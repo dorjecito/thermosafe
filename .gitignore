@@ -7,18 +7,58 @@ yarn-error.log*
 pnpm-debug.log*
 lerna-debug.log*
 
-node_modules
+# Dependency directories
+node_modules/
 dist
 dist-ssr
-*.local
 
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json
 .idea
 .DS_Store
-*.suo
-*.ntvs*
-*.njsproj
-*.sln
-*.sw?
+
+# TypeScript
+*.tsbuildinfo
+
+# Output and cache
+.cache
+.parcel-cache
+.next
+.nuxt
+out
+coverage
+*.lcov
+.nyc_output
+.rpt2_cache/
+.rts2_cache_*
+.web_modules/
+
+# Environment variables
+.env
+.env.*.local
+
+# Lock files
+*.pid
+*.seed
+*.pid.lock
+.lock-wscript
+
+# Other
+bower_components
+jspm_packages/
+build/Release
+*.tgz
+.yarn-integrity
+.eslintcache
+.stylelintcache
+.node_repl_history
+.tern-port
+.serverless/
+.dynamodb/
+.docusaurus/
+.yarn/cache
+.yarn/unplugged
+.yarn/build-state.yml
+.yarn/install-state.gz
+.pnp.*

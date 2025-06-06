@@ -1,54 +1,29 @@
-# React + TypeScript + Vite
+# ThermoSafe – Risc per calor 🌞
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+Aplicació web que mostra el risc per calor en funció de la temperatura i la humitat actuals.
 
-Currently, two official plugins are available:
+📍 Basat en la ubicació GPS o cerca manual per ciutat o poble.
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+## 🔥 Funcionalitats
 
-## Expanding the ESLint configuration
+- Índex de calor percebut (heat index)
+- Alertes visuals i sonores en cas de risc extrem
+- Consulta recurrent automàtica cada 30 minuts
+- Selector de municipis habituals de les Illes Balears
+- Interfície moderna i adaptada a mode fosc
+- Disponible en català i castellà (canvi automàtic segons navegador)
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+## 🧰 Tecnologies emprades
 
-```js
-export default tseslint.config({
-  extends: [
-    // Remove ...tseslint.configs.recommended and replace with this
-    ...tseslint.configs.recommendedTypeChecked,
-    // Alternatively, use this for stricter rules
-    ...tseslint.configs.strictTypeChecked,
-    // Optionally, add this for stylistic rules
-    ...tseslint.configs.stylisticTypeChecked,
-  ],
-  languageOptions: {
-    // other options...
-    parserOptions: {
-      project: ['./tsconfig.node.json', './tsconfig.app.json'],
-      tsconfigRootDir: import.meta.dirname,
-    },
-  },
-})
-```
+- React + Vite
+- TypeScript
+- OpenWeather API
+- Notification API (alertes)
+- CSS Variables amb suport per `prefers-color-scheme`
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+## 🚀 Desplegament
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+Aquest projecte es pot desplegar fàcilment a [Vercel](https://vercel.com) o [Netlify](https://netlify.com).
 
-export default tseslint.config({
-  plugins: {
-    // Add the react-x and react-dom plugins
-    'react-x': reactX,
-    'react-dom': reactDom,
-  },
-  rules: {
-    // other rules...
-    // Enable its recommended typescript rules
-    ...reactX.configs['recommended-typescript'].rules,
-    ...reactDom.configs.recommended.rules,
-  },
-})
-```
+## 📂 Estructura principal
+
