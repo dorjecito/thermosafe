@@ -24,6 +24,23 @@ function calculateHeatIndex(temp: number, humidity: number): number {
   return Math.round(HI * 10) / 10;
 }
 
+// 🔈 So lleuger per a l'alerta
+const playAlertSound = () => {
+  const audio = new Audio('/alert.mp3'); // Afegeix un fitxer /public/alert.mp3
+  audio.volume = 0.3;
+  audio.play().catch(() => {}); // Evita errors en navegadors que bloquegen autoplay
+};
+
+// 🔔 Notificació visual
+const notifyHeatRisk = (message: string) => {
+  if (Notification.permission === 'granted') {
+    new Notification('ThermoSafe', {
+      body: message,
+      icon: '/favicon.ico',
+    });
+  }
+};
+
 function App() {
   const lang = navigator.language.startsWith('es') ? 'es' : 'ca';
 
@@ -58,12 +75,17 @@ function App() {
   useEffect(() => {
     handleGeolocation();
 
+    // 🔔 Demana permís per a notificacions
+    if (Notification.permission !== 'granted') {
+      Notification.requestPermission();
+    }
+
     const interval = setInterval(() => {
       console.log('[ThermoSafe] Verificant temperatura...');
-      handleGeolocation(true); // true per indicar que no cal mostrar loading
+      handleGeolocation(true);
     }, 30 * 60 * 1000); // Cada 30 minuts
 
-    return () => clearInterval(interval); // Neteja si es desmunta
+    return () => clearInterval(interval);
   }, []);
 
   const handleGeolocation = (silent: boolean = false) => {
@@ -87,7 +109,11 @@ function App() {
           setCityInput('');
           if (!silent) setError('');
 
-          if (hi >= 35) alert(t.alertRisk);
+          if (hi >= 35) {
+            alert(t.alertRisk);
+            notifyHeatRisk(t.alertRisk);
+            playAlertSound();
+          }
         } catch (err) {
           if (!silent) setError(t.errorGPS);
         }
@@ -112,7 +138,11 @@ function App() {
       setHeatIndex(hi);
       setError('');
 
-      if (hi >= 35) alert(t.alertRisk);
+      if (hi >= 35) {
+        alert(t.alertRisk);
+        notifyHeatRisk(t.alertRisk);
+        playAlertSound();
+      }
     } catch (err) {
       setError(t.errorCity);
     }
