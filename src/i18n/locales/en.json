@@ -1,0 +1,15 @@
+{
+  "title": "ThermoSafe – Heat Risk 🌞",
+  "search_placeholder": "Enter a city or town",
+  "search_button": "🔍 Search",
+  "common_cities": "Common cities:",
+  "select_city": "-- Select --",
+  "gps_button": "📍 Use current location",
+  "alert_extreme": "🚨 EXTREME heat risk! Avoid physical effort and stay hydrated!",
+  "location": "📍 Location",
+  "humidity": "💧 Humidity",
+  "heat_index": "🌡️ Perceived heat index",
+  "loading": "Loading weather data...",
+  "error_gps": "Unable to get location.",
+  "error_data": "Could not retrieve data for this location."
+}

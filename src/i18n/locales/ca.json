@@ -1,0 +1,15 @@
+{
+  "title": "ThermoSafe – Risc per calor 🌞",
+  "search_placeholder": "Introdueix una ciutat o poble",
+  "search_button": "🔍 Consulta",
+  "common_cities": "Ciutats habituals:",
+  "select_city": "-- Selecciona --",
+  "gps_button": "📍 Usar ubicació actual",
+  "alert_extreme": "🚨 Risc EXTREM de calor! Evita l’esforç i hidrata’t constantment!",
+  "location": "📍 Localització",
+  "humidity": "💧 Humitat",
+  "heat_index": "🌡️ Índex de calor percebut",
+  "loading": "Carregant dades meteorològiques...",
+  "error_gps": "No s’ha pogut obtenir la ubicació.",
+  "error_data": "No s’ha pogut obtenir dades per aquesta localització."
+}

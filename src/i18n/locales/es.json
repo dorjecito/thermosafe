@@ -1,0 +1,15 @@
+{
+  "title": "ThermoSafe – Riesgo por calor 🌞",
+  "search_placeholder": "Introduce una ciudad o pueblo",
+  "search_button": "🔍 Consultar",
+  "common_cities": "Ciudades habituales:",
+  "select_city": "-- Selecciona --",
+  "gps_button": "📍 Usar ubicación actual",
+  "alert_extreme": "🚨 ¡Riesgo EXTREMO de calor! ¡Evita el esfuerzo e hidrátate constantemente!",
+  "location": "📍 Localización",
+  "humidity": "💧 Humedad",
+  "heat_index": "🌡️ Índice de calor percibido",
+  "loading": "Cargando datos meteorológicos...",
+  "error_gps": "No se ha podido obtener la ubicación.",
+  "error_data": "No se han podido obtener datos para esta localización."
+}
