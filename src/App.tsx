@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import {
   getWeatherByCoords,
   getWeatherByCity,
@@ -24,25 +24,9 @@ function calculateHeatIndex(temp: number, humidity: number): number {
   return Math.round(HI * 10) / 10;
 }
 
-// 🔈 So lleuger per a l'alerta
-const playAlertSound = () => {
-  const audio = new Audio('/alert.mp3'); // Afegeix un fitxer /public/alert.mp3
-  audio.volume = 0.3;
-  audio.play().catch(() => {}); // Evita errors en navegadors que bloquegen autoplay
-};
-
-// 🔔 Notificació visual
-const notifyHeatRisk = (message: string) => {
-  if (Notification.permission === 'granted') {
-    new Notification('ThermoSafe', {
-      body: message,
-      icon: '/favicon.ico',
-    });
-  }
-};
-
 function App() {
   const lang = navigator.language.startsWith('es') ? 'es' : 'ca';
+  const audioRef = useRef<HTMLAudioElement | null>(null);
 
   const t = {
     title: lang === 'es' ? 'ThermoSafe – Riesgo por calor ☀️' : 'ThermoSafe – Risc per calor 🌞',
@@ -75,18 +59,20 @@ function App() {
   useEffect(() => {
     handleGeolocation();
 
-    // 🔔 Demana permís per a notificacions
-    if (Notification.permission !== 'granted') {
-      Notification.requestPermission();
-    }
-
     const interval = setInterval(() => {
       console.log('[ThermoSafe] Verificant temperatura...');
       handleGeolocation(true);
-    }, 30 * 60 * 1000); // Cada 30 minuts
+    }, 30 * 60 * 1000);
 
     return () => clearInterval(interval);
   }, []);
+
+  const triggerAlarm = () => {
+    if (audioRef.current) {
+      audioRef.current.currentTime = 0;
+      audioRef.current.play().catch((e) => console.warn('No es pot reproduir el so:', e));
+    }
+  };
 
   const handleGeolocation = (silent: boolean = false) => {
     navigator.geolocation.getCurrentPosition(
@@ -111,8 +97,7 @@ function App() {
 
           if (hi >= 35) {
             alert(t.alertRisk);
-            notifyHeatRisk(t.alertRisk);
-            playAlertSound();
+            triggerAlarm();
           }
         } catch (err) {
           if (!silent) setError(t.errorGPS);
@@ -140,8 +125,7 @@ function App() {
 
       if (hi >= 35) {
         alert(t.alertRisk);
-        notifyHeatRisk(t.alertRisk);
-        playAlertSound();
+        triggerAlarm();
       }
     } catch (err) {
       setError(t.errorCity);
@@ -157,6 +141,8 @@ function App() {
     <div className="container">
       <h1>{t.title}</h1>
 
+      <audio ref={audioRef} src="/alarma_vaixell_guerra.mp3" preload="auto" />
+
       <div style={{ marginBottom: '1rem' }}>
         <input
           type="text"
@@ -170,14 +156,16 @@ function App() {
           <label style={{ marginRight: '0.5rem' }}>{t.selectLabel}</label>
           <select onChange={(e) => handleCitySearchFromSelect(e.target.value)} defaultValue="">
             <option value="" disabled>{t.selectDefault}</option>
-            {[
-              'Alcúdia', 'Andratx', 'Artà', 'Binissalem', 'Bunyola', 'Calvià', 'Campos',
-              'Ciutadella', 'Eivissa', 'Es Castell', 'Es Mercadal', 'Es Migjorn Gran',
-              'Felanitx', 'Ferreries', 'Inca', 'Llucmajor', 'Maó', 'Manacor', 'Palma',
-              'Pollença', 'Porreres', 'Sant Antoni de Portmany', 'Sant Francesc Xavier',
-              'Sant Joan', 'Sant Josep de sa Talaia', 'Sant Llorenç des Cardassar',
-              'Santa Eulària des Riu', 'Santa Margalida', 'Santanyí', 'Sineu', 'Sóller'
-            ].map((ciutat) => (
+            {[...Array.from(
+              new Set([
+                'Alcúdia', 'Andratx', 'Artà', 'Binissalem', 'Bunyola', 'Calvià', 'Campos',
+                'Ciutadella', 'Eivissa', 'Es Castell', 'Es Mercadal', 'Es Migjorn Gran',
+                'Felanitx', 'Ferreries', 'Inca', 'Llucmajor', 'Maó', 'Manacor', 'Palma',
+                'Pollença', 'Porreres', 'Sant Antoni de Portmany', 'Sant Francesc Xavier',
+                'Sant Joan', 'Sant Josep de sa Talaia', 'Sant Llorenç des Cardassar',
+                'Santa Eulària des Riu', 'Santa Margalida', 'Santanyí', 'Sineu', 'Sóller'
+              ])
+            )].map((ciutat) => (
               <option key={ciutat} value={ciutat}>{ciutat}</option>
             ))}
           </select>
