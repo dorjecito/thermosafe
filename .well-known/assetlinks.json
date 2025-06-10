@@ -1,0 +1,12 @@
+[
+  {
+    "relation": ["delegate_permission/common.handle_all_urls"],
+    "target": {
+      "namespace": "android_app",
+      "package_name": "app.vercel.thermosafe.twa",
+      "sha256_cert_fingerprints": [
+        "C3:46:00:B2:3D:75:E4:EE:C9:F9:95:6A:FE:C0:0F:8A:E3:58:4D:D6:23:38:C1:B6:4A:AF:5B:59:2C:4B:8D:FE"
+      ]
+    }
+  }
+]
