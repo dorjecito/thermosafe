@@ -29,8 +29,6 @@ function App() {
     heatIndex: lang === 'es' ? '🌡️ Índice de calor percibido' : '🌡️ Índex de calor percebut',
     searchPlaceholder: lang === 'es' ? 'Introduce una ciudad o pueblo' : 'Introdueix una ciutat o poble',
     buttonSearch: lang === 'es' ? '🔍 Consultar' : '🔍 Consulta',
-    selectLabel: lang === 'es' ? 'Ciudades habituales:' : 'Ciutats habituals:',
-    selectDefault: lang === 'es' ? '-- Selecciona --' : '-- Selecciona --',
     useGPS: lang === 'es' ? '📍 Usar ubicación actual' : '📍 Usar ubicació actual',
     alertText: lang === 'es'
       ? '🚨 ¡Riesgo EXTREMO de calor! Evita el esfuerzo e hidrátate constantemente.'
@@ -116,11 +114,6 @@ function App() {
     }
   };
 
-  const handleCitySearchFromSelect = async (selectedCity: string) => {
-    setCityInput(selectedCity);
-    await handleCitySearch();
-  };
-
   return (
     <div className="container">
       <h1>{t.title}</h1>
@@ -133,23 +126,6 @@ function App() {
           placeholder={t.searchPlaceholder}
         />
         <button onClick={handleCitySearch}>{t.buttonSearch}</button>
-
-        <div style={{ marginTop: '0.5rem' }}>
-          <label style={{ marginRight: '0.5rem' }}>{t.selectLabel}</label>
-          <select onChange={(e) => handleCitySearchFromSelect(e.target.value)} defaultValue="">
-            <option value="" disabled>{t.selectDefault}</option>
-            {[
-              'Alcúdia', 'Andratx', 'Artà', 'Binissalem', 'Bunyola', 'Calvià', 'Campos',
-              'Ciutadella', 'Eivissa', 'Es Castell', 'Es Mercadal', 'Es Migjorn Gran',
-              'Felanitx', 'Ferreries', 'Inca', 'Llucmajor', 'Maó', 'Manacor', 'Palma',
-              'Pollença', 'Porreres', 'Sant Antoni de Portmany', 'Sant Francesc Xavier',
-              'Sant Joan', 'Sant Josep de sa Talaia', 'Sant Llorenç des Cardassar',
-              'Santa Eulària des Riu', 'Santa Margalida', 'Santanyí', 'Sineu', 'Sóller'
-            ].map((ciutat) => (
-              <option key={ciutat} value={ciutat}>{ciutat}</option>
-            ))}
-          </select>
-        </div>
 
         <div style={{ marginTop: '1rem' }}>
           <button onClick={() => handleGeolocation(false)}>{t.useGPS}</button>
