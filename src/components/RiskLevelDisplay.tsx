@@ -8,13 +8,13 @@ export default function RiskLevelDisplay({ temp }: Props) {
   let level = 'Desconegut';
   let color = 'gray';
 
-  if (temp < 25) {
+  if (temp < 28) {
     level = 'Baix';
     color = 'green';
-  } else if (temp < 30) {
+  } else if (temp < 33) {
     level = 'Moderat';
     color = 'goldenrod';
-  } else if (temp < 35) {
+  } else if (temp < 40) {
     level = 'Alt';
     color = 'orange';
   } else {
