@@ -27,8 +27,10 @@ export default function Recommendations({ temp }: Props) {
       tips = t('day_mild', { returnObjects: true });
     } else if (temp < 35) {
       tips = t('day_moderate', { returnObjects: true });
-    } else {
+    } else if (temp < 40) {
       tips = t('day_high', { returnObjects: true });
+    } else {
+      tips = t('day_extreme', { returnObjects: true });
     }
   }
 

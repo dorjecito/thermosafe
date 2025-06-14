@@ -31,6 +31,13 @@
     "Ropa ligera, sombrero y mucha hidratación.",
     "Avisa a responsables si aparecen mareos o calambres."
   ],
+  "day_extreme": [
+    "Evita cualquier esfuerzo físico intenso.",
+    "Detén la actividad si es posible y busca un lugar fresco.",
+    "Hidrátate constantemente, incluso si no tienes sed.",
+    "Avisa inmediatamente si hay malestar, desorientación o piel seca.",
+    "Contacta con servicios de emergencia si aparecen síntomas graves."
+  ],
 
   "night_label": "🌙 Recomendaciones adaptadas al horario nocturno",
   "night_safe": "Noche con condiciones seguras. Mantén buena ventilación.",
@@ -39,5 +46,6 @@
   "night_water": "Bebe agua antes de acostarte.",
   "night_clothes": "Duerme con ropa ligera.",
   "night_ventilator": "Usa ventilador si es posible.",
-  "night_heavy_meal": "Evita comidas pesadas y mantente bien hidratado."
+  "night_heavy_meal": "Evita comidas pesadas y mantente bien hidratado.",
+  "night_emergency": "Evita cualquier esfuerzo. Si tienes síntomas graves, solicita ayuda médica de inmediato."
 }

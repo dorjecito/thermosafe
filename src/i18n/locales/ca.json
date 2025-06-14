@@ -31,6 +31,13 @@
     "Roba lleugera, barret, molta hidratació.",
     "Avís a responsables si apareixen marejos o rampes."
   ],
+  "day_extreme": [
+    "Evita qualsevol esforç físic intens.",
+    "Atura l’activitat si és possible i busca un lloc fresc.",
+    "Hidrata’t constantment, fins i tot si no tens set.",
+    "Avís immediat si hi ha malestar, desorientació o pell seca.",
+    "Contacta amb serveis d’emergència si apareixen símptomes greus."
+  ],
 
   "night_label": "🌙 Recomanacions adaptades a l’horari nocturn",
   "night_safe": "Nit amb condicions segures. Mantén una bona ventilació.",
@@ -39,5 +46,6 @@
   "night_water": "Beu aigua abans d’anar a dormir.",
   "night_clothes": "Descansa amb roba lleugera.",
   "night_ventilator": "Utilitza ventilador si és possible.",
-  "night_heavy_meal": "Evita menjars pesats i beu aigua regularment."
+  "night_heavy_meal": "Evita menjars pesats i beu aigua regularment.",
+  "night_emergency": "Evita qualsevol esforç. Si tens símptomes greus, demana ajuda mèdica immediatament."
 }

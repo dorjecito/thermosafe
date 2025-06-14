@@ -31,6 +31,13 @@
     "Wear light clothing, use a hat, stay well hydrated.",
     "Alert supervisors if dizziness or cramps appear."
   ],
+  "day_extreme": [
+    "Avoid any intense physical effort.",
+    "Stop the activity if possible and seek a cool place.",
+    "Drink water constantly, even if not thirsty.",
+    "Alert someone immediately if feeling unwell, disoriented or with dry skin.",
+    "Contact emergency services if serious symptoms appear."
+  ],
 
   "night_label": "🌙 Recommendations adapted to night time",
   "night_safe": "Safe night conditions. Ensure good ventilation.",
@@ -39,5 +46,6 @@
   "night_water": "Drink water before going to sleep.",
   "night_clothes": "Sleep with light clothing.",
   "night_ventilator": "Use a fan if possible.",
-  "night_heavy_meal": "Avoid heavy meals and stay hydrated."
+  "night_heavy_meal": "Avoid heavy meals and stay hydrated.",
+  "night_emergency": "Avoid any physical effort. Seek medical help immediately if you have serious symptoms."
 }
