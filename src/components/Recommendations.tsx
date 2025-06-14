@@ -1,36 +1,47 @@
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 
 interface Props {
   temp: number;
 }
 
 export default function Recommendations({ temp }: Props) {
+  const { t } = useTranslation();
+  const hora = new Date().getHours();
+  const esVespreONit = hora >= 20 || hora < 6;
+
   let tips: string[] = [];
 
-  if (temp < 25) {
-    tips = ['Condicions segures. Mantén la hidratació habitual.'];
-  } else if (temp < 30) {
-    tips = ['Beu aigua cada 30 minuts.', 'Fes descansos a l’ombra cada hora.'];
-  } else if (temp < 35) {
-    tips = [
-      'Beu aigua cada 20 minuts.',
-      'Evita l’esforç físic intens al migdia.',
-      'Fes descansos freqüents.',
-    ];
+  if (esVespreONit) {
+    if (temp < 25) {
+      tips = [t('night_safe'), t('night_water')];
+    } else if (temp < 30) {
+      tips = [t('night_moderate'), t('night_water'), t('night_clothes')];
+    } else {
+      tips = [t('night_extreme'), t('night_ventilator'), t('night_heavy_meal')];
+    }
   } else {
-    tips = [
-      'Evita treballar a ple sol si és possible.',
-      'Fes pauses cada 20 minuts a l’ombra.',
-      'Roba lleugera, barret, molta hidratació.',
-      'Avís a responsables si apareixen marejos o rampes.',
-    ];
+    if (temp < 25) {
+      tips = t('day_safe', { returnObjects: true });
+    } else if (temp < 30) {
+      tips = t('day_mild', { returnObjects: true });
+    } else if (temp < 35) {
+      tips = t('day_moderate', { returnObjects: true });
+    } else {
+      tips = t('day_high', { returnObjects: true });
+    }
   }
 
   return (
     <div>
-      <h3>Recomanacions:</h3>
+      <h3>{t('recommendations_title') ?? 'Recomanacions:'}</h3>
+      {esVespreONit && (
+        <p><strong>{t('night_label')}</strong></p>
+      )}
       <ul>
-        {tips.map((tip, index) => <li key={index}>{tip}</li>)}
+        {tips.map((tip, index) => (
+          <li key={index}>{tip}</li>
+        ))}
       </ul>
     </div>
   );

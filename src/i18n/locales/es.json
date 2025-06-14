@@ -11,5 +11,33 @@
   "heat_index": "🌡️ Índice de calor percibido",
   "loading": "Cargando datos meteorológicos...",
   "error_gps": "No se ha podido obtener la ubicación.",
-  "error_data": "No se han podido obtener datos para esta localización."
+  "error_data": "No se han podido obtener datos para esta localización.",
+
+  "recommendations_title": "Recomendaciones:",
+
+  "day_safe": ["Condiciones seguras. Mantén la hidratación habitual."],
+  "day_mild": [
+    "Bebe agua cada 30 minutos.",
+    "Haz descansos a la sombra cada hora."
+  ],
+  "day_moderate": [
+    "Bebe agua cada 20 minutos.",
+    "Evita el esfuerzo físico intenso al mediodía.",
+    "Haz descansos frecuentes."
+  ],
+  "day_high": [
+    "Evita trabajar bajo el sol directo si es posible.",
+    "Haz pausas cada 20 minutos a la sombra.",
+    "Ropa ligera, sombrero y mucha hidratación.",
+    "Avisa a responsables si aparecen mareos o calambres."
+  ],
+
+  "night_label": "🌙 Recomendaciones adaptadas al horario nocturno",
+  "night_safe": "Noche con condiciones seguras. Mantén buena ventilación.",
+  "night_moderate": "Noche con temperatura elevada: abre ventanas o ventila bien el espacio.",
+  "night_extreme": "🌡️ Noche tórrida: evita esfuerzos y descansa en un lugar fresco.",
+  "night_water": "Bebe agua antes de acostarte.",
+  "night_clothes": "Duerme con ropa ligera.",
+  "night_ventilator": "Usa ventilador si es posible.",
+  "night_heavy_meal": "Evita comidas pesadas y mantente bien hidratado."
 }

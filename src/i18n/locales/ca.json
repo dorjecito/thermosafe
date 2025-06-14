@@ -11,5 +11,33 @@
   "heat_index": "🌡️ Índex de calor percebut",
   "loading": "Carregant dades meteorològiques...",
   "error_gps": "No s’ha pogut obtenir la ubicació.",
-  "error_data": "No s’ha pogut obtenir dades per aquesta localització."
+  "error_data": "No s’ha pogut obtenir dades per aquesta localització.",
+
+  "recommendations_title": "Recomanacions:",
+
+  "day_safe": ["Condicions segures. Mantén la hidratació habitual."],
+  "day_mild": [
+    "Beu aigua cada 30 minuts.",
+    "Fes descansos a l’ombra cada hora."
+  ],
+  "day_moderate": [
+    "Beu aigua cada 20 minuts.",
+    "Evita l’esforç físic intens al migdia.",
+    "Fes descansos freqüents."
+  ],
+  "day_high": [
+    "Evita treballar a ple sol si és possible.",
+    "Fes pauses cada 20 minuts a l’ombra.",
+    "Roba lleugera, barret, molta hidratació.",
+    "Avís a responsables si apareixen marejos o rampes."
+  ],
+
+  "night_label": "🌙 Recomanacions adaptades a l’horari nocturn",
+  "night_safe": "Nit amb condicions segures. Mantén una bona ventilació.",
+  "night_moderate": "Nit amb temperatura elevada: obre finestres o ventila bé l’espai.",
+  "night_extreme": "🌡️ Nit tòrrida: evita esforços i descansa en lloc fresc.",
+  "night_water": "Beu aigua abans d’anar a dormir.",
+  "night_clothes": "Descansa amb roba lleugera.",
+  "night_ventilator": "Utilitza ventilador si és possible.",
+  "night_heavy_meal": "Evita menjars pesats i beu aigua regularment."
 }

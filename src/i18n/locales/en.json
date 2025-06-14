@@ -11,5 +11,33 @@
   "heat_index": "🌡️ Perceived heat index",
   "loading": "Loading weather data...",
   "error_gps": "Unable to get location.",
-  "error_data": "Could not retrieve data for this location."
+  "error_data": "Could not retrieve data for this location.",
+
+  "recommendations_title": "Recommendations:",
+
+  "day_safe": ["Safe conditions. Maintain usual hydration."],
+  "day_mild": [
+    "Drink water every 30 minutes.",
+    "Take breaks in the shade every hour."
+  ],
+  "day_moderate": [
+    "Drink water every 20 minutes.",
+    "Avoid intense physical effort at midday.",
+    "Take frequent breaks."
+  ],
+  "day_high": [
+    "Avoid working under direct sunlight if possible.",
+    "Take 20-minute breaks in the shade regularly.",
+    "Wear light clothing, use a hat, stay well hydrated.",
+    "Alert supervisors if dizziness or cramps appear."
+  ],
+
+  "night_label": "🌙 Recommendations adapted to night time",
+  "night_safe": "Safe night conditions. Ensure good ventilation.",
+  "night_moderate": "Warm night: open windows or ventilate the room.",
+  "night_extreme": "🌡️ Hot night: avoid effort and rest in a cool place.",
+  "night_water": "Drink water before going to sleep.",
+  "night_clothes": "Sleep with light clothing.",
+  "night_ventilator": "Use a fan if possible.",
+  "night_heavy_meal": "Avoid heavy meals and stay hydrated."
 }
