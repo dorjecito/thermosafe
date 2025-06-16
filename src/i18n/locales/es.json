@@ -1,51 +1,55 @@
 {
-  "title": "ThermoSafe – Riesgo por calor 🌞",
+  "title": "ThermoSafe – Riesgo por calor ☀️",
   "search_placeholder": "Introduce una ciudad o pueblo",
   "search_button": "🔍 Consultar",
-  "common_cities": "Ciudades habituales:",
-  "select_city": "-- Selecciona --",
   "gps_button": "📍 Usar ubicación actual",
-  "alert_extreme": "🚨 ¡Riesgo EXTREMO de calor! ¡Evita el esfuerzo e hidrátate constantemente!",
-  "location": "📍 Localización",
+  "location": "📍 Ubicación",
   "humidity": "💧 Humedad",
   "heat_index": "🌡️ Índice de calor percibido",
+  "measured_temp": "📈 Temperatura real",
+  "risk_level": "Riesgo por calor:",
+  "alert_extreme": "🚨 ¡Riesgo EXTREMO de calor! Evita el esfuerzo e hidrátate constantemente.",
   "loading": "Cargando datos meteorológicos...",
-  "error_gps": "No se ha podido obtener la ubicación.",
-  "error_data": "No se han podido obtener datos para esta localización.",
-
+  "error_gps": "No se pudo obtener la temperatura por GPS.",
+  "error_data": "No se pudieron obtener datos para esta localización.",
+  "error_no_location": "No se pudo obtener la ubicación.",
   "recommendations_title": "Recomendaciones:",
+  "source_manual": "Índice de calor calculado manualmente",
+  "source_api": "Índice de calor de la API meteorológica",
 
-  "day_safe": ["Condiciones seguras. Mantén la hidratación habitual."],
+  "day_safe": [
+    "Condiciones seguras. Mantén una hidratación normal."
+  ],
   "day_mild": [
     "Bebe agua cada 30 minutos.",
-    "Haz descansos a la sombra cada hora."
+    "Descansa a la sombra cada hora."
   ],
   "day_moderate": [
     "Bebe agua cada 20 minutos.",
     "Evita el esfuerzo físico intenso al mediodía.",
-    "Haz descansos frecuentes."
+    "Haz pausas frecuentes."
   ],
   "day_high": [
-    "Evita trabajar bajo el sol directo si es posible.",
+    "Evita trabajar al sol directo si es posible.",
     "Haz pausas cada 20 minutos a la sombra.",
-    "Ropa ligera, sombrero y mucha hidratación.",
+    "Ropa ligera, gorra y mucha hidratación.",
     "Avisa a responsables si aparecen mareos o calambres."
   ],
   "day_extreme": [
     "Evita cualquier esfuerzo físico intenso.",
     "Detén la actividad si es posible y busca un lugar fresco.",
     "Hidrátate constantemente, incluso si no tienes sed.",
-    "Avisa inmediatamente si hay malestar, desorientación o piel seca.",
-    "Contacta con servicios de emergencia si aparecen síntomas graves."
+    "Aviso inmediato si hay malestar, desorientación o piel seca.",
+    "Contacta con emergencias si aparecen síntomas graves."
   ],
 
-  "night_label": "🌙 Recomendaciones adaptadas al horario nocturno",
+  "night_label": "🌙 Recomendaciones para la noche",
   "night_safe": "Noche con condiciones seguras. Mantén buena ventilación.",
-  "night_moderate": "Noche con temperatura elevada: abre ventanas o ventila bien el espacio.",
-  "night_extreme": "🌡️ Noche tórrida: evita esfuerzos y descansa en un lugar fresco.",
-  "night_water": "Bebe agua antes de acostarte.",
+  "night_moderate": "Noche calurosa: ventila bien la habitación.",
+  "night_extreme": "🌡️ Noche muy calurosa: evita esfuerzos y descansa en un lugar fresco.",
+  "night_water": "Bebe agua antes de dormir.",
   "night_clothes": "Duerme con ropa ligera.",
   "night_ventilator": "Usa ventilador si es posible.",
-  "night_heavy_meal": "Evita comidas pesadas y mantente bien hidratado.",
-  "night_emergency": "Evita cualquier esfuerzo. Si tienes síntomas graves, solicita ayuda médica de inmediato."
+  "night_heavy_meal": "Evita comidas pesadas y bebe agua regularmente.",
+  "night_emergency": "Evita cualquier esfuerzo. Si tienes síntomas graves, busca ayuda médica."
 }

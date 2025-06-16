@@ -1,3 +1,4 @@
+
 import React, { useEffect, useState } from 'react';
 import { getWeatherByCoords, getWeatherByCity } from './services/weatherAPI';
 import RiskLevelDisplay from './components/RiskLevelDisplay';
@@ -16,7 +17,10 @@ function calculateHeatIndex(temp: number, humidity: number): number {
     0.002211732 * T * T * R +
     0.00072546 * T * R * R +
     -0.000003582 * T * T * R * R;
-  return Math.round(HI * 10) / 10;
+
+  const resultat = Math.round(HI * 10) / 10;
+  console.log(`[ThermoSafe] HI manual → Temp: ${T}, Humitat: ${R}, Resultat: ${resultat} °C`);
+  return resultat;
 }
 
 function App() {
@@ -38,6 +42,7 @@ function App() {
     errorNoLocation: lang === 'es' ? 'No se pudo obtener la ubicación.' : 'No s’ha pogut obtenir la ubicació.',
     errorCity: lang === 'es' ? 'No se encontraron datos para esta ciudad.' : 'No s’ha pogut obtenir dades per aquesta localització.',
     alertRisk: lang === 'es' ? '⚠️ ¡Riesgo alto o extremo de calor!' : '⚠️ Risc alt o extrem de calor!',
+    realMeasuredTemp: lang === 'es' ? '📈 Temperatura real medida' : 'Temperatura real'
   };
 
   const [temp, setTemp] = useState<number | null>(null);
@@ -75,12 +80,29 @@ function App() {
           );
           const tempValue = data.main.temp;
           const humidityValue = data.main.humidity;
+          const feelsLikeAPI = data.main.feels_like;
+
+          console.log('[ThermoSafe] Dades rebudes:', {
+            temp: tempValue,
+            humidity: humidityValue,
+            feels_like: feelsLikeAPI
+          });
 
           setTemp(tempValue);
           setHumidity(humidityValue);
           setCity(data.name);
 
-          const hi = calculateHeatIndex(tempValue, humidityValue);
+          let hi: number;
+          const recalcular = Math.abs(feelsLikeAPI - tempValue) < 1 && humidityValue > 60;
+
+          if (recalcular) {
+            console.log('[ThermoSafe] Recalculant Heat Index manualment…');
+            hi = calculateHeatIndex(tempValue, humidityValue);
+          } else {
+            console.log('[ThermoSafe] Usant feels_like de l’API');
+            hi = feelsLikeAPI;
+          }
+
           setHeatIndex(hi);
           setCityInput('');
           if (!silent) setError('');
@@ -100,12 +122,29 @@ function App() {
       const data = await getWeatherByCity(cityInput);
       const tempValue = data.main.temp;
       const humidityValue = data.main.humidity;
+      const feelsLikeAPI = data.main.feels_like;
+
+      console.log('[ThermoSafe] Dades rebudes:', {
+        temp: tempValue,
+        humidity: humidityValue,
+        feels_like: feelsLikeAPI
+      });
 
       setTemp(tempValue);
       setHumidity(humidityValue);
       setCity(data.name);
 
-      const hi = calculateHeatIndex(tempValue, humidityValue);
+      let hi: number;
+      const recalcular = Math.abs(feelsLikeAPI - tempValue) < 1 && humidityValue > 60;
+
+      if (recalcular) {
+        console.log('[ThermoSafe] Recalculant Heat Index manualment…');
+        hi = calculateHeatIndex(tempValue, humidityValue);
+      } else {
+        console.log('[ThermoSafe] Usant feels_like de l’API');
+        hi = feelsLikeAPI;
+      }
+
       setHeatIndex(hi);
       setError('');
       if (hi >= 38) triggerAlarm();
@@ -141,6 +180,7 @@ function App() {
           {city && <h2>{t.location}: {city}</h2>}
           <p>{t.humidity}: {humidity}%</p>
           <p>{t.heatIndex}: <strong>{heatIndex} °C</strong></p>
+          <p>📈 {t.realMeasuredTemp}: {temp} °C</p>
           <RiskLevelDisplay temp={heatIndex!} />
           <Recommendations temp={heatIndex!} />
         </>

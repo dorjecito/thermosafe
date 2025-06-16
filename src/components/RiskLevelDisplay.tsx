@@ -25,7 +25,6 @@ export default function RiskLevelDisplay({ temp }: Props) {
   return (
     <div>
       <h2>Risc per calor: <span style={{ color }}>{level}</span></h2>
-      <p>Temperatura actual: {temp} °C</p>
     </div>
   );
 }
