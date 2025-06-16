@@ -42,7 +42,7 @@ function App() {
     errorNoLocation: lang === 'es' ? 'No se pudo obtener la ubicación.' : 'No s’ha pogut obtenir la ubicació.',
     errorCity: lang === 'es' ? 'No se encontraron datos para esta ciudad.' : 'No s’ha pogut obtenir dades per aquesta localització.',
     alertRisk: lang === 'es' ? '⚠️ ¡Riesgo alto o extremo de calor!' : '⚠️ Risc alt o extrem de calor!',
-    realMeasuredTemp: lang === 'es' ? '📈 Temperatura real medida' : 'Temperatura real'
+    realMeasuredTemp: lang === 'es' ? 'Temperatura real' : 'Temperatura real'
   };
 
   const [temp, setTemp] = useState<number | null>(null);
