@@ -2,20 +2,24 @@
   "title": "ThermoSafe – Risc per calor 🌞",
   "search_placeholder": "Introdueix una ciutat o poble",
   "search_button": "🔍 Consulta",
-  "common_cities": "Ciutats habituals:",
-  "select_city": "-- Selecciona --",
   "gps_button": "📍 Usar ubicació actual",
-  "alert_extreme": "🚨 Risc EXTREM de calor! Evita l’esforç i hidrata’t constantment!",
   "location": "📍 Localització",
   "humidity": "💧 Humitat",
   "heat_index": "🌡️ Índex de calor percebut",
-  "loading": "Carregant dades meteorològiques...",
-  "error_gps": "No s’ha pogut obtenir la ubicació.",
+  "measured_temp": "📈 Temperatura real",
+  "risk_level": "Risc per calor:",
+  "alert_extreme": "🚨 Risc EXTREM de calor! Evita l’esforç i hidrata’t constantment!",
+  "loading": "Carregant dades meteorològiques…",
+  "error_gps": "No s’ha pogut obtenir la temperatura per GPS.",
   "error_data": "No s’ha pogut obtenir dades per aquesta localització.",
-
+  "error_no_location": "No s’ha pogut obtenir la ubicació.",
   "recommendations_title": "Recomanacions:",
+  "source_manual": "Índex de calor calculat manualment",
+  "source_api": "Índex de calor de l’API meteorològica",
 
-  "day_safe": ["Condicions segures. Mantén la hidratació habitual."],
+  "day_safe": [
+    "Condicions segures. Mantén la hidratació habitual."
+  ],
   "day_mild": [
     "Beu aigua cada 30 minuts.",
     "Fes descansos a l’ombra cada hora."
@@ -39,7 +43,7 @@
     "Contacta amb serveis d’emergència si apareixen símptomes greus."
   ],
 
-  "night_label": "🌙 Recomanacions adaptades a l’horari nocturn",
+  "night_label": "🌙 Recomanacions per la nit",
   "night_safe": "Nit amb condicions segures. Mantén una bona ventilació.",
   "night_moderate": "Nit amb temperatura elevada: obre finestres o ventila bé l’espai.",
   "night_extreme": "🌡️ Nit tòrrida: evita esforços i descansa en lloc fresc.",

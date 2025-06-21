@@ -6,11 +6,11 @@ const BASE_URL = 'https://api.openweathermap.org/data/2.5/weather';
 interface WeatherResponse {
   main: {
     temp: number;
+    feels_like: number; 
     humidity: number;
   };
   name: string;
 }
-
 
 export async function getWeatherByCoords(lat: number, lon: number): Promise<WeatherResponse> {
   const url = `${BASE_URL}?lat=${lat}&lon=${lon}&appid=${API_KEY}&units=metric`;

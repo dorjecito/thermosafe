@@ -1,21 +1,25 @@
 {
-  "title": "ThermoSafe – Heat Risk 🌞",
+  "title": "ThermoSafe – Heat Risk ☀️",
   "search_placeholder": "Enter a city or town",
   "search_button": "🔍 Search",
-  "common_cities": "Common cities:",
-  "select_city": "-- Select --",
   "gps_button": "📍 Use current location",
-  "alert_extreme": "🚨 EXTREME heat risk! Avoid physical effort and stay hydrated!",
   "location": "📍 Location",
   "humidity": "💧 Humidity",
   "heat_index": "🌡️ Perceived heat index",
+  "measured_temp": "📈 Actual temperature",
+  "risk_level": "Heat risk:",
+  "alert_extreme": "🚨 EXTREME heat risk! Avoid exertion and stay hydrated at all times.",
   "loading": "Loading weather data...",
-  "error_gps": "Unable to get location.",
+  "error_gps": "Could not retrieve temperature via GPS.",
   "error_data": "Could not retrieve data for this location.",
-
+  "error_no_location": "Could not determine location.",
   "recommendations_title": "Recommendations:",
+  "source_manual": "Manually calculated heat index",
+  "source_api": "Heat index from weather API",
 
-  "day_safe": ["Safe conditions. Maintain usual hydration."],
+  "day_safe": [
+    "Safe conditions. Maintain regular hydration."
+  ],
   "day_mild": [
     "Drink water every 30 minutes.",
     "Take breaks in the shade every hour."
@@ -26,26 +30,26 @@
     "Take frequent breaks."
   ],
   "day_high": [
-    "Avoid working under direct sunlight if possible.",
-    "Take 20-minute breaks in the shade regularly.",
-    "Wear light clothing, use a hat, stay well hydrated.",
-    "Alert supervisors if dizziness or cramps appear."
+    "Avoid working in direct sunlight if possible.",
+    "Take 20-minute breaks in the shade.",
+    "Wear light clothing, a hat, and stay hydrated.",
+    "Notify supervisors if you feel dizzy or get cramps."
   ],
   "day_extreme": [
-    "Avoid any intense physical effort.",
-    "Stop the activity if possible and seek a cool place.",
-    "Drink water constantly, even if not thirsty.",
-    "Alert someone immediately if feeling unwell, disoriented or with dry skin.",
-    "Contact emergency services if serious symptoms appear."
+    "Avoid any intense physical activity.",
+    "Stop work if possible and find a cool place.",
+    "Stay hydrated constantly, even if not thirsty.",
+    "Seek help if experiencing disorientation or dry skin.",
+    "Call emergency services if severe symptoms appear."
   ],
 
-  "night_label": "🌙 Recommendations adapted to night time",
+  "night_label": "🌙 Nighttime recommendations",
   "night_safe": "Safe night conditions. Ensure good ventilation.",
-  "night_moderate": "Warm night: open windows or ventilate the room.",
-  "night_extreme": "🌡️ Hot night: avoid effort and rest in a cool place.",
+  "night_moderate": "Warm night: ventilate the space well.",
+  "night_extreme": "🌡️ Torrid night: avoid activity and rest in a cool space.",
   "night_water": "Drink water before going to sleep.",
-  "night_clothes": "Sleep with light clothing.",
+  "night_clothes": "Sleep in light clothing.",
   "night_ventilator": "Use a fan if possible.",
-  "night_heavy_meal": "Avoid heavy meals and stay hydrated.",
-  "night_emergency": "Avoid any physical effort. Seek medical help immediately if you have serious symptoms."
+  "night_heavy_meal": "Avoid heavy meals and drink water regularly.",
+  "night_emergency": "Avoid exertion. If symptoms appear, seek medical help immediately."
 }
