@@ -5,7 +5,6 @@ import RiskLevelDisplay from './components/RiskLevelDisplay';
 import Recommendations from './components/Recommendations';
 import UVAdvice from './components/UVAdvice';
 import UVScale from './components/UVScale';
-import Historic from './components/Historic';
 
 function calculateHeatIndex(temp: number, humidity: number): number {
   const T = temp;
@@ -120,10 +119,8 @@ function App() {
           setUVI(uviValue);
           setCity(data.name);
 
-          let hi: number;
           const recalcular = Math.abs(feelsLikeAPI - tempValue) < 1 && humidityValue > 60;
-
-          hi = recalcular ? calculateHeatIndex(tempValue, humidityValue) : feelsLikeAPI;
+          const hi = recalcular ? calculateHeatIndex(tempValue, humidityValue) : feelsLikeAPI;
           setHeatIndex(hi);
           setCityInput('');
           if (!silent) setError('');
@@ -159,9 +156,10 @@ function App() {
       setCity(data.name);
 
       const recalcular = Math.abs(feelsLikeAPI - tempValue) < 1 && humidityValue > 60;
-      setHeatIndex(recalcular ? calculateHeatIndex(tempValue, humidityValue) : feelsLikeAPI);
+      const hi = recalcular ? calculateHeatIndex(tempValue, humidityValue) : feelsLikeAPI;
+      setHeatIndex(hi);
       setError('');
-      if ((recalcular ? calculateHeatIndex(tempValue, humidityValue) : feelsLikeAPI) >= 38) triggerAlarm();
+      if (hi >= 38) triggerAlarm();
     } catch {
       setError(t.errorCity);
     }
@@ -209,9 +207,9 @@ function App() {
               {showLegend && <p style={{ fontSize: '0.85rem', color: '#666' }}>{t.irradianceLegend}</p>}
             </>
           )}
-         <div style={{ marginTop: '1.5rem' }}>
-         <RiskLevelDisplay temp={heatIndex!} />
-         </div>
+          <div style={{ marginTop: '1.5rem' }}>
+            <RiskLevelDisplay temp={heatIndex!} />
+          </div>
           <Recommendations temp={heatIndex!} />
           <UVScale lang={lang as 'ca' | 'es'} />
         </>
@@ -220,10 +218,6 @@ function App() {
       )}
 
       {error && <p style={{ color: 'red' }}>{error}</p>}
-
-      <hr />
-      <h2 style={{ marginTop: '1rem' }}>📊 Històric diari</h2>
-      <Historic />
     </div>
   );
 }
