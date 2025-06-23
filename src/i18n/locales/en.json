@@ -1,14 +1,14 @@
 {
-  "title": "ThermoSafe – Heat Risk ☀️",
+  "title": "ThermoSafe \u2013 Heat Risk \u2600\ufe0f",
   "search_placeholder": "Enter a city or town",
-  "search_button": "🔍 Search",
-  "gps_button": "📍 Use current location",
-  "location": "📍 Location",
-  "humidity": "💧 Humidity",
-  "heat_index": "🌡️ Perceived heat index",
-  "measured_temp": "📈 Actual temperature",
+  "search_button": "\ud83d\udd0d Search",
+  "gps_button": "\ud83d\udccd Use current location",
+  "location": "\ud83d\udccd Location",
+  "humidity": "\ud83d\udca7 Humidity",
+  "heat_index": "\ud83c\udf21\ufe0f Perceived heat index",
+  "measured_temp": "\ud83d\udcc8 Actual temperature",
   "risk_level": "Heat risk:",
-  "alert_extreme": "🚨 EXTREME heat risk! Avoid exertion and stay hydrated at all times.",
+  "alert_extreme": "\ud83d\udea8 EXTREME heat risk! Avoid exertion and stay hydrated at all times.",
   "loading": "Loading weather data...",
   "error_gps": "Could not retrieve temperature via GPS.",
   "error_data": "Could not retrieve data for this location.",
@@ -16,7 +16,6 @@
   "recommendations_title": "Recommendations:",
   "source_manual": "Manually calculated heat index",
   "source_api": "Heat index from weather API",
-
   "day_safe": [
     "Safe conditions. Maintain regular hydration."
   ],
@@ -42,14 +41,20 @@
     "Seek help if experiencing disorientation or dry skin.",
     "Call emergency services if severe symptoms appear."
   ],
-
-  "night_label": "🌙 Nighttime recommendations",
+  "night_label": "\ud83c\udf19 Nighttime recommendations",
   "night_safe": "Safe night conditions. Ensure good ventilation.",
   "night_moderate": "Warm night: ventilate the space well.",
-  "night_extreme": "🌡️ Torrid night: avoid activity and rest in a cool space.",
+  "night_extreme": "\ud83c\udf21\ufe0f Torrid night: avoid activity and rest in a cool space.",
   "night_water": "Drink water before going to sleep.",
   "night_clothes": "Sleep in light clothing.",
   "night_ventilator": "Use a fan if possible.",
   "night_heavy_meal": "Avoid heavy meals and drink water regularly.",
-  "night_emergency": "Avoid exertion. If symptoms appear, seek medical help immediately."
+  "night_emergency": "Avoid exertion. If symptoms appear, seek medical help immediately.",
+  "irradiance": "\u2600\ufe0f Solar irradiance",
+  "uvi": "\ud83d\udd06 UV Index",
+  "highIrradianceWarning": "\u26a0\ufe0f Very high solar irradiance. Avoid prolonged sun exposure.",
+  "highUVIWarning": "\u26a0\ufe0f Very high UV Index. Sun protection is essential!",
+  "irradianceTips": "\ud83d\udc52 Use a hat, sunglasses and sunscreen. Avoid physical activity under intense sun.",
+  "irradianceLegend": "\u2600\ufe0f Irradiance levels: <8 moderate \u00b7 \u22658 high",
+  "toggleLegend": "\u2139\ufe0f Show/Hide legend"
 }

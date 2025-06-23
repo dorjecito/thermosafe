@@ -7,6 +7,9 @@
   "humidity": "💧 Humitat",
   "heat_index": "🌡️ Índex de calor percebut",
   "measured_temp": "📈 Temperatura real",
+  "uv_index": "🔆 Índex UV",
+  "uv_warning": "⚠️ Índex UV molt alt. Protecció solar imprescindible!",
+  "uv_tips": "👒 Usa barret, ulleres de sol i crema solar. Evita activitats físiques sota el sol intens.",
   "risk_level": "Risc per calor:",
   "alert_extreme": "🚨 Risc EXTREM de calor! Evita l’esforç i hidrata’t constantment!",
   "loading": "Carregant dades meteorològiques…",
@@ -16,7 +19,6 @@
   "recommendations_title": "Recomanacions:",
   "source_manual": "Índex de calor calculat manualment",
   "source_api": "Índex de calor de l’API meteorològica",
-
   "day_safe": [
     "Condicions segures. Mantén la hidratació habitual."
   ],
@@ -42,7 +44,6 @@
     "Avís immediat si hi ha malestar, desorientació o pell seca.",
     "Contacta amb serveis d’emergència si apareixen símptomes greus."
   ],
-
   "night_label": "🌙 Recomanacions per la nit",
   "night_safe": "Nit amb condicions segures. Mantén una bona ventilació.",
   "night_moderate": "Nit amb temperatura elevada: obre finestres o ventila bé l’espai.",
