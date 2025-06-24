@@ -128,6 +128,7 @@ function App() {
           setUVI(uviValue);
           setCity(locationName || data.name); // Prioritza nom real
           setCityInput('');
+          setRealCity('');
   
           // Index de calor (recalculat si és necessari)
           const recalcular = Math.abs(feelsLikeAPI - tempValue) < 1 && humidityValue > 60;
