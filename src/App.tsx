@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from 'react';
 import { getWeatherByCoords, getWeatherByCity } from './services/weatherAPI';
 import { getUVI } from './services/uviAPI';
@@ -8,246 +7,243 @@ import UVAdvice from './components/UVAdvice';
 import UVScale from './components/UVScale';
 import { getLocationNameFromCoords } from './utils/getLocationNameFromCoords';
 import LocationDisplay from './components/LocationDisplay';
-
+import { Analytics } from '@vercel/analytics/react'; // ✅ Afegit
 
 function calculateHeatIndex(temp: number, humidity: number): number {
-  const T = temp;
-  const R = humidity;
-  const HI =
-    -8.784695 +
-    1.61139411 * T +
-    2.338549 * R +
-    -0.14611605 * T * R +
-    -0.012308094 * T * T +
-    -0.016424828 * R * R +
-    0.002211732 * T * T * R +
-    0.00072546 * T * R * R +
-    -0.000003582 * T * T * R * R;
+  const T = temp;
+  const R = humidity;
+  const HI =
+    -8.784695 +
+    1.61139411 * T +
+    2.338549 * R +
+    -0.14611605 * T * R +
+    -0.012308094 * T * T +
+    -0.016424828 * R * R +
+    0.002211732 * T * T * R +
+    0.00072546 * T * R * R +
+    -0.000003582 * T * T * R * R;
 
-  return Math.round(HI * 10) / 10;
+  return Math.round(HI * 10) / 10;
 }
 
 function getIrradianceRecommendations(lang: string): string {
-  return lang === 'es'
-    ? '👒 Usa sombrero, gafas de sol y protección solar. Evita actividades físicas bajo el sol intenso.'
-    : '👒 Usa barret, ulleres de sol i crema solar. Evita activitats físiques sota el sol intens.';
+  return lang === 'es'
+    ? '👒 Usa sombrero, gafas de sol y protección solar. Evita actividades físicas bajo el sol intenso.'
+    : '👒 Usa barret, ulleres de sol i crema solar. Evita activitats físiques sota el sol intens.';
 }
 
 async function fetchSolarIrradiance(lat: number, lon: number, date: string): Promise<number | null> {
-  try {
-    const url = `https://power.larc.nasa.gov/api/temporal/daily/point?parameters=ALLSKY_SFC_SW_DWN&start=${date}&end=${date}&latitude=${lat}&longitude=${lon}&format=JSON&community=RE`;
-    const response = await fetch(url);
-    const data = await response.json();
-    return data.properties.parameter.ALLSKY_SFC_SW_DWN[date] ?? null;
-  } catch (error) {
-    console.error('Error fetching solar irradiance:', error);
-    return null;
-  }
+  try {
+    const url = `https://power.larc.nasa.gov/api/temporal/daily/point?parameters=ALLSKY_SFC_SW_DWN&start=${date}&end=${date}&latitude=${lat}&longitude=${lon}&format=JSON&community=RE`;
+    const response = await fetch(url);
+    const data = await response.json();
+    return data.properties.parameter.ALLSKY_SFC_SW_DWN[date] ?? null;
+  } catch (error) {
+    console.error('Error fetching solar irradiance:', error);
+    return null;
+  }
 }
 
 function App() {
-  const lang = navigator.language.startsWith('es') ? 'es' : 'ca';
+  const lang = navigator.language.startsWith('es') ? 'es' : 'ca';
 
-  const t = {
-    title: lang === 'es' ? 'ThermoSafe – Riesgo por calor ☀️' : 'ThermoSafe – Risc per calor 🌞',
-    location: lang === 'es' ? '📍 Ubicación' : '📍 Localització',
-    humidity: lang === 'es' ? '💧 Humedad' : '💧 Humitat',
-    heatIndex: lang === 'es' ? '🌡️ Índice de calor percibido' : '🌡️ Índex de calor percebut',
-    irradiance: lang === 'es' ? '☀️ Irradiancia solar' : '☀️ Irradiància solar',
-    uvi: lang === 'es' ? '🔆 Índice UV' : '🔆 Índex UV',
-    highIrradianceWarning: lang === 'es' ? '⚠️ Irradiancia solar muy alta. Evita la exposición prolongada al sol.' : '⚠️ Irradiància solar molt alta. Evita l’exposició prolongada al sol.',
-    highUVIWarning: lang === 'es' ? '⚠️ Índice UV muy alto. Protección solar imprescindible!' : '⚠️ Índex UV molt alt. Protecció solar imprescindible!',
-    irradianceTips: getIrradianceRecommendations(lang),
-    searchPlaceholder: lang === 'es' ? 'Introduce una ciudad o pueblo' : 'Introdueix una ciutat o poble',
-    buttonSearch: lang === 'es' ? '🔍 Consultar' : '🔍 Consulta',
-    useGPS: lang === 'es' ? '📍 Usar ubicación actual' : '📍 Usar ubicació actual',
-    alertText: lang === 'es'
-      ? '🚨 ¡Riesgo EXTREMO de calor! Evita el esfuerzo e hidrátate constantemente.'
-      : '🚨 Risc EXTREM de calor! Evita l’esforç i hidrata’t constantment!',
-    loading: lang === 'es' ? 'Cargando datos meteorológicos…' : 'Carregant dades meteorològiques…',
-    errorGPS: lang === 'es' ? 'No se pudo obtener la temperatura por GPS.' : 'No s’ha pogut obtenir la temperatura per GPS.',
-    errorNoLocation: lang === 'es' ? 'No se pudo obtener la ubicación.' : 'No s’ha pogut obtenir la ubicació.',
-    errorCity: lang === 'es' ? 'No se encontraron datos para esta ciudad.' : 'No s’ha pogut obtenir dades per aquesta localització.',
-    alertRisk: lang === 'es' ? '⚠️ ¡Riesgo alto o extremo de calor!' : '⚠️ Risc alt o extrem de calor!',
-    irradianceLegend: lang === 'es' ? '☀️ Niveles de irradiancia: <8 moderado · ≥8 alto' : '☀️ Nivells d’irradiància: <8 moderat · ≥8 alt',
-    toggleLegend: lang === 'es' ? 'ℹ️ Mostrar/Ocultar llegenda' : 'ℹ️ Mostra/Oculta llegenda',
-    realMeasuredTemp: lang === 'es' ? 'Temperatura real' : 'Temperatura real',
-  };
+  const t = {
+    title: lang === 'es' ? 'ThermoSafe – Riesgo por calor ☀️' : 'ThermoSafe – Risc per calor 🌞',
+    location: lang === 'es' ? '📍 Ubicación' : '📍 Localització',
+    humidity: lang === 'es' ? '💧 Humedad' : '💧 Humitat',
+    heatIndex: lang === 'es' ? '🌡️ Índice de calor percibido' : '🌡️ Índex de calor percebut',
+    irradiance: lang === 'es' ? '☀️ Irradiancia solar' : '☀️ Irradiància solar',
+    uvi: lang === 'es' ? '🔆 Índice UV' : '🔆 Índex UV',
+    highIrradianceWarning: lang === 'es' ? '⚠️ Irradiancia solar muy alta. Evita la exposición prolongada al sol.' : '⚠️ Irradiància solar molt alta. Evita l’exposició prolongada al sol.',
+    highUVIWarning: lang === 'es' ? '⚠️ Índice UV muy alto. Protección solar imprescindible!' : '⚠️ Índex UV molt alt. Protecció solar imprescindible!',
+    irradianceTips: getIrradianceRecommendations(lang),
+    searchPlaceholder: lang === 'es' ? 'Introduce una ciudad o pueblo' : 'Introdueix una ciutat o poble',
+    buttonSearch: lang === 'es' ? '🔍 Consultar' : '🔍 Consulta',
+    useGPS: lang === 'es' ? '📍 Usar ubicación actual' : '📍 Usar ubicació actual',
+    alertText: lang === 'es'
+      ? '🚨 ¡Riesgo EXTREMO de calor! Evita el esfuerzo e hidrátate constantemente.'
+      : '🚨 Risc EXTREM de calor! Evita l’esforç i hidrata’t constantment!',
+    loading: lang === 'es' ? 'Cargando datos meteorológicos…' : 'Carregant dades meteorològiques…',
+    errorGPS: lang === 'es' ? 'No se pudo obtener la temperatura por GPS.' : 'No s’ha pogut obtenir la temperatura per GPS.',
+    errorNoLocation: lang === 'es' ? 'No se pudo obtener la ubicación.' : 'No s’ha pogut obtenir la ubicació.',
+    errorCity: lang === 'es' ? 'No se encontraron datos para esta ciudad.' : 'No s’ha pogut obtenir dades per aquesta localització.',
+    alertRisk: lang === 'es' ? '⚠️ ¡Riesgo alto o extremo de calor!' : '⚠️ Risc alt o extrem de calor!',
+    irradianceLegend: lang === 'es' ? '☀️ Niveles de irradiancia: <8 moderado · ≥8 alto' : '☀️ Nivells d’irradiància: <8 moderat · ≥8 alt',
+    toggleLegend: lang === 'es' ? 'ℹ️ Mostrar/Ocultar llegenda' : 'ℹ️ Mostra/Oculta llegenda',
+    realMeasuredTemp: lang === 'es' ? 'Temperatura real' : 'Temperatura real',
+  };
 
-  const [temp, setTemp] = useState<number | null>(null);
-  const [humidity, setHumidity] = useState<number | null>(null);
-  const [city, setCity] = useState<string | null>(null);
-  const [realCity, setRealCity] = useState<string>('');
-  const [heatIndex, setHeatIndex] = useState<number | null>(null);
-  const [irradiance, setIrradiance] = useState<number | null>(null);
-  const [uvi, setUVI] = useState<number | null>(null);
-  const [error, setError] = useState<string>('');
-  const [cityInput, setCityInput] = useState<string>('');
-  const [showLegend, setShowLegend] = useState<boolean>(false);
+  const [temp, setTemp] = useState<number | null>(null);
+  const [humidity, setHumidity] = useState<number | null>(null);
+  const [city, setCity] = useState<string | null>(null);
+  const [realCity, setRealCity] = useState<string>('');
+  const [heatIndex, setHeatIndex] = useState<number | null>(null);
+  const [irradiance, setIrradiance] = useState<number | null>(null);
+  const [uvi, setUVI] = useState<number | null>(null);
+  const [error, setError] = useState<string>('');
+  const [cityInput, setCityInput] = useState<string>('');
+  const [showLegend, setShowLegend] = useState<boolean>(false);
 
-  useEffect(() => {
-    handleGeolocation();
-    const interval = setInterval(() => {
-      handleGeolocation(true);
-    }, 30 * 60 * 1000);
-    return () => clearInterval(interval);
-  }, []);
+  useEffect(() => {
+    handleGeolocation();
+    const interval = setInterval(() => {
+      handleGeolocation(true);
+    }, 30 * 60 * 1000);
+    return () => clearInterval(interval);
+  }, []);
 
-  const triggerAlarm = () => {
-    alert(t.alertRisk);
-    const audio = new Audio('/alarma_vaixell_guerra.mp3');
-    audio.play().catch((e) => console.warn('Error reproduint el so:', e));
-    if (navigator.vibrate) {
-      navigator.vibrate([500, 300, 500]);
-    }
-  };
+  const triggerAlarm = () => {
+    alert(t.alertRisk);
+    const audio = new Audio('/alarma_vaixell_guerra.mp3');
+    audio.play().catch((e) => console.warn('Error reproduint el so:', e));
+    if (navigator.vibrate) {
+      navigator.vibrate([500, 300, 500]);
+    }
+  };
 
-  const handleGeolocation = (silent: boolean = false) => {
-    navigator.geolocation.getCurrentPosition(
-      async (position) => {
-        try {
-          const lat = position.coords.latitude;
-          const lon = position.coords.longitude;
-          const today = new Date().toISOString().split('T')[0];
-  
-          // Dades meteorològiques i ambientals
-          const data = await getWeatherByCoords(lat, lon);
-          const tempValue = data.main.temp;
-          const humidityValue = data.main.humidity;
-          const feelsLikeAPI = data.main.feels_like;
-          const solarValue = await fetchSolarIrradiance(lat, lon, today);
-          const uviValue = await getUVI(lat, lon);
-  
-          // Ubicació real 
-          const locationName = await getLocationNameFromCoords(lat, lon);
-  
-          // Actualitza estats
-          setTemp(tempValue);
-          setHumidity(humidityValue);
-          setIrradiance(solarValue);
-          setUVI(uviValue);
-          setCity(locationName || data.name); // Prioritza nom real
-          setCityInput('');
-          setRealCity('');
-  
-          // Index de calor (recalculat si és necessari)
-          const recalcular = Math.abs(feelsLikeAPI - tempValue) < 1 && humidityValue > 60;
-          const hi = recalcular ? calculateHeatIndex(tempValue, humidityValue) : feelsLikeAPI;
-          setHeatIndex(hi);
-  
-          if (!silent) setError('');
-          if (hi >= 38) triggerAlarm();
-        } catch (error) {
-          console.error("Error a handleGeolocation:", error);
-          if (!silent) setError(t.errorGPS);
-        }
-      },
-      () => {
-        if (!silent) setError(t.errorNoLocation);
-      }
-    );
-  };
+  const handleGeolocation = (silent: boolean = false) => {
+    navigator.geolocation.getCurrentPosition(
+      async (position) => {
+        try {
+          const lat = position.coords.latitude;
+          const lon = position.coords.longitude;
+          const today = new Date().toISOString().split('T')[0];
 
-  const handleCitySearch = async () => {
-  if (!cityInput.trim()) {
-    setError(lang === 'es' ? 'Introduce una ciudad válida.' : 'Introdueix una ciutat vàlida.');
-    return;
-  }
-  try {
-    const data = await getWeatherByCity(cityInput);
-    const tempValue = data.main.temp;
-    const humidityValue = data.main.humidity;
-    const feelsLikeAPI = data.main.feels_like;
+          const data = await getWeatherByCoords(lat, lon);
+          const tempValue = data.main.temp;
+          const humidityValue = data.main.humidity;
+          const feelsLikeAPI = data.main.feels_like;
+          const solarValue = await fetchSolarIrradiance(lat, lon, today);
+          const uviValue = await getUVI(lat, lon);
+          const locationName = await getLocationNameFromCoords(lat, lon);
 
-    const lat = data.coord.lat;
-    const lon = data.coord.lon;
-    const today = new Date().toISOString().split('T')[0];
+          setTemp(tempValue);
+          setHumidity(humidityValue);
+          setIrradiance(solarValue);
+          setUVI(uviValue);
+          setCity(locationName || data.name);
+          setCityInput('');
+          setRealCity('');
 
-    const solarValue = await fetchSolarIrradiance(lat, lon, today);
-    const uviValue = await getUVI(lat, lon);
-    const realLocation = await getLocationNameFromCoords(lat, lon);
+          const recalcular = Math.abs(feelsLikeAPI - tempValue) < 1 && humidityValue > 60;
+          const hi = recalcular ? calculateHeatIndex(tempValue, humidityValue) : feelsLikeAPI;
+          setHeatIndex(hi);
 
-    setTemp(tempValue);
-    setHumidity(humidityValue);
-    setIrradiance(solarValue);
-    setUVI(uviValue);
-    setCity(realLocation || data.name);
-    setRealCity(realLocation);
-    setCityInput('');
-    setError('');
+          if (!silent) setError('');
+          if (hi >= 38) triggerAlarm();
+        } catch (error) {
+          console.error("Error a handleGeolocation:", error);
+          if (!silent) setError(t.errorGPS);
+        }
+      },
+      () => {
+        if (!silent) setError(t.errorNoLocation);
+      }
+    );
+  };
 
-    const recalcular = Math.abs(feelsLikeAPI - tempValue) < 1 && humidityValue > 60;
-    const hi = recalcular ? calculateHeatIndex(tempValue, humidityValue) : feelsLikeAPI;
-    setHeatIndex(hi);
+  const handleCitySearch = async () => {
+    if (!cityInput.trim()) {
+      setError(lang === 'es' ? 'Introduce una ciudad válida.' : 'Introdueix una ciutat vàlida.');
+      return;
+    }
+    try {
+      const data = await getWeatherByCity(cityInput);
+      const tempValue = data.main.temp;
+      const humidityValue = data.main.humidity;
+      const feelsLikeAPI = data.main.feels_like;
 
-    if (hi >= 38) triggerAlarm();
-  } catch {
-    setError(t.errorCity);
-  }
-};
+      const lat = data.coord.lat;
+      const lon = data.coord.lon;
+      const today = new Date().toISOString().split('T')[0];
 
-  return (
-    <div className="container">
-      <h1>{t.title}</h1>
+      const solarValue = await fetchSolarIrradiance(lat, lon, today);
+      const uviValue = await getUVI(lat, lon);
+      const realLocation = await getLocationNameFromCoords(lat, lon);
 
-      <div style={{ marginBottom: '1rem' }}>
-        <input
-          type="text"
-          value={cityInput}
-          onChange={(e) => setCityInput(e.target.value)}
-          placeholder={t.searchPlaceholder}
-        />
-        <button onClick={handleCitySearch}>{t.buttonSearch}</button>
-        <div style={{ marginTop: '1rem' }}>
-          <button onClick={() => handleGeolocation(false)}>{t.useGPS}</button>
-        </div>
-      </div>
+      setTemp(tempValue);
+      setHumidity(humidityValue);
+      setIrradiance(solarValue);
+      setUVI(uviValue);
+      setCity(realLocation || data.name);
+      setRealCity(realLocation);
+      setCityInput('');
+      setError('');
 
-      {heatIndex !== null && heatIndex >= 40 && (
-        <div className="alert-banner">{t.alertText}</div>
-      )}
+      const recalcular = Math.abs(feelsLikeAPI - tempValue) < 1 && humidityValue > 60;
+      const hi = recalcular ? calculateHeatIndex(tempValue, humidityValue) : feelsLikeAPI;
+      setHeatIndex(hi);
 
-      {irradiance !== null && irradiance >= 8 && (
-        <div className="alert-banner">
-          <p>{t.highIrradianceWarning}</p>
-          <p>{t.irradianceTips}</p>
-        </div>
-      )}
+      if (hi >= 38) triggerAlarm();
+    } catch {
+      setError(t.errorCity);
+    }
+  };
 
-      {temp !== null && humidity !== null ? (
-        <>
-          {city && (
-  <LocationDisplay
-    city={city}
-    realCity={realCity}
-    lang={lang as 'ca' | 'es'}
-    label={t.location}
-  />
-)}
-          <p>{t.humidity}: {humidity}%</p>
-          <p>{t.heatIndex}: <strong>{heatIndex} °C</strong></p>
-          <p>📈 {t.realMeasuredTemp}: {temp} °C</p>
-          {irradiance !== null && <p>{t.irradiance}: <strong>{irradiance} kWh/m²/dia</strong></p>}
-          {uvi !== null && <UVAdvice uvi={uvi} lang={lang as 'ca' | 'es'} />}
-          {irradiance !== null && (
-            <>
-              <button onClick={() => setShowLegend(!showLegend)}>{t.toggleLegend}</button>
-              {showLegend && <p style={{ fontSize: '0.85rem', color: '#666' }}>{t.irradianceLegend}</p>}
-            </>
-          )}
-          <div style={{ marginTop: '1.5rem' }}>
-            <RiskLevelDisplay temp={heatIndex!} />
-          </div>
-          <Recommendations temp={heatIndex!} />
-          <UVScale lang={lang as 'ca' | 'es'} />
-        </>
-      ) : (
-        !error && <p>{t.loading}</p>
-      )}
+  return (
+    <div className="container">
+      <h1>{t.title}</h1>
 
-      {error && <p style={{ color: 'red' }}>{error}</p>}
-    </div>
-  );
+      <div style={{ marginBottom: '1rem' }}>
+        <input
+          type="text"
+          value={cityInput}
+          onChange={(e) => setCityInput(e.target.value)}
+          placeholder={t.searchPlaceholder}
+        />
+        <button onClick={handleCitySearch}>{t.buttonSearch}</button>
+        <div style={{ marginTop: '1rem' }}>
+          <button onClick={() => handleGeolocation(false)}>{t.useGPS}</button>
+        </div>
+      </div>
+
+      {heatIndex !== null && heatIndex >= 40 && (
+        <div className="alert-banner">{t.alertText}</div>
+      )}
+
+      {irradiance !== null && irradiance >= 8 && (
+        <div className="alert-banner">
+          <p>{t.highIrradianceWarning}</p>
+          <p>{t.irradianceTips}</p>
+        </div>
+      )}
+
+      {temp !== null && humidity !== null ? (
+        <>
+          {city && (
+            <LocationDisplay
+              city={city}
+              realCity={realCity}
+              lang={lang as 'ca' | 'es'}
+              label={t.location}
+            />
+          )}
+          <p>{t.humidity}: {humidity}%</p>
+          <p>{t.heatIndex}: <strong>{heatIndex} °C</strong></p>
+          <p>📈 {t.realMeasuredTemp}: {temp} °C</p>
+          {irradiance !== null && <p>{t.irradiance}: <strong>{irradiance} kWh/m²/dia</strong></p>}
+          {uvi !== null && <UVAdvice uvi={uvi} lang={lang as 'ca' | 'es'} />}
+          {irradiance !== null && (
+            <>
+              <button onClick={() => setShowLegend(!showLegend)}>{t.toggleLegend}</button>
+              {showLegend && <p style={{ fontSize: '0.85rem', color: '#666' }}>{t.irradianceLegend}</p>}
+            </>
+          )}
+          <div style={{ marginTop: '1.5rem' }}>
+            <RiskLevelDisplay temp={heatIndex!} />
+          </div>
+          <Recommendations temp={heatIndex!} />
+          <UVScale lang={lang as 'ca' | 'es'} />
+        </>
+      ) : (
+        !error && <p>{t.loading}</p>
+      )}
+
+      {error && <p style={{ color: 'red' }}>{error}</p>}
+
+      <Analytics /> {/* ✅ Component de Vercel integrat */}
+    </div>
+  );
 }
 
 export default App;
