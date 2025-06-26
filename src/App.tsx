@@ -7,7 +7,8 @@ import UVAdvice from './components/UVAdvice';
 import UVScale from './components/UVScale';
 import { getLocationNameFromCoords } from './utils/getLocationNameFromCoords';
 import LocationDisplay from './components/LocationDisplay';
-import { Analytics } from '@vercel/analytics/react'; // ✅ Afegit
+import { inject } from '@vercel/analytics';
+inject(); // ✅ Només això per activar el tracking a Vite
 
 function calculateHeatIndex(temp: number, humidity: number): number {
   const T = temp;
@@ -22,7 +23,6 @@ function calculateHeatIndex(temp: number, humidity: number): number {
     0.002211732 * T * T * R +
     0.00072546 * T * R * R +
     -0.000003582 * T * T * R * R;
-
   return Math.round(HI * 10) / 10;
 }
 
@@ -96,9 +96,7 @@ function App() {
     alert(t.alertRisk);
     const audio = new Audio('/alarma_vaixell_guerra.mp3');
     audio.play().catch((e) => console.warn('Error reproduint el so:', e));
-    if (navigator.vibrate) {
-      navigator.vibrate([500, 300, 500]);
-    }
+    if (navigator.vibrate) navigator.vibrate([500, 300, 500]);
   };
 
   const handleGeolocation = (silent: boolean = false) => {
@@ -240,8 +238,6 @@ function App() {
       )}
 
       {error && <p style={{ color: 'red' }}>{error}</p>}
-
-      <Analytics /> {/* ✅ Component de Vercel integrat */}
     </div>
   );
 }
