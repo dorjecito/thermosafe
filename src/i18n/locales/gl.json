@@ -1,0 +1,69 @@
+{
+  "title": "ThermoSafe – Risco por calor ☀️",
+
+  "searchPlaceholder": "Introduce unha cidade ou vila",
+  "buttonSearch": "🔍 Consultar",
+  "useGPS": "📍 Usar localización actual",
+
+  "location": "📍 Localización",
+  "humidity": "💧 Humidade",
+  "heatIndex": "🌡️ Índice de calor percibido",
+  "realMeasuredTemp": "📈 Temperatura real",
+
+  "irradiance": "☀️ Irradiancia solar",
+  "uvi": "🔆 Índice UV",
+  "highIrradianceWarning": "⚠️ Irradiancia solar moi alta. Evita a exposición prolongada ao sol.",
+  "highUVIWarning": "⚠️ Índice UV moi alto. É imprescindible usar protección solar!",
+  "irradianceTips": "👒 Usa sombreiro, lentes de sol e protector solar. Evita actividades físicas baixo o sol intenso.",
+  "irradianceLegend": "☀️ Niveis de irradiancia: <8 moderado · ≥8 alto",
+  "toggleLegend": "ℹ️ Amosar/Ocultar lenda",
+
+  "riskLevel": "Risco por calor:",
+  "alertExtreme": "🚨 RISCO EXTREMO de calor! Evita o esforzo e mantente ben hidratado!",
+  "alertRisk": "⚠️ Risco alto ou extremo por calor!",
+
+  "loading": "Cargando datos meteorolóxicos…",
+  "errorGPS": "Non se puido obter a temperatura por GPS.",
+  "errorCity": "Non se puideron obter datos para esta localización.",
+  "errorNoLocation": "Non se puido determinar a localización.",
+
+  "recommendationsTitle": "Recomendacións:",
+  "sourceManual": "Índice de calor calculado manualmente",
+  "sourceAPI": "Índice de calor da API meteorolóxica",
+
+  "daySafe": [
+    "Condicións seguras. Mantén unha hidratación normal."
+  ],
+  "dayMild": [
+    "Bebe auga cada 30 minutos.",
+    "Fai descansos á sombra cada hora."
+  ],
+  "dayModerate": [
+    "Bebe auga cada 20 minutos.",
+    "Evita o esforzo físico intenso ao mediodía.",
+    "Fai descansos frecuentes."
+  ],
+  "dayHigh": [
+    "Evita traballar ao sol directo se é posible.",
+    "Descansa á sombra cada 20 minutos.",
+    "Leva roupa lixeira, sombreiro e mantén unha hidratación continua.",
+    "Avisa ao responsable se tes mareos ou rampas."
+  ],
+  "dayExtreme": [
+    "Evita calquera esforzo físico intenso.",
+    "Suspende a actividade se é posible e busca un lugar fresco.",
+    "Hidrátate de forma constante, mesmo sen ter sede.",
+    "Solicita axuda se notas desorientación ou sequidade na pel.",
+    "Chama aos servizos de emerxencia ante síntomas graves."
+  ],
+
+  "nightLabel": "🌙 Recomendacións para a noite",
+  "nightSafe": "Condicións nocturnas seguras. Asegura unha boa ventilación.",
+  "nightModerate": "Noite cálida: ventila ben o espazo.",
+  "nightExtreme": "🌡️ Noite moi cálida: evita esforzos e repousa nun lugar fresco.",
+  "nightWater": "Bebe auga antes de deitarse.",
+  "nightClothes": "Durme con roupa lixeira.",
+  "nightVentilator": "Usa ventilador se é posible.",
+  "nightHeavyMeal": "Evita ceas pesadas e bebe auga con frecuencia.",
+  "nightEmergency": "Evita esforzos. Se aparecen síntomas graves, solicita asistencia médica inmediata."
+}

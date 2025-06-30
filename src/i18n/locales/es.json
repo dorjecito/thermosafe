@@ -1,21 +1,45 @@
 {
   "title": "ThermoSafe – Riesgo por calor ☀️",
+
   "search_placeholder": "Introduce una ciudad o pueblo",
+  "searchPlaceholder": "Introduce una ciudad o pueblo",
   "search_button": "🔍 Consultar",
+  "buttonSearch": "🔍 Consultar",
   "gps_button": "📍 Usar ubicación actual",
+  "useGPS": "📍 Usar ubicación actual",
+
   "location": "📍 Ubicación",
   "humidity": "💧 Humedad",
   "heat_index": "🌡️ Índice de calor percibido",
+  "heatIndex": "🌡️ Índice de calor percibido",
   "measured_temp": "📈 Temperatura real",
+  "realMeasuredTemp": "📈 Temperatura real",
+  "irradiance": "☀️ Irradiancia solar",
+  "uvi": "🔆 Índice UV",
+
+  "highIrradianceWarning": "⚠️ Irradiancia solar muy alta. Evita la exposición prolongada al sol.",
+  "highUVIWarning": "⚠️ Índice UV muy alto. ¡Protección solar imprescindible!",
+  "irradianceTips": "👒 Usa sombrero, gafas de sol y protección solar. Evita actividad física bajo sol intenso.",
+  "irradianceLegend": "☀️ Niveles de irradiancia: <8 moderado · ≥8 alto",
+  "toggleLegend": "ℹ️ Mostrar/Ocultar leyenda",
+
   "risk_level": "Riesgo por calor:",
   "alert_extreme": "🚨 ¡Riesgo EXTREMO de calor! Evita el esfuerzo e hidrátate constantemente.",
-  "loading": "Cargando datos meteorológicos...",
+  "alertText": "🚨 ¡Riesgo EXTREMO de calor! Evita el esfuerzo e hidrátate constantemente.",
+  "alertRisk": "⚠️ Riesgo alto o extremo de calor",
+
+  "loading": "Cargando datos meteorológicos…",
   "error_gps": "No se pudo obtener la temperatura por GPS.",
+  "errorGPS": "No se pudo obtener la temperatura por GPS.",
   "error_data": "No se pudieron obtener datos para esta localización.",
+  "errorCity": "No se pudieron obtener datos para esta localización.",
   "error_no_location": "No se pudo obtener la ubicación.",
+  "errorNoLocation": "No se pudo obtener la ubicación.",
+
   "recommendations_title": "Recomendaciones:",
   "source_manual": "Índice de calor calculado manualmente",
   "source_api": "Índice de calor de la API meteorológica",
+
   "day_safe": [
     "Condiciones seguras. Mantén una hidratación normal."
   ],
@@ -41,6 +65,7 @@
     "Aviso inmediato si hay malestar, desorientación o piel seca.",
     "Contacta con emergencias si aparecen síntomas graves."
   ],
+
   "night_label": "🌙 Recomendaciones para la noche",
   "night_safe": "Noche con condiciones seguras. Mantén buena ventilación.",
   "night_moderate": "Noche calurosa: ventila bien la habitación.",
@@ -49,12 +74,5 @@
   "night_clothes": "Duerme con ropa ligera.",
   "night_ventilator": "Usa ventilador si es posible.",
   "night_heavy_meal": "Evita comidas pesadas y bebe agua regularmente.",
-  "night_emergency": "Evita cualquier esfuerzo. Si tienes síntomas graves, busca ayuda médica.",
-  "irradiance": "☀️ Irradiancia solar",
-  "uvi": "🔆 Índice UV",
-  "highIrradianceWarning": "⚠️ Irradiancia solar muy alta. Evita la exposición prolongada al sol.",
-  "highUVIWarning": "⚠️ Índice UV muy alto. Protección solar imprescindible!",
-  "irradianceTips": "👒 Usa sombrero, gafas de sol y protección solar. Evita actividades físicas bajo el sol intenso.",
-  "irradianceLegend": "☀️ Niveles de irradiancia: <8 moderado · ≥8 alto",
-  "toggleLegend": "ℹ️ Mostrar/Ocultar leyenda"
+  "night_emergency": "Evita cualquier esfuerzo. Si tienes síntomas graves, busca ayuda médica inmediatamente."
 }

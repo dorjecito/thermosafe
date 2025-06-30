@@ -1,30 +1,65 @@
 import React from 'react';
 
+type Lang = 'ca' | 'es' | 'eu' | 'gl';
+
 interface Props {
-  temp: number;
+  temp: number;   // Heat-Index en °C
+  lang: Lang;
 }
 
-export default function RiskLevelDisplay({ temp }: Props) {
-  let level = 'Desconegut';
-  let color = 'gray';
+const LABEL: Record<Lang, string> = {
+  ca: 'Risc per calor:',
+  es: 'Riesgo por calor:',
+  eu: 'Bero arriskua:',
+  gl: 'Risco por calor:'
+};
 
-  if (temp < 28) {
-    level = 'Baix';
-    color = 'green';
-  } else if (temp < 33) {
-    level = 'Moderat';
-    color = 'goldenrod';
-  } else if (temp < 40) {
-    level = 'Alt';
+const LEVEL: Record<'low' | 'moderate' | 'high' | 'extreme', Record<Lang, string>> = {
+  low: {
+    ca: 'Baix',
+    es: 'Bajo',
+    eu: 'Baxua',
+    gl: 'Baixo'
+  },
+  moderate: {
+    ca: 'Moderat',
+    es: 'Moderado',
+    eu: 'Moderatua',
+    gl: 'Moderado'
+  },
+  high: {
+    ca: 'Alt',
+    es: 'Alto',
+    eu: 'Handia',
+    gl: 'Alto'
+  },
+  extreme: {
+    ca: 'Extrem',
+    es: 'Extremo',
+    eu: 'Larri',
+    gl: 'Extremo'
+  }
+};
+
+export default function RiskLevelDisplay({ temp, lang }: Props) {
+  let key: 'low' | 'moderate' | 'high' | 'extreme' = 'low';
+  let color = 'green';
+
+  if (temp >= 33 && temp < 40) {
+    key = 'moderate';
+    color = '#FFC107';
+  } else if (temp >= 40 && temp < 45) {
+    key = 'high';
     color = 'orange';
-  } else {
-    level = 'Extrem';
+  } else if (temp >= 55) {
+    key = 'extreme';
     color = 'red';
   }
 
   return (
-    <div>
-      <h2>Risc per calor: <span style={{ color }}>{level}</span></h2>
-    </div>
+    <h2>
+      {LABEL[lang]}{' '}
+      <span style={{ color }}>{LEVEL[key][lang]}</span>
+    </h2>
   );
 }
