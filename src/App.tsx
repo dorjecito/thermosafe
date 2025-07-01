@@ -232,7 +232,7 @@ export default function App() {
   };
 
   /* ─ render ─ */
-  const safeLangUV = (['ca', 'es'] as const).includes(lang) ? lang : undefined;
+  const safeLangUV = (['ca', 'es', 'eu', 'gl'] as const).includes(lang) ? lang : undefined;
 
   return (
     <div className="container">
