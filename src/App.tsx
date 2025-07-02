@@ -1,7 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import './i18n';
 import { useTranslation } from 'react-i18next';
-
 import { getWeatherByCoords, getWeatherByCity } from './services/weatherAPI';
 import { getUVI } from './services/uviAPI';
 import RiskLevelDisplay from './components/RiskLevelDisplay';
