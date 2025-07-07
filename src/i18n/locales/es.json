@@ -10,8 +10,8 @@
 
   "location": "📍 Ubicación",
   "humidity": "💧 Humedad",
-  "heat_index": "🌡️ Índice de calor percibido",
-  "heatIndex": "🌡️ Índice de calor percibido",
+  "heat_index": "🌡️ Sensación térmica",
+  "heatIndex": "🌡️ Sensación térmica",
   "measured_temp": "📈 Temperatura real",
   "realMeasuredTemp": "📈 Temperatura real",
   "irradiance": "☀️ Irradiancia solar",
