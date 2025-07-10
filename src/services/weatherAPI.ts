@@ -5,12 +5,16 @@ const BASE_URL = 'https://api.openweathermap.org/data/2.5/weather';
 
 interface WeatherResponse {
   main: {
-    temp: number;
-    feels_like: number; 
-    humidity: number;
+    temp:       number;  // °C
+    feels_like: number;  // °C  (la “sensació” que ja dona OW)
+    humidity:   number;  // %
   };
-  name: string;
+  wind: {
+    speed: number;       // m/s  (OpenWeather la retorna així)
+  };
+  name: string;          // nom del lloc
 }
+
 
 export async function getWeatherByCoords(lat: number, lon: number): Promise<WeatherResponse> {
   const url = `${BASE_URL}?lat=${lat}&lon=${lon}&appid=${API_KEY}&units=metric`;

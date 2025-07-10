@@ -14,9 +14,8 @@ import gl from './i18n/locales/gl.json';
 
 /* ─── Inicialitza i18next ───────────────────────────────────────── */
 i18n
-  .use(initReactI18next)           // integra i18next amb React
+  .use(initReactI18next)
   .init({
-    /* Recursos carregats al bundle */
     resources: {
       ca: { translation: ca },
       es: { translation: es },
@@ -25,14 +24,11 @@ i18n
       gl: { translation: gl }
     },
 
-    /* Idioma a utilitzar:
-       · Primer intentem detectar-lo des del navegador (p. ex. “es-ES” → “es”)
-       · Si no coincideix amb cap traducció, fem servir el de reserva (‘ca’) */
-    lng: navigator.language.split('-')[0],   // ‘ca’, ‘es’, ‘en’, ‘eu’, ‘gl’, …
-    fallbackLng: 'ca',
+    fallbackLng: 'ca',                  // idioma de reserva
+    supportedLngs: ['ca', 'es', 'en', 'eu', 'gl'], // idiomes permesos
 
-    /* Altres opcions */
-    interpolation: { escapeValue: false },   // React ja escapa per defecte
+    interpolation: { escapeValue: false },
+
     debug: import.meta.env.MODE === 'development'
   });
 

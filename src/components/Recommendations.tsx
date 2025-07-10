@@ -5,85 +5,107 @@ import { getHeatRisk } from '../utils/heatRisk';
 type Lang = 'ca' | 'es' | 'eu' | 'gl';
 
 interface Props {
-  temp: number;   // índex de calor percebut (ST)
+  /** Índex de calor o sensació tèrmica (ST) */
+  temp: number;
   lang: Lang;
-  isDay: boolean; // true = dia · false = nit
+  /** true = dia · false = nit */
+  isDay: boolean;
 }
 
-/* ─── Textos de recomanació ───────────────────────────── */
+/* ─────────── Textos ─────────── */
 const txt = {
   ca: {
     title: 'Recomanacions:',
-    safe : 'Condicions segures. Mantén la hidratació habitual.',
-    mild : 'Possible fatiga per calor. Beu aigua sovint i descansa a l’ombra.',
-    mod  : 'Risc moderat de calor. Pauses cada 20 min, hidrata’t i, si l’EPI ho permet, roba lleugera i transpirable. Evita l’esforç més intens entre les 12 h i les 16 h.',
-    high : 'Risc alt. Evita l’esforç intens, hidrata’t sovint i incrementa les pauses a l’ombra. Evita l’esforç més intens entre les 12 h i les 16 h.',
-    ext  : 'Risc extrem. Atura l’activitat i refresca’t immediatament. Evita qualsevol esforç entre les 12 h i les 16 h.',
-    nightSafe: 'Si fa calor a la nit, ventila bé l’espai i dorm amb roba lleugera.',
-    nightMod : 'La calor nocturna pot afectar el descans. Ventila, hidrata’t i vesteix roba fresca.',
-    nightHigh: 'Risc alt també de nit. Beu sovint i garanteix bona ventilació.',
-    nightExt : 'Risc extrem. Dorm en un lloc fresc i hidratat; evita esforços.',
+    safe      : 'Condicions segures. Mantén la hidratació habitual.',
+    mild      : 'Possible fatiga per calor. Beu aigua sovint i descansa a l’ombra.',
+    mod       : 'Risc moderat. Pauses cada 20 min, roba lleugera i hidrata’t.',
+    high      : 'Risc alt. Evita l’esforç intens i incrementa les pauses.',
+    ext       : 'Risc extrem. Atura l’activitat i refresca’t de seguida.',
+    nightCool : 'Nit fresca: abriga’t adequadament i mantén l’espai ventilat.',
+    nightSafe : 'Condicions segures. Mantén una bona ventilació.',
+    nightHeat : 'Si fa calor a la nit, ventila bé l’espai i dorm amb roba lleugera.',
   },
-
   es: {
     title: 'Recomendaciones:',
-    safe : 'Condiciones seguras. Mantén la hidratación habitual.',
-    mild : 'Posible fatiga por calor. Bebe agua con frecuencia y descansa a la sombra.',
-    mod  : 'Riesgo moderado. Pausas cada 20 min, hidrátate y, si el EPI lo permite, ropa ligera y transpirable. Evita el esfuerzo más intenso entre las 12 h y las 16 h.',
-    high : 'Riesgo alto. Evita el esfuerzo intenso, hidrátate a menudo y amplía las pausas a la sombra. Evita el esfuerzo más intenso entre las 12 h y las 16 h.',
-    ext  : 'Riesgo extremo. Detén la actividad y refréscate de inmediato. Evita cualquier esfuerzo entre las 12 h y las 16 h.',
-    nightSafe: 'Si hace calor por la noche, ventila bien y usa ropa ligera para dormir.',
-    nightMod : 'El calor nocturno puede afectar al descanso. Ventila, hidrátate y usa ropa fresca.',
-    nightHigh: 'Riesgo alto también por la noche. Bebe a menudo y garantiza ventilación.',
-    nightExt : 'Riesgo extremo. Duerme en un espacio fresco e hidratado; evita esfuerzos nocturnos.',
+    safe      : 'Condiciones seguras. Mantén la hidratación habitual.',
+    mild      : 'Posible fatiga por calor. Bebe agua y descansa a la sombra.',
+    mod       : 'Riesgo moderado. Pausas cada 20 min, ropa ligera e hidrátate.',
+    high      : 'Riesgo alto. Evita el esfuerzo intenso y aumenta las pausas.',
+    ext       : 'Riesgo extremo. Detén la actividad y refréscate.',
+    nightCool : 'Noche fresca: abrígate y ventila la habitación adecuadamente.',
+    nightSafe : 'Condiciones seguras. Mantén buena ventilación.',
+    nightHeat : 'Si hace calor por la noche, ventila bien y usa ropa ligera.',
   },
-
   eu: {
     title: 'Gomendioak:',
-    safe : 'Egoera segurua. Mantendu ohiko hidratazioa.',
-    mild : 'Litekeena bero nekearen agerpena. Edan ura maiz eta atseden hartu itzalean.',
-    mod  : 'Berorako arrisku moderatua. Geldialdiak 20 minuturo, hidratazioa eta, EPIak uzten badu, jantzi arin eta transpiragarria. Saihestu ahalegin handiena 12:00-16:00.',
-    high : 'Arrisku handia. Saihestu ahalegin handia, hidrata zaitez sarri eta luzatu atsedenaldiak itzalean. Saihestu ahalegin handiena 12:00-16:00.',
-    ext  : 'Arrisku larria. Utzi jarduera eta freskatu berehala. Saihestu edozein ahalegin 12:00-16:00.',
-    nightSafe: 'Gau beroa bada, ondo aireztatu gela eta erabili arropa arina lo egiteko.',
-    nightMod : 'Gaueko beroak atsedenari eragin diezaioke. Aireztatu gela, edan ura eta jantzi arropa arina.',
-    nightHigh: 'Gauez ere arrisku handia. Edan maiz ura eta ziurtatu gela freskoa eta aireztatua dela.',
-    nightExt : 'Arrisku larria. Lo egin toki fresko eta aireztatuan; edan ura oheratu aurretik.',
+    safe      : 'Egoera segurua. Mantendu hidratazio arrunta.',
+    mild      : 'Litekeena bero-nekearen agerpena. Edan ura maiz.',
+    mod       : 'Arrisku moderatua. Geldialdiak 20 minuturo eta hidratazioa.',
+    high      : 'Arrisku handia. Saihestu ahalegin handia.',
+    ext       : 'Arrisku larria. Utzi jarduera eta freskatu berehala.',
+    nightCool : 'Gau freskoa: estali zaitez eta aireztatu ondo gela.',
+    nightSafe : 'Egoera segurua. Aireztapen ona mantendu.',
+    nightHeat : 'Gauean bero badago, aireztatu eta erabili arropa arina.',
   },
-
   gl: {
     title: 'Recomendacións:',
-    safe : 'Condicións seguras. Mantén a hidratación habitual.',
-    mild : 'Posible fatiga por calor. Bebe auga con frecuencia e repousa á sombra.',
-    mod  : 'Risco moderado. Pausas cada 20 min, hidrátate e, se o EPI o permite, usa roupa lixeira e transpirable. Evita o esforzo máis intenso entre as 12 h e as 16 h.',
-    high : 'Risco alto. Evita o esforzo intenso, hidrátate a miúdo e incrementa as pausas á sombra. Evita o esforzo máis intenso entre as 12 h e as 16 h.',
-    ext  : 'Risco extremo. Detén a actividade e arrefréscate de inmediato. Evita calquera esforzo entre as 12 h e as 16 h.',
-    nightSafe: 'Se fai calor pola noite, ventila ben e dorme con roupa lixeira.',
-    nightMod : 'A calor nocturna pode afectar ao descanso. Ventila, bebe auga e usa roupa fresca.',
-    nightHigh: 'Risco alto tamén pola noite. Hidrátate con frecuencia e asegura ventilación.',
-    nightExt : 'Risco extremo. Durme nun espazo fresco e hidratado; evita esforzos nocturnos.',
+    safe      : 'Condicións seguras. Mantén a hidratación habitual.',
+    mild      : 'Posible fatiga por calor. Bebe auga con frecuencia.',
+    mod       : 'Risco moderado. Pausas cada 20 min e hidrátate.',
+    high      : 'Risco alto. Evita o esforzo intenso e incrementa as pausas.',
+    ext       : 'Risco extremo. Detén a actividade e arrefréscate.',
+    nightCool : 'Noite fresca: abrígate e asegúrate de boa ventilación.',
+    nightSafe : 'Condicións seguras. Mantén boa ventilación.',
+    nightHeat : 'Se fai calor pola noite, ventila ben e usa roupa lixeira.',
   },
 } as const;
 
-/* ─── Component ─────────────────────────────────────── */
+/* ─────────── Component ─────────── */
 export default function Recommendations({ temp, lang, isDay }: Props): JSX.Element {
   const t = txt[lang];
 
-  /* Mapegem el nivell de risc (getHeatRisk) al clau del text */
-  const level     = getHeatRisk(temp).level;                 // 'Baix' | 'Moderat'…
-  const level2key = { 'Cap risc':'safe', Baix:'mild', Moderat:'mod', Alt:'high', Extrem:'ext' } as const;
-  const key       = level2key[level as keyof typeof level2key];
+  /* 1. Tall de seguretat per fred (<18 °C)  */
+  const isCold = temp < 18;
 
-  const nightKey: Record<typeof key, keyof typeof t> = {
-    safe:'nightSafe', mild:'nightSafe', mod:'nightMod', high:'nightHigh', ext:'nightExt',
+  /* 2. Nivell de risc segons INSST (només si no és fred) */
+  const level = isCold
+    ? 'Cap risc'
+    : (getHeatRisk(temp).level as
+        | 'Cap risc'
+        | 'Baix'
+        | 'Moderat'
+        | 'Alt'
+        | 'Extrem');
+
+  /* 3. Mapatge a clau de text per al dia */
+  const map: Record<typeof level, keyof typeof t> = {
+    'Cap risc': 'safe',
+    'Baix'    : 'mild',
+    'Moderat' : 'mod',
+    'Alt'     : 'high',
+    'Extrem'  : 'ext',
   };
 
-  const msg = isDay ? t[key] : t[nightKey[key]];
+  /* 4. Seleccionem la clau tenint en compte nit/dia */
+  let key: keyof typeof t;
+
+  if (temp < 18) {
+    // Sempre mostrar recomanació de fred, sigui de dia o de nit
+    key = 'nightCool';
+  } else if (!isDay) {
+    if (temp < 24) key = 'nightSafe';
+    else           key = 'nightHeat';
+  } else {
+    key = map[level];
+  }
+
+  // DEBUG opcional
+  // console.log('[Recommendations]', { temp, isDay, level, key });
 
   return (
-    <div style={{ marginTop:'1rem' }}>
+    <div style={{ marginTop: '1rem' }}>
       <h3>{t.title}</h3>
-      <p>{msg}</p>
+      <p>{t[key]}</p>
     </div>
   );
 }

@@ -1,29 +1,87 @@
 {
+  "t": "ThermoSafe – Bero arriskua ☀️",
   "title": "ThermoSafe – Bero arriskua ☀️",
+
+  "ph": "Sartu hiri edo herri bat",
+  "search_placeholder": "Sartu hiri edo herri bat",
   "searchPlaceholder": "Sartu hiri edo herri bat",
+
+  "btn":       "🔍 Bilatu",
+  "search_button": "🔍 Bilatu",
   "buttonSearch": "🔍 Bilatu",
+
+  "gps": "📍 Erabili uneko kokapena",
+  "gps_button": "📍 Erabili uneko kokapena",
   "useGPS": "📍 Erabili uneko kokapena",
+
+  "loc": "📍 Kokapena",
   "location": "📍 Kokapena",
+
+  "hum": "💧 Hezetasuna",
   "humidity": "💧 Hezetasuna",
+
+  "feels_like": "🌡️ Tenperatura sentsazioa",
+
+  "hi": "🌡️ Tenperatura sentsazioa",
+  "heat_index": "🌡️ Tenperatura sentsazioa",
   "heatIndex": "🌡️ Tenperatura sentsazioa",
+
+  "real": "Benetako tenperatura",
+  "measured_temp": "📈 Benetako tenperatura",
   "realMeasuredTemp": "📈 Benetako tenperatura",
+
+  "irr": "☀️ Eguzki erradiazioa",
   "irradiance": "☀️ Eguzki erradiazioa",
+
+  "uv": "🔆 UV indizea",
   "uvi": "🔆 UV indizea",
-  "highIrradianceWarning": "⚠️ Eguzki erradiazio oso handia. Saihestu eguzkipean denbora luzean egotea.",
-  "highUVIWarning": "⚠️ UV indize oso altua. Eguzkitik babestea ezinbestekoa da!",
-  "irradianceTips": "👒 Erabili txapela, eguzkitako betaurrekoak eta eguzki-krema. Saihestu jarduera fisiko bizia eguzki gogorrean.",
-  "irradianceLegend": "☀️ Erradiazio mailak: <8 moderatua · ≥8 altua",
-  "toggleLegend": "ℹ️ Erakutsi/Ezkutatu legenda",
-  "riskLevel": "Bero arriskua:",
+  "uv_index": "🔆 UV indizea",
+
+  "wind": "💨 Haizearen abiadura",
+
+  "aExt": "🚨 BERO ARRISKU LARRIA! Saihestu ahaleginak eta hidratatu etengabe!",
   "alertExtreme": "🚨 BERO ARRISKU LARRIA! Saihestu ahaleginak eta hidratatu etengabe!",
+  "alertText": "🚨 BERO ARRISKU LARRIA! Saihestu ahaleginak eta hidratatu etengabe!",
+  "aHi": "⚠️ Bero arrisku handia edo larria!",
   "alertRisk": "⚠️ Bero arrisku handia edo larria!",
+
+  "hiIrr": "⚠️ Eguzki erradiazio oso handia. Saihestu eguzkipean denbora luzean egotea.",
+  "highIrradianceWarning": "⚠️ Eguzki erradiazio oso handia. Saihestu eguzkipean denbora luzean egotea.",
+
+  "hiUV": "⚠️ UV indize oso altua. Eguzkitik babestea ezinbestekoa da!",
+  "highUVIWarning": "⚠️ UV indize oso altua. Eguzkitik babestea ezinbestekoa da!",
+  "uv_warning": "⚠️ UV indize oso altua. Eguzkitik babestea ezinbestekoa da!",
+
+  "irrTips": "👒 Erabili txapela, eguzkitako betaurrekoak eta eguzki-krema. Saihestu jarduera fisiko bizia eguzki gogorrean.",
+  "uv_tips": "👒 Erabili txapela, eguzkitako betaurrekoak eta eguzki-krema. Saihestu jarduera fisiko bizia eguzki gogorrean.",
+
+  "irrLeg": "☀️ Erradiazio mailak: <8 moderatua · ≥8 altua",
+  "irradianceLegend": "☀️ Erradiazio mailak: <8 moderatua · ≥8 altua",
+  "legBtn": "ℹ️ Erakutsi/Ezkutatu legenda",
+  "toggleLegend": "ℹ️ Erakutsi/Ezkutatu legenda",
+
+  "load": "Eguraldi-datuak kargatzen…",
   "loading": "Eguraldi-datuak kargatzen…",
+
+  "eGps": "Ezin izan da GPS bidezko tenperatura lortu.",
+  "error_gps": "Ezin izan da GPS bidezko tenperatura lortu.",
   "errorGPS": "Ezin izan da GPS bidezko tenperatura lortu.",
-  "errorCity": "Ezin izan da daturik lortu kokapen honetarako.",
+
+  "eLoc": "Ezin izan da kokapena zehaztu.",
+  "error_no_location": "Ezin izan da kokapena zehaztu.",
   "errorNoLocation": "Ezin izan da kokapena zehaztu.",
+
+  "eCity": "Ezin izan da daturik lortu kokapen honetarako.",
+  "error_data": "Ezin izan da daturik lortu kokapen honetarako.",
+  "errorCity": "Ezin izan da daturik lortu kokapen honetarako.",
+
   "recommendationsTitle": "Gomendioak:",
+  "recommendations_title": "Gomendioak:",
+
   "sourceManual": "Eskuz kalkulatutako sentsazio termikoa",
+  "source_manual": "Eskuz kalkulatutako sentsazio termikoa",
   "sourceAPI": "Eguraldi-APIko sentsazio termikoa",
+  "source_api": "Eguraldi-APIko sentsazio termikoa",
 
   "daySafe": [
     "Egoera segurua. Mantendu hidratazio arrunta."
@@ -39,20 +97,20 @@
   ],
   "dayHigh": [
     "Saihestu eguzkipean lan egitea ahal bada.",
-    "Egin 20 minutuko atsedenaldiak itzalean.",
+    "Egin atsedenaldiak itzalean 20 minuturo.",
     "Arropa arina, txapela eta hidratazio handia.",
-    "Abisatu arduradunei zorabio edo uzkurdurak badituzu."
+    "Abisatu arduradunei zorabioa edo uzkurdurak badituzu."
   ],
   "dayExtreme": [
     "Saihestu edozein jarduera fisiko bizia.",
     "Gelditu lana ahal bada eta bilatu leku freskoa.",
     "Hidrata zaitez etengabe, egarri izan gabe ere.",
-    "Eskatu laguntza nahasmendu edo azala lehorra sumatuz gero.",
+    "Eskatu laguntza nahasmendurik edo azala lehorra sumatuz gero.",
     "Deitu larrialdi zerbitzuei sintoma larriak badira."
   ],
 
   "nightLabel": "🌙 Gaueko gomendioak",
-  "nightSafe": "Gaueko egoera segurua. Aireztatze ona ziurtatu.",
+  "night_safe": "Gaueko egoera segurua. Aireztatze ona ziurtatu.",
   "nightModerate": "Gaueko tenperatura altua: aireztatu espazioa ondo.",
   "nightExtreme": "🌡️ Gaueko bero handia: saihestu jarduerak eta atseden hartu leku freskoan.",
   "nightWater": "Edan ura ohera joan aurretik.",
