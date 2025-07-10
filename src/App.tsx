@@ -254,24 +254,48 @@ const hiVal =
       <p>{t('wind')}: {wind.toFixed(1)} km/h</p>
     )}
 
-    {irr !== null && (
-      <>
-        <p>{t('irradiance')}: <strong>{irr} kWh/m²/dia</strong></p>
-        <button onClick={() => setLeg(!leg)}>
-          {t('toggleLegend')}
-        </button>
-        {leg && (
-          <p style={{ fontSize: '.85rem' }}>{t('irradianceLegend')}</p>
-        )}
-      </>
+{irr !== null && (
+  <div style={{ marginTop: '1rem', textAlign: 'center' }}>
+    <p>{t('irradiance')}: <strong>{irr} kWh/m²/dia</strong></p>
+
+    <div style={{ marginTop: '1.2rem' }}>
+      <h3 style={{ marginBottom: '0.4rem' }}>🔆 {t('solarProtection')}</h3>
+      <button
+        onClick={() => setLeg(!leg)}
+        style={{
+          backgroundColor: '#222',
+          border: '1px solid #444',
+          padding: '8px 16px',
+          borderRadius: '8px',
+          cursor: 'pointer',
+          color: 'white',
+          fontSize: '0.9rem',
+        }}
+      >
+        ℹ️ {t('toggleLegend')}
+      </button>
+    </div>
+
+    {leg && (
+      <p style={{ fontSize: '.85rem', marginTop: '0.5rem' }}>
+        {t('irradianceLegend')}
+      </p>
     )}
+  </div>
+)}
+
 
     {uvi !== null && day && (
       <UVAdvice uvi={uvi} lang={i18n.language as any} />
     )}
 
     <div style={{ marginTop: '1.5rem' }}>
-      <RiskLevelDisplay temp={hi!} lang={i18n.language as any} />
+    <RiskLevelDisplay
+  temp={hi!}
+  lang={i18n.language as any}
+  className={`risk-level ${getHeatRisk(hi!).class}`}
+/>
+
     </div>
 
     <Recommendations

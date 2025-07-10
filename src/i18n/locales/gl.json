@@ -1,88 +1,65 @@
 {
   "t": "ThermoSafe – Risco por calor 🌞",
   "title": "ThermoSafe – Risco por calor 🌞",
-
   "ph": "Introduce unha cidade ou vila",
   "search_placeholder": "Introduce unha cidade ou vila",
   "searchPlaceholder": "Introduce unha cidade ou vila",
-
   "btn": "🔍 Consultar",
   "search_button": "🔍 Consultar",
   "buttonSearch": "🔍 Consultar",
-
   "gps": "📍 Usar localización actual",
   "gps_button": "📍 Usar localización actual",
   "useGPS": "📍 Usar localización actual",
-
   "loc": "📍 Localización",
   "location": "📍 Localización",
-
   "hum": "💧 Humidade",
   "humidity": "💧 Humidade",
-
   "feels_like": "🌡️ Sensación térmica",
-
   "hi": "🌡️ Sensación térmica",
   "heat_index": "🌡️ Sensación térmica",
   "heatIndex": "🌡️ Sensación térmica",
-
   "real": "Temperatura real",
   "measured_temp": "📈 Temperatura real",
   "realMeasuredTemp": "📈 Temperatura real",
-
   "irr": "☀️ Irradiancia solar",
   "irradiance": "☀️ Irradiancia solar",
-
   "uv": "🔆 Índice UV",
   "uvi": "🔆 Índice UV",
   "uv_index": "🔆 Índice UV",
-
   "wind": "💨 Velocidade do vento",
-
   "aExt": "🚨 RISCO EXTREMO de calor! Evita o esforzo e mantente ben hidratado!",
   "alertExtreme": "🚨 RISCO EXTREMO de calor! Evita o esforzo e mantente ben hidratado!",
   "alertText": "🚨 RISCO EXTREMO de calor! Evita o esforzo e mantente ben hidratado!",
   "aHi": "⚠️ Risco alto ou extremo de calor!",
   "alertRisk": "⚠️ Risco alto ou extremo de calor!",
-
   "hiIrr": "⚠️ Irradiancia solar moi alta. Evita a exposición prolongada ao sol.",
   "highIrradianceWarning": "⚠️ Irradiancia solar moi alta. Evita a exposición prolongada ao sol.",
-
   "hiUV": "⚠️ Índice UV moi alto. É imprescindible usar protección solar!",
   "highUVIWarning": "⚠️ Índice UV moi alto. É imprescindible usar protección solar!",
   "uv_warning": "⚠️ Índice UV moi alto. É imprescindible usar protección solar!",
-
   "irrTips": "👒 Usa sombreiro, lentes de sol e protector solar. Evita actividades físicas baixo o sol intenso.",
   "uv_tips": "👒 Usa sombreiro, lentes de sol e protector solar. Evita actividades físicas baixo o sol intenso.",
-
   "irrLeg": "☀️ Niveis de irradiancia: <8 moderado · ≥8 alto",
   "irradianceLegend": "☀️ Niveis de irradiancia: <8 moderado · ≥8 alto",
   "legBtn": "ℹ️ Amosar/Ocultar lenda",
   "toggleLegend": "ℹ️ Amosar/Ocultar lenda",
-
   "load": "Cargando datos meteorolóxicos…",
   "loading": "Cargando datos meteorolóxicos…",
-
   "eGps": "Non se puido obter a temperatura por GPS.",
   "error_gps": "Non se puido obter a temperatura por GPS.",
   "errorGPS": "Non se puido obter a temperatura por GPS.",
-
   "eLoc": "Non se puido determinar a localización.",
   "error_no_location": "Non se puido determinar a localización.",
   "errorNoLocation": "Non se puido determinar a localización.",
-
   "eCity": "Non se puideron obter datos para esta localización.",
   "error_data": "Non se puideron obter datos para esta localización.",
   "errorCity": "Non se puideron obter datos para esta localización.",
-
   "recommendations_title": "Recomendacións:",
   "recommendationsTitle": "Recomendacións:",
-
   "source_manual": "Sensación térmica calculada manualmente",
   "sourceManual": "Sensación térmica calculada manualmente",
   "source_api": "Sensación térmica da API meteorolóxica",
   "sourceAPI": "Sensación térmica da API meteorolóxica",
-
   "day_safe": [
     "Condicións seguras. Mantén a hidratación habitual."
   ],
@@ -108,7 +85,6 @@
     "Pide axuda se hai desorientación ou a pel está seca.",
     "Chama a emerxencias ante síntomas graves."
   ],
-
   "night_label": "🌙 Recomendacións para a noite",
   "night_safe": "Noite con condicións seguras. Asegura boa ventilación.",
   "night_moderate": "Noite cálida: ventila ben a habitación.",
@@ -117,5 +93,7 @@
   "night_clothes": "Durme con roupa lixeira.",
   "night_ventilator": "Usa ventilador se é posible.",
   "night_heavy_meal": "Evita ceas pesadas e bebe auga con frecuencia.",
-  "night_emergency": "Evita esforzos. Se aparecen síntomas graves, busca axuda médica inmediata."
+  "night_emergency": "Evita esforzos. Se aparecen síntomas graves, busca axuda médica inmediata.",
+  "night_cold": "Noite fresca: abrígate ben e mantén boa ventilación.",
+  "solarProtection": "🔆 Protección solar"
 }

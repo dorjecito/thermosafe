@@ -32,6 +32,7 @@ h2 {
   font-size: 1.5rem;
 }
 
+/* 🔵 BOTONS I FORMULARIS */
 input,
 select,
 button {
@@ -60,6 +61,12 @@ button:hover {
   background-color: #005dc1;
 }
 
+button:focus-visible {
+  outline: 2px dashed var(--primary-color);
+  outline-offset: 2px;
+}
+
+/* 🧱 CONTENIDORS */
 .container {
   max-width: 600px;
   width: 100%;
@@ -77,6 +84,7 @@ button:hover {
   box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
 }
 
+/* ⚠️ BANNER ALERTA */
 .alert-banner {
   background-color: var(--alert-bg);
   color: var(--alert-text);
@@ -89,21 +97,56 @@ button:hover {
 }
 
 @keyframes pulse-banner {
-  0% {
-    transform: scale(1);
-    opacity: 1;
-  }
-  50% {
-    transform: scale(1.02);
-    opacity: 0.9;
-  }
-  100% {
-    transform: scale(1);
-    opacity: 1;
-  }
+  0% { transform: scale(1); opacity: 1; }
+  50% { transform: scale(1.02); opacity: 0.9; }
+  100% { transform: scale(1); opacity: 1; }
 }
 
-/* 🌙 Mode fosc automàtic segons configuració del sistema */
+/* 🧊 RECOMANACIONS */
+.recommendation-title {
+  font-weight: 600;
+  margin-bottom: 0.5rem;
+  font-size: 1.2rem;
+  color: orange; /* Per defecte */
+}
+
+/* Colors segons el risc tèrmic */
+.recommendation-title.safe      { color: green; }
+.recommendation-title.mild      { color: darkorange; }
+.recommendation-title.moderate  { color: orange; }
+.recommendation-title.high      { color: red; }
+.recommendation-title.ext       { color: darkred; }
+
+/* Condicions nocturnes */
+.recommendation-title.nightCool  { color: #2b72b8; }
+.recommendation-title.nightSafe  { color: #336699; }
+.recommendation-title.nightHeat  { color: #cc6600; }
+
+.recommendation-box {
+  background-color: #f3f4f6;
+  border-left: 4px solid var(--primary-color);
+  padding: 1rem;
+  border-radius: 8px;
+  margin-top: 1rem;
+  font-size: 0.95rem;
+  line-height: 1.5;
+}
+
+/* 🎨 Colors aplicats al text de risc per calor */
+.risk-level.safe      { color: green; }
+.risk-level.mild      { color: darkorange; }
+.risk-level.moderate  { color: orange; }
+.risk-level.high      { color: red; }
+.risk-level.ext       { color: darkred; }
+
+/* 🌡️ DADES METEOROLÒGIQUES EN GRID */
+.info-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.5rem;
+}
+
+/* 🌙 MODE FOSC AUTOMÀTIC */
 @media (prefers-color-scheme: dark) {
   :root {
     --primary-color: #0a84ff;
@@ -132,5 +175,10 @@ button:hover {
 
   button:hover {
     background-color: #0060d0;
+  }
+
+  .recommendation-box {
+    background-color: #333;
+    border-left: 4px solid var(--primary-color);
   }
 }
