@@ -45,7 +45,7 @@ const isDaytime = () => {
   const h = new Date().getHours();
   const m = new Date().getMonth();
   const summer = m >= 5 && m <= 8; // juny–set.
-  return summer ? h >= 7 && h <= 21 : h >= 8 && h <= 18;
+  return summer ? h >= 7 && h <= 20 : h >= 8 && h <= 18;
 };
 
 const fetchSolarIrr = async (lat: number, lon: number, d: string) => {

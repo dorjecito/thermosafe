@@ -1,10 +1,13 @@
 // src/components/UVScale.tsx
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
+import SunCalc from 'suncalc';
 
 type Lang = 'ca' | 'es' | 'eu' | 'gl';
 
 interface UVScaleProps {
   lang: Lang;
+  lat?: number;
+  lon?: number;
 }
 
 /* ─── Traduccions generals ─────────────────────────── */
@@ -12,18 +15,22 @@ const ui = {
   ca: {
     toggle: 'ℹ️ Mostra/Oculta escala UV',
     heading: '🔆 Escala oficial de l’índex UV',
+    night: '🌙 Ara és de nit. L’índex UV no és rellevant.',
   },
   es: {
     toggle: 'ℹ️ Mostrar/Ocultar escala UV',
     heading: '🔆 Escala oficial del índice UV',
+    night: '🌙 Ahora es de noche. El índice UV no es relevante.',
   },
   eu: {
     toggle: 'ℹ️ Erakutsi/Ezkutatu UV eskala',
     heading: '🔆 UV indizearen eskala ofiziala',
+    night: '🌙 Gaua da. UV indizea ez da garrantzitsua.',
   },
   gl: {
     toggle: 'ℹ️ Amosar/Ocultar escala UV',
     heading: '🔆 Escala oficial do índice UV',
+    night: '🌙 É de noite. O índice UV non é relevante.',
   },
 } as const;
 
@@ -87,9 +94,20 @@ const escalaUV = [
 ] as const;
 
 /* ─── Component ────────────────────────────────────── */
-export default function UVScale({ lang }: UVScaleProps) {
+export default function UVScale({ lang, lat, lon }: UVScaleProps) {
   const [visible, setVisible] = useState(false);
-  const { toggle, heading } = ui[lang];
+  const { toggle, heading, night } = ui[lang];
+
+  const isDaylight = useMemo(() => {
+    if (typeof lat !== 'number' || typeof lon !== 'number') return true;
+    try {
+      const now = new Date();
+      const { sunrise, sunset } = SunCalc.getTimes(now, lat, lon);
+      return now > sunrise && now < sunset;
+    } catch (error) {
+      return true;
+    }
+  }, [lat, lon]);
 
   return (
     <div style={{ marginTop: '2rem' }}>
@@ -99,27 +117,32 @@ export default function UVScale({ lang }: UVScaleProps) {
 
       {visible && (
         <>
-          <h2 style={{ marginBottom: '1rem' }}>{heading}</h2>
-
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-            {escalaUV.map((nivell, i) => (
-              <div
-                key={i}
-                style={{
-                  backgroundColor: nivell.color,
-                  color: 'white',
-                  padding: '0.75rem 1rem',
-                  borderRadius: '6px',
-                  boxShadow: '0 1px 4px rgba(0,0,0,0.2)',
-                }}
-              >
-                <strong style={{ fontSize: '1.05rem' }}>
-                  UV {nivell.rang} — {nivell.nivell[lang]}
-                </strong>
-                <p style={{ margin: '0.3rem 0 0' }}>{nivell.consell[lang]}</p>
+          {isDaylight ? (
+            <>
+              <h2 style={{ marginBottom: '1rem' }}>{heading}</h2>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+                {escalaUV.map((nivell, i) => (
+                  <div
+                    key={i}
+                    style={{
+                      backgroundColor: nivell.color,
+                      color: 'white',
+                      padding: '0.75rem 1rem',
+                      borderRadius: '6px',
+                      boxShadow: '0 1px 4px rgba(0,0,0,0.2)',
+                    }}
+                  >
+                    <strong style={{ fontSize: '1.05rem' }}>
+                      UV {nivell.rang} — {nivell.nivell[lang]}
+                    </strong>
+                    <p style={{ margin: '0.3rem 0 0' }}>{nivell.consell[lang]}</p>
+                  </div>
+                ))}
               </div>
-            ))}
-          </div>
+            </>
+          ) : (
+            <p>{night}</p>
+          )}
         </>
       )}
     </div>
