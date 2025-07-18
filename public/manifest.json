@@ -27,8 +27,13 @@
       "sizes": "180x180",
       "type": "image/png",
       "purpose": "any"
+    },
+    {
+      "src": "/apple-touch-icon-alt.png",
+      "sizes": "180x180",
+      "type": "image/png",
+      "purpose": "any"
     }
-    
   ],
   "screenshots": [
     {
@@ -38,6 +43,16 @@
     },
     {
       "src": "/screenshots/screen2_540x960.png",
+      "sizes": "540x960",
+      "type": "image/png"
+    },
+    {
+      "src": "/screenshots/screen3_540x960.png",
+      "sizes": "540x960",
+      "type": "image/png"
+    },
+    {
+      "src": "/screenshots/screen4_540x960.png",
       "sizes": "540x960",
       "type": "image/png"
     }
