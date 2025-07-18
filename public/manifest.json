@@ -27,13 +27,9 @@
       "sizes": "180x180",
       "type": "image/png",
       "purpose": "any"
-    },
-    {
-      "src": "/apple-touch-icon-alt.png",
-      "sizes": "180x180",
-      "type": "image/png",
-      "purpose": "any"
     }
+
+    
   ],
   "screenshots": [
     {
