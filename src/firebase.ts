@@ -1,17 +1,25 @@
-// src/firebase.ts
-import { initializeApp } from 'firebase/app';
-import { getFirestore } from 'firebase/firestore';
+import { initializeApp } from "firebase/app";
+import { getFirestore } from "firebase/firestore";
+import { getMessaging, isSupported } from "firebase/messaging";
+
 
 const firebaseConfig = {
-  apiKey: "AIzaSyCX3YBHYbJQx2E4bZaAsdbMiDZY8n78CY",
-  authDomain: "thermosafe-7bdfc.firebaseapp.com",
-  projectId: "thermosafe-7bdfc",
-  storageBucket: "thermosafe-7bdfc.appspot.com",
-  messagingSenderId: "1001271905837",
-  appId: "1:1001271905837:web:9509a0612c526dcba072a4"
+  apiKey: "AIzaSyBHcrvu7pUzNSH6Tk0LhvRavHknrIox8U8",
+  authDomain: "thermosafe-58f46.firebaseapp.com",
+  projectId: "thermosafe-58f46",
+  storageBucket: "thermosafe-58f46.appspot.com",
+  messagingSenderId: "293147213871",
+  appId: "1:293147213871:web:b7f5a12817d4bf57e886da",
+  measurementId: "G-5BNW2FLZ54"
 };
 
-const app = initializeApp(firebaseConfig);
-const db = getFirestore(app);
+// Inicialitza Firebase
+export const firebaseApp = initializeApp(firebaseConfig);
 
-export { db };
+// Firestore (per guardar subscripcions, històrics, etc.)
+export const db = getFirestore(firebaseApp);
+
+// Messaging (per notificacions push)
+export const messagingPromise = isSupported().then(s => 
+  s ? getMessaging(firebaseApp) : null
+);

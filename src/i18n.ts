@@ -1,9 +1,9 @@
 /* ------------------------------------------------------------------
  *  i18n.ts - Configuració d’i18next per a React
  * ------------------------------------------------------------------ */
-
 import i18n from 'i18next';
 import { initReactI18next } from 'react-i18next';
+import LanguageDetector from 'i18next-browser-languagedetector';
 
 /* ─── Importa els arxius de traducció ────────────────────────────── */
 import ca from './i18n/locales/ca.json';
@@ -14,18 +14,18 @@ import gl from './i18n/locales/gl.json';
 
 /* ─── Inicialitza i18next ───────────────────────────────────────── */
 i18n
+  .use(LanguageDetector)   // 👈 activa detecció navegador
   .use(initReactI18next)
   .init({
     resources: {
       ca: { translation: ca },
       es: { translation: es },
-      en: { translation: en },
       eu: { translation: eu },
       gl: { translation: gl }
     },
 
-    fallbackLng: 'ca',                  // idioma de reserva
-    supportedLngs: ['ca', 'es', 'en', 'eu', 'gl'], // idiomes permesos
+    fallbackLng: 'ca',   // 👈 anglès com a reserva
+    supportedLngs: ['ca', 'es', 'eu', 'gl'],
 
     interpolation: { escapeValue: false },
 

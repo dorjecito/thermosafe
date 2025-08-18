@@ -85,5 +85,17 @@
   "night_clothes": "Utilitza roba lleugera per dormir.",
   "night_ventilator": "Activa un ventilador o sistema de ventilació si és possible.",
   "night_heavy_meal": "Evita sopars pesats i beu aigua regularment.",
-  "night_emergency": "Evita qualsevol esforç. Si tens símptomes greus, demana ajuda mèdica immediatament."
+  "night_emergency": "Evita qualsevol esforç. Si tens símptomes greus, demana ajuda mèdica immediatament.",
+
+  "push": {
+    "label": "Rebre avisos quan el risc ≥ moderat",
+    "enabled": "Avisos activats. Rebràs notificacions quan el risc sigui moderat o superior.",
+    "disabled": "Avisos desactivats.",
+    "errors": {
+      "permissionDenied": "Has denegat el permís de notificacions.",
+      "noGps": "No s’ha pogut obtenir la ubicació (GPS).",
+      "notSupported": "El navegador no suporta Web Push.",
+      "noToken": "No s’ha pogut obtenir el token de notificacions."
+    }
+  }
 }

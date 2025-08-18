@@ -63,5 +63,17 @@
   "night_clothes": "Sleep in light clothing.",
   "night_ventilator": "Use a fan if possible.",
   "night_heavy_meal": "Avoid heavy meals and drink water regularly.",
-  "night_emergency": "Avoid exertion. If severe symptoms appear, seek medical help immediately."
+  "night_emergency": "Avoid exertion. If severe symptoms appear, seek medical help immediately.",
+
+  "push": {
+    "label": "Receive alerts when risk ≥ moderate",
+    "enabled": "Alerts enabled. You will receive notifications when the risk is moderate or higher.",
+    "disabled": "Alerts disabled.",
+    "errors": {
+      "permissionDenied": "You denied notification permission.",
+      "noGps": "Could not retrieve location (GPS).",
+      "notSupported": "Your browser does not support Web Push.",
+      "noToken": "Could not obtain a notification token."
+    }
+  }
 }

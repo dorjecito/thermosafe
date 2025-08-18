@@ -1,42 +1,37 @@
 {
   "title": "ThermoSafe – Riesgo por calor ☀️",
+
   "search_placeholder": "Introduce una ciudad o pueblo",
-  "searchPlaceholder": "Introduce una ciudad o pueblo",
   "search_button": "🔍 Consultar",
-  "buttonSearch": "🔍 Consultar",
   "gps_button": "📍 Usar ubicación actual",
-  "useGPS": "📍 Usar ubicación actual",
   "location": "📍 Ubicación",
   "humidity": "💧 Humedad",
-  "hi": "🌡️ Sensación térmica",
-  "heat_index": "🌡️ Sensación térmica",
-  "heatIndex": "🌡️ Sensación térmica",
   "feels_like": "🌡️ Sensación térmica",
   "measured_temp": "📈 Temperatura real",
-  "realMeasuredTemp": "📈 Temperatura real",
   "irradiance": "☀️ Irradiancia solar",
   "uvi": "🔆 Índice UV",
   "wind": "💨 Velocidad del viento",
+
   "highIrradianceWarning": "⚠️ Irradiancia solar muy alta. Evita la exposición directa.",
   "highUVIWarning": "⚠️ Índice UV muy alto. ¡Protección solar imprescindible!",
   "irradianceTips": "👒 Usa sombrero, gafas de sol y crema solar. Evita actividad física bajo el sol.",
   "solarProtection": "🔆 Protección solar",
   "irradianceLegend": "☀️ Niveles de irradiancia: <8 moderado · ≥8 alto",
   "toggleLegend": "ℹ️ Mostrar/Ocultar leyenda",
+
   "risk_level": "Riesgo por calor:",
   "alert_extreme": "🚨 ¡Riesgo EXTREMO de calor! Detén la actividad e hidrátate inmediatamente.",
-  "alertText": "🚨 ¡Riesgo EXTREMO de calor! Detén la actividad e hidrátate inmediatamente.",
   "alertRisk": "⚠️ Riesgo alto o extremo por calor",
+
   "loading": "Cargando datos meteorológicos…",
-  "error_gps": "No se pudo obtener la temperatura por GPS.",
   "errorGPS": "No se pudo obtener la temperatura por GPS.",
-  "error_data": "No se pudieron obtener datos para esta localización.",
   "errorCity": "No se pudieron obtener datos para esta localización.",
-  "error_no_location": "No se pudo obtener la ubicación.",
   "errorNoLocation": "No se pudo obtener la ubicación.",
+
   "recommendations_title": "Recomendaciones:",
   "source_manual": "Sensación térmica calculada manualmente",
   "source_api": "Sensación térmica proporcionada por la API meteorológica",
+
   "day_safe": [
     "Condiciones seguras. Mantén una hidratación normal.",
     "Realiza pequeñas pausas a lo largo de la jornada."
@@ -65,6 +60,7 @@
     "Avisa inmediatamente si hay desorientación, piel seca o dificultad para sudar.",
     "Contacta con emergencias (112) si los síntomas son graves."
   ],
+
   "night_label": "🌙 Recomendaciones para la noche",
   "night_safe": "Noche con condiciones seguras. Mantén buena ventilación.",
   "night_moderate": "Noche cálida: abre ventanas o activa la ventilación.",
@@ -74,5 +70,28 @@
   "night_ventilator": "Usa un ventilador si es posible.",
   "night_heavy_meal": "Evita cenas pesadas y bebe agua regularmente.",
   "night_emergency": "Evita cualquier esfuerzo. Si tienes síntomas graves, busca atención médica de inmediato.",
-  "night_cold": "Noche fresca: abrígate adecuadamente y mantén el espacio bien ventilado."
+  "night_cold": "Noche fresca: abrígate adecuadamente y mantén el espacio bien ventilado.",
+
+  "push": {
+    "label": "Recibir avisos cuando el riesgo ≥ moderado",
+    "enabled": "Avisos activados. Recibirás notificaciones cuando el riesgo sea moderado o superior.",
+    "disabled": "Avisos desactivados.",
+    "errors": {
+      "permissionDenied": "Has denegado el permiso de notificaciones.",
+      "noGps": "No se ha podido obtener la ubicación (GPS).",
+      "notSupported": "El navegador no soporta Web Push.",
+      "noToken": "No se ha podido obtener el token de notificaciones."
+    }
+  },
+
+ 
+  "ph": "Introduce una ciudad o pueblo",
+  "btn": "🔍 Consultar",
+  "gps": "📍 Usar ubicación actual",
+  "loc": "📍 Ubicación",
+  "uv": "🔆 Índice UV",
+  "uv_index": "🔆 Índice UV",
+  "realMeasuredTemp": "📈 Temperatura real",
+  "heat_index": "🌡️ Sensación térmica",
+  "heatIndex": "🌡️ Sensación térmica"
 }

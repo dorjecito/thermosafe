@@ -131,5 +131,16 @@
   "night_heavy_meal": "Saihestu afari astunak eta edan ura aldian-aldian.",
   "night_emergency": "Saihestu edozein ahalegin. Sintomak larriak badira, jo osasun zerbitzuetara berehala.",
   "night_cold": "Gau freskoa: estali zaitez ongi eta aireztatu gela.",
-  "solarProtection": "🔆 Eguzkitik babesteko gomendioak"
+  "solarProtection": "🔆 Eguzkitik babesteko gomendioak",
+  "push": {
+    "label": "Jakinarazpenak jaso arriskua ≥ moderatua denean",
+    "enabled": "Jakinarazpenak aktibatuta. Arriskua moderatua edo handiagoa denean jasoko dituzu.",
+    "disabled": "Jakinarazpenak desaktibatuta.",
+    "errors": {
+      "permissionDenied": "Ezgaitu duzu jakinarazpenen baimena.",
+      "noGps": "Ezin izan da kokapena (GPS) eskuratu.",
+      "notSupported": "Nabigatzaileak ez du Web Push onartzen.",
+      "noToken": "Ezin izan da jakinarazpen tokena lortu."
+    }
+  }
 }

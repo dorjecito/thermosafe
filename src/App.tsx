@@ -6,6 +6,7 @@
    import { useTranslation } from 'react-i18next';
    import './i18n';
    
+   
    /* —— serveis ———————————————————————————— */
    import { getWeatherByCoords, getWeatherByCity } from './services/weatherAPI';
    import { getUVI } from './services/uviAPI';
@@ -24,6 +25,19 @@
    /* —— analítica (opcional) ———————————— */
    import { inject } from '@vercel/analytics';
    inject()
+
+   import { db, messagingPromise } from "./firebase";
+   import { getToken, onMessage } from "firebase/messaging";
+   import { doc, setDoc, deleteDoc } from "firebase/firestore";
+
+   import { firebaseApp } from "./firebase";
+   console.log("FB opts:", firebaseApp.options); // ha de mostrar apiKey i projectId
+
+   import LanguageSwitcher from './components/LanguageSwitcher';
+
+   
+   
+
 
 /* ──────── constants & helpers ──────── */
 const calcHI = (t: number, h: number) => {
@@ -48,6 +62,28 @@ const isDaytime = () => {
   return summer ? h >= 7 && h <= 20 : h >= 8 && h <= 18;
 };
 
+// ── Llindars per INSST (ajusta si cal)
+const TH = { MODERATE: 31, HIGH: 38, VERY_HIGH: 46 } as const;
+
+// Envia la prova/push quan HI ≥ MODERAT
+async function sendIfAtLeastModerate(hi: number | null) {
+  if (hi == null) return;
+  if (hi < TH.MODERATE) return;
+
+  const token = localStorage.getItem("fcmToken");
+  if (!token) return;
+
+  try {
+    // ⚠️ Substitueix REGIO-PROJECTE pel teu (ex: europe-west1-thermosafe-58f46)
+    const url = `https://europe-west1-thermosafe-58f46.cloudfunctions.net/sendTestNotification?token=${encodeURIComponent(token)}`;
+    await fetch(url);
+    console.log("Notificació enviada ✅ (HI ≥ moderat)");
+  } catch (err) {
+    console.error("Error enviant notificació:", err);
+  }
+}
+
+
 const fetchSolarIrr = async (lat: number, lon: number, d: string) => {
   try {
     const url =
@@ -60,6 +96,90 @@ const fetchSolarIrr = async (lat: number, lon: number, d: string) => {
     return null;
   }
 };
+
+type Level = "moderate" | "high" | "very_high";
+type Lang  = "ca" | "es" | "eu" | "gl";
+
+async function registerSW() {
+  if (!("serviceWorker" in navigator)) return null;
+  return navigator.serviceWorker.register("/firebase-messaging-sw.js", { scope: "/" });
+}
+async function askNotificationPermission(): Promise<boolean> {
+  if (!("Notification" in window)) return false;
+  const res = await Notification.requestPermission();
+  return res === "granted";
+}
+
+
+async function getCoords(): Promise<{ lat: number; lon: number } | null> {
+  if (!("geolocation" in navigator)) return null;
+  return new Promise((resolve) => {
+    navigator.geolocation.getCurrentPosition(
+      (pos) => resolve({ lat: pos.coords.latitude, lon: pos.coords.longitude }),
+      () => resolve(null),
+      { enableHighAccuracy: false, timeout: 10000, maximumAge: 300000 }
+    );
+  });
+}
+
+/** Activa avisos i desa subscripció a Firestore */
+async function enableRiskAlerts({ threshold = "moderate", lang }: { threshold?: Level; lang?: Lang } = {}) {
+  console.log('[PUSH] start enableRiskAlerts');
+
+  const granted = await askNotificationPermission();
+  console.log('[PUSH] permission:', granted);
+  if (!granted) throw new Error("Has denegat el permís de notificacions");
+
+  const loc = await getCoords();
+  console.log('[PUSH] coords:', loc);
+  if (!loc) throw new Error("No s'ha pogut obtenir la ubicació (GPS)");
+
+  const swReg = await registerSW();
+  console.log('[PUSH] swReg ok?', !!swReg);
+  const messaging = await messagingPromise;
+  console.log('[PUSH] messaging available?', !!messaging);
+  if (!messaging || !swReg) throw new Error("El navegador no suporta Web Push");
+
+  let token: string | null = null;
+  try {
+    token = await getToken(messaging, {
+      vapidKey: "BNh8R1YOsrnV58xNBIOVi-aMIYCvTsPpdmn7hcKJ3lldQUZ8BF6qP_wEa84TnIwZ765YQxHGWc7fAdpegzgH184",
+      serviceWorkerRegistration: swReg,
+    });
+    console.log('[PUSH] getToken OK:', token);
+  } catch (e: any) {
+    console.error('[PUSH] getToken ERROR:', e?.code, e?.message || e);
+    throw new Error(e?.message || 'Error a getToken()');
+  }
+  if (!token) throw new Error("No s'ha obtingut token FCM");
+
+  localStorage.setItem("fcmToken", token);
+
+  const navLang = ((lang ?? (navigator.language || "ca").slice(0, 2)) as Lang);
+  const langNorm: Lang = (["ca", "es", "eu", "gl"] as Lang[]).includes(navLang) ? navLang : "ca";
+
+  await setDoc(doc(db, "subs", token), {
+    token,
+    lat: loc.lat,
+    lon: loc.lon,
+    threshold,
+    lang: langNorm,
+    lastNotified: null,
+    createdAt: Date.now(),
+  }, { merge: true });
+
+  onMessage(messaging, (p) => console.log("[PUSH] foreground message:", p));
+  return token;
+}
+
+
+/** Desactiva avisos: elimina el document de Firestore amb aquest token */
+async function disableRiskAlerts(token: string | null) {
+  if (!token) return;
+  await deleteDoc(doc(db, "subs", token));
+  // ✅ netejar local
+  localStorage.removeItem("fcmToken");
+}
 
 /* ──────── component ──────── */
 export default function App() {
@@ -91,6 +211,41 @@ export default function App() {
   const [input, setInput] = useState('');
   const [leg, setLeg] = useState(false);
   const [day, setDay] = useState(isDaytime());
+
+// --- ESTAT PUSH ---
+const [pushEnabled, setPushEnabled] = useState(false);
+const [pushToken,   setPushToken]   = useState<string | null>(null);
+const [busy,        setBusy]        = useState(false);
+const [msg,         setMsg]         = useState<string | null>(null);
+
+async function onTogglePush(next: boolean) {
+  setBusy(true);
+  setMsg(null);
+  try {
+    if (next) {
+      const token = await enableRiskAlerts({ threshold: "moderate" });
+      setPushEnabled(true);
+      setPushToken(token);
+      setMsg(t('push.enabled'));
+    } else {
+      await disableRiskAlerts(pushToken);
+      setPushEnabled(false);
+      setPushToken(null);
+      setMsg(t('push.disabled'));
+    }
+    
+  } catch (e: any) {
+    console.error(e);
+    const key =
+      e?.message?.includes('permís') ? 'permissionDenied' :
+      e?.message?.includes('GPS')     ? 'noGps' :
+      e?.message?.includes('Push')    ? 'notSupported' :
+      e?.message?.includes('token')   ? 'noToken' :
+      null;
+  
+    setMsg(key ? t(`push.errors.${key}`) : (e?.message ?? t('error_generic')));
+  }
+}
 
   /* auto-refresh */
   useEffect(() => {
@@ -135,6 +290,7 @@ const hiVal =
         : fl;
 
     setHi(hiVal);
+sendIfAtLeastModerate(hiVal);
     if (!silent) setErr('');
   };
 
@@ -198,119 +354,135 @@ const hiVal =
   /* ──────── render ──────── */
   const safeLangUV = ['ca', 'es', 'eu', 'gl'].includes(i18n.language) ? i18n.language : undefined;
 
-  return (
-    <div className="container">
-      <h1>{t('title')}</h1>
+ return (
+  <div className="container">
+    {/* 🔄 Selector d’idioma */}
+    <div style={{ display: "flex", justifyContent: "flex-end", marginBottom: "1rem" }}>
+      <LanguageSwitcher />
+    </div>
 
-      {/* 🔍 SEARCH */}
-      <div style={{ marginBottom: '1rem' }}>
-        <input
-          value={input}
-          onChange={(e) => setInput(e.target.value)}
-          placeholder={t('search_placeholder')}
-        />
-        <button onClick={search}>{t('search_button')}</button>
-        <div style={{ marginTop: '1rem' }}>
-          <button onClick={() => locate(false)}>{t('gps_button')}</button>
-        </div>
-      </div>
+    <h1>{t('title')}</h1>
 
-      {/* ⚠️ ALERTES */}
-{hi !== null && hi >= 18 && getHeatRisk(hi).isHigh && (
-  <div className="alert-banner">
-    {getHeatRisk(hi).isExtreme ? t('alert_extreme') : t('alertRisk')}
-  </div>
-)}
-
-{irr !== null && irr >= 8 && (
-  <div className="alert-banner">
-    <p>{t('highIrradianceWarning')}</p>
-    <p>{t('irradianceTips')}</p>
-  </div>
-)}
-
-
-     {/* 🌡️ DADES */}
-{temp !== null && hum !== null ? (
-  <>
-    {city && (
-      <LocationDisplay
-        city={city}
-        realCity={realCity}
-        lang={i18n.language === 'es' ? 'es' : 'ca'}
-        label={t('location')}
+    {/* 🔍 SEARCH */}
+    <div style={{ marginBottom: '1rem' }}>
+      <input
+        value={input}
+        onChange={(e) => setInput(e.target.value)}
+        placeholder={t('search_placeholder')}
       />
-    )}
-
-    <p>{t('humidity')}: {hum}%</p>
-
-    <p>{t('feels_like')}: <strong>{temp >= 20 ? hi : wc ?? hi} °C</strong></p>
-
-
-    <p>{t('measured_temp')}: {temp} °C</p>
-
-    {/* 💨 VENT */}
-    {wind !== null && (
-      <p>{t('wind')}: {wind.toFixed(1)} km/h</p>
-    )}
-
-{irr !== null && (
-  <div style={{ marginTop: '1rem', textAlign: 'center' }}>
-    <p>{t('irradiance')}: <strong>{irr} kWh/m²/dia</strong></p>
-
-    <div style={{ marginTop: '1.2rem' }}>
-      <h3 style={{ marginBottom: '0.4rem' }}>🔆 {t('solarProtection')}</h3>
-      <button
-        onClick={() => setLeg(!leg)}
-        style={{
-          backgroundColor: '#222',
-          border: '1px solid #444',
-          padding: '8px 16px',
-          borderRadius: '8px',
-          cursor: 'pointer',
-          color: 'white',
-          fontSize: '0.9rem',
-        }}
-      >
-        ℹ️ {t('toggleLegend')}
-      </button>
+      <button onClick={search}>{t('search_button')}</button>
+      <div style={{ marginTop: '1rem' }}>
+        <button onClick={() => locate(false)}>{t('gps_button')}</button>
+      </div>
     </div>
 
-    {leg && (
-      <p style={{ fontSize: '.85rem', marginTop: '0.5rem' }}>
-        {t('irradianceLegend')}
-      </p>
+    {/* 🔔 AVISOS PER RISC DE CALOR */}
+    <div style={{ margin: '0.5rem 0 1rem 0', display: 'flex', alignItems: 'center', gap: 8 }}>
+      <input
+        type="checkbox"
+        id="ts-push"
+        checked={pushEnabled}
+        disabled={busy}
+        onChange={(e) => onTogglePush(e.target.checked)}
+      />
+      <label htmlFor="ts-push">{t('push.label')}</label>
+    </div>
+    {msg && <p style={{ marginTop: '-0.5rem', fontSize: '.9rem' }}>{msg}</p>}
+
+    {/* ⚠️ ALERTES */}
+    {hi !== null && hi >= 18 && getHeatRisk(hi).isHigh && (
+      <div className="alert-banner">
+        {getHeatRisk(hi).isExtreme ? t('alert_extreme') : t('alertRisk')}
+      </div>
     )}
+
+    {irr !== null && irr >= 8 && (
+      <div className="alert-banner">
+        <p>{t('highIrradianceWarning')}</p>
+        <p>{t('irradianceTips')}</p>
+      </div>
+    )}
+
+    {/* 🌡️ DADES */}
+    {temp !== null && hum !== null ? (
+      <>
+        {city && (
+          <LocationDisplay
+            city={city}
+            realCity={realCity}
+            lang={i18n.language === 'es' ? 'es' : 'ca'}
+            label={t('location')}
+          />
+        )}
+
+        <p>{t('humidity')}: {hum}%</p>
+
+        <p>
+          {t('feels_like')}: <strong>{temp >= 20 ? hi : (wc ?? hi)} °C</strong>
+        </p>
+
+        <p>{t('measured_temp')}: {temp} °C</p>
+
+        {/* 💨 VENT */}
+        {wind !== null && (
+          <p>{t('wind')}: {wind.toFixed(1)} km/h</p>
+        )}
+
+        {irr !== null && (
+          <div style={{ marginTop: '1rem', textAlign: 'center' }}>
+            <p>{t('irradiance')}: <strong>{irr} kWh/m²/dia</strong></p>
+
+            <div style={{ marginTop: '1.2rem' }}>
+              <h3 style={{ marginBottom: '0.4rem' }}>🔆 {t('solarProtection')}</h3>
+              <button
+                onClick={() => setLeg(!leg)}
+                style={{
+                  backgroundColor: '#222',
+                  border: '1px solid #444',
+                  padding: '8px 16px',
+                  borderRadius: '8px',
+                  cursor: 'pointer',
+                  color: 'white',
+                  fontSize: '0.9rem',
+                }}
+              >
+                ℹ️ {t('toggleLegend')}
+              </button>
+            </div>
+
+            {leg && (
+              <p style={{ fontSize: '.85rem', marginTop: '0.5rem' }}>
+                {t('irradianceLegend')}
+              </p>
+            )}
+          </div>
+        )}
+
+        {uvi !== null && day && (
+          <UVAdvice uvi={uvi} lang={i18n.language as any} />
+        )}
+
+        <div style={{ marginTop: '1.5rem' }}>
+          <RiskLevelDisplay
+            temp={hi!}
+            lang={i18n.language as any}
+            className={`risk-level ${getHeatRisk(hi!).class}`}
+          />
+        </div>
+
+        <Recommendations
+          temp={hi!}
+          lang={i18n.language as any}
+          isDay={day}
+        />
+
+        {['ca', 'es', 'eu', 'gl'].includes(i18n.language) && <UVScale lang={i18n.language as any} />}
+      </>
+    ) : (
+      !err && <p>{t('loading')}</p>
+    )}
+
+    {err && <p style={{ color: 'red' }}>{err}</p>}
   </div>
-)}
-
-
-    {uvi !== null && day && (
-      <UVAdvice uvi={uvi} lang={i18n.language as any} />
-    )}
-
-    <div style={{ marginTop: '1.5rem' }}>
-    <RiskLevelDisplay
-  temp={hi!}
-  lang={i18n.language as any}
-  className={`risk-level ${getHeatRisk(hi!).class}`}
-/>
-
-    </div>
-
-    <Recommendations
-      temp={hi!}
-      lang={i18n.language as any}
-      isDay={day}
-    />
-
-    {safeLangUV && <UVScale lang={safeLangUV as any} />}
-  </>
-) : (
-  !err && <p>{t('loading')}</p>
-)}
-
-{err && <p style={{ color: 'red' }}>{err}</p>}
-</div> 
-  );
+);
 }
