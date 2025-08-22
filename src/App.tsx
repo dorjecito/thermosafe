@@ -26,14 +26,10 @@
    import { inject } from '@vercel/analytics';
    inject()
 
-   import { db, messagingPromise } from "./firebase";
-   import { getToken, onMessage } from "firebase/messaging";
-   import { doc, setDoc, deleteDoc } from "firebase/firestore";
-
-   import { firebaseApp } from "./firebase";
-   console.log("FB opts:", firebaseApp.options); // ha de mostrar apiKey i projectId
+   //console.log("FB opts:", firebaseApp.options); // ha de mostrar apiKey i projectId
 
    import LanguageSwitcher from './components/LanguageSwitcher';
+   import { enableRiskAlerts, disableRiskAlerts } from "./push/subscribe";
 
    
    
@@ -123,7 +119,7 @@ async function getCoords(): Promise<{ lat: number; lon: number } | null> {
 }
 
 /** Activa avisos i desa subscripció a Firestore */
-async function enableRiskAlerts({ threshold = "moderate", lang }: { threshold?: Level; lang?: Lang } = {}) {
+/*async function enableRiskAlerts({ threshold = "moderate", lang }: { threshold?: Level; lang?: Lang } = {}) {
   console.log('[PUSH] start enableRiskAlerts');
 
   const granted = await askNotificationPermission();
@@ -170,16 +166,25 @@ async function enableRiskAlerts({ threshold = "moderate", lang }: { threshold?: 
 
   onMessage(messaging, (p) => console.log("[PUSH] foreground message:", p));
   return token;
-}
+} */
 
 
 /** Desactiva avisos: elimina el document de Firestore amb aquest token */
-async function disableRiskAlerts(token: string | null) {
+/*async function disableRiskAlerts(token: string | null) {
   if (!token) return;
   await deleteDoc(doc(db, "subs", token));
   // ✅ netejar local
   localStorage.removeItem("fcmToken");
 }
+
+/* 🔁 Aquestes funcions ja estan definides a push/subscribe.ts
+   i no cal duplicar-les aquí a App.tsx.
+
+async function enableRiskAlerts(...) { ... }
+
+async function disableRiskAlerts(...) { ... }
+
+*/
 
 /* ──────── component ──────── */
 export default function App() {
@@ -193,7 +198,7 @@ export default function App() {
   if (i18n.language !== lang) {
     i18n.changeLanguage(lang);
   }
-}, []);
+}, []); 
 
 
   /* state */
@@ -354,7 +359,58 @@ sendIfAtLeastModerate(hiVal);
   /* ──────── render ──────── */
   const safeLangUV = ['ca', 'es', 'eu', 'gl'].includes(i18n.language) ? i18n.language : undefined;
 
+async function onTogglePush(next: boolean) {
+  setBusy(true);
+  setMsg(null);
+
+  try {
+    if (next) {
+      // Passa el llindar i la llengua actual
+      const token = await enableRiskAlerts({
+        threshold: "moderate",              // "moderate" | "high" | "very_high"
+        lang: (i18n.language as any)        // "ca" | "es" | "eu" | "gl"
+      });
+
+      setPushEnabled(true);
+      setPushToken(token);
+      setMsg(t("push.enabled"));
+      console.log("[PUSH] enabled. token:", token);
+    } else {
+      await disableRiskAlerts(pushToken);
+      setPushEnabled(false);
+      setPushToken(null);
+      setMsg(t("push.disabled"));
+      console.log("[PUSH] disabled");
+    }
+  } catch (e: any) {
+    console.error("[PUSH] toggle error:", e);
+    // Mapeig d’errors a claus de traducció
+    const m = String(e?.message || "");
+    const key =
+      m.includes("permís") || m.toLowerCase().includes("permission") ? "permissionDenied" :
+      m.includes("GPS")                                             ? "noGps" :
+      m.toLowerCase().includes("push") ||
+      m.toLowerCase().includes("service worker")                    ? "notSupported" :
+      m.toLowerCase().includes("token")                             ? "noToken" :
+      "error_generic";
+
+    setMsg(t(`push.errors.${key}`));
+  } finally {
+    setBusy(false);
+  }
+}
+
+useEffect(() => {
+  const tok = localStorage.getItem("fcmToken");
+  if (tok) {
+    setPushEnabled(true);
+    setPushToken(tok);
+  }
+}, []);
+
+
  return (
+  
   <div className="container">
     {/* 🔄 Selector d’idioma */}
     <div style={{ display: "flex", justifyContent: "flex-end", marginBottom: "1rem" }}>
