@@ -11,6 +11,97 @@ const OPENWEATHER_KEY = functions.config().openweather?.key;
 const REGION = 'europe-west1';
 
 // ─────────────────────────────────────────────
+// Neteja de subscripcions velles o invàlides
+// ─────────────────────────────────────────────
+const INACTIVITY_DAYS = 90;    // elimina subs sense activitat en ≥90 dies
+const PAGE_SIZE = 500;         // lectura paginada de Firestore
+const VALIDATION_CONC = 100;   // validacions FCM en paral·lel
+
+function chunk(arr, n) {
+  const out = [];
+  for (let i = 0; i < arr.length; i += n) out.push(arr.slice(i, i + n));
+  return out;
+}
+
+// Valida un token SENSE enviar cap push (dry run)
+async function isTokenValid(token) {
+  if (!token) return false;
+  try {
+    await admin.messaging().send(
+      {
+        token,
+        notification: { title: 'ping', body: 'dry-run' },
+      },
+      /* dryRun = */ true
+    );
+    return true;
+  } catch (e) {
+    const msg = String(e?.errorInfo?.code || e?.message || '');
+    // Tokens clarament invàlids:
+    if (msg.includes('registration-token-not-registered')) return false;
+    if (msg.includes('invalid-argument')) return false;
+    // Altres errors puntuals de xarxa → considera'ls vàlids
+    console.warn('[cleanup] dry-run error no definitiu:', msg);
+    return true;
+  }
+}
+
+function daysBetweenNow(ms) {
+  const age = Date.now() - Number(ms || 0);
+  return age / (1000 * 60 * 60 * 24);
+}
+
+// Executa cada dia a les 03:00 (hora Madrid)
+exports.cleanupSubs = functions
+  .region(REGION)                 // p.ex. 'europe-west1'
+  .pubsub.schedule('0 3 * * *')   // cron diari 03:00
+  .timeZone('Europe/Madrid')
+  .onRun(async () => {
+    console.log('[cleanup] start');
+    let lastDoc = null;
+    let totalChecked = 0, totalDeleted = 0, totalInvalid = 0, totalStale = 0;
+
+    while (true) {
+      let q = db.collection('subs').orderBy('__name__').limit(PAGE_SIZE);
+      if (lastDoc) q = q.startAfter(lastDoc);
+      const snap = await q.get();
+      if (snap.empty) break;
+
+      const docs = snap.docs;
+      lastDoc = docs[docs.length - 1];
+
+      // Validació tokens en lots
+      for (const batch of chunk(docs, VALIDATION_CONC)) {
+        const validations = batch.map(async (doc) => {
+          const d = doc.data() || {};
+          const token = d.token;
+          totalChecked++;
+
+          // regla d'inactivitat (últim avís o creació)
+          const last = d.lastNotified ?? d.createdAt ?? 0;
+          const stale = daysBetweenNow(last) > INACTIVITY_DAYS;
+
+          const valid = await isTokenValid(token);
+
+          if (!token || !valid || stale) {
+            const why = !token ? 'missing token' : (!valid ? 'invalid token' : 'stale');
+            if (!valid) totalInvalid++;
+            if (stale) totalStale++;
+            console.log('[cleanup] delete', doc.id, why);
+            await doc.ref.delete();
+            totalDeleted++;
+          }
+        });
+
+        await Promise.allSettled(validations);
+      }
+    }
+
+    console.log('[cleanup] done', { totalChecked, totalDeleted, totalInvalid, totalStale });
+    return null;
+  });
+
+// ─────────────────────────────────────────────
 // Llindars INSST
 // ─────────────────────────────────────────────
 const TH = { MODERATE: 31, HIGH: 38, VERY_HIGH: 46 }; // °C
