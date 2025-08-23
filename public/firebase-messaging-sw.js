@@ -1,4 +1,8 @@
 // -- Firebase Messaging SW (v9 compat) --
+// v2: forçar update del SW
+self.addEventListener('install', () => self.skipWaiting());
+self.addEventListener('activate', (e) => e.waitUntil(clients.claim()));
+
 importScripts('https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js');
 importScripts('https://www.gstatic.com/firebasejs/9.23.0/firebase-messaging-compat.js');
 
@@ -17,15 +21,15 @@ const messaging = firebase.messaging();
 
 // 🗣️ cadenes per idioma
 const STR = {
-  ca: { open: 'Obrir',  dismiss: 'Descartar'  },
-  es: { open: 'Abrir',  dismiss: 'Descartar'  },
+  ca: { open: 'Obrir',  dismiss: 'Descartar' },
+  es: { open: 'Abrir',  dismiss: 'Descartar' },
   eu: { open: 'Ireki',  dismiss: 'Baztertu'   },
-  gl: { open: 'Abrir',  dismiss: 'Descartar'  },
+  gl: { open: 'Abrir',  dismiss: 'Descartar' },
 };
 
 // 🌐 URL destí (dev/prod)
 const PROD_URL = 'https://thermosafe.app';
-const DEV_URL  = self.location.origin;                      // p.ex. http://localhost:5173
+const DEV_URL  = self.location.origin; // p.ex. http://localhost:5173
 const FALLBACK_URL = self.location.host.includes('localhost') ? DEV_URL : PROD_URL;
 
 // 🧠 helper: afegeix municipi si ve al payload

@@ -55,7 +55,7 @@ function levelFromINSST(hi) {
 // ─────────────────────────────────────────────
 // Auxiliars
 // ─────────────────────────────────────────────
-const LANGS = ['ca','es','eu','gl'];
+const LANGS = ['ca', 'es', 'eu', 'gl'];
 
 function calcHI(t, h) {
   const hi = -8.784695 + 1.61139411 * t + 2.338549 * h
@@ -73,8 +73,8 @@ function isQuietHours(nowUtcMs, tzOffsetSec) {
 function yyyyMMdd(nowUtcMs, tzOffsetSec) {
   const d = new Date(nowUtcMs + tzOffsetSec * 1000);
   const y = d.getFullYear();
-  const m = `${d.getMonth()+1}`.padStart(2,'0');
-  const day = `${d.getDate()}`.padStart(2,'0');
+  const m = `${d.getMonth() + 1}`.padStart(2, '0');
+  const day = `${d.getDate()}`.padStart(2, '0');
   return `${y}-${m}-${day}`;
 }
 
@@ -97,45 +97,53 @@ function meetsUserThreshold(level, userThreshold) {
 }
 
 // ─────────────────────────────────────────────
-// Helpers per texts
+/** Helpers per texts */
 // ─────────────────────────────────────────────
 function makeTitle(lang) {
-  return {
+  return ({
     ca: '🌡️ ThermoSafe – Avís INSST',
     es: '🌡️ ThermoSafe – Aviso INSST',
     eu: '🌡️ ThermoSafe – INSST abisua',
     gl: '🌡️ ThermoSafe – Aviso INSST'
-  }[lang] ?? '🌡️ ThermoSafe – Avís INSST';
+  }[lang]) ?? '🌡️ ThermoSafe – Avís INSST';
 }
 
-function makeBody(lang, labelByLang, hi, place) {
+// etiqueta “índex de calor” per idioma
+const HI_LABEL = {
+  ca: 'Índex de calor',
+  es: 'Índice de calor',
+  eu: 'Bero‑indizea',
+  gl: 'Índice de calor'
+};
+
+// ❗️IMPORTANT: el body NO afegeix municipi (va a data.place)
+function makeBody(lang, labelByLang, hi) {
   const label = labelByLang[lang] ?? labelByLang.ca;
   const hiStr = `${Math.round(hi)} °C`;
-  const placeStr = place ? ` (${place})` : '';
-  const tail = {
+  const tail = ({
     ca: 'Obre ThermoSafe per recomanacions.',
     es: 'Abre ThermoSafe para recomendaciones.',
     eu: 'Ireki ThermoSafe gomendioetarako.',
     gl: 'Abre ThermoSafe para recomendacións.'
-  }[lang] ?? 'Open ThermoSafe for tips.';
-  return `${label}${placeStr}. Índex de calor: ${hiStr}. ${tail}`;
+  }[lang]) ?? 'Open ThermoSafe for tips.';
+  return `${label}. ${HI_LABEL[lang] ?? HI_LABEL.ca}: ${hiStr}. ${tail}`;
 }
 
 // ─────────────────────────────────────────────
-// PUSH: payload xulo
+/** PUSH: payload xulo (place només a DATA) */
 // ─────────────────────────────────────────────
 async function sendPush(token, lang, level, hi, labelByLang, place) {
   if (level === 0) return;
 
   const title = makeTitle(lang);
-  const body  = makeBody(lang, labelByLang, hi, place);
+  const body = makeBody(lang, labelByLang, hi); // ← sense municipi
 
   const data = {
     url: 'https://thermosafe.app',
     level: String(level),
     hi: String(Math.round(hi)),
     lang,
-    place: place || ''
+    place: place || '' // ← el SW el mostrarà com a prefix
   };
 
   await admin.messaging().send({
@@ -163,7 +171,7 @@ async function sendPush(token, lang, level, hi, labelByLang, place) {
 }
 
 // ─────────────────────────────────────────────
-// CRON programat (cada 30 min)
+/** CRON programat (cada 30 min) */
 // ─────────────────────────────────────────────
 exports.cronCheckHeatRisk = functions
   .region(REGION)
@@ -207,7 +215,7 @@ exports.cronCheckHeatRisk = functions
   });
 
 // ─────────────────────────────────────────────
-// Endpoint de prova manual
+/** Endpoint de prova manual */
 // ─────────────────────────────────────────────
 exports.sendTestNotification = functions
   .region(REGION)
@@ -217,7 +225,7 @@ exports.sendTestNotification = functions
     if (req.method === 'OPTIONS') return res.status(204).end();
 
     const token = String(req.query.token || '');
-    const lang  = String((req.query.lang || 'ca')).slice(0,2);
+    const lang  = String((req.query.lang || 'ca')).slice(0, 2);
     const hi    = Number(req.query.hi || 33);
     const place = String(req.query.place || '');
 
@@ -225,7 +233,7 @@ exports.sendTestNotification = functions
 
     try {
       const { level, ca, es, eu, gl } = levelFromINSST(hi);
-      await sendPush(token, LANGS.includes(lang) ? lang : 'ca', level, hi, { ca, es, eu, gl }, place);
+      await sendPush(token, ['ca','es','eu','gl'].includes(lang) ? lang : 'ca', level, hi, { ca, es, eu, gl }, place);
       res.json({ ok: true, level });
     } catch (e) {
       console.error(e);
