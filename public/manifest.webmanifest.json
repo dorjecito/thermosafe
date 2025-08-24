@@ -23,11 +23,12 @@
   ],
   "screenshots": [
     {
-      "src": "/screen4_540x960.png",
-      "sizes": "540x720",
+      "src": "/screen1_540x960.png",
+      "sizes": "880x1296",
       "type": "image/png",
       "label": "Pantalla d'inici"
     }
+
   ],
   "launch_handler": {
     "client_mode": "navigate-existing"
