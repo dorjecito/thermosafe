@@ -1,7 +1,7 @@
 {
   "headers": [
     {
-      "source": "/manifest.webmanifest.json",
+      "source": "/manifest.webmanifest",
       "headers": [
         {
           "key": "Content-Type",
