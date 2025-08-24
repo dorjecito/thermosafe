@@ -82,9 +82,10 @@ async function sendIfAtLeastModerate(hi: number | null) {
 
 const fetchSolarIrr = async (lat: number, lon: number, d: string) => {
   try {
-    const url =
-      `https://power.larc.nasa.gov/api/temporal/daily/point?parameters=ALLSKY_SFC_SW_DWN&start=${d}` +
-      `&end=${d}&latitude=${lat}&longitude=${lon}&format=JSON&community=RE`;
+     const cleanDate = d.replaceAll("-", ""); // elimina els guions → "20250824"
+  const url = 
+    `https://power.larc.nasa.gov/api/temporal/daily/point?parameters=ALLSKY_SFC_SW_DWN&start=${cleanDate}` +
+    `&end=${cleanDate}&latitude=${lat}&longitude=${lon}&format=JSON&community=re`;
     const r = await fetch(url);
     const j = await r.json();
     return j.properties.parameter.ALLSKY_SFC_SW_DWN[d] ?? null;
