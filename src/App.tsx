@@ -58,8 +58,8 @@ const isDaytime = () => {
   return summer ? h >= 7 && h <= 20 : h >= 8 && h <= 18;
 };
 
-// ── Llindars per INSST (ajusta si cal)
-const TH = { MODERATE: 31, HIGH: 38, VERY_HIGH: 46 } as const;
+// ── Llindars per INSST (adaptats)
+const TH = { MODERATE: 27, HIGH: 32, VERY_HIGH: 41 } as const;
 
 // Envia la prova/push quan HI ≥ MODERAT
 async function sendIfAtLeastModerate(hi: number | null) {
@@ -118,74 +118,6 @@ async function getCoords(): Promise<{ lat: number; lon: number } | null> {
     );
   });
 }
-
-/** Activa avisos i desa subscripció a Firestore */
-/*async function enableRiskAlerts({ threshold = "moderate", lang }: { threshold?: Level; lang?: Lang } = {}) {
-  console.log('[PUSH] start enableRiskAlerts');
-
-  const granted = await askNotificationPermission();
-  console.log('[PUSH] permission:', granted);
-  if (!granted) throw new Error("Has denegat el permís de notificacions");
-
-  const loc = await getCoords();
-  console.log('[PUSH] coords:', loc);
-  if (!loc) throw new Error("No s'ha pogut obtenir la ubicació (GPS)");
-
-  const swReg = await registerSW();
-  console.log('[PUSH] swReg ok?', !!swReg);
-  const messaging = await messagingPromise;
-  console.log('[PUSH] messaging available?', !!messaging);
-  if (!messaging || !swReg) throw new Error("El navegador no suporta Web Push");
-
-  let token: string | null = null;
-  try {
-    token = await getToken(messaging, {
-      vapidKey: "BNh8R1YOsrnV58xNBIOVi-aMIYCvTsPpdmn7hcKJ3lldQUZ8BF6qP_wEa84TnIwZ765YQxHGWc7fAdpegzgH184",
-      serviceWorkerRegistration: swReg,
-    });
-    console.log('[PUSH] getToken OK:', token);
-  } catch (e: any) {
-    console.error('[PUSH] getToken ERROR:', e?.code, e?.message || e);
-    throw new Error(e?.message || 'Error a getToken()');
-  }
-  if (!token) throw new Error("No s'ha obtingut token FCM");
-
-  localStorage.setItem("fcmToken", token);
-
-  const navLang = ((lang ?? (navigator.language || "ca").slice(0, 2)) as Lang);
-  const langNorm: Lang = (["ca", "es", "eu", "gl"] as Lang[]).includes(navLang) ? navLang : "ca";
-
-  await setDoc(doc(db, "subs", token), {
-    token,
-    lat: loc.lat,
-    lon: loc.lon,
-    threshold,
-    lang: langNorm,
-    lastNotified: null,
-    createdAt: Date.now(),
-  }, { merge: true });
-
-  onMessage(messaging, (p) => console.log("[PUSH] foreground message:", p));
-  return token;
-} */
-
-
-/** Desactiva avisos: elimina el document de Firestore amb aquest token */
-/*async function disableRiskAlerts(token: string | null) {
-  if (!token) return;
-  await deleteDoc(doc(db, "subs", token));
-  // ✅ netejar local
-  localStorage.removeItem("fcmToken");
-}
-
-/* 🔁 Aquestes funcions ja estan definides a push/subscribe.ts
-   i no cal duplicar-les aquí a App.tsx.
-
-async function enableRiskAlerts(...) { ... }
-
-async function disableRiskAlerts(...) { ... }
-
-*/
 
 /* ──────── component ──────── */
 export default function App() {
