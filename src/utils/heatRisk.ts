@@ -38,7 +38,7 @@ export interface HeatRisk {
             isExtreme: false,
           };
       
-        if (st < 54)   // pots deixar marge abans de l’extrem
+        if (st < 54)   
           return {
             level: 'Alt',
             color: 'orange',

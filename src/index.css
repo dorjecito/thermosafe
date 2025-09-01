@@ -133,8 +133,8 @@ button:focus-visible {
 }
 
 /* 🎨 Colors aplicats al text de risc per calor */
-.risk-level.safe      { color: green; }
-.risk-level.mild      { color: darkorange; }
+.risk-level.safe      { color: gray; }  /* Segons taula INSST: Cap risc és color gris */
+.risk-level.mild      { color: green; }
 .risk-level.moderate  { color: orange; }
 .risk-level.high      { color: red; }
 .risk-level.ext       { color: darkred; }
