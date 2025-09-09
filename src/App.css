@@ -1,64 +1,157 @@
+/* === Estils generals === */
+
 #root {
-  max-width: 1280px;
-  margin: 0 auto;
-  padding: 2rem;
-  text-align: center;
-}
-
-.logo {
-  height: 6em;
-  padding: 1.5em;
-  will-change: filter;
-  transition: filter 300ms;
-}
-.logo:hover {
-  filter: drop-shadow(0 0 2em #646cffaa);
-}
-.logo.react:hover {
-  filter: drop-shadow(0 0 2em #61dafbaa);
-}
-
-@keyframes logo-spin {
-  from {
-    transform: rotate(0deg);
+    max-width: 1280px;
+    margin: 0 auto;
+    padding: 2rem;
+    text-align: center;
   }
-  to {
-    transform: rotate(360deg);
+  
+  .logo {
+    height: 6em;
+    padding: 1.5em;
+    will-change: filter;
+    transition: filter 300ms;
   }
-}
-
-@media (prefers-reduced-motion: no-preference) {
-  a:nth-of-type(2) .logo {
-    animation: logo-spin infinite 20s linear;
+  
+  .logo:hover {
+    filter: drop-shadow(0 0 2em #646cffaa);
   }
-}
-
-.card {
-  padding: 2em;
-}
-
-.read-the-docs {
-  color: #888;
-}
-
-body {
-    background-color: white;
-    color: black;
-    transition: background-color 0.3s, color 0.3s;
+  
+  .logo.react:hover {
+    filter: drop-shadow(0 0 2em #61dafbaa);
   }
+  
+  @keyframes logo-spin {
+    from {
+      transform: rotate(0deg);
+    }
+    to {
+      transform: rotate(360deg);
+    }
+  }
+  
+  @media (prefers-reduced-motion: no-preference) {
+    a:nth-of-type(2) .logo {
+      animation: logo-spin infinite 20s linear;
+    }
+  }
+  
+  .card {
+    padding: 2em;
+  }
+  
+  .read-the-docs {
+    color: #888;
+  }
+  
+  /* === Mode clar === */
+  
+  body {
+    background-color: white;
+    color: black;
+    transition: background-color 0.3s, color 0.3s;
+  }
+  
+  /* === Mode fosc === */
   
   @media (prefers-color-scheme: dark) {
-    body {
-      background-color: #121212;
-      color: white;
-    }
+    body {
+      background-color: #121212;
+      color: white;
+    }
   
-    .card {
-      background-color: #1e1e1e;
-      border: 1px solid #333;
-    }
+    .card {
+      background-color: #1e1e1e;
+      border: 1px solid #333;
+    }
   
-    .read-the-docs {
-      color: #ccc;
-    }
+    .read-the-docs {
+      color: #ccc;
+    }
+  }
+  
+  /* ☁️ Bloc ESTAT DEL CEL estilititzat */
+  
+  .sky-row {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    margin: 0.5rem 0;
+    justify-content: flex-start;
+  }
+  
+  .sky-label {
+    font-weight: 500;
+    font-size: 1rem;
+    color: #444;
+  }
+  
+  .sky-icon {
+    width: 32px !important;
+    height: 32px !important;
+    object-fit: contain;
+    filter: drop-shadow(0 0 1px rgba(0, 0, 0, 0.1));
+  }
+  
+  /* === Blocs informatius amb colors diferenciats === */
+  
+  /* 🌡️ Bloc temperatura */
+  .block-temp {
+    background-color: #ffe5e5;
+    padding: 1rem;
+    border-radius: 0.5rem;
+    margin-bottom: 1rem;
+  }
+  
+  /* 💧 Bloc humitat */
+  .block-humidity {
+    background-color: #e0f7fa;
+    padding: 1rem;
+    border-radius: 0.5rem;
+    margin-bottom: 1rem;
+  }
+  
+  /* 💨 Bloc vent */
+  .block-wind {
+    background-color: #e3f2fd;
+    padding: 1rem;
+    border-radius: 0.5rem;
+    margin-bottom: 1rem;
+  }
+  
+  /* ☀️ Bloc UV */
+  .block-uv {
+    background-color: #fff3e0;
+    padding: 1rem;
+    border-radius: 0.5rem;
+    margin-bottom: 1rem;
+  }
+  
+  /* 🔥 Bloc risc per calor */
+  .block-heat-risk {
+    background-color: #fce4ec;
+    padding: 1rem;
+    border-radius: 0.5rem;
+    margin-bottom: 1rem;
+  }
+  
+  /* 🛏️ Bloc recomanacions */
+  .block-recom {
+    background-color: #e8f5e9;
+    padding: 1rem;
+    border-radius: 0.5rem;
+    margin-bottom: 1rem;
+  }
+  
+  /* 📘 Recomanacions destacades */
+  .recomanacions-box {
+    border-left: 4px solid #2196f3;
+    background-color: #e3f2fd;
+    padding: 1rem;
+    border-radius: 8px;
+    margin-top: 1rem;
+    text-align: left;
+    color: #0d47a1;
+    font-weight: 500;
   }

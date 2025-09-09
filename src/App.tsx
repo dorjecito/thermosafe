@@ -31,9 +31,6 @@
    import LanguageSwitcher from './components/LanguageSwitcher';
    import { enableRiskAlerts, disableRiskAlerts } from "./push/subscribe";
 
-   
-   
-
 
 /* ──────── constants & helpers ──────── */
 const calcHI = (t: number, h: number) => {
@@ -51,11 +48,22 @@ const calcHI = (t: number, h: number) => {
   return Math.round(hi * 10) / 10;
 };
 
+const d = new Date();
+const day = d.getDate();
+const month = d.getMonth(); // Gener = 0, Juny = 5, Setembre = 8
+
+// Estiu real: del 21 de juny (21/6) al 23 de setembre (23/9)
+const summer =
+  (month === 5 && day >= 21) || // Juny: a partir del dia 21
+  (month === 6) ||              // Juliol: tot
+  (month === 7) ||              // Agost: tot
+  (month === 8 && day <= 23);   // Setembre: fins al dia 23
+
 const isDaytime = () => {
-  const h = new Date().getHours();
-  const m = new Date().getMonth();
-  const summer = m >= 5 && m <= 8; // juny–set.
-  return summer ? h >= 7 && h <= 20 : h >= 8 && h <= 18;
+  const hour = d.getHours();
+  return summer
+    ? hour >= 7 && hour <= 19  // Si és estiu, es considera dia de 7h a 19h
+    : hour >= 8 && hour <= 18; // Si no és estiu, de 8h a 18h
 };
 
 // ── Llindars per INSST (adaptats)
@@ -135,6 +143,7 @@ export default function App() {
 
 
   /* state */
+  const [data, setData] = useState<any | null>(null);
   const [temp, setTemp] = useState<number | null>(null);
   const [hum, setHum] = useState<number | null>(null);
   const [hi, setHi] = useState<number | null>(null);
@@ -238,7 +247,9 @@ sendIfAtLeastModerate(hiVal);
         try {
           const { latitude: lat, longitude: lon } = p.coords;
           const d = await getWeatherByCoords(lat, lon);
+          setData(d); 
           const nm = (await getLocationNameFromCoords(lat, lon)) || d.name;
+      
 
           /* wind & wind-chill */
           setWind(Math.round(d.wind.speed * 3.6 * 10) / 10);
@@ -262,6 +273,7 @@ sendIfAtLeastModerate(hiVal);
     }
     try {
       const d = await getWeatherByCity(input);
+      setData(d); 
       const { lat, lon } = d.coord;
       const nm = (await getLocationNameFromCoords(lat, lon)) || d.name;
 
@@ -343,135 +355,150 @@ useEffect(() => {
 
 
  return (
-  
-  <div className="container">
-    {/* 🔄 Selector d’idioma */}
-    <div style={{ display: "flex", justifyContent: "flex-end", marginBottom: "1rem" }}>
-      <LanguageSwitcher />
-    </div>
+  <div className="container">
+    {/* 🔄 Selector d’idioma */}
+    <div style={{ display: "flex", justifyContent: "flex-end", marginBottom: "1rem" }}>
+      <LanguageSwitcher />
+    </div>
 
-    <h1>{t('title')}</h1>
+    <h1>{t('title')}</h1>
 
-    {/* 🔍 SEARCH */}
-    <div style={{ marginBottom: '1rem' }}>
-      <input
-        value={input}
-        onChange={(e) => setInput(e.target.value)}
-        placeholder={t('search_placeholder')}
-      />
-      <button onClick={search}>{t('search_button')}</button>
-      <div style={{ marginTop: '1rem' }}>
-        <button onClick={() => locate(false)}>{t('gps_button')}</button>
-      </div>
-    </div>
+    {/* 🔍 SEARCH */}
+    <div style={{ marginBottom: '1rem' }}>
+      <input
+        value={input}
+        onChange={(e) => setInput(e.target.value)}
+        placeholder={t('search_placeholder')}
+      />
+      <button onClick={search}>{t('search_button')}</button>
+      <div style={{ marginTop: '1rem' }}>
+        <button onClick={() => locate(false)}>{t('gps_button')}</button>
+      </div>
+    </div>
 
-    {/* 🔔 AVISOS PER RISC DE CALOR */}
-    <div style={{ margin: '0.5rem 0 1rem 0', display: 'flex', alignItems: 'center', gap: 8 }}>
-      <input
-        type="checkbox"
-        id="ts-push"
-        checked={pushEnabled}
-        disabled={busy}
-        onChange={(e) => onTogglePush(e.target.checked)}
-      />
-      <label htmlFor="ts-push">{t('push.label')}</label>
-    </div>
-    {msg && <p style={{ marginTop: '-0.5rem', fontSize: '.9rem' }}>{msg}</p>}
+    {/* 🔔 AVISOS PER RISC DE CALOR */}
+    <div style={{ margin: '0.5rem 0 1rem 0', display: 'flex', alignItems: 'center', gap: 8 }}>
+      <input
+        type="checkbox"
+        id="ts-push"
+        checked={pushEnabled}
+        disabled={busy}
+        onChange={(e) => onTogglePush(e.target.checked)}
+      />
+      <label htmlFor="ts-push">{t('push.label')}</label>
+    </div>
+    {msg && <p style={{ marginTop: '-0.5rem', fontSize: '.9rem' }}>{msg}</p>}
 
-    {/* ⚠️ ALERTES */}
-    {hi !== null && hi >= 18 && getHeatRisk(hi).isHigh && (
-      <div className="alert-banner">
-        {getHeatRisk(hi).isExtreme ? t('alert_extreme') : t('alertRisk')}
-      </div>
-    )}
+    {/* ⚠️ ALERTES */}
+    {hi !== null && hi >= 18 && getHeatRisk(hi).isHigh && (
+      <div className="alert-banner">
+        {getHeatRisk(hi).isExtreme ? t('alert_extreme') : t('alertRisk')}
+      </div>
+    )}
 
-    {irr !== null && irr >= 8 && (
-      <div className="alert-banner">
-        <p>{t('highIrradianceWarning')}</p>
-        <p>{t('irradianceTips')}</p>
-      </div>
-    )}
+    {irr !== null && irr >= 8 && (
+      <div className="alert-banner">
+        <p>{t('highIrradianceWarning')}</p>
+        <p>{t('irradianceTips')}</p>
+      </div>
+    )}
 
-    {/* 🌡️ DADES */}
-    {temp !== null && hum !== null ? (
-      <>
-        {city && (
-          <LocationDisplay
-            city={city}
-            realCity={realCity}
-            lang={i18n.language === 'es' ? 'es' : 'ca'}
-            label={t('location')}
-          />
-        )}
+    {/* 🌡️ DADES */}
+    {temp !== null && hum !== null ? (
+      <>
+        {city && (
+          <LocationDisplay
+            city={city}
+            realCity={realCity}
+            lang={i18n.language === 'es' ? 'es' : 'ca'}
+            label={t('location')}
+          />
+        )}
 
-        <p>{t('humidity')}: {hum}%</p>
+        <p>{t('humidity')}: {hum}%</p>
 
-        <p>
-          {t('feels_like')}: <strong>{temp >= 20 ? hi : (wc ?? hi)} °C</strong>
-        </p>
+        <p>
+          {t('feels_like')}: <strong>{temp >= 20 ? hi : (wc ?? hi)} °C</strong>
+        </p>
 
-        <p>{t('measured_temp')}: {temp} °C</p>
+        <p>{t('measured_temp')}: {temp} °C</p>
 
-        {/* 💨 VENT */}
-        {wind !== null && (
-          <p>{t('wind')}: {wind.toFixed(1)} km/h</p>
-        )}
+   {/* 🌤️ ESTAT DEL CEL */}
+{data?.weather?.[0] && (
+  <div className="sky-row">
+    <img
+      src={`https://openweathermap.org/img/wn/${data.weather[0].icon}@2x.png`}
+      alt={data.weather[0].description}
+      className="sky-icon"
+      width="32"
+      height="32"
+    />
+    <span className="sky-label">
+      <strong>{t('sky_state')}:</strong>{' '}
+      {t(`weather_desc.${data.weather[0].description}`) || data.weather[0].description}
+    </span>
+  </div>
+)}
+        {/* 💨 VENT */}
+        {wind !== null && (
+          <p>{t('wind')}: {wind.toFixed(1)} km/h</p>
+        )}
 
-        {irr !== null && (
-          <div style={{ marginTop: '1rem', textAlign: 'center' }}>
-            <p>{t('irradiance')}: <strong>{irr} kWh/m²/dia</strong></p>
+        {irr !== null && (
+          <div style={{ marginTop: '1rem', textAlign: 'center' }}>
+            <p>{t('irradiance')}: <strong>{irr} kWh/m²/dia</strong></p>
 
-            <div style={{ marginTop: '1.2rem' }}>
-              <h3 style={{ marginBottom: '0.4rem' }}>🔆 {t('solarProtection')}</h3>
-              <button
-                onClick={() => setLeg(!leg)}
-                style={{
-                  backgroundColor: '#222',
-                  border: '1px solid #444',
-                  padding: '8px 16px',
-                  borderRadius: '8px',
-                  cursor: 'pointer',
-                  color: 'white',
-                  fontSize: '0.9rem',
-                }}
-              >
-                ℹ️ {t('toggleLegend')}
-              </button>
-            </div>
+            <div style={{ marginTop: '1.2rem' }}>
+              <h3 style={{ marginBottom: '0.4rem' }}>🔆 {t('solarProtection')}</h3>
+              <button
+                onClick={() => setLeg(!leg)}
+                style={{
+                  backgroundColor: '#222',
+                  border: '1px solid #444',
+                  padding: '8px 16px',
+                  borderRadius: '8px',
+                  cursor: 'pointer',
+                  color: 'white',
+                  fontSize: '0.9rem',
+                }}
+              >
+                ℹ️ {t('toggleLegend')}
+              </button>
+            </div>
 
-            {leg && (
-              <p style={{ fontSize: '.85rem', marginTop: '0.5rem' }}>
-                {t('irradianceLegend')}
-              </p>
-            )}
-          </div>
-        )}
+            {leg && (
+              <p style={{ fontSize: '.85rem', marginTop: '0.5rem' }}>
+                {t('irradianceLegend')}
+              </p>
+            )}
+          </div>
+        )}
 
-        {uvi !== null && day && (
-          <UVAdvice uvi={uvi} lang={i18n.language as any} />
-        )}
+        {uvi !== null && day && (
+          <UVAdvice uvi={uvi} lang={i18n.language as any} />
+        )}
 
-        <div style={{ marginTop: '1.5rem' }}>
-          <RiskLevelDisplay
-            temp={hi!}
-            lang={i18n.language as any}
-            className={`risk-level ${getHeatRisk(hi!).class}`}
-          />
-        </div>
+        <div style={{ marginTop: '1.5rem' }}>
+          <RiskLevelDisplay
+            temp={hi!}
+            lang={i18n.language as any}
+            className={`risk-level ${getHeatRisk(hi!).class}`}
+          />
+        </div>
 
-        <Recommendations
-          temp={hi!}
-          lang={i18n.language as any}
-          isDay={day}
-        />
+        <Recommendations
+          temp={hi!}
+          lang={i18n.language as any}
+          isDay={day}
+        />
 
-        {['ca', 'es', 'eu', 'gl'].includes(i18n.language) && <UVScale lang={i18n.language as any} />}
-      </>
-    ) : (
-      !err && <p>{t('loading')}</p>
-    )}
+        {['ca', 'es', 'eu', 'gl'].includes(i18n.language) && <UVScale lang={i18n.language as any} />}
+      </>
+    ) : (
+      !err && <p>{t('loading')}</p>
+    )}
 
-    {err && <p style={{ color: 'red' }}>{err}</p>}
-  </div>
+    {err && <p style={{ color: 'red' }}>{err}</p>}
+  </div>
 );
 }

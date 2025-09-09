@@ -93,5 +93,20 @@
   "uv_index": "🔆 Índice UV",
   "realMeasuredTemp": "📈 Temperatura real",
   "heat_index": "🌡️ Sensación térmica",
-  "heatIndex": "🌡️ Sensación térmica"
+  "heatIndex": "🌡️ Sensación térmica",
+
+  "sky_state": "Estado del cielo",
+
+"weather_desc.clear sky": "Cielo despejado",
+"weather_desc.few clouds": "Pocas nubes",
+"weather_desc.scattered clouds": "Nubes dispersas",
+"weather_desc.broken clouds": "Cielo parcialmente nublado",
+"weather_desc.overcast clouds": "Cielo cubierto",
+"weather_desc.light rain": "Lluvia ligera",
+"weather_desc.rain": "Lluvia moderada",
+"weather_desc.heavy rain": "Lluvia intensa",
+"weather_desc.thunderstorm": "Tormenta eléctrica",
+"weather_desc.snow": "Nieve",
+"weather_desc.mist": "Niebla",
+"weather_desc.fog": "Neblina"
 }

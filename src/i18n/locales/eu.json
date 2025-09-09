@@ -142,5 +142,20 @@
       "notSupported": "Nabigatzaileak ez du Web Push onartzen.",
       "noToken": "Ezin izan da jakinarazpen tokena lortu."
     }
-  }
+  },
+
+  "sky_state": "Zeruaren egoera",
+
+"weather_desc.clear sky": "Zeru garbia",
+"weather_desc.few clouds": "Hodei gutxi",
+"weather_desc.scattered clouds": "Hodei sakabanatuak",
+"weather_desc.broken clouds": "Zerua partzialki estalia",
+"weather_desc.overcast clouds": "Zerua guztiz estalia",
+"weather_desc.light rain": "Euri arina",
+"weather_desc.rain": "Euri ertaina",
+"weather_desc.heavy rain": "Euri handia",
+"weather_desc.thunderstorm": "Ekaitz elektrikoa",
+"weather_desc.snow": "Elurra",
+"weather_desc.mist": "Lainoa",
+"weather_desc.fog": "Behelainoa"
 }

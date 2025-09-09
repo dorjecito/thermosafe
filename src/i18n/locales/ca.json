@@ -97,5 +97,22 @@
       "notSupported": "El navegador no suporta Web Push.",
       "noToken": "No s’ha pogut obtenir el token de notificacions."
     }
-  }
+  },
+
+  "sky_state": "Estat del cel",
+
+"weather_desc.clear sky": "Cel clar",
+"weather_desc.few clouds": "Pocs núvols",
+"weather_desc.scattered clouds": "Núvols dispersos",
+"weather_desc.broken clouds": "Cel parcialment ennuvolat",
+"weather_desc.overcast clouds": "Cel tapat",
+"weather_desc.light rain": "Pluja lleugera",
+"weather_desc.rain": "Pluja moderada",
+"weather_desc.heavy rain": "Pluja intensa",
+"weather_desc.thunderstorm": "Tempesta amb llamps",
+"weather_desc.snow": "Neu",
+"weather_desc.mist": "Boira",
+"weather_desc.fog": "Boirina"
+
+ 
 }

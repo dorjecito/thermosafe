@@ -116,5 +116,20 @@
       "notSupported": "O navegador non soporta Web Push.",
       "noToken": "Non se puido obter o token de notificacións."
     }
-  }
+  },
+
+  "sky_state": "Estado do ceo",
+
+"weather_desc.clear sky": "Ceo despexado",
+"weather_desc.few clouds": "Poucas nubes",
+"weather_desc.scattered clouds": "Nubes dispersas",
+"weather_desc.broken clouds": "Ceo parcialmente nubrado",
+"weather_desc.overcast clouds": "Ceo cuberto",
+"weather_desc.light rain": "Choiva lixeira",
+"weather_desc.rain": "Choiva moderada",
+"weather_desc.heavy rain": "Choiva intensa",
+"weather_desc.thunderstorm": "Treboada con lóstregos",
+"weather_desc.snow": "Neve",
+"weather_desc.mist": "Brétema",
+"weather_desc.fog": "Neboa"
 }
