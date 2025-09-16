@@ -46,7 +46,6 @@
   }
   
   /* === Mode clar === */
-  
   body {
     background-color: white;
     color: black;
@@ -54,7 +53,6 @@
   }
   
   /* === Mode fosc === */
-  
   @media (prefers-color-scheme: dark) {
     body {
       background-color: #121212;
@@ -71,8 +69,7 @@
     }
   }
   
-  /* ☁️ Bloc ESTAT DEL CEL estilititzat */
-  
+  /* ☁️ Bloc ESTAT DEL CEL */
   .sky-row {
     display: flex;
     align-items: center;
@@ -94,64 +91,112 @@
     filter: drop-shadow(0 0 1px rgba(0, 0, 0, 0.1));
   }
   
-  /* === Blocs informatius amb colors diferenciats === */
+  /* === Blocs informatius === */
+  .block-temp,
+  .block-humidity,
+  .block-wind,
+  .block-uv,
+  .block-heat-risk,
+  .block-recom {
+    padding: 1.2rem;
+    border-radius: 0.5rem;
+    margin-bottom: 2rem;
+  }
   
-  /* 🌡️ Bloc temperatura */
   .block-temp {
     background-color: #ffe5e5;
-    padding: 1rem;
-    border-radius: 0.5rem;
-    margin-bottom: 1rem;
   }
-  
-  /* 💧 Bloc humitat */
   .block-humidity {
     background-color: #e0f7fa;
-    padding: 1rem;
-    border-radius: 0.5rem;
-    margin-bottom: 1rem;
   }
-  
-  /* 💨 Bloc vent */
   .block-wind {
     background-color: #e3f2fd;
-    padding: 1rem;
-    border-radius: 0.5rem;
-    margin-bottom: 1rem;
   }
-  
-  /* ☀️ Bloc UV */
   .block-uv {
     background-color: #fff3e0;
-    padding: 1rem;
-    border-radius: 0.5rem;
-    margin-bottom: 1rem;
   }
-  
-  /* 🔥 Bloc risc per calor */
   .block-heat-risk {
     background-color: #fce4ec;
-    padding: 1rem;
-    border-radius: 0.5rem;
-    margin-bottom: 1rem;
   }
-  
-  /* 🛏️ Bloc recomanacions */
   .block-recom {
     background-color: #e8f5e9;
-    padding: 1rem;
-    border-radius: 0.5rem;
-    margin-bottom: 1rem;
   }
   
-  /* 📘 Recomanacions destacades */
+  /* 📘 Recomanacions */
   .recomanacions-box {
     border-left: 4px solid #2196f3;
     background-color: #e3f2fd;
     padding: 1rem;
     border-radius: 8px;
-    margin-top: 1rem;
+    margin-top: 1.5rem;
     text-align: left;
     color: #0d47a1;
     font-weight: 500;
+  }
+  
+  /* === Dades clau === */
+  .data-label {
+    font-size: 1.1rem;
+    font-weight: 500;
+    margin-right: 0.4rem;
+  }
+  
+  .data-value {
+    font-size: 1.6rem;
+    font-weight: 600;
+    color: #000;
+  }
+  
+  @media (prefers-color-scheme: dark) {
+    .data-value {
+      color: #fff;
+    }
+  }
+  
+  /* 🔗 Enllaços oficials */
+  .official-links {
+    display: flex;
+    flex-direction: column;
+    gap: 0.8rem;
+    align-items: flex-start;
+    margin-top: 1.5rem;
+  }
+  
+  .official-link,
+  .official-link:visited {
+    display: inline-block;
+    padding: 8px 16px;
+    border-radius: 6px;
+    font-weight: 600;
+    text-decoration: none !important;
+    transition: background-color 0.3s, transform 0.2s;
+  }
+  
+  /* Mode clar */
+  @media (prefers-color-scheme: light) {
+    .official-link,
+    .official-link:visited {
+      background-color: #1976d2;
+      color: #fff !important;
+    }
+  
+    .official-link:hover {
+      background-color: #0d47a1;
+      transform: scale(1.05);
+    }
+  }
+  
+  /* Mode fosc */
+  @media (prefers-color-scheme: dark) {
+    .official-link,
+    .official-link:visited {
+      background-color: #64b5f6;
+      color: #fff !important;
+    }
+  
+    .official-link:hover {
+      background-color: #bbdefb;
+      color: #121212 !important;
+      transform: scale(1.05);
+    }
   }

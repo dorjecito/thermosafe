@@ -1,10 +1,16 @@
 {
-  "title": "ThermoSafe – Riesgo por calor ☀️",
+  "t": "ThermoSafe – Riesgo por calor 🌞",
 
+  "ph": "Introduce una ciudad o pueblo",
+  "btn": "🔍 Consulta",
+  "gps": "📍 Usar ubicación actual",
+
+  "title": "ThermoSafe – Riesgo por calor 🌞",
   "search_placeholder": "Introduce una ciudad o pueblo",
-  "search_button": "🔍 Consultar",
+  "search_button": "🔍 Consulta",
   "gps_button": "📍 Usar ubicación actual",
-  "location": "📍 Ubicación",
+
+  "location": "📍 Localización",
   "humidity": "💧 Humedad",
   "feels_like": "🌡️ Sensación térmica",
   "measured_temp": "📈 Temperatura real",
@@ -14,63 +20,21 @@
 
   "highIrradianceWarning": "⚠️ Irradiancia solar muy alta. Evita la exposición directa.",
   "highUVIWarning": "⚠️ Índice UV muy alto. ¡Protección solar imprescindible!",
-  "irradianceTips": "👒 Usa sombrero, gafas de sol y crema solar. Evita actividad física bajo el sol.",
-  "solarProtection": "🔆 Protección solar",
-  "irradianceLegend": "☀️ Niveles de irradiancia: <8 moderado · ≥8 alto",
-  "toggleLegend": "ℹ️ Mostrar/Ocultar leyenda",
+  "irradianceTips": "👒 Usa sombrero, gafas de sol y crema solar. Evita actividades físicas al sol.",
 
   "risk_level": "Riesgo por calor:",
-  "alert_extreme": "🚨 ¡Riesgo EXTREMO de calor! Detén la actividad e hidrátate inmediatamente.",
-  "alertRisk": "⚠️ Riesgo alto o extremo por calor",
+  "alert_extreme": "🚨 ¡Riesgo EXTREMO de calor! Detén la actividad e hidrátate de inmediato.",
+  "alertRisk": "⚠️ Riesgo alto o extremo de calor.",
 
   "loading": "Cargando datos meteorológicos…",
-  "errorGPS": "No se pudo obtener la temperatura por GPS.",
-  "errorCity": "No se pudieron obtener datos para esta localización.",
-  "errorNoLocation": "No se pudo obtener la ubicación.",
+  "errorGPS": "No se ha podido obtener la temperatura por GPS.",
+  "errorCity": "No se han encontrado datos para esta localización.",
+  "errorNoLocation": "No se ha podido obtener la ubicación.",
 
   "recommendations_title": "Recomendaciones:",
-  "source_manual": "Sensación térmica calculada manualmente",
-  "source_api": "Sensación térmica proporcionada por la API meteorológica",
-
-  "day_safe": [
-    "Condiciones seguras. Mantén una hidratación normal.",
-    "Realiza pequeñas pausas a lo largo de la jornada."
-  ],
-  "day_mild": [
-    "Bebe agua cada 30 minutos, incluso sin sed.",
-    "Descansa a la sombra siempre que sea posible.",
-    "Evita actividades físicas innecesarias."
-  ],
-  "day_moderate": [
-    "Bebe agua cada 20 minutos.",
-    "Evita esfuerzo físico intenso entre las 12h y las 16h.",
-    "Haz pausas cada 30 minutos en lugares frescos o sombreados.",
-    "Utiliza ropa ligera y sombrero."
-  ],
-  "day_high": [
-    "Evita trabajar al sol directo. Prioriza zonas con sombra.",
-    "Haz pausas cada 20 minutos e hidrátate con frecuencia.",
-    "Ropa ligera, protección solar y sombrero obligatorios.",
-    "Avisa de inmediato si hay mareos, calambres o fatiga."
-  ],
-  "day_extreme": [
-    "Evita cualquier esfuerzo físico. Detén la actividad si es posible.",
-    "Busca un lugar fresco o climatizado.",
-    "Hidrátate constantemente, aunque no tengas sed.",
-    "Avisa inmediatamente si hay desorientación, piel seca o dificultad para sudar.",
-    "Contacta con emergencias (112) si los síntomas son graves."
-  ],
-
-  "night_label": "🌙 Recomendaciones para la noche",
-  "night_safe": "Noche con condiciones seguras. Mantén buena ventilación.",
-  "night_moderate": "Noche cálida: abre ventanas o activa la ventilación.",
-  "night_extreme": "🌡️ Noche muy calurosa: evita esfuerzos y descansa en un lugar fresco.",
-  "night_water": "Bebe agua antes de dormir.",
-  "night_clothes": "Duerme con ropa ligera.",
-  "night_ventilator": "Usa un ventilador si es posible.",
-  "night_heavy_meal": "Evita cenas pesadas y bebe agua regularmente.",
-  "night_emergency": "Evita cualquier esfuerzo. Si tienes síntomas graves, busca atención médica de inmediato.",
-  "night_cold": "Noche fresca: abrígate adecuadamente y mantén el espacio bien ventilado.",
+  "solarProtection": "🔆 Protección solar",
+  "irradianceLegend": "☀️ Niveles de irradiancia: <8 moderado · ≥8 alto",
+  "toggleLegend": "ℹ️ Mostrar/Ocultar escala UV",
 
   "push": {
     "label": "Recibir avisos cuando el riesgo ≥ moderado",
@@ -84,29 +48,22 @@
     }
   },
 
- 
-  "ph": "Introduce una ciudad o pueblo",
-  "btn": "🔍 Consultar",
-  "gps": "📍 Usar ubicación actual",
-  "loc": "📍 Ubicación",
-  "uv": "🔆 Índice UV",
-  "uv_index": "🔆 Índice UV",
-  "realMeasuredTemp": "📈 Temperatura real",
-  "heat_index": "🌡️ Sensación térmica",
-  "heatIndex": "🌡️ Sensación térmica",
-
   "sky_state": "Estado del cielo",
 
-"weather_desc.clear sky": "Cielo despejado",
-"weather_desc.few clouds": "Pocas nubes",
-"weather_desc.scattered clouds": "Nubes dispersas",
-"weather_desc.broken clouds": "Cielo parcialmente nublado",
-"weather_desc.overcast clouds": "Cielo cubierto",
-"weather_desc.light rain": "Lluvia ligera",
-"weather_desc.rain": "Lluvia moderada",
-"weather_desc.heavy rain": "Lluvia intensa",
-"weather_desc.thunderstorm": "Tormenta eléctrica",
-"weather_desc.snow": "Nieve",
-"weather_desc.mist": "Niebla",
-"weather_desc.fog": "Neblina"
+  "weather_desc.clear sky": "Cielo despejado",
+  "weather_desc.few clouds": "Pocas nubes",
+  "weather_desc.scattered clouds": "Nubes dispersas",
+  "weather_desc.broken clouds": "Cielo parcialmente nublado",
+  "weather_desc.overcast clouds": "Cielo cubierto",
+  "weather_desc.light rain": "Lluvia ligera",
+  "weather_desc.rain": "Lluvia moderada",
+  "weather_desc.heavy rain": "Lluvia intensa",
+  "weather_desc.thunderstorm": "Tormenta con rayos",
+  "weather_desc.snow": "Nieve",
+  "weather_desc.mist": "Niebla",
+  "weather_desc.fog": "Neblina",
+
+  "official_links": "Enlaces oficiales",
+  "link_insst": "INSST: estrés térmico y calor",
+  "link_aemet": "AEMET: salud y meteorología"
 }

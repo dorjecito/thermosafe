@@ -143,6 +143,7 @@ export default function App() {
 
 
   /* state */
+  const [forecast, setForecast] = useState<any | null>(null);
   const [data, setData] = useState<any | null>(null);
   const [temp, setTemp] = useState<number | null>(null);
   const [hum, setHum] = useState<number | null>(null);
@@ -241,65 +242,90 @@ sendIfAtLeastModerate(hiVal);
     if (!silent) setErr('');
   };
 
-  const locate = (silent = false) => {
-    navigator.geolocation.getCurrentPosition(
-      async (p) => {
-        try {
-          const { latitude: lat, longitude: lon } = p.coords;
-          const d = await getWeatherByCoords(lat, lon);
-          setData(d); 
-          const nm = (await getLocationNameFromCoords(lat, lon)) || d.name;
-      
+ /* 📍 LOCALITZACIÓ ACTUAL */
+const locate = (silent = false) => {
+  navigator.geolocation.getCurrentPosition(
+    async (p) => {
+      try {
+        const { latitude: lat, longitude: lon } = p.coords;
 
-          /* wind & wind-chill */
-          setWind(Math.round(d.wind.speed * 3.6 * 10) / 10);
-          setWc(null);
+        // Obté dades del temps
+        const d = await getWeatherByCoords(lat, lon);
+        setData(d);
 
-          await updateAll(d.main.temp, d.main.humidity, d.main.feels_like, lat, lon, nm, silent);
-          setInput('');
-          setRealCity('');
-        } catch {
-          !silent && setErr(t('errorGPS'));
-        }
-      },
-      () => !silent && setErr(t('errorNoLocation')),
-    );
-  };
+        // Nom de ciutat
+        const nm = (await getLocationNameFromCoords(lat, lon)) || d.name;
 
-  const search = async () => {
-    if (!input.trim()) {
-      setErr(t('errorCity'));
-      return;
-    }
-    try {
-      const d = await getWeatherByCity(input);
-      setData(d); 
-      const { lat, lon } = d.coord;
-      const nm = (await getLocationNameFromCoords(lat, lon)) || d.name;
+        // Vent
+        const wKmh = Math.round(d.wind.speed * 3.6 * 10) / 10;
+        setWind(wKmh);
 
-      /* wind */
-      const wKmh = Math.round(d.wind.speed * 3.6 * 10) / 10;
-      setWind(wKmh);
+        // Wind-chill (si fa fred i vent)
+        if (d.main.temp <= 10 && wKmh >= 5) {
+          const wcVal =
+            13.12 +
+            0.6215 * d.main.temp -
+            11.37 * Math.pow(wKmh, 0.16) +
+            0.3965 * d.main.temp * Math.pow(wKmh, 0.16);
+          setWc(Math.round(wcVal * 10) / 10);
+        } else {
+          setWc(null);
+        }
 
-      /* wind-chill (temperatura ≤ 10 °C & vent ≥ 5 km/h) */
-      if (d.main.temp <= 10 && wKmh >= 5) {
-        const wcVal =
-          13.12 +
-          0.6215 * d.main.temp -
-          11.37 * Math.pow(wKmh, 0.16) +
-          0.3965 * d.main.temp * Math.pow(wKmh, 0.16);
-        setWc(Math.round(wcVal * 10) / 10);
-      } else {
-        setWc(null);
-      }
+        // Actualitza estat general
+        await updateAll(d.main.temp, d.main.humidity, d.main.feels_like, lat, lon, nm);
+        setRealCity(nm);
+        setCity(nm);
+        setErr('');
+      } catch (e) {
+        if (!silent) setErr(t('errorGPS'));
+      }
+    },
+    () => {
+      if (!silent) setErr(t('errorGPS'));
+    }
+  );
+}
 
-      await updateAll(d.main.temp, d.main.humidity, d.main.feels_like, lat, lon, nm);
-      setRealCity(nm);
-      setInput('');
-    } catch {
-      setErr(t('errorCity'));
-    }
-  };
+/* 🔍 CERCA PER CIUTAT */
+const search = async () => {
+  if (!input.trim()) {
+    setErr(t('errorCity'));
+    return;
+  }
+  try {
+    const d = await getWeatherByCity(input);
+    setData(d);
+
+    const { lat, lon } = d.coord;
+    const nm = (await getLocationNameFromCoords(lat, lon)) || d.name;
+
+    // Vent
+    const wKmh = Math.round(d.wind.speed * 3.6 * 10) / 10;
+    setWind(wKmh);
+
+    // Wind-chill
+    if (d.main.temp <= 10 && wKmh >= 5) {
+      const wcVal =
+        13.12 +
+        0.6215 * d.main.temp -
+        11.37 * Math.pow(wKmh, 0.16) +
+        0.3965 * d.main.temp * Math.pow(wKmh, 0.16);
+      setWc(Math.round(wcVal * 10) / 10);
+    } else {
+      setWc(null);
+    }
+
+    // Actualitza estat general
+    await updateAll(d.main.temp, d.main.humidity, d.main.feels_like, lat, lon, nm);
+    setRealCity(nm);
+    setCity(nm);
+    setInput('');
+    setErr('');
+  } catch {
+    setErr(t('errorCity'));
+  }
+};
 
   /* ──────── render ──────── */
   const safeLangUV = ['ca', 'es', 'eu', 'gl'].includes(i18n.language) ? i18n.language : undefined;
@@ -354,151 +380,184 @@ useEffect(() => {
 }, []);
 
 
- return (
-  <div className="container">
-    {/* 🔄 Selector d’idioma */}
-    <div style={{ display: "flex", justifyContent: "flex-end", marginBottom: "1rem" }}>
-      <LanguageSwitcher />
-    </div>
-
-    <h1>{t('title')}</h1>
-
-    {/* 🔍 SEARCH */}
-    <div style={{ marginBottom: '1rem' }}>
-      <input
-        value={input}
-        onChange={(e) => setInput(e.target.value)}
-        placeholder={t('search_placeholder')}
-      />
-      <button onClick={search}>{t('search_button')}</button>
-      <div style={{ marginTop: '1rem' }}>
-        <button onClick={() => locate(false)}>{t('gps_button')}</button>
-      </div>
-    </div>
-
-    {/* 🔔 AVISOS PER RISC DE CALOR */}
-    <div style={{ margin: '0.5rem 0 1rem 0', display: 'flex', alignItems: 'center', gap: 8 }}>
-      <input
-        type="checkbox"
-        id="ts-push"
-        checked={pushEnabled}
-        disabled={busy}
-        onChange={(e) => onTogglePush(e.target.checked)}
-      />
-      <label htmlFor="ts-push">{t('push.label')}</label>
-    </div>
-    {msg && <p style={{ marginTop: '-0.5rem', fontSize: '.9rem' }}>{msg}</p>}
-
-    {/* ⚠️ ALERTES */}
-    {hi !== null && hi >= 18 && getHeatRisk(hi).isHigh && (
-      <div className="alert-banner">
-        {getHeatRisk(hi).isExtreme ? t('alert_extreme') : t('alertRisk')}
-      </div>
-    )}
-
-    {irr !== null && irr >= 8 && (
-      <div className="alert-banner">
-        <p>{t('highIrradianceWarning')}</p>
-        <p>{t('irradianceTips')}</p>
-      </div>
-    )}
-
-    {/* 🌡️ DADES */}
-    {temp !== null && hum !== null ? (
-      <>
-        {city && (
-          <LocationDisplay
-            city={city}
-            realCity={realCity}
-            lang={i18n.language === 'es' ? 'es' : 'ca'}
-            label={t('location')}
-          />
-        )}
-
-        <p>{t('humidity')}: {hum}%</p>
-
-        <p>
-          {t('feels_like')}: <strong>{temp >= 20 ? hi : (wc ?? hi)} °C</strong>
-        </p>
-
-        <p>{t('measured_temp')}: {temp} °C</p>
-
-   {/* 🌤️ ESTAT DEL CEL */}
-{data?.weather?.[0] && (
-  <div className="sky-row">
-    <img
-      src={`https://openweathermap.org/img/wn/${data.weather[0].icon}@2x.png`}
-      alt={data.weather[0].description}
-      className="sky-icon"
-      width="32"
-      height="32"
-    />
-    <span className="sky-label">
-      <strong>{t('sky_state')}:</strong>{' '}
-      {t(`weather_desc.${data.weather[0].description}`) || data.weather[0].description}
-    </span>
-  </div>
-)}
-        {/* 💨 VENT */}
-        {wind !== null && (
-          <p>{t('wind')}: {wind.toFixed(1)} km/h</p>
-        )}
-
-        {irr !== null && (
-          <div style={{ marginTop: '1rem', textAlign: 'center' }}>
-            <p>{t('irradiance')}: <strong>{irr} kWh/m²/dia</strong></p>
-
-            <div style={{ marginTop: '1.2rem' }}>
-              <h3 style={{ marginBottom: '0.4rem' }}>🔆 {t('solarProtection')}</h3>
-              <button
-                onClick={() => setLeg(!leg)}
-                style={{
-                  backgroundColor: '#222',
-                  border: '1px solid #444',
-                  padding: '8px 16px',
-                  borderRadius: '8px',
-                  cursor: 'pointer',
-                  color: 'white',
-                  fontSize: '0.9rem',
-                }}
-              >
-                ℹ️ {t('toggleLegend')}
-              </button>
-            </div>
-
-            {leg && (
-              <p style={{ fontSize: '.85rem', marginTop: '0.5rem' }}>
-                {t('irradianceLegend')}
-              </p>
-            )}
-          </div>
-        )}
-
-        {uvi !== null && day && (
-          <UVAdvice uvi={uvi} lang={i18n.language as any} />
-        )}
-
-        <div style={{ marginTop: '1.5rem' }}>
-          <RiskLevelDisplay
-            temp={hi!}
-            lang={i18n.language as any}
-            className={`risk-level ${getHeatRisk(hi!).class}`}
-          />
-        </div>
-
-        <Recommendations
-          temp={hi!}
-          lang={i18n.language as any}
-          isDay={day}
-        />
-
-        {['ca', 'es', 'eu', 'gl'].includes(i18n.language) && <UVScale lang={i18n.language as any} />}
-      </>
-    ) : (
-      !err && <p>{t('loading')}</p>
-    )}
-
-    {err && <p style={{ color: 'red' }}>{err}</p>}
-  </div>
-);
+return (
+    <div className="container">
+      {/* 🔄 Selector d’idioma */}
+      <div style={{ display: "flex", justifyContent: "flex-end", marginBottom: "1rem" }}>
+        <LanguageSwitcher />
+      </div>
+  
+      <h1>{t('title')}</h1>
+  
+      {/* 🔍 SEARCH */}
+      <div style={{ marginBottom: '1rem' }}>
+        <input
+          value={input}
+          onChange={(e) => setInput(e.target.value)}
+          placeholder={t('search_placeholder')}
+        />
+        <button onClick={search}>{t('search_button')}</button>
+        <div style={{ marginTop: '1rem' }}>
+          <button onClick={() => locate(false)}>{t('gps_button')}</button>
+        </div>
+      </div>
+  
+      {/* 🔔 AVISOS PER RISC DE CALOR */}
+      <div style={{ margin: '0.5rem 0 1rem 0', display: 'flex', alignItems: 'center', gap: 8 }}>
+        <input
+          type="checkbox"
+          id="ts-push"
+          checked={pushEnabled}
+          disabled={busy}
+          onChange={(e) => onTogglePush(e.target.checked)}
+        />
+        <label htmlFor="ts-push">{t('push.label')}</label>
+      </div>
+      {msg && <p style={{ marginTop: '-0.5rem', fontSize: '.9rem' }}>{msg}</p>}
+  
+      {/* ⚠️ ALERTES */}
+      {hi !== null && hi >= 18 && getHeatRisk(hi).isHigh && (
+        <div className="alert-banner">
+          {getHeatRisk(hi).isExtreme ? t('alert_extreme') : t('alertRisk')}
+        </div>
+      )}
+  
+      {irr !== null && irr >= 8 && (
+        <div className="alert-banner">
+          <p>{t('highIrradianceWarning')}</p>
+          <p>{t('irradianceTips')}</p>
+        </div>
+      )}
+  
+      {/* 🌡️ DADES */}
+      {temp !== null && hum !== null ? (
+        <>
+          {city && (
+            <LocationDisplay
+              city={city}
+              realCity={realCity}
+              lang={i18n.language === 'es' ? 'es' : 'ca'}
+              label={t('location')}
+            />
+          )}
+  
+          <p>{t('humidity')}: {hum}%</p>
+  
+          <p>
+            {t('feels_like')}: <strong>{temp >= 20 ? hi : (wc ?? hi)} °C</strong>
+          </p>
+  
+          <p>{t('measured_temp')}: {temp} °C</p>
+  
+          {/* 🌤️ ESTAT DEL CEL */}
+          {data?.weather?.[0] && (
+            <div className="sky-row">
+              <img
+                src={`https://openweathermap.org/img/wn/${data.weather[0].icon}@2x.png`}
+                alt={data.weather[0].description}
+                className="sky-icon"
+                width="32"
+                height="32"
+              />
+              <span className="sky-label">
+                <strong>{t('sky_state')}:</strong>{' '}
+                {t(`weather_desc.${data.weather[0].description}`) || data.weather[0].description}
+              </span>
+            </div>
+          )}
+  
+          {/* 💨 VENT */}
+          {wind !== null && (
+            <p>{t('wind')}: {wind.toFixed(1)} km/h</p>
+          )}
+  
+          {irr !== null && (
+            <div style={{ marginTop: '1rem', textAlign: 'center' }}>
+              <p>{t('irradiance')}: <strong>{irr} kWh/m²/dia</strong></p>
+  
+              <div style={{ marginTop: '1.2rem' }}>
+                <h3 style={{ marginBottom: '0.4rem' }}>🔆 {t('solarProtection')}</h3>
+                <button
+                  onClick={() => setLeg(!leg)}
+                  style={{
+                    backgroundColor: '#222',
+                    border: '1px solid #444',
+                    padding: '8px 16px',
+                    borderRadius: '8px',
+                    cursor: 'pointer',
+                    color: 'white',
+                    fontSize: '0.9rem',
+                  }}
+                >
+                  ℹ️ {t('toggleLegend')}
+                </button>
+              </div>
+  
+              {leg && (
+                <p style={{ fontSize: '.85rem', marginTop: '0.5rem' }}>
+                  {t('irradianceLegend')}
+                </p>
+              )}
+            </div>
+          )}
+  
+          {uvi !== null && day && (
+            <UVAdvice uvi={uvi} lang={i18n.language as any} />
+          )}
+  
+          <div style={{ marginTop: '1.5rem' }}>
+            <RiskLevelDisplay
+              temp={hi!}
+              lang={i18n.language as any}
+              className={`risk-level ${getHeatRisk(hi!).class}`}
+            />
+          </div>
+  
+          {/* 📋 RECOMANACIONS */}
+          <Recommendations
+            temp={hi!}
+            lang={i18n.language as any}
+            isDay={day}
+          />
+  
+         {/* 🔗 Enllaços oficials */}
+  <div className="official-links">
+  <p>{t("official_links")}:</p>
+  <ul>
+    <li>
+      <a
+        href="https://www.insst.es"
+        target="_blank"
+        rel="noopener noreferrer"
+        className="official-link"
+      >
+        🔗 {t("link_insst")}
+      </a>
+    </li>
+    <li>
+      <a
+        href="https://www.sanidad.gob.es/excesoTemperaturas2025/meteosalud.do"
+        target="_blank"
+        rel="noopener noreferrer"
+        className="official-link"
+      >
+        🔗 {t("link_aemet")}
+      </a>
+    </li>
+  </ul>
+</div>
+  
+          {/* 📐 ESCALA UV */}
+          {['ca', 'es', 'eu', 'gl'].includes(i18n.language) && (
+            <UVScale lang={i18n.language as any} />
+          )}
+        </>
+      ) : (
+        !err && <p>{t('loading')}</p>
+      )}
+  
+      {err && <p style={{ color: 'red' }}>{err}</p>}
+    </div>
+  );
+  
 }
