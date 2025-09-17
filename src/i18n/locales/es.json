@@ -50,18 +50,43 @@
 
   "sky_state": "Estado del cielo",
 
-  "weather_desc.clear sky": "Cielo despejado",
-  "weather_desc.few clouds": "Pocas nubes",
-  "weather_desc.scattered clouds": "Nubes dispersas",
-  "weather_desc.broken clouds": "Cielo parcialmente nublado",
-  "weather_desc.overcast clouds": "Cielo cubierto",
-  "weather_desc.light rain": "Lluvia ligera",
-  "weather_desc.rain": "Lluvia moderada",
-  "weather_desc.heavy rain": "Lluvia intensa",
-  "weather_desc.thunderstorm": "Tormenta con rayos",
-  "weather_desc.snow": "Nieve",
-  "weather_desc.mist": "Niebla",
-  "weather_desc.fog": "Neblina",
+"weather_desc.clear sky": "Cielo despejado",
+"weather_desc.few clouds": "Pocas nubes",
+"weather_desc.scattered clouds": "Nubes dispersas",
+"weather_desc.broken clouds": "Muy nublado",
+"weather_desc.overcast clouds": "Cubierto",
+
+"weather_desc.light rain": "Lluvia ligera",
+"weather_desc.moderate rain": "Lluvia moderada",
+"weather_desc.heavy rain": "Lluvia intensa",
+"weather_desc.very heavy rain": "Lluvia muy intensa",
+"weather_desc.extreme rain": "Lluvia extrema",
+"weather_desc.freezing rain": "Lluvia helada",
+
+"weather_desc.light snow": "Nevada ligera",
+"weather_desc.snow": "Nieve",
+"weather_desc.heavy snow": "Nevada intensa",
+"weather_desc.sleet": "Aguanieve",
+
+"weather_desc.shower rain": "Chubascos",
+"weather_desc.light intensity shower rain": "Chubascos débiles",
+"weather_desc.heavy intensity shower rain": "Chubascos fuertes",
+
+"weather_desc.thunderstorm": "Tormenta",
+"weather_desc.light thunderstorm": "Tormenta ligera",
+"weather_desc.heavy thunderstorm": "Tormenta fuerte",
+"weather_desc.thunderstorm with rain": "Tormenta con lluvia",
+
+"weather_desc.mist": "Neblina",
+"weather_desc.fog": "Niebla",
+"weather_desc.smoke": "Humo",
+"weather_desc.haze": "Calina",
+"weather_desc.sand": "Arena",
+"weather_desc.dust": "Polvo",
+"weather_desc.tornado": "Tornado",
+
+"weather_desc.unknown": "Descripción no disponible",
+
 
   "official_links": "Enlaces oficiales",
   "link_insst": "INSST: estrés térmico y calor",

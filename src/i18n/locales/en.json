@@ -29,6 +29,39 @@
   "eLoc": "Could not determine location.",
   "eCity": "Could not retrieve data for this location.",
 
+  "sky_state": "Sky condition",
+
+  "weather_desc.clear sky": "Clear sky",
+  "weather_desc.few clouds": "Few clouds",
+  "weather_desc.scattered clouds": "Scattered clouds",
+  "weather_desc.broken clouds": "Broken clouds",
+  "weather_desc.overcast clouds": "Overcast",
+  "weather_desc.light rain": "Light rain",
+  "weather_desc.moderate rain": "Moderate rain",
+  "weather_desc.heavy rain": "Heavy rain",
+  "weather_desc.very heavy rain": "Very heavy rain",
+  "weather_desc.extreme rain": "Extreme rain",
+  "weather_desc.freezing rain": "Freezing rain",
+  "weather_desc.light snow": "Light snow",
+  "weather_desc.snow": "Snow",
+  "weather_desc.heavy snow": "Heavy snow",
+  "weather_desc.sleet": "Sleet",
+  "weather_desc.shower rain": "Shower rain",
+  "weather_desc.light intensity shower rain": "Light shower rain",
+  "weather_desc.heavy intensity shower rain": "Heavy shower rain",
+  "weather_desc.thunderstorm": "Thunderstorm",
+  "weather_desc.light thunderstorm": "Light thunderstorm",
+  "weather_desc.heavy thunderstorm": "Heavy thunderstorm",
+  "weather_desc.thunderstorm with rain": "Thunderstorm with rain",
+  "weather_desc.mist": "Mist",
+  "weather_desc.fog": "Fog",
+  "weather_desc.smoke": "Smoke",
+  "weather_desc.haze": "Haze",
+  "weather_desc.sand": "Sand",
+  "weather_desc.dust": "Dust",
+  "weather_desc.tornado": "Tornado",
+  "weather_desc.unknown": "Description not available",
+
   "day_safe": [
     "Safe conditions. Maintain normal hydration."
   ],
@@ -75,5 +108,9 @@
       "notSupported": "Your browser does not support Web Push.",
       "noToken": "Could not obtain a notification token."
     }
-  }
+  },
+
+  "official_links": "Official links",
+  "link_insst": "INSST: heat stress and heat",
+  "link_aemet": "AEMET: health and meteorology"
 }

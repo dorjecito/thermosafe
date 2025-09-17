@@ -101,18 +101,43 @@
 
   "sky_state": "Estat del cel",
 
-  "weather_desc.clear sky": "Cel clar",
-  "weather_desc.few clouds": "Pocs núvols",
-  "weather_desc.scattered clouds": "Núvols dispersos",
-  "weather_desc.broken clouds": "Cel parcialment ennuvolat",
-  "weather_desc.overcast clouds": "Cel tapat",
-  "weather_desc.light rain": "Pluja lleugera",
-  "weather_desc.rain": "Pluja moderada",
-  "weather_desc.heavy rain": "Pluja intensa",
-  "weather_desc.thunderstorm": "Tempesta amb llamps",
-  "weather_desc.snow": "Neu",
-  "weather_desc.mist": "Boira",
-  "weather_desc.fog": "Boirina",
+"weather_desc.clear sky": "Cel clar",
+"weather_desc.few clouds": "Pocs núvols",
+"weather_desc.scattered clouds": "Núvols dispersos",
+"weather_desc.broken clouds": "Cel parcialment ennuvolat",
+"weather_desc.overcast clouds": "Cel tapat",
+
+"weather_desc.light rain": "Pluja lleugera",
+"weather_desc.moderate rain": "Pluja moderada",
+"weather_desc.heavy rain": "Pluja intensa",
+"weather_desc.very heavy rain": "Pluja molt intensa",
+"weather_desc.extreme rain": "Pluja extrema",
+"weather_desc.freezing rain": "Pluja glaçada",
+
+"weather_desc.light snow": "Nevada lleugera",
+"weather_desc.snow": "Neu",
+"weather_desc.heavy snow": "Nevada intensa",
+"weather_desc.sleet": "Aiguaneu",
+
+"weather_desc.shower rain": "Ruixats",
+"weather_desc.light intensity shower rain": "Ruixats febles",
+"weather_desc.heavy intensity shower rain": "Ruixats intensos",
+
+"weather_desc.thunderstorm": "Tempesta",
+"weather_desc.light thunderstorm": "Tempesta lleugera",
+"weather_desc.heavy thunderstorm": "Tempesta intensa",
+"weather_desc.thunderstorm with rain": "Tempesta amb pluja",
+
+"weather_desc.mist": "Boira",
+"weather_desc.fog": "Boirina",
+"weather_desc.smoke": "Fum",
+"weather_desc.haze": "Calitja",
+"weather_desc.sand": "Sorreny",
+"weather_desc.dust": "Pols",
+"weather_desc.tornado": "Tornado",
+
+"weather_desc.unknown": "Descripció no disponible",
+
 
   "official_links": "Enllaços oficials",
   "link_insst": "INSST: estrès tèrmic i calor",
