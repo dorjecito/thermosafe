@@ -1,0 +1,173 @@
+{
+  "t": "ThermoSafe – Risc actual ☀️❄️💨",
+
+  "ph": "Introdueix una ciutat o poble",
+  "btn": "🔍 Consulta",
+  "gps": "📍 Usar ubicació actual",
+
+  "title": "ThermoSafe – Risc actual ☀️❄️💨",
+  "search_placeholder": "Introdueix una ciutat o poble",
+  "search_button": "🔍 Consulta",
+  "gps_button": "📍 Usar ubicació actual",
+
+  "location": "📍 Localització",
+  "humidity": "💧 Humitat",
+  "hi": "🌡️ Sensació tèrmica",
+  "heat_index": "🌡️ Sensació tèrmica",
+  "feels_like": "🌡️ Sensació tèrmica",
+  "measured_temp": "📈 Temperatura real",
+  "irradiance": "☀️ Irradiància solar",
+  "uvi": "🔆 Índex UV",
+  "uv_index": "🔆 Índex UV",
+  "wind": "💨 Velocitat del vent",
+  "wind_risk": "💨 Risc per vent",
+  "no_risk_wind": "Sense risc per vent",
+  "wind_none": "Cap risc",
+  "wind_breezy": "Fluix",
+  "wind_moderate": "Fluix/moderat",
+  "wind_strong": "Fort",
+  "wind_very_strong": "Molt fort",
+  "realMeasuredTemp": "📈 Temperatura real",
+  "wind_alert_label": "Rebre avisos per vent fort",
+
+  "highIrradianceWarning": "⚠️ Irradiància solar molt alta. Evita l’exposició directa.",
+  "highUVIWarning": "⚠️ Índex UV molt alt. Protecció solar imprescindible!",
+  "uv_warning": "⚠️ Índex UV molt alt. Protecció solar imprescindible!",
+  "irradianceTips": "👒 Usa barret, ulleres de sol i crema solar. Evita activitats físiques al sol.",
+  "uv_tips": "👒 Usa barret, ulleres de sol i crema solar. Evita activitats físiques al sol.",
+
+  "risk_level": "Risc per calor:",
+  "alert_extreme": "🚨 Risc EXTREM de calor! Atura l’activitat i hidrata’t de seguida!",
+  "alertText": "🚨 Risc EXTREM de calor! Atura l’activitat i hidrata’t de seguida!",
+  "alertRisk": "⚠️ Risc alt o extrem de calor!",
+
+  "loading": "Carregant dades meteorològiques…",
+  "error_gps": "No s’ha pogut obtenir la temperatura per GPS.",
+  "errorGPS": "No s’ha pogut obtenir la temperatura per GPS.",
+  "error_data": "No s’han trobat dades per aquesta localització.",
+  "errorCity": "No s’han trobat dades per aquesta localització.",
+  "error_no_location": "No s’ha pogut obtenir la ubicació.",
+  "errorNoLocation": "No s’ha pogut obtenir la ubicació.",
+
+  "recommendations_title": "Recomanacions:",
+  "solarProtection": "🔆 Protecció solar",
+  "irradianceLegend": "☀️ Nivells d’irradiància: <8 moderat · ≥8 alt",
+  "toggleLegend": "ℹ️ Mostra/Oculta escala UV",
+  "source_manual": "Sensació tèrmica calculada manualment",
+  "source_api": "Sensació tèrmica des de l’API meteorològica",
+
+  "day_safe": [
+    "Condicions segures. Mantén la hidratació habitual.",
+    "Fes petites pauses durant la jornada."
+  ],
+  "day_mild": [
+    "Beu aigua cada 30 minuts, encara que no tinguis set.",
+    "Descansa a l’ombra sempre que sigui possible.",
+    "Evita activitats físiques innecessàries."
+  ],
+  "day_moderate": [
+    "Beu aigua cada 20 minuts.",
+    "Evita l’esforç físic intens entre les 12h i les 16h.",
+    "Fes descansos cada 30 minuts en lloc fresc o ombrívol.",
+    "Utilitza roba lleugera i barret."
+  ],
+  "day_high": [
+    "Evita treballar a ple sol. Prioritza zones ombrívoles.",
+    "Fes pauses cada 20 minuts i beu aigua sovint.",
+    "Roba lleugera, protecció solar i barret obligatori.",
+    "Avís immediat als responsables si apareixen marejos, rampes o fatiga."
+  ],
+  "day_extreme": [
+    "Evita qualsevol esforç físic. Atura l’activitat si és possible.",
+    "Busca un lloc fresc o climatitzat.",
+    "Hidrata’t constantment, encara que no tinguis set.",
+    "Avís immediat si apareix desorientació, pell seca o dificultat per suar.",
+    "Contacta amb emergències (112) si els símptomes són greus."
+  ],
+
+  "night_label": "🌙 Recomanacions per la nit",
+  "night_safe": "Nit amb condicions segures. Mantén una bona ventilació.",
+  "night_moderate": "Nit càlida: obre finestres o activa la ventilació.",
+  "night_extreme": "🌡️ Nit tòrrida: descansa en lloc fresc i evita qualsevol esforç.",
+  "night_water": "Beu aigua abans d’anar a dormir.",
+  "night_clothes": "Utilitza roba lleugera per dormir.",
+  "night_ventilator": "Activa un ventilador o sistema de ventilació si és possible.",
+  "night_heavy_meal": "Evita sopars pesats i beu aigua regularment.",
+  "night_emergency": "Evita qualsevol esforç. Si tens símptomes greus, demana ajuda mèdica immediatament.",
+
+  "push": {
+    "label": "Rebre avisos quan el risc per calor ≥ moderat",
+    "enabled": "Avisos activats. Rebràs notificacions quan el risc sigui moderat o superior.",
+    "disabled": "Avisos desactivats.",
+    "errors": {
+      "permissionDenied": "Has denegat el permís de notificacions.",
+      "noGps": "No s’ha pogut obtenir la ubicació (GPS).",
+      "notSupported": "El navegador no suporta Web Push.",
+      "noToken": "No s’ha pogut obtenir el token de notificacions."
+    }
+  },
+
+  "sky_state": "Estat del cel",
+
+  "weather_desc.clear sky": "Cel clar",
+  "weather_desc.few clouds": "Pocs núvols",
+  "weather_desc.scattered clouds": "Núvols dispersos",
+  "weather_desc.broken clouds": "Cel parcialment ennuvolat",
+  "weather_desc.overcast clouds": "Cel tapat",
+  "weather_desc.light rain": "Pluja lleugera",
+  "weather_desc.moderate rain": "Pluja moderada",
+  "weather_desc.heavy rain": "Pluja intensa",
+  "weather_desc.very heavy rain": "Pluja molt intensa",
+  "weather_desc.extreme rain": "Pluja extrema",
+  "weather_desc.freezing rain": "Pluja glaçada",
+  "weather_desc.light snow": "Nevada lleugera",
+  "weather_desc.snow": "Neu",
+  "weather_desc.heavy snow": "Nevada intensa",
+  "weather_desc.sleet": "Aiguaneu",
+  "weather_desc.shower rain": "Ruixats",
+  "weather_desc.light intensity shower rain": "Ruixats febles",
+  "weather_desc.heavy intensity shower rain": "Ruixats intensos",
+  "weather_desc.thunderstorm": "Tempesta",
+  "weather_desc.light thunderstorm": "Tempesta lleugera",
+  "weather_desc.heavy thunderstorm": "Tempesta intensa",
+  "weather_desc.thunderstorm with rain": "Tempesta amb pluja",
+  "weather_desc.mist": "Boira",
+  "weather_desc.fog": "Boirina",
+  "weather_desc.smoke": "Fum",
+  "weather_desc.haze": "Calitja",
+  "weather_desc.sand": "Sorreny",
+  "weather_desc.dust": "Pols",
+  "weather_desc.tornado": "Tornado",
+  "weather_desc.unknown": "Descripció no disponible",
+
+  "official_links": "Enllaços oficials",
+  "link_insst": "INSST: estrès tèrmic i calor",
+  "link_aemet": "AEMET: salut i meteorologia",
+   
+  "wind_alert_strong": "Vent fort detectat. Extrema precaucions a l'exterior.",
+  "wind_alert_very_strong": "Vent molt fort detectat! Evita treballar a l’exterior si és possible.",
+  "cold_alert_label": "Rebre avisos per fred extrem",
+ 
+
+  "cold_risk": "Risc per fred",
+  "heat_risk": "Risc per calor",
+  "wind_risk": "Risc per vent",
+  "current_risk": "Risc actual",
+  "no_risk": "Cap risc",
+  "no_risk_overall": "Cap risc detectat",
+  "high": "Alt",
+  "extreme": "Extrem",
+  "moderate": "Moderat",
+  "take_extreme_caution": "Precaució extrema a l'exterior",
+  "caution_outdoors": "Precaució si treballes o estàs a l'exterior",
+
+  "notify": {
+    "coldTitle": "Avisa ThermoSafe",
+    "coldBody": "Risc per fred {{risk}}. Temperatura {{temp}}°C",
+    "heatTitle": "Avisa ThermoSafe",
+    "heatBody": "Risc per calor {{risk}}. Sensació tèrmica {{hi}}°C",
+    "windTitle": "Avisa ThermoSafe",
+    "windBody": "Risc per vent {{risk}}. Velocitat {{wind}} km/h",
+    "no_specific_risk": "sense risc específic"
+  }
+}

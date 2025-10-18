@@ -1,0 +1,105 @@
+{
+  "t": "ThermoSafe – Riesgo actual ☀️❄️💨",
+
+  "ph": "Introduce una ciudad o pueblo",
+  "btn": "🔍 Consultar",
+  "gps": "📍 Usar ubicación actual",
+
+  "title": "ThermoSafe – Riesgo actual ☀️❄️💨",
+  "search_placeholder": "Introduce una ciudad o pueblo",
+  "search_button": "🔍 Consultar",
+  "gps_button": "📍 Usar ubicación actual",
+
+  "location": "📍 Ubicación",
+  "humidity": "💧 Humedad",
+  "feels_like": "🌡️ Sensación térmica",
+  "measured_temp": "📈 Temperatura real",
+  "irradiance": "☀️ Irradiancia solar",
+  "uvi": "🔆 Índice UV",
+  "wind": "💨 Velocidad del viento",
+  "wind_risk": "💨 Riesgo por viento",
+  "no_risk_wind": "Sin riesgo por viento",
+  "wind_none": "Sin riesgo",
+  "wind_breezy": "Brisa",
+  "wind_moderate": "Moderado",
+  "wind_strong": "Fuerte",
+  "wind_very_strong": "Muy fuerte",
+  "wind_alert_label": "Recibir avisos por viento fuerte",
+
+  "highIrradianceWarning": "⚠️ Irradiancia solar muy alta. Evita la exposición directa.",
+  "highUVIWarning": "⚠️ Índice UV muy alto. ¡Protección solar imprescindible!",
+  "irradianceTips": "👒 Usa sombrero, gafas de sol y crema solar. Evita actividades físicas al sol.",
+
+  "risk_level": "Riesgo por calor:",
+  "alert_extreme": "🚨 ¡Riesgo EXTREMO de calor! Detén la actividad e hidrátate de inmediato.",
+  "alertRisk": "⚠️ Riesgo alto o extremo por calor.",
+
+  "loading": "Cargando datos meteorológicos...",
+  "errorGPS": "No se pudo obtener la temperatura por GPS.",
+  "errorCity": "No se encontraron datos para esa ubicación.",
+  "errorNoLocation": "No se pudo obtener la ubicación.",
+
+  "recommendations_title": "Recomendaciones:",
+  "solarProtection": "🔆 Protección solar",
+  "irradianceLegend": "☀️ Niveles de irradiancia: <8 moderado · ≥8 alto",
+  "toggleLegend": "ℹ️ Mostrar/Ocultar escala UV",
+
+  "push": {
+    "label": "Recibir avisos cuando el riesgo por calor ≥ moderado",
+    "enabled": "Avisos activados. Recibirás notificaciones cuando el riesgo sea moderado o superior.",
+    "disabled": "Avisos desactivados.",
+    "errors": {
+      "permissionDenied": "Has denegado el permiso de notificaciones.",
+      "noGps": "No se pudo obtener la ubicación (GPS).",
+      "notSupported": "El navegador no admite Web Push.",
+      "noToken": "No se pudo obtener el token de notificaciones."
+    }
+  },
+
+  "sky_state": "Estado del cielo",
+
+  "weather_desc.clear sky": "Cielo despejado",
+  "weather_desc.few clouds": "Pocas nubes",
+  "weather_desc.scattered clouds": "Nubes dispersas",
+  "weather_desc.broken clouds": "Cielo parcialmente nublado",
+  "weather_desc.overcast clouds": "Cielo cubierto",
+  "weather_desc.light rain": "Lluvia ligera",
+  "weather_desc.moderate rain": "Lluvia moderada",
+  "weather_desc.heavy rain": "Lluvia intensa",
+  "weather_desc.very heavy rain": "Lluvia muy intensa",
+  "weather_desc.light snow": "Nieve ligera",
+  "weather_desc.snow": "Nieve",
+  "weather_desc.heavy snow": "Nieve intensa",
+  "weather_desc.thunderstorm": "Tormenta",
+  "weather_desc.mist": "Niebla ligera",
+  "weather_desc.fog": "Niebla",
+  "weather_desc.tornado": "Tornado",
+  "weather_desc.unknown": "Descripción no disponible",
+
+  "official_links": "Enlaces oficiales",
+  "link_insst": "INSST: estrés térmico y calor",
+  "link_aemet": "AEMET: salud y meteorología",
+
+  "cold_alert_label": "Recibir avisos por frío extremo",
+  "cold_risk": "Riesgo por frío",
+  "heat_risk": "Riesgo por calor",
+  "wind_risk": "Riesgo por viento",
+  "current_risk": "Riesgo actual",
+  "no_risk": "Sin riesgo",
+  "no_risk_overall": "Sin riesgo detectado",
+  "no_specific_risk": "sin riesgo específico",
+  "high": "Alto",
+  "extreme": "Extremo",
+  "moderate": "Moderado",
+  "take_extreme_caution": "Precaución extrema en exteriores",
+  "caution_outdoors": "Precaución si trabajas o permaneces al aire libre",
+
+  "notify": {
+    "coldTitle": "Aviso ThermoSafe",
+    "coldBody": "Riesgo por frío {{risk}}. Temperatura {{temp}}°C",
+    "heatTitle": "Aviso ThermoSafe",
+    "heatBody": "Riesgo por calor {{risk}}. Sensación {{hi}}°C",
+    "windTitle": "Aviso ThermoSafe",
+    "windBody": "Riesgo por viento {{risk}}. Velocidad {{wind}} km/h"
+  }
+}

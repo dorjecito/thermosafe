@@ -1,0 +1,214 @@
+/* === Estils generals === */
+
+html, body, #root {
+    width: 100%;
+    margin: 0;
+    padding: env(safe-area-inset-top, 0) env(safe-area-inset-right, 0)
+             env(safe-area-inset-bottom, 0) env(safe-area-inset-left, 0);
+    overflow-x: hidden;
+    box-sizing: border-box;
+    font-family: 'Inter', 'Segoe UI', Roboto, sans-serif;
+    scroll-behavior: smooth;
+  }
+  
+  /* === Contenidor principal === */
+  #root {
+    max-width: 100%;
+    margin: 0 auto;
+    padding: 1.5rem;
+    text-align: center;
+    transition: background-color 0.3s, color 0.3s;
+  }
+  
+  /* === Títols i text === */
+  h1 {
+    font-size: 2rem;
+    margin-bottom: 1.5rem;
+    background: linear-gradient(90deg, #0072ff, #00c6ff);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+  
+  /* === Mode clar === */
+  body {
+    background-color: #fafafa;
+    color: #222;
+  }
+  
+  /* === Mode fosc === */
+  @media (prefers-color-scheme: dark) {
+    body {
+      background-color: #121212;
+      color: #eee;
+    }
+  }
+  
+  /* === Targetes i seccions === */
+  .card {
+    background-color: white;
+    padding: 1.5em;
+    border-radius: 0.75rem;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    transition: transform 0.2s ease, box-shadow 0.3s ease;
+  }
+  
+  .card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  }
+  
+  /* ☁️ Bloc ESTAT DEL CEL */
+  .sky-row {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    margin: 0.5rem 0;
+    justify-content: flex-start;
+  }
+  
+  .sky-label {
+    font-weight: 500;
+    font-size: 1rem;
+    color: #444;
+  }
+  
+  .sky-icon {
+    width: 32px !important;
+    height: 32px !important;
+    object-fit: contain;
+    filter: drop-shadow(0 0 1px rgba(0, 0, 0, 0.1));
+  }
+  
+  /* === BLOCS INFORMATIUS === */
+  .block-temp,
+  .block-humidity,
+  .block-wind,
+  .block-uv,
+  .block-heat-risk,
+  .block-recom {
+    padding: 1.2rem;
+    border-radius: 0.75rem;
+    margin-bottom: 1.5rem;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+    text-align: left;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+  }
+  
+  .block-temp:hover,
+  .block-humidity:hover,
+  .block-wind:hover,
+  .block-uv:hover,
+  .block-heat-risk:hover,
+  .block-recom:hover {
+    transform: scale(1.02);
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15);
+  }
+  
+  /* 🎨 Colors de cada bloc */
+  .block-temp { background-color: #ffe5e5; }
+  .block-humidity { background-color: #e0f7fa; }
+  .block-wind { background-color: #e3f2fd; }
+  .block-uv { background-color: #fff3e0; }
+  .block-heat-risk { background-color: #fce4ec; }
+  .block-recom { background-color: #e8f5e9; }
+  
+  /* 📘 Recomanacions */
+  .recomanacions-box {
+    border-left: 4px solid #2196f3;
+    background-color: #e3f2fd;
+    padding: 1rem;
+    border-radius: 8px;
+    margin-top: 1.5rem;
+    text-align: left;
+    color: #0d47a1;
+    font-weight: 500;
+  }
+  
+  /* === Dades clau === */
+  .data-label {
+    font-size: 1.1rem;
+    font-weight: 500;
+    margin-right: 0.4rem;
+  }
+  
+  .data-value {
+    font-size: 1.6rem;
+    font-weight: 600;
+    color: #000;
+  }
+  
+  @media (prefers-color-scheme: dark) {
+    .data-value {
+      color: #fff;
+    }
+  }
+  
+  /* 🔗 Enllaços oficials */
+  .official-links {
+    display: flex;
+    flex-direction: column;
+    gap: 0.8rem;
+    align-items: flex-start;
+    margin-top: 1.5rem;
+  }
+  
+  .official-link,
+  .official-link:visited {
+    display: inline-block;
+    padding: 8px 16px;
+    border-radius: 6px;
+    font-weight: 600;
+    text-decoration: none !important;
+    transition: background-color 0.3s, transform 0.2s;
+  }
+  
+  /* Mode clar */
+  @media (prefers-color-scheme: light) {
+    .official-link,
+    .official-link:visited {
+      background-color: #1976d2;
+      color: #fff !important;
+    }
+    .official-link:hover {
+      background-color: #0d47a1;
+      transform: scale(1.05);
+    }
+  }
+  
+  /* Mode fosc */
+  @media (prefers-color-scheme: dark) {
+    .official-link,
+    .official-link:visited {
+      background-color: #64b5f6;
+      color: #fff !important;
+    }
+    .official-link:hover {
+      background-color: #bbdefb;
+      color: #121212 !important;
+      transform: scale(1.05);
+    }
+  }
+  
+  /* === Responsive (pantalles petites, Android, etc.) === */
+  @media screen and (max-width: 600px) {
+    #root {
+      padding: 1rem;
+    }
+  
+    h1 {
+      font-size: 1.6rem;
+    }
+  
+    .block-temp,
+    .block-humidity,
+    .block-wind,
+    .block-uv,
+    .block-heat-risk,
+    .block-recom {
+      padding: 1rem;
+    }
+  
+    body {
+      overflow-x: hidden;
+    }
+  }

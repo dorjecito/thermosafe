@@ -1,0 +1,105 @@
+{
+  "t": "ThermoSafe – Risco actual ☀️❄️💨",
+
+  "ph": "Introduce unha cidade ou poboación",
+  "btn": "🔍 Consultar",
+  "gps": "📍 Usar localización actual",
+
+  "title": "ThermoSafe – Risco actual ☀️❄️💨",
+  "search_placeholder": "Introduce unha cidade ou poboación",
+  "search_button": "🔍 Consultar",
+  "gps_button": "📍 Usar localización actual",
+
+  "location": "📍 Localización",
+  "humidity": "💧 Humidade",
+  "feels_like": "🌡️ Sensación térmica",
+  "measured_temp": "📈 Temperatura real",
+  "irradiance": "☀️ Irradiancia solar",
+  "uvi": "🔆 Índice UV",
+  "wind": "💨 Velocidade do vento",
+  "wind_risk": "💨 Risco por vento",
+  "no_risk_wind": "Sen risco por vento",
+  "wind_none": "Sen risco",
+  "wind_breezy": "Brisa",
+  "wind_moderate": "Moderado",
+  "wind_strong": "Forte",
+  "wind_very_strong": "Moi forte",
+  "wind_alert_label": "Recibir avisos por vento forte",
+
+  "highIrradianceWarning": "⚠️ Irradiancia solar moi alta. Evita a exposición directa.",
+  "highUVIWarning": "⚠️ Índice UV moi alto. Protección solar imprescindible!",
+  "irradianceTips": "👒 Usa sombreiro, lentes de sol e crema solar. Evita o esforzo físico ao sol.",
+
+  "risk_level": "Risco por calor:",
+  "alert_extreme": "🚨 Risco EXTREMO por calor! Deteña a actividade e hidrátese de inmediato!",
+  "alertRisk": "⚠️ Risco alto ou extremo por calor!",
+
+  "loading": "Cargando datos meteorolóxicos...",
+  "errorGPS": "Non se puido obter a temperatura por GPS.",
+  "errorCity": "Non se atoparon datos para esa localización.",
+  "errorNoLocation": "Non se puido obter a localización.",
+
+  "recommendations_title": "Recomendacións:",
+  "solarProtection": "🔆 Protección solar",
+  "irradianceLegend": "☀️ Niveis de irradiancia: <8 moderado · ≥8 alto",
+  "toggleLegend": "ℹ️ Mostrar/Ocultar escala UV",
+
+  "push": {
+    "label": "Recibir avisos cando o risco por calor ≥ moderado",
+    "enabled": "Avisos activados. Recibirás notificacións cando o risco sexa moderado ou superior.",
+    "disabled": "Avisos desactivados.",
+    "errors": {
+      "permissionDenied": "Negaches o permiso de notificacións.",
+      "noGps": "Non se puido obter a localización (GPS).",
+      "notSupported": "O navegador non admite Web Push.",
+      "noToken": "Non se puido obter o token de notificacións."
+    }
+  },
+
+  "sky_state": "Estado do ceo",
+
+  "weather_desc.clear sky": "Ceo despexado",
+  "weather_desc.few clouds": "Poucas nubes",
+  "weather_desc.scattered clouds": "Nubes dispersas",
+  "weather_desc.broken clouds": "Ceo parcialmente nublado",
+  "weather_desc.overcast clouds": "Ceo cuberto",
+  "weather_desc.light rain": "Chuvia lixeira",
+  "weather_desc.moderate rain": "Chuvia moderada",
+  "weather_desc.heavy rain": "Chuvia intensa",
+  "weather_desc.very heavy rain": "Chuvia moi intensa",
+  "weather_desc.light snow": "Neve lixeira",
+  "weather_desc.snow": "Neve",
+  "weather_desc.heavy snow": "Neve intensa",
+  "weather_desc.thunderstorm": "Treboada",
+  "weather_desc.mist": "Néboa",
+  "weather_desc.fog": "Brétema",
+  "weather_desc.tornado": "Tornado",
+  "weather_desc.unknown": "Descrición non dispoñible",
+
+  "official_links": "Ligazóns oficiais",
+  "link_insst": "INSST: estrés térmico e calor",
+  "link_aemet": "AEMET: saúde e meteoroloxía",
+
+  "cold_alert_label": "Recibir avisos por frío extremo",
+  "cold_risk": "Risco por frío",
+  "heat_risk": "Risco por calor",
+  "wind_risk": "Risco por vento",
+  "current_risk": "Risco actual",
+  "no_risk": "Sen risco",
+  "no_risk_overall": "Sen risco detectado",
+  "no_specific_risk": "sen risco específico",
+  "high": "Alto",
+  "extreme": "Extremo",
+  "moderate": "Moderado",
+  "take_extreme_caution": "Precaución extrema no exterior",
+  "caution_outdoors": "Precaución se traballas ou estás ao aire libre",
+
+  "notify": {
+    "coldTitle": "Aviso ThermoSafe",
+    "coldBody": "Risco por frío {{risk}}. Temperatura {{temp}}°C",
+    "heatTitle": "Aviso ThermoSafe",
+    "heatBody": "Risco por calor {{risk}}. Sensación {{hi}}°C",
+    "windTitle": "Aviso ThermoSafe",
+    "windBody": "Risco por vento {{risk}}. Velocidade {{wind}} km/h"
+  }
+}

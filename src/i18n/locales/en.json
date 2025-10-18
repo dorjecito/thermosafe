@@ -1,0 +1,105 @@
+{
+  "t": "ThermoSafe – Current Risk ☀️❄️💨",
+
+  "ph": "Enter a city or town",
+  "btn": "🔍 Search",
+  "gps": "📍 Use current location",
+
+  "title": "ThermoSafe – Current Risk ☀️❄️💨",
+  "search_placeholder": "Enter a city or town",
+  "search_button": "🔍 Search",
+  "gps_button": "📍 Use current location",
+
+  "location": "📍 Location",
+  "humidity": "💧 Humidity",
+  "feels_like": "🌡️ Feels like",
+  "measured_temp": "📈 Actual temperature",
+  "irradiance": "☀️ Solar irradiance",
+  "uvi": "🔆 UV index",
+  "wind": "💨 Wind speed",
+  "wind_risk": "💨 Wind risk",
+  "no_risk_wind": "No wind risk",
+  "wind_none": "No risk",
+  "wind_breezy": "Breezy",
+  "wind_moderate": "Moderate",
+  "wind_strong": "Strong",
+  "wind_very_strong": "Very strong",
+  "wind_alert_label": "Receive alerts for strong wind",
+
+  "highIrradianceWarning": "⚠️ Very high solar irradiance. Avoid direct exposure.",
+  "highUVIWarning": "⚠️ Very high UV index. Sun protection is essential!",
+  "irradianceTips": "👒 Wear a hat, sunglasses, and sunscreen. Avoid physical activity in direct sunlight.",
+
+  "risk_level": "Heat risk:",
+  "alert_extreme": "🚨 EXTREME heat risk! Stop activity and hydrate immediately!",
+  "alertRisk": "⚠️ High or extreme heat risk!",
+
+  "loading": "Loading weather data...",
+  "errorGPS": "Unable to get temperature via GPS.",
+  "errorCity": "No data found for this location.",
+  "errorNoLocation": "Unable to obtain location.",
+
+  "recommendations_title": "Recommendations:",
+  "solarProtection": "🔆 Sun protection",
+  "irradianceLegend": "☀️ Irradiance levels: <8 moderate · ≥8 high",
+  "toggleLegend": "ℹ️ Show/Hide UV scale",
+
+  "push": {
+    "label": "Receive alerts when heat risk ≥ moderate",
+    "enabled": "Alerts enabled. You’ll receive notifications when risk is moderate or higher.",
+    "disabled": "Alerts disabled.",
+    "errors": {
+      "permissionDenied": "You denied the notification permission.",
+      "noGps": "Unable to obtain location (GPS).",
+      "notSupported": "Your browser does not support Web Push.",
+      "noToken": "Unable to obtain notification token."
+    }
+  },
+
+  "sky_state": "Sky condition",
+
+  "weather_desc.clear sky": "Clear sky",
+  "weather_desc.few clouds": "Few clouds",
+  "weather_desc.scattered clouds": "Scattered clouds",
+  "weather_desc.broken clouds": "Partly cloudy",
+  "weather_desc.overcast clouds": "Overcast",
+  "weather_desc.light rain": "Light rain",
+  "weather_desc.moderate rain": "Moderate rain",
+  "weather_desc.heavy rain": "Heavy rain",
+  "weather_desc.very heavy rain": "Very heavy rain",
+  "weather_desc.light snow": "Light snow",
+  "weather_desc.snow": "Snow",
+  "weather_desc.heavy snow": "Heavy snow",
+  "weather_desc.thunderstorm": "Thunderstorm",
+  "weather_desc.mist": "Mist",
+  "weather_desc.fog": "Fog",
+  "weather_desc.tornado": "Tornado",
+  "weather_desc.unknown": "Description not available",
+
+  "official_links": "Official links",
+  "link_insst": "INSST: Heat stress and thermal risk",
+  "link_aemet": "AEMET: Health and meteorology",
+
+  "cold_alert_label": "Receive alerts for extreme cold",
+  "cold_risk": "Cold risk",
+  "heat_risk": "Heat risk",
+  "wind_risk": "Wind risk",
+  "current_risk": "Current risk",
+  "no_risk": "No risk",
+  "no_risk_overall": "No risk detected",
+  "no_specific_risk": "no specific risk",
+  "high": "High",
+  "extreme": "Extreme",
+  "moderate": "Moderate",
+  "take_extreme_caution": "Take extreme caution outdoors",
+  "caution_outdoors": "Be cautious if working or staying outdoors",
+
+  "notify": {
+    "coldTitle": "ThermoSafe Alert",
+    "coldBody": "Cold risk {{risk}}. Temperature {{temp}}°C",
+    "heatTitle": "ThermoSafe Alert",
+    "heatBody": "Heat risk {{risk}}. Feels like {{hi}}°C",
+    "windTitle": "ThermoSafe Alert",
+    "windBody": "Wind risk {{risk}}. Speed {{wind}} km/h"
+  }
+}

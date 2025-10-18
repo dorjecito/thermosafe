@@ -1,0 +1,24 @@
+{
+  "version": 2,
+  "functions": {
+    "api/openuv.ts": {
+      "maxDuration": 10,
+      "memory": 128
+    }
+  },
+  "routes": [
+    {
+      "src": "/api/openuv",
+      "dest": "/api/openuv.ts",
+      "headers": {
+        "Access-Control-Allow-Origin": "*",
+        "Access-Control-Allow-Methods": "GET,OPTIONS",
+        "Access-Control-Allow-Headers": "Content-Type, Authorization"
+      }
+    },
+    {
+      "src": "/(.*)",
+      "dest": "/index.html"
+    }
+  ]
+}

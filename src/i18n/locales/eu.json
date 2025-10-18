@@ -1,0 +1,117 @@
+{
+  "t": "ThermoSafe – Arrisku orokorra ☀️❄️💨",
+
+  "ph": "Idatzi hiri edo herri bat",
+  "btn": "🔍 Kontsulta",
+  "gps": "📍 Uneko kokapena erabili",
+
+  "title": "ThermoSafe – Arrisku orokorra ☀️❄️💨",
+  "search_placeholder": "Idatzi hiri edo herri bat",
+  "search_button": "🔍 Kontsulta",
+  "gps_button": "📍 Uneko kokapena erabili",
+
+  "location": "📍 Kokapena",
+  "humidity": "💧 Hezetasuna",
+  "hi": "🌡️ Sentsazio termikoa",
+  "heat_index": "🌡️ Sentsazio termikoa",
+  "feels_like": "🌡️ Sentsazio termikoa",
+  "measured_temp": "📈 Tenperatura erreala",
+  "irradiance": "☀️ Eguzki-erradiazioa",
+  "uvi": "🔆 UV indizea",
+  "uv_index": "🔆 UV indizea",
+  "wind": "💨 Haizearen abiadura",
+  "wind_risk": "💨 Haizearen arriskua",
+  "no_risk_wind": "Haizerik gabeko arriskurik ez",
+  "wind_none": "Arriskurik ez",
+  "wind_breezy": "Haize arina",
+  "wind_moderate": "Haize ertaina",
+  "wind_strong": "Haize handia",
+  "wind_very_strong": "Haize oso handia",
+  "realMeasuredTemp": "📈 Tenperatura erreala",
+  "wind_alert_label": "Jaso abisuak haize handia dagoenean",
+
+  "highIrradianceWarning": "⚠️ Erradiazio oso altua. Saihestu eguzkipeko esposizio zuzena.",
+  "highUVIWarning": "⚠️ UV indize oso altua. Babes eguzkitakoa ezinbestekoa!",
+  "uv_warning": "⚠️ UV indize oso altua. Babes eguzkitakoa ezinbestekoa!",
+  "irradianceTips": "👒 Erabili txapela, betaurrekoak eta eguzkitako krema. Saihestu eguzkitan ariketa fisikoa.",
+  "uv_tips": "👒 Erabili txapela, betaurrekoak eta eguzkitako krema. Saihestu eguzkitan ariketa fisikoa.",
+
+  "risk_level": "Bero arriskua:",
+  "alert_extreme": "🚨 BERO MUTURREKO arriskua! Gelditu jarduera eta hidrata zaitez berehala!",
+  "alertText": "🚨 BERO MUTURREKO arriskua! Gelditu jarduera eta hidrata zaitez berehala!",
+  "alertRisk": "⚠️ Bero arrisku handia edo muturrekoa!",
+
+  "loading": "Datu meteorologikoak kargatzen...",
+  "error_gps": "Ezin izan da tenperatura GPS bidez lortu.",
+  "errorGPS": "Ezin izan da tenperatura GPS bidez lortu.",
+  "error_data": "Ez dira daturik aurkitu kokapen horretarako.",
+  "errorCity": "Ez dira daturik aurkitu kokapen horretarako.",
+  "error_no_location": "Ezin izan da kokapena lortu.",
+  "errorNoLocation": "Ezin izan da kokapena lortu.",
+
+  "recommendations_title": "Gomendioak:",
+  "solarProtection": "🔆 Eguzkitik babesa",
+  "irradianceLegend": "☀️ Erradiazio mailak: <8 moderatua · ≥8 altua",
+  "toggleLegend": "ℹ️ Erakutsi/Ezkutatu UV eskala",
+  "source_manual": "Sentsazio termikoa eskuz kalkulatuta",
+  "source_api": "Sentsazio termikoa datu meteorologikoetatik",
+
+  "push": {
+    "label": "Jaso abisuak bero arriskua ≥ moderatua denean",
+    "enabled": "Jakinarazpenak aktibatuta. Arriskua moderatua edo handiagoa denean abisuak jasoko dituzu.",
+    "disabled": "Jakinarazpenak desaktibatuta.",
+    "errors": {
+      "permissionDenied": "Baimena ukatu duzu.",
+      "noGps": "Ezin izan da kokapena lortu (GPS).",
+      "notSupported": "Nabigatzaileak ez du Web Push onartzen.",
+      "noToken": "Ezin izan da jakinarazpen tokena lortu."
+    }
+  },
+
+  "sky_state": "Zeruaren egoera",
+
+  "weather_desc.clear sky": "Zeru garbi",
+  "weather_desc.few clouds": "Hodei gutxi",
+  "weather_desc.scattered clouds": "Hodei sakabanatuak",
+  "weather_desc.broken clouds": "Oso hodeitsu",
+  "weather_desc.overcast clouds": "Estalia",
+  "weather_desc.light rain": "Euri arina",
+  "weather_desc.moderate rain": "Euri moderatua",
+  "weather_desc.heavy rain": "Euri handia",
+  "weather_desc.extreme rain": "Euri muturrekoa",
+  "weather_desc.light snow": "Elur arina",
+  "weather_desc.snow": "Elurra",
+  "weather_desc.heavy snow": "Elur handia",
+  "weather_desc.thunderstorm": "Trumoi-ekaitza",
+  "weather_desc.mist": "Lainoa",
+  "weather_desc.fog": "Behe-lainoa",
+  "weather_desc.tornado": "Tornadoa",
+  "weather_desc.unknown": "Deskribapena ez dago eskuragarri",
+
+  "official_links": "Esteka ofizialak",
+  "link_insst": "INSST: estres termikoa eta beroa",
+  "link_aemet": "AEMET: osasuna eta meteorologia",
+
+  "cold_alert_label": "Jaso abisuak hotz osoagatik",
+  "cold_risk": "Hotz arriskua",
+  "heat_risk": "Bero arriskua",
+  "wind_risk": "Haize arriskua",
+  "current_risk": "Uneko arriskua",
+  "no_risk": "Arriskurik ez",
+  "no_risk_overall": "Ez da arriskurik hauteman",
+  "no_specific_risk": "arrisku espezifikorik gabe",
+  "high": "Altua",
+  "extreme": "Muturrekoa",
+  "moderate": "Moderatua",
+  "take_extreme_caution": "Kontuz ibili kanpoan",
+  "caution_outdoors": "Kontuz lan edo jarduera kanpoan egitean",
+
+  "notify": {
+    "coldTitle": "ThermoSafe abisua",
+    "coldBody": "Hotz arriskua {{risk}}. Tenperatura {{temp}}°C",
+    "heatTitle": "ThermoSafe abisua",
+    "heatBody": "Bero arriskua {{risk}}. Sentsazioa {{hi}}°C",
+    "windTitle": "ThermoSafe abisua",
+    "windBody": "Haize arriskua {{risk}}. Abiadura {{wind}} km/h"
+  }
+}
