@@ -3,6 +3,7 @@
 // ─────────────────────────────────────────────
 const admin = require('firebase-admin');
 const functions = require('firebase-functions');
+const fetch = (...args) => import('node-fetch').then(({ default: fetch }) => fetch(...args));
 
 admin.initializeApp();
 const db = admin.firestore();
@@ -13,9 +14,9 @@ const REGION = 'europe-west1';
 // ─────────────────────────────────────────────
 // Neteja de subscripcions velles o invàlides
 // ─────────────────────────────────────────────
-const INACTIVITY_DAYS = 90;    // elimina subs sense activitat en ≥90 dies
-const PAGE_SIZE = 500;         // lectura paginada de Firestore
-const VALIDATION_CONC = 100;   // validacions FCM en paral·lel
+const INACTIVITY_DAYS = 90;
+const PAGE_SIZE = 500;
+const VALIDATION_CONC = 100;
 
 function chunk(arr, n) {
   const out = [];
@@ -23,7 +24,6 @@ function chunk(arr, n) {
   return out;
 }
 
-// Valida un token SENSE enviar cap push (dry run)
 async function isTokenValid(token) {
   if (!token) return false;
   try {
@@ -32,15 +32,13 @@ async function isTokenValid(token) {
         token,
         notification: { title: 'ping', body: 'dry-run' },
       },
-      /* dryRun = */ true
+      true
     );
     return true;
   } catch (e) {
     const msg = String(e?.errorInfo?.code || e?.message || '');
-    // Tokens clarament invàlids:
     if (msg.includes('registration-token-not-registered')) return false;
     if (msg.includes('invalid-argument')) return false;
-    // Altres errors puntuals de xarxa → considera'ls vàlids
     console.warn('[cleanup] dry-run error no definitiu:', msg);
     return true;
   }
@@ -51,10 +49,9 @@ function daysBetweenNow(ms) {
   return age / (1000 * 60 * 60 * 24);
 }
 
-// Executa cada dia a les 03:00 (hora Madrid)
 exports.cleanupSubs = functions
-  .region(REGION)                 // p.ex. 'europe-west1'
-  .pubsub.schedule('0 3 * * *')   // cron diari 03:00
+  .region(REGION)
+  .pubsub.schedule('0 3 * * *')
   .timeZone('Europe/Madrid')
   .onRun(async () => {
     console.log('[cleanup] start');
@@ -70,17 +67,14 @@ exports.cleanupSubs = functions
       const docs = snap.docs;
       lastDoc = docs[docs.length - 1];
 
-      // Validació tokens en lots
       for (const batch of chunk(docs, VALIDATION_CONC)) {
         const validations = batch.map(async (doc) => {
           const d = doc.data() || {};
           const token = d.token;
           totalChecked++;
 
-          // regla d'inactivitat (últim avís o creació)
           const last = d.lastNotified ?? d.createdAt ?? 0;
           const stale = daysBetweenNow(last) > INACTIVITY_DAYS;
-
           const valid = await isTokenValid(token);
 
           if (!token || !valid || stale) {
@@ -104,7 +98,7 @@ exports.cleanupSubs = functions
 // ─────────────────────────────────────────────
 // Llindars INSST
 // ─────────────────────────────────────────────
-const TH = { MODERATE: 31, HIGH: 38, VERY_HIGH: 46 }; // °C
+const TH = { MODERATE: 31, HIGH: 38, VERY_HIGH: 46 };
 
 function levelFromINSST(hi) {
   if (hi >= TH.VERY_HIGH) {
@@ -143,9 +137,6 @@ function levelFromINSST(hi) {
   };
 }
 
-// ─────────────────────────────────────────────
-// Auxiliars
-// ─────────────────────────────────────────────
 const LANGS = ['ca', 'es', 'eu', 'gl'];
 
 function calcHI(t, h) {
@@ -178,6 +169,7 @@ async function getWeather(lat, lon) {
     temp: j.main?.temp,
     hum: j.main?.humidity,
     feels: j.main?.feels_like,
+    wind: j.wind?.speed,
     tzOffset: j.timezone
   };
 }
@@ -188,7 +180,7 @@ function meetsUserThreshold(level, userThreshold) {
 }
 
 // ─────────────────────────────────────────────
-/** Helpers per texts */
+// Textos i notificacions
 // ─────────────────────────────────────────────
 function makeTitle(lang) {
   return ({
@@ -199,15 +191,13 @@ function makeTitle(lang) {
   }[lang]) ?? '🌡️ ThermoSafe – Avís INSST';
 }
 
-// etiqueta “índex de calor” per idioma
 const HI_LABEL = {
   ca: 'Índex de calor',
   es: 'Índice de calor',
-  eu: 'Bero‑indizea',
+  eu: 'Bero-indizea',
   gl: 'Índice de calor'
 };
 
-// ❗️IMPORTANT: el body NO afegeix municipi (va a data.place)
 function makeBody(lang, labelByLang, hi) {
   const label = labelByLang[lang] ?? labelByLang.ca;
   const hiStr = `${Math.round(hi)} °C`;
@@ -220,21 +210,16 @@ function makeBody(lang, labelByLang, hi) {
   return `${label}. ${HI_LABEL[lang] ?? HI_LABEL.ca}: ${hiStr}. ${tail}`;
 }
 
-// ─────────────────────────────────────────────
-/** PUSH: payload xulo (place només a DATA) */
-// ─────────────────────────────────────────────
 async function sendPush(token, lang, level, hi, labelByLang, place) {
   if (level === 0) return;
-
   const title = makeTitle(lang);
-  const body = makeBody(lang, labelByLang, hi); // ← sense municipi
-
+  const body = makeBody(lang, labelByLang, hi);
   const data = {
     url: 'https://thermosafe.app',
     level: String(level),
     hi: String(Math.round(hi)),
     lang,
-    place: place || '' // ← el SW el mostrarà com a prefix
+    place: place || ''
   };
 
   await admin.messaging().send({
@@ -249,8 +234,7 @@ async function sendPush(token, lang, level, hi, labelByLang, place) {
         renotify: true,
         requireInteraction: true,
         actions: [
-          { action: 'open', title: lang === 'es' ? 'Abrir ThermoSafe' : lang === 'eu' ? 'Ireki ThermoSafe' : lang === 'gl' ? 'Abrir ThermoSafe' : 'Obrir ThermoSafe' },
-          { action: 'tips', title: lang === 'es' ? 'Ver recom.' : lang === 'eu' ? 'Gomendioak' : lang === 'gl' ? 'Ver recom.' : 'Veure recom.' }
+          { action: 'open', title: 'Obrir ThermoSafe' }
         ],
         data
       },
@@ -262,7 +246,7 @@ async function sendPush(token, lang, level, hi, labelByLang, place) {
 }
 
 // ─────────────────────────────────────────────
-/** CRON programat (cada 30 min) */
+// 🌡️ CRON RISC PER CALOR
 // ─────────────────────────────────────────────
 exports.cronCheckHeatRisk = functions
   .region(REGION)
@@ -282,17 +266,12 @@ exports.cronCheckHeatRisk = functions
       tasks.push((async () => {
         try {
           const w = await getWeather(sub.lat, sub.lon);
-          const hi = w.temp < 18 ? w.temp :
-            (Math.abs(w.feels - w.temp) < 1 && w.hum > 60) ? calcHI(w.temp, w.hum) : w.feels;
-
+          const hi = w.temp < 18 ? w.temp : calcHI(w.temp, w.hum);
           const { level, ca, es, eu, gl } = levelFromINSST(hi);
-
           if (isQuietHours(now, w.tzOffset)) return;
           const today = yyyyMMdd(now, w.tzOffset);
           if (sub.lastNotifiedDay === today) return;
-
           if (!meetsUserThreshold(level, sub.threshold)) return;
-
           await sendPush(sub.token, lang, level, hi, { ca, es, eu, gl }, sub.place);
           await doc.ref.set({ lastNotified: now, lastNotifiedDay: today }, { merge: true });
         } catch (e) {
@@ -306,7 +285,119 @@ exports.cronCheckHeatRisk = functions
   });
 
 // ─────────────────────────────────────────────
-/** Endpoint de prova manual */
+// ❄️ CRON FRED EXTREM (criteris INSST)
+// ─────────────────────────────────────────────
+exports.cronCheckColdRisk = functions
+  .region(REGION)
+  .pubsub.schedule('every 30 minutes')
+  .timeZone('Europe/Madrid')
+  .onRun(async () => {
+    const now = Date.now();
+    const snap = await db.collection('subs').limit(1000).get();
+    if (snap.empty) return null;
+
+    const tasks = [];
+
+    for (const doc of snap.docs) {
+      const sub = doc.data();
+      const lang = LANGS.includes(sub.lang) ? sub.lang : 'ca';
+
+      tasks.push((async () => {
+        try {
+          const w = await getWeather(sub.lat, sub.lon);
+          if (isQuietHours(now, w.tzOffset)) return;
+
+          // Càlcul de sensació tèrmica pel vent (Wind Chill)
+          const windChill = 13.12 + 0.6215 * w.temp - 11.37 * Math.pow(w.wind, 0.16) + 0.3965 * w.temp * Math.pow(w.wind, 0.16);
+          const riskLevel =
+            windChill <= -10 ? 'extrem' :
+            windChill <= -5 ? 'alt' :
+            windChill <= 4 ? 'moderat' : null;
+
+          if (!riskLevel) return;
+
+          const body =
+            riskLevel === 'extrem' ? `⚠️ Fred extrem (${windChill.toFixed(1)} °C). Evita exposició prolongada.` :
+            riskLevel === 'alt' ? `Fred intens (${windChill.toFixed(1)} °C). Protegeix mans i cara.` :
+            `Fred moderat (${windChill.toFixed(1)} °C). Usa roba d’abric.`;
+
+          await admin.messaging().send({
+            token: sub.token,
+            notification: {
+              title: '❄️ Avisa ThermoSafe',
+              body
+            },
+            webpush: { fcmOptions: { link: 'https://thermosafe.app' } }
+          });
+
+          console.log(`[COLD] Notificació ${riskLevel} enviada a ${sub.place}`);
+        } catch (e) {
+          console.error('cron cold error', e);
+        }
+      })());
+    }
+
+    await Promise.allSettled(tasks);
+    return null;
+  });
+
+// ─────────────────────────────────────────────
+// 🌬️ CRON VENT FORT (criteris INSST/Beaufort)
+// ─────────────────────────────────────────────
+exports.cronCheckWindRisk = functions
+  .region(REGION)
+  .pubsub.schedule('every 30 minutes')
+  .timeZone('Europe/Madrid')
+  .onRun(async () => {
+    const now = Date.now();
+    const snap = await db.collection('subs').limit(1000).get();
+    if (snap.empty) return null;
+
+    const tasks = [];
+
+    for (const doc of snap.docs) {
+      const sub = doc.data();
+      const lang = LANGS.includes(sub.lang) ? sub.lang : 'ca';
+
+      tasks.push((async () => {
+        try {
+          const w = await getWeather(sub.lat, sub.lon);
+          if (isQuietHours(now, w.tzOffset)) return;
+
+          let risk = null;
+          if (w.wind >= 90) risk = 'extrem';
+          else if (w.wind >= 70) risk = 'alt';
+          else if (w.wind >= 50) risk = 'moderat';
+
+          if (!risk) return;
+
+          const body =
+            risk === 'extrem' ? `🌪️ Vent extrem (${w.wind} km/h). Evita treballs a l’exterior.` :
+            risk === 'alt' ? `💨 Vent molt fort (${w.wind} km/h). Retira objectes solts.` :
+            `🌬️ Vent fort (${w.wind} km/h). Precaució a l’exterior.`;
+
+          await admin.messaging().send({
+            token: sub.token,
+            notification: {
+              title: '🌬️ Avisa ThermoSafe',
+              body
+            },
+            webpush: { fcmOptions: { link: 'https://thermosafe.app' } }
+          });
+
+          console.log(`[WIND] Notificació ${risk} enviada a ${sub.place}`);
+        } catch (e) {
+          console.error('cron wind error', e);
+        }
+      })());
+    }
+
+    await Promise.allSettled(tasks);
+    return null;
+  });
+
+// ─────────────────────────────────────────────
+// Endpoint de prova manual
 // ─────────────────────────────────────────────
 exports.sendTestNotification = functions
   .region(REGION)
@@ -316,16 +407,21 @@ exports.sendTestNotification = functions
     if (req.method === 'OPTIONS') return res.status(204).end();
 
     const token = String(req.query.token || '');
-    const lang  = String((req.query.lang || 'ca')).slice(0, 2);
-    const hi    = Number(req.query.hi || 33);
-    const place = String(req.query.place || '');
+    const type = String(req.query.type || 'heat');
 
     if (!token) return res.status(400).json({ ok: false, error: 'missing token' });
 
     try {
-      const { level, ca, es, eu, gl } = levelFromINSST(hi);
-      await sendPush(token, ['ca','es','eu','gl'].includes(lang) ? lang : 'ca', level, hi, { ca, es, eu, gl }, place);
-      res.json({ ok: true, level });
+      let title = 'ThermoSafe';
+      let body = '';
+      if (type === 'heat') body = '🔥 Risc per calor alt';
+      else if (type === 'cold') body = '❄️ Fred extrem';
+      else if (type === 'wind') body = '🌬️ Vent fort';
+      await admin.messaging().send({
+        token,
+        notification: { title, body }
+      });
+      res.json({ ok: true });
     } catch (e) {
       console.error(e);
       res.status(500).json({ ok: false, error: e?.message || 'send error' });

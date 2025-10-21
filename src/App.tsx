@@ -338,9 +338,13 @@ async function maybeNotifyWind(kmh: number) {
 }
 // --- ESTAT PUSH ---
 const [pushEnabled, setPushEnabled] = useState(false);
-const [pushToken,   setPushToken]   = useState<string | null>(null);
-const [busy,        setBusy]        = useState(false);
-const [msg,         setMsg]         = useState<string | null>(null);
+const [pushToken, setPushToken] = useState<string | null>(null);
+const [busy, setBusy] = useState(false);
+
+// Missatges independents
+const [msgHeat, setMsgHeat] = useState<string | null>(null);
+const [msgCold, setMsgCold] = useState<string | null>(null);
+const [msgWind, setMsgWind] = useState<string | null>(null);
 
   /** Desa la preferència de l’usuari */
 useEffect(() => {
@@ -349,30 +353,29 @@ useEffect(() => {
 
 async function onTogglePush(next: boolean) {
   setBusy(true);
-  setMsg(null);
+  setMsgHeat(null);
   try {
     if (next) {
       const token = await enableRiskAlerts({ threshold: "moderate" });
       setPushEnabled(true);
       setPushToken(token);
-      setMsg(t('push.enabled'));
+      setMsgHeat(t('push.enabled'));
     } else {
       await disableRiskAlerts(pushToken);
       setPushEnabled(false);
       setPushToken(null);
-      setMsg(t('push.disabled'));
+      setMsgHeat(t('push.disabled'));
     }
-    
   } catch (e: any) {
     console.error(e);
     const key =
       e?.message?.includes('permís') ? 'permissionDenied' :
-      e?.message?.includes('GPS')     ? 'noGps' :
-      e?.message?.includes('Push')    ? 'notSupported' :
-      e?.message?.includes('token')   ? 'noToken' :
+      e?.message?.includes('GPS') ? 'noGps' :
+      e?.message?.includes('Push') ? 'notSupported' :
+      e?.message?.includes('token') ? 'noToken' :
       null;
-  
-    setMsg(key ? t(`push.errors.${key}`) : (e?.message ?? t('error_generic')));
+
+    setMsgHeat(key ? t(`push.errors.${key}`) : (e?.message ?? t('error_generic')));
   }
 }
 
@@ -754,58 +757,73 @@ return (
   <button onClick={() => locate(false)}>{t("gps_button")}</button>
 </div>
   
-    {/* 🔔 AVISOS PER RISC DE CALOR */}
-<div style={{ margin: '0.5rem 0 1rem 0', display: 'flex', alignItems: 'center', gap: 8 }}>
-  <input
-    type="checkbox"
-    id="ts-push"
-    checked={pushEnabled}
-    disabled={false}
-    onChange={async (e) => {
-      const next = e.target.checked;
-      console.log(`[DEBUG] Avisos per CALOR ${next ? 'activats' : 'desactivats'}`);
-      await onTogglePush(next);
-      setMsg(next ? t('push.enabled') : t('push.disabled'));
-    }}
-  />
-  <label htmlFor="ts-push">{t('push.label')}</label>
+   {/* 🔔 AVISOS PER RISC DE CALOR */}
+<div style={{ margin: '0.5rem 0 1rem 0', display: 'flex', flexDirection: 'column', gap: 4 }}>
+  <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+    <input
+      type="checkbox"
+      id="ts-push"
+      checked={pushEnabled}
+      disabled={false}
+      onChange={async (e) => {
+        const next = e.target.checked;
+        console.log(`[DEBUG] Avisos per CALOR ${next ? 'activats' : 'desactivats'}`);
+        setPushEnabled(next);
+        localStorage.setItem('pushEnabled', JSON.stringify(next));
+        setMsgHeat(next ? t('push.enabled') : t('push.disabled'));
+        await onTogglePush(next);
+      }}
+    />
+    <label htmlFor="ts-push">{t('push.label')}</label>
+  </div>
+
+  {msgHeat && (
+    <p style={{ marginLeft: '1.5rem', fontSize: '.9rem', color: '#ccc' }}>{msgHeat}</p>
+  )}
 </div>
 
-{msg && <p style={{ marginTop: '-0.5rem', fontSize: '.9rem' }}>{msg}</p>}
-
 {/* ❄️ AVISOS PER FRED EXTREM */}
-<div style={{ margin: '0.25rem 0 1rem 0', display: 'flex', alignItems: 'center', gap: 8 }}>
-  <input
-    type="checkbox"
-    id="cold-alert"
-    checked={enableColdAlerts}
-    onChange={(e) => {
-      const next = e.target.checked;
-      setEnableColdAlerts(next);
-      localStorage.setItem('enableColdAlerts', JSON.stringify(next));
-      console.log(`[DEBUG] Avisos per FRED ${next ? 'activats' : 'desactivats'}`);
-      setMsg(next ? t('push.enabled') : t('push.disabled'));
-    }}
-  />
-  <label htmlFor="cold-alert">{t('cold_alert_label')}</label>
+<div style={{ margin: '0.25rem 0 1rem 0', display: 'flex', flexDirection: 'column', gap: 4 }}>
+  <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+    <input
+      type="checkbox"
+      id="cold-alert"
+      checked={enableColdAlerts}
+      onChange={(e) => {
+        const next = e.target.checked;
+        setEnableColdAlerts(next);
+        localStorage.setItem('enableColdAlerts', JSON.stringify(next));
+        console.log(`[DEBUG] Avisos per FRED ${next ? 'activats' : 'desactivats'}`);
+        setMsgCold(next ? t('push.enabled') : t('push.disabled'));
+      }}
+    />
+    <label htmlFor="cold-alert">{t('cold_alert_label')}</label>
+  </div>
+
+  {msgCold && <p className="notif-msg">{msgCold}</p>}
 </div>
 
 {/* 🌬️ AVISOS PER VENT FORT */}
-<div style={{ margin: '0.25rem 0 1rem 0', display: 'flex', alignItems: 'center', gap: 8 }}>
-  <input
-    type="checkbox"
-    id="wind-alert"
-    checked={enableWindAlerts}
-    onChange={(e) => {
-      const next = e.target.checked;
-      setEnableWindAlerts(next);
-      localStorage.setItem('enableWindAlerts', JSON.stringify(next));
-      console.log(`[DEBUG] Avisos per VENT ${next ? 'activats' : 'desactivats'}`);
-      setMsg(next ? t('push.enabled') : t('push.disabled'));
-    }}
-  />
-  <label htmlFor="wind-alert">{t('wind_alert_label')}</label>
+<div style={{ margin: '0.25rem 0 1rem 0', display: 'flex', flexDirection: 'column', gap: 4 }}>
+  <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+    <input
+      type="checkbox"
+      id="wind-alert"
+      checked={enableWindAlerts}
+      onChange={(e) => {
+        const next = e.target.checked;
+        setEnableWindAlerts(next);
+        localStorage.setItem('enableWindAlerts', JSON.stringify(next));
+        console.log(`[DEBUG] Avisos per VENT ${next ? 'activats' : 'desactivats'}`);
+        setMsgWind(next ? t('push.enabled') : t('push.disabled'));
+      }}
+    />
+    <label htmlFor="wind-alert">{t('wind_alert_label')}</label>
+  </div>
+
+  {msgWind && <p className="notif-msg">{msgWind}</p>}
 </div>
+    
   
       {/* ⚠️ ALERTES */}
       {hi !== null && hi >= 18 && getHeatRisk(hi).isHigh && (

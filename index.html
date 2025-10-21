@@ -1,47 +1,53 @@
 <!DOCTYPE html>
 <html lang="ca">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="theme-color" content="#28C8B0" />
-    <meta name="background-color" content="#ffffff" />
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#28C8B0" />
+    <meta name="background-color" content="#ffffff" />
 
-    <!-- 🔹 META SEO -->
-    <title>ThermoSafe – Risc tèrmic actual ☀️❄️💨</title>
-    <meta
-      name="description"
-      content="Consulta el risc per calor, fred o vent amb dades reals i notificacions automàtiques. Usa la teva ubicació o introdueix una ciutat."
-    />
-    <meta
-      name="keywords"
-      content="ThermoSafe, risc tèrmic, calor, fred, vent, avisos, meteorologia, salut laboral, estrès tèrmic, prevenció de riscos"
-    />
-    <meta name="author" content="Esteve Montalvo" />
+    <!-- 🔹 META SEO -->
+    <title>ThermoSafe – Risc tèrmic actual ☀️❄️💨</title>
+    <meta
+      name="description"
+      content="Consulta el risc per calor, fred o vent amb dades reals i notificacions automàtiques. Usa la teva ubicació o introdueix una ciutat."
+    />
+    <meta
+      name="keywords"
+      content="ThermoSafe, risc tèrmic, calor, fred, vent, avisos, meteorologia, salut laboral, estrès tèrmic, prevenció de riscos"
+    />
+    <meta name="author" content="Esteve Montalvo" />
 
-    <!-- 🔹 OPEN GRAPH (per Google, Facebook, WhatsApp, etc.) -->
-    <meta property="og:title" content="ThermoSafe – Risc tèrmic actual ☀️❄️💨" />
-    <meta property="og:description" content="Consulta el risc per calor, fred o vent amb dades reals i notificacions automàtiques." />
-    <meta property="og:image" content="icons/icon-512.png" />
-    <meta property="og:url" content="https://thermosafe.app" />
-    <meta property="og:type" content="website" />
+    <!-- 🔹 OPEN GRAPH (per Google, Facebook, WhatsApp, etc.) -->
+    <meta property="og:title" content="ThermoSafe – Risc tèrmic actual ☀️❄️💨" />
+    <meta property="og:description" content="Consulta el risc per calor, fred o vent amb dades reals i notificacions automàtiques." />
+    <meta property="og:image" content="icons/icon-512.png" />
+    <meta property="og:url" content="https://thermosafe.app" />
+    <meta property="og:type" content="website" />
 
-    <!-- 🔹 ICONES -->
-    <link rel="icon" type="image/png" href="favicon.ico" />
-    <link rel="apple-touch-icon" href="icons/icon-512.png" />
+    <!-- 🔹 TWITTER CARD (per X / Twitter) -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="ThermoSafe – Risc tèrmic actual ☀️❄️💨" />
+    <meta name="twitter:description" content="Consulta el risc per calor, fred o vent amb dades reals i notificacions automàtiques." />
+    <meta name="twitter:image" content="https://thermosafe.app/icons/icon-512.png" />
+    <meta name="twitter:site" content="@ThermoSafeApp" />
 
-    <!-- 🔹 MANIFEST PWA -->
-    <link rel="manifest" href="manifest.webmanifest" />
-  </head>
+    <!-- 🔹 ICONES -->
+    <link rel="icon" type="image/png" href="favicon.ico" />
+    <link rel="apple-touch-icon" href="icons/icon-512.png" />
 
-  <body>
-    <noscript>Necessites JavaScript per utilitzar aquesta aplicació.</noscript>
-    <div id="root"></div>
+    <!-- 🔹 MANIFEST PWA -->
+    <link rel="manifest" href="/manifest.json" />
 
-    <!-- 🔹 APP -->
-    <script type="module" src="/src/main.tsx"></script>
-    <body>
+    <!-- 🔹 ROBOTS / SEO -->
+    <meta name="robots" content="index, follow" />
+  </head>
+
+  <body>
     <noscript>Necessites JavaScript per utilitzar aquesta aplicació.</noscript>
     <div id="root"></div>
+
+    <!-- 🔹 APP -->
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>
