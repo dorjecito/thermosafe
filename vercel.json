@@ -3,11 +3,27 @@
   "buildCommand": "npm run build",
   "outputDirectory": "dist",
   "framework": "vite",
+  "functions": {
+    "api/openuv.ts": {
+      "maxDuration": 10,
+      "memory": 128
+    }
+  },
   "rewrites": [
     { "source": "/manifest.webmanifest", "destination": "/manifest.webmanifest" },
     { "source": "/sw.js", "destination": "/sw.js" },
-    //{ "source": "/registerSW.js", "destination": "/registerSW.js" },
     { "source": "/assets/(.*)", "destination": "/assets/$1" },
     { "source": "/(.*)", "destination": "/index.html" }
+  ],
+  "routes": [
+    {
+      "src": "/api/openuv",
+      "dest": "/api/openuv.ts",
+      "headers": {
+        "Access-Control-Allow-Origin": "*",
+        "Access-Control-Allow-Methods": "GET,OPTIONS",
+        "Access-Control-Allow-Headers": "Content-Type, Authorization"
+      }
+    }
   ]
 }
