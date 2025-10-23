@@ -906,8 +906,11 @@ return (
       borderRadius: "6px",
       padding: "0.5rem 0.75rem",
       marginTop: "0.5rem",
-      textAlign: "center",
-      fontWeight: "bold"
+      textAlign: "left",
+      fontWeight: "bold",
+      display: "flex",            // 🔹 activa flexbox
+      flexDirection: "column",    // 🔹 col·loca el text en columna
+      alignItems: "flex-start"    // 🔹 alinea tot el contingut a l’esquerra
     }}
   >
     💨 {t("wind_risk")}:{" "}
