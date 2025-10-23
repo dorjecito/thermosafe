@@ -1,28 +1,30 @@
 export async function getUVI(lat: number, lon: number): Promise<number | null> {
-    try {
-      // Si estem en desenvolupament, simulem el valor UVI per evitar errors locals
-      if (import.meta.env.DEV) {
-        console.log("🧪 Mode local: simulant UVI 4.5");
-        return 4.5;
-      }
-  
-      // Si és producció, fem la crida directa a OpenUV
-      const response = await fetch(`https://api.openuv.io/api/v1/uv?lat=${lat}&lng=${lon}`, {
-        headers: {
-          "x-access-token": import.meta.env.VITE_OPENUV_KEY || "LA_TEVA_API_KEY"
-        }
-      });
-  
-      if (!response.ok) {
-        throw new Error("Failed to fetch UVI");
-      }
-  
-      const data = await response.json();
-      console.log("🌞 UVI data:", data);
-      return data.result?.uv ?? null;
-  
-    } catch (error) {
-      console.error("❌ Error fetching UVI:", error);
-      return null;
-    }
+  try {
+    // 💻 Mode local (durant desenvolupament)
+    if (import.meta.env.DEV) {
+      console.log("🧪 Mode local: simulant UVI 4.5");
+      return 4.5;
+    }
+
+    // 🌍 En producció: crida al backend de Vercel (no directament a OpenUV)
+    const response = await fetch(`/api/openuv?lat=${lat}&lon=${lon}`);
+
+    console.log("📡 Resposta backend /api/openuv:", response.status);
+
+    if (!response.ok) {
+      const text = await response.text();
+      console.error("❌ Error resposta /api/openuv:", text);
+      throw new Error(`Error backend: ${response.status}`);
+    }
+
+    const data = await response.json();
+    console.log("🌞 Dades UVI rebudes:", data);
+
+    // 🔁 Retorna el valor UV si existeix
+    return data?.result?.uv ?? null;
+
+  } catch (error) {
+    console.error("💥 Error obtenint UVI:", error);
+    return null;
   }
+}
