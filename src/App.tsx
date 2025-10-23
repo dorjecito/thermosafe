@@ -93,6 +93,15 @@ function getWindRisk(kmh: number): WindRisk {
   return 'none';
 }
 
+// 🌬️ Colors per risc de vent
+const WIND_COLORS = {
+  none: "#4CAF50",        // Verd: cap risc
+  breezy: "#8BC34A",      // Verd clar: baix
+  moderate: "#FFC107",    // Groc: moderat
+  strong: "#FF9800",      // Taronja: fort
+  very_strong: "#F44336"  // Vermell: molt fort
+} as const;
+
 
 // ── Llindars per INSST (adaptats)
 const TH = { MODERATE: 27, HIGH: 32, VERY_HIGH: 41 } as const;
@@ -890,16 +899,26 @@ return (
 
 {/* 💨 VENT */}
 {wind !== null && (
-  <>
-    <p>{t('wind')}: {wind.toFixed(1)} km/h</p>
-    <p>
-      {t('wind_risk')}: {
-        windRisk === 'none' || (windRisk as string) === 'no_risk'
-          ? t('no_risk_wind')
-          : t('wind_' + windRisk)
-      }
-    </p>
-  </>
+  <div
+    style={{
+      backgroundColor: WIND_COLORS[windRisk as keyof typeof WIND_COLORS],
+      color: windRisk === "none" ? "#000" : "#fff",
+      borderRadius: "6px",
+      padding: "0.5rem 0.75rem",
+      marginTop: "0.5rem",
+      textAlign: "center",
+      fontWeight: "bold"
+    }}
+  >
+    💨 {t("wind_risk")}:{" "}
+    {windRisk === "none"
+      ? t("no_risk_wind")
+      : t("wind_" + windRisk)}
+    <br />
+    <small>
+      {t("wind")}: {wind.toFixed(1)} km/h
+    </small>
+  </div>
 )}
 
 {/* ❄️ FRED */}
