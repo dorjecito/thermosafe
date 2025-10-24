@@ -87,17 +87,39 @@
   "current_risk": "Riesgo actual",
   "no_risk": "Sin riesgo",
   "no_risk_overall": "Sin riesgo detectado",
-  "no_specific_risk": "sin riesgo específico",
+  "no_specific_risk": "Sin riesgo específico",
   "high": "Alto",
   "extreme": "Extremo",
   "moderate": "Moderado",
 
   "notify": {
     "coldTitle": "Aviso ThermoSafe",
-    "coldBody": "Riesgo por frío {{risk}}. Temperatura {{temp}}°C",
+    "coldBody": "Riesgo por frío {{risk}}. Temperatura: {{temp}}°C",
     "heatTitle": "Aviso ThermoSafe",
-    "heatBody": "Riesgo por calor {{risk}}. Sensación {{hi}}°C",
+    "heatBody": "Riesgo por calor {{risk}}. Sensación térmica: {{hi}}°C",
     "windTitle": "Aviso ThermoSafe",
-    "windBody": "Riesgo por viento {{risk}}. Velocidad {{wind}} km/h"
-  }
+    "windBody": "Riesgo por viento {{risk}}. Velocidad del viento: {{speed}} km/h"
+  },
+
+  "heatRisk": {
+  "moderate": "moderado",
+  "high": "alto",
+  "extreme": "extremo"
+},
+
+"coldRisk": {
+  "lleu": "leve",
+  "moderada": "moderado",
+  "alt": "alto",
+  "molt alt": "muy alto",
+  "extrem": "extremo"
+},
+
+"windRisk": {
+  "none": "sin riesgo",
+  "breezy": "suave",
+  "moderate": "moderado",
+  "strong": "fuerte",
+  "very_strong": "muy fuerte"
+}
 }

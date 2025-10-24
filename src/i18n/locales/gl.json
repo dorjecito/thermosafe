@@ -1,12 +1,12 @@
 {
   "t": "ThermoSafe – Risco actual ☀️❄️💨",
 
-  "ph": "Introduce unha cidade ou poboación",
+  "ph": "Introduce unha cidade ou vila",
   "btn": "🔍 Consultar",
   "gps": "📍 Usar localización actual",
 
   "title": "ThermoSafe – Risco actual ☀️❄️💨",
-  "search_placeholder": "Introduce unha cidade ou poboación",
+  "search_placeholder": "Introduce unha cidade ou vila",
   "search_button": "🔍 Consultar",
   "gps_button": "📍 Usar localización actual",
 
@@ -17,7 +17,7 @@
   "irradiance": "☀️ Irradiancia solar",
   "uvi": "🔆 Índice UV",
   "wind": "💨 Velocidade do vento",
-   "wind_risk": "Risco por vento",
+  "wind_risk": "Risco por vento",
   "no_risk_wind": "Sen risco",
   "wind_breezy": "Baixo",
   "wind_moderate": "Moderado",
@@ -27,13 +27,13 @@
   "take_extreme_caution": "Evita actividades ao aire libre",
   "wind_alert_label": "Recibir avisos por vento forte",
 
-  "highIrradianceWarning": "⚠️ Irradiancia solar moi alta. Evita a exposición directa.",
+  "highIrradianceWarning": "⚠️ Irradiancia solar moi alta. Evita a exposición directa ao sol.",
   "highUVIWarning": "⚠️ Índice UV moi alto. Protección solar imprescindible!",
-  "irradianceTips": "👒 Usa sombreiro, lentes de sol e crema solar. Evita o esforzo físico ao sol.",
+  "irradianceTips": "👒 Usa sombreiro, lentes de sol e crema solar. Evita o exercicio ao sol.",
 
   "risk_level": "Risco por calor:",
-  "alert_extreme": "🚨 RISCO EXTREMO por calor! Deteña a actividade e hidrátese de inmediato!",
-  "alertRisk": "⚠️ Risco alto ou extremo por calor!",
+  "alert_extreme": "🚨 RISCO EXTREMO DE CALOR! Detén a actividade e hidrátate de inmediato.",
+  "alertRisk": "⚠️ Risco alto ou extremo por calor.",
 
   "loading": "Cargando datos meteorolóxicos...",
   "errorGPS": "Non se puido obter a temperatura por GPS.",
@@ -50,7 +50,7 @@
     "enabled": "Avisos activados. Recibirás notificacións cando o risco sexa moderado ou superior.",
     "disabled": "Avisos desactivados.",
     "errors": {
-      "permissionDenied": "Negaches o permiso de notificacións.",
+      "permissionDenied": "Denegaches o permiso de notificacións.",
       "noGps": "Non se puido obter a localización (GPS).",
       "notSupported": "O navegador non admite Web Push.",
       "noToken": "Non se puido obter o token de notificacións."
@@ -67,14 +67,12 @@
   "weather_desc.light rain": "Chuvia lixeira",
   "weather_desc.moderate rain": "Chuvia moderada",
   "weather_desc.heavy rain": "Chuvia intensa",
-  "weather_desc.very heavy rain": "Chuvia moi intensa",
   "weather_desc.light snow": "Neve lixeira",
   "weather_desc.snow": "Neve",
   "weather_desc.heavy snow": "Neve intensa",
   "weather_desc.thunderstorm": "Treboada",
-  "weather_desc.mist": "Néboa",
-  "weather_desc.fog": "Brétema",
-  "weather_desc.tornado": "Tornado",
+  "weather_desc.mist": "Brétema lixeira",
+  "weather_desc.fog": "Néboa",
   "weather_desc.unknown": "Descrición non dispoñible",
 
   "official_links": "Ligazóns oficiais",
@@ -87,17 +85,39 @@
   "current_risk": "Risco actual",
   "no_risk": "Sen risco",
   "no_risk_overall": "Sen risco detectado",
-  "no_specific_risk": "sen risco específico",
+  "no_specific_risk": "Sen risco específico",
   "high": "Alto",
   "extreme": "Extremo",
   "moderate": "Moderado",
 
   "notify": {
     "coldTitle": "Aviso ThermoSafe",
-    "coldBody": "Risco por frío {{risk}}. Temperatura {{temp}}°C",
+    "coldBody": "Risco por frío {{risk}}. Temperatura: {{temp}}°C",
     "heatTitle": "Aviso ThermoSafe",
-    "heatBody": "Risco por calor {{risk}}. Sensación {{hi}}°C",
+    "heatBody": "Risco por calor {{risk}}. Sensación térmica: {{hi}}°C",
     "windTitle": "Aviso ThermoSafe",
-    "windBody": "Risco por vento {{risk}}. Velocidade {{wind}} km/h"
-  }
+    "windBody": "Risco por vento {{risk}}. Velocidade do vento: {{speed}} km/h"
+  },
+
+ "heatRisk": {
+  "moderate": "ertaina",
+  "high": "altua",
+  "extreme": "oso altua"
+},
+
+"coldRisk": {
+  "lleu": "arin",
+  "moderada": "ertaina",
+  "alt": "altua",
+  "molt alt": "oso altua",
+  "extrem": "muturrekoa"
+},
+
+"windRisk": {
+  "none": "arriskurik gabe",
+  "breezy": "arin haizea",
+  "moderate": "ertaina",
+  "strong": "indartsua",
+  "very_strong": "oso indartsua"
+}
 }

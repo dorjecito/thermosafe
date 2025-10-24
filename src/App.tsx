@@ -267,7 +267,7 @@ function getColdRisk(temp: number, windKmh: number): string {
 
 
 /* === [COLD] notifier amb cooldown (multilingüe i sense error await) === */
-const COLD_ALERT_MIN_INTERVAL_MIN = 120; // 2 hores
+const COLD_ALERT_MIN_INTERVAL_MIN = 0.17; // 2 hores
 
 async function maybeNotifyCold(temp: number, windKmh: number) {
   // Evita fer res si no està activat l’avís
@@ -279,31 +279,32 @@ async function maybeNotifyCold(temp: number, windKmh: number) {
   // Cooldown per evitar notificacions massa seguides
   const now = Date.now();
   const lastColdAlert = Number(localStorage.getItem('lastColdAlert')) || 0;
-  const cooldownMs = COLD_ALERT_MIN_INTERVAL_MIN * 60 * 1000;
+  if (now - lastColdAlert < COLD_ALERT_MIN_INTERVAL_MIN * 60 * 1000) return;
 
-  if (now - lastColdAlert < cooldownMs) {
-    console.log(`[DEBUG] Notificació fred no enviada (cooldown actiu, ${COLD_ALERT_MIN_INTERVAL_MIN} min)`);
-    return;
-  }
+  // 🔹 Envia notificació si hi ha qualsevol risc (lleu, moderada, alt, molt alt o extrem)
+  if (
+    coldRiskValue === "lleu" ||
+    coldRiskValue === "moderada" ||
+    coldRiskValue === "alt" ||
+    coldRiskValue === "molt alt" ||
+    coldRiskValue === "extrem"
+  ) {
+    const title = `❄️ ${t('notify.coldTitle')}`;
+const msg = t('notify.coldBody', {
+  risk: t(`coldRisk.${coldRiskValue}`),
+  temp: temp.toFixed(1)
+});
 
-  // Mostra notificació si risc alt o extrem
-  if (['alt', 'extrem'].includes(coldRiskValue)) {
-    const title = "❄️ " + t('notify.coldTitle');
-    const body = t('notify.coldBody', { 
-      risk: t(coldRiskValue === 'alt' ? 'high' : 'extreme'),
-      temp: temp.toFixed(1)
-    });
-
-    console.log('[DEBUG] Enviant notificació fred:', title, body);
-    await showBrowserNotification(title, body); // ✅ Ara dins funció async
-    localStorage.setItem('lastColdAlert', String(Date.now()));
+showBrowserNotification(title, msg);
+localStorage.setItem('lastColdAlert', now.toString());
+console.log(`[DEBUG] Notificació fred enviada (${coldRiskValue})`);
   } else {
-    console.log('[DEBUG] Condicions sense risc per fred: notificació no enviada');
+    console.log("[DEBUG] Condicions sense risc per fred: notificació no enviada");
   }
 }
 
  /* === [WIND] notifier amb cooldown (versió definitiva) === */
-const WIND_ALERT_MIN_INTERVAL_MIN = 120; // 2 hores
+const WIND_ALERT_MIN_INTERVAL_MIN = 0.17; // 2 hores
 
 async function maybeNotifyWind(kmh: number) {
   // No fem res si no està activat l'avís
@@ -327,19 +328,18 @@ async function maybeNotifyWind(kmh: number) {
   const crossedUp = rank[risk] > rank[prev] && rank[risk] >= rank['moderate'];
 
   // --- Mostra notificació si risc puja i no hi ha cooldown ---
-  if (crossedUp && cooldownOk) {
-    const title = `🌬️ Avisa ThermoSafe`;
-    const body = `Risc ${windRiskLabel(risk)}: vent a ${kmh.toFixed(1)} km/h`;
-    console.log(`[DEBUG] Enviant notificació per vent (${risk})`);
-    await showBrowserNotification(title, body);
-    localStorage.setItem('lastWindAlertAt', String(Date.now()));
-  } else {
-    if (!cooldownOk) {
-      console.log(`[DEBUG] Notificació vent no enviada (cooldown actiu, ${WIND_ALERT_MIN_INTERVAL_MIN} min)`);
-    } else {
-      console.log(`[DEBUG] Sense canvi rellevant de risc de vent (${risk})`);
-    }
-  }
+if (crossedUp && cooldownOk) {
+  const title = `💨 ${t('notify.windTitle')}`;
+  const msg = t('notify.windBody', {
+  risk: t('windRisk.' + risk),
+  speed: kmh.toFixed(1)
+});
+
+  showBrowserNotification(title, msg);
+  localStorage.setItem('lastWindAlertAt', Date.now().toString());
+  localStorage.setItem('lastWindRisk', risk);
+  console.log(`[DEBUG] Notificació de vent enviada (${risk})`);
+}
 
   if (prev !== risk) {
     localStorage.setItem('lastWindRisk', risk);
@@ -655,11 +655,13 @@ setColdRisk(coldRisk); // actualitza estat final
 // 🧊 Comprova risc de fred i mostra notificació si escau
 maybeNotifyCold(coldFeels, wind || 0);
 
-// Si vols afegir notificació push per fred:
 if (enableColdAlerts && (coldRisk === 'alt' || coldRisk === 'extrem')) {
   showBrowserNotification(
     `❄️ ${t('notify.coldTitle')}`,
-    `${t('notify.coldBody', { risk: coldRisk, temp: coldFeels })}`
+    t('notify.coldBody', {
+      risk: t(`coldRisk.${coldRisk}`),
+      temp: coldFeels.toFixed(1)
+    })
   );
 }
 
@@ -690,26 +692,39 @@ useEffect(() => {
 (window as any).maybeNotifyCold = maybeNotifyCold;
 (window as any).maybeNotifyHeat = maybeNotifyHeat;
 
-/* === [HEAT] notifier amb llindars INSSST === */
+/* === [HEAT] notifier amb llindars INSST === */
 async function maybeNotifyHeat(hi: number | null) {
   if (!pushEnabled || hi == null) return;
 
   // Llindars segons INSST (Risc per calor)
   if (hi >= 27 && hi < 32) {
-    showBrowserNotification("🌤️ " + t('notify.heatTitle'), 
-      t('notify.heatBody', { risk: t('moderate'), hi }));
-    console.log("[DEBUG] Notificació calor enviada (risc moderat)");
-  } 
-  else if (hi >= 32 && hi < 41) {
-    showBrowserNotification("🔥 " + t('notify.heatTitle'), 
-      t('notify.heatBody', { risk: t('high'), hi }));
-    console.log("[DEBUG] Notificació calor enviada (risc alt)");
-  } 
-  else if (hi >= 41) {
-    showBrowserNotification("🚨 " + t('notify.heatTitle'), 
-      t('notify.heatBody', { risk: t('extreme'), hi }));
-    console.log("[DEBUG] Notificació calor enviada (risc molt alt)");
-  }
+  showBrowserNotification(
+    `🌤️ ${t('notify.heatTitle')}`,
+    t('notify.heatBody', {
+      risk: t('heatRisk.moderate'),
+      hi: hi.toFixed(1)
+    })
+  );
+  console.log("[DEBUG] Notificació calor enviada (risc moderat)");
+} else if (hi >= 32 && hi < 41) {
+  showBrowserNotification(
+    `🔥 ${t('notify.heatTitle')}`,
+    t('notify.heatBody', {
+      risk: t('heatRisk.high'),
+      hi: hi.toFixed(1)
+    })
+  );
+  console.log("[DEBUG] Notificació calor enviada (risc alt)");
+} else if (hi >= 41) {
+  showBrowserNotification(
+    `🚨 ${t('notify.heatTitle')}`,
+    t('notify.heatBody', {
+      risk: t('heatRisk.extreme'),
+      hi: hi.toFixed(1)
+    })
+  );
+  console.log("[DEBUG] Notificació calor enviada (risc molt alt)");
+}
 }
 
 return (

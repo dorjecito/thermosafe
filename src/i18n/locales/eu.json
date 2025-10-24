@@ -1,14 +1,14 @@
 {
-  "t": "ThermoSafe – Uneko arriskua ☀️❄️💨",
+  "t": "ThermoSafe – Egungo arriskua ☀️❄️💨",
 
   "ph": "Idatzi hiri edo herri bat",
   "btn": "🔍 Kontsultatu",
-  "gps": "📍 Uneko kokapena erabili",
+  "gps": "📍 Erabili kokapen aktu ala",
 
-  "title": "ThermoSafe – Uneko arriskua ☀️❄️💨",
+  "title": "ThermoSafe – Egungo arriskua ☀️❄️💨",
   "search_placeholder": "Idatzi hiri edo herri bat",
   "search_button": "🔍 Kontsultatu",
-  "gps_button": "📍 Uneko kokapena erabili",
+  "gps_button": "📍 Erabili kokapen aktu ala",
 
   "location": "📍 Kokapena",
   "humidity": "💧 Hezetasuna",
@@ -17,44 +17,43 @@
   "irradiance": "☀️ Eguzki-erradiazioa",
   "uvi": "🔆 UV indizea",
   "wind": "💨 Haizearen abiadura",
-
   "wind_risk": "Haize arriskua",
   "no_risk_wind": "Arriskurik ez",
   "wind_breezy": "Baxua",
-  "wind_moderate": "Moderatua",
-  "wind_strong": "Indartsua",
-  "wind_very_strong": "Oso indartsua",
-  "caution_outdoors": "Kontuz kanpoan",
-  "take_extreme_caution": "Saihestu aire libreko jarduerak",
-  "wind_alert_label": "Jaso abisuak haize handiarengatik",
+  "wind_moderate": "Ertaina",
+  "wind_strong": "Handia",
+  "wind_very_strong": "Oso handia",
+  "caution_outdoors": "Kontuz kanpoan jardutean",
+  "take_extreme_caution": "Saihestu jarduera fisikoak kanpoan",
+  "wind_alert_label": "Jaso haize gogorraren abisuak",
 
-  "highIrradianceWarning": "⚠️ Eguzki-erradiazio oso handia. Saihestu eguzki zuzena.",
-  "highUVIWarning": "⚠️ UV indize oso altua. Babes eguzkitakoa ezinbestekoa!",
-  "irradianceTips": "👒 Erabili txanoa, betaurrekoak eta eguzkitako krema. Saihestu eguzkitan jarduera fisikoak.",
+  "highIrradianceWarning": "⚠️ Eguzki-erradiazio oso handia. Saihestu eguzki-esposizio zuzena.",
+  "highUVIWarning": "⚠️ UV indize oso altua. Babestu eguzkitik!",
+  "irradianceTips": "👒 Erabili txanoa, eguzkitako betaurrekoak eta krema. Ez egin jarduera fisikorik eguzkitan.",
 
-  "risk_level": "Bero-arriskua:",
-  "alert_extreme": "🚨 BERO ARRISKU HANDIA! Gelditu jarduera eta hidratatu berehala.",
+  "risk_level": "Bero arriskua:",
+  "alert_extreme": "🚨 BEROAREN ARRISKU LARRIA! Gelditu eta hidratatu berehala.",
   "alertRisk": "⚠️ Bero arrisku handia edo oso handia.",
 
   "loading": "Datu meteorologikoak kargatzen...",
-  "errorGPS": "Ezin izan da GPS bidez tenperatura lortu.",
-  "errorCity": "Ez da aurkitu kokapen hori.",
+  "errorGPS": "Ezin izan da tenperatura lortu GPS bidez.",
+  "errorCity": "Ez da daturik aurkitu kokapen horretarako.",
   "errorNoLocation": "Ezin izan da kokapena lortu.",
 
   "recommendations_title": "Gomendioak:",
-  "solarProtection": "🔆 Eguzkitik babesa",
-  "irradianceLegend": "☀️ Erradiazio mailak: <8 ertaina · ≥8 handia",
+  "solarProtection": "🔆 Eguzki-babesa",
+  "irradianceLegend": "☀️ Erradiazio mailak: <8 ertaina · ≥8 altua",
   "toggleLegend": "ℹ️ Erakutsi/Ezkutatu UV eskala",
 
   "push": {
-    "label": "Jaso abisuak bero-arriskua ≥ ertaina denean",
+    "label": "Jaso abisuak bero arriskua ≥ ertaina denean",
     "enabled": "Abisuak aktibatuta. Jasoko dituzu arriskua ertaina edo handiagoa denean.",
     "disabled": "Abisuak desaktibatuta.",
     "errors": {
-      "permissionDenied": "Baztertu duzu jakinarazpenen baimena.",
+      "permissionDenied": "Ezetz esan diozu jakinarazpen-baimenari.",
       "noGps": "Ezin izan da kokapena (GPS) lortu.",
       "notSupported": "Nabigatzaileak ez du Web Push onartzen.",
-      "noToken": "Ezin izan da jakinarazpenen token-a lortu."
+      "noToken": "Ezin izan da jakinarazpen tokena lortu."
     }
   },
 
@@ -63,42 +62,63 @@
   "weather_desc.clear sky": "Zeru garbia",
   "weather_desc.few clouds": "Hodei gutxi",
   "weather_desc.scattered clouds": "Hodei sakabanatuak",
-  "weather_desc.broken clouds": "Zerua partzialki estalia",
-  "weather_desc.overcast clouds": "Zerua estalia",
+  "weather_desc.broken clouds": "Zeru erdi hodeitsua",
+  "weather_desc.overcast clouds": "Zeru estalia",
   "weather_desc.light rain": "Euri arina",
   "weather_desc.moderate rain": "Euri ertaina",
   "weather_desc.heavy rain": "Euri handia",
-  "weather_desc.very heavy rain": "Euri oso handia",
   "weather_desc.light snow": "Elur arina",
   "weather_desc.snow": "Elurra",
   "weather_desc.heavy snow": "Elur handia",
   "weather_desc.thunderstorm": "Ekaitza",
   "weather_desc.mist": "Laino arina",
   "weather_desc.fog": "Lainoa",
-  "weather_desc.tornado": "Tornadoa",
-  "weather_desc.unknown": "Deskribapena ez dago erabilgarri",
+  "weather_desc.unknown": "Deskribapena ez dago eskuragarri",
 
-  "official_links": "Lotura ofizialak",
+  "official_links": "Esteka ofizialak",
   "link_insst": "INSST: estres termikoa eta beroa",
   "link_aemet": "AEMET: osasuna eta meteorologia",
 
-  "cold_alert_label": "Jaso abisuak hotz osoagatik",
+  "cold_alert_label": "Jaso hotz osoaren abisuak",
   "cold_risk": "Hotz arriskua",
   "heat_risk": "Bero arriskua",
-  "current_risk": "Uneko arriskua",
+  "current_risk": "Egungo arriskua",
   "no_risk": "Arriskurik ez",
-  "no_risk_overall": "Ez da arriskurik hauteman",
-  "no_specific_risk": "arrisku espezifikorik gabe",
+  "no_risk_overall": "Ez da arriskurik detektatu",
+  "no_specific_risk": "Ez dago arrisku zehatzik",
   "high": "Altua",
-  "extreme": "Muturrekoa",
-  "moderate": "Moderatua",
+  "extreme": "Oso altua",
+  "moderate": "Ertaina",
 
   "notify": {
     "coldTitle": "ThermoSafe abisua",
-    "coldBody": "Hotz-arriskua {{risk}}. Tenperatura {{temp}}°C",
+    "coldBody": "Hotz {{risk}} arriskua. Tenperatura: {{temp}}°C",
     "heatTitle": "ThermoSafe abisua",
-    "heatBody": "Bero-arriskua {{risk}}. Sentsazioa {{hi}}°C",
+    "heatBody": "Bero {{risk}} arriskua. Sentsazio termikoa: {{hi}}°C",
     "windTitle": "ThermoSafe abisua",
-    "windBody": "Haize-arriskua {{risk}}. Abiadura {{wind}} km/h"
-  }
+    "windBody": "Haize {{risk}} arriskua. Abiadura: {{speed}} km/h"
+  },
+
+  "heatRisk": {
+  "moderate": "ertaina",
+  "high": "altua",
+  "extreme": "oso altua"
+},
+
+"coldRisk": {
+  "lleu": "arin",
+  "moderada": "ertaina",
+  "alt": "altua",
+  "molt alt": "oso altua",
+  "extrem": "muturrekoa"
+},
+
+"windRisk": {
+  "none": "arriskurik gabe",
+  "breezy": "arin haizea",
+  "moderate": "ertaina",
+  "strong": "indartsua",
+  "very_strong": "oso indartsua"
+}
+
 }
