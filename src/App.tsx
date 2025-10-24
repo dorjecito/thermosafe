@@ -267,7 +267,7 @@ function getColdRisk(temp: number, windKmh: number): string {
 
 
 /* === [COLD] notifier amb cooldown (multilingüe i sense error await) === */
-const COLD_ALERT_MIN_INTERVAL_MIN = 0.17; // 2 hores
+const COLD_ALERT_MIN_INTERVAL_MIN = 120; // 2 hores
 
 async function maybeNotifyCold(temp: number, windKmh: number) {
   // Evita fer res si no està activat l’avís
@@ -304,7 +304,7 @@ console.log(`[DEBUG] Notificació fred enviada (${coldRiskValue})`);
 }
 
  /* === [WIND] notifier amb cooldown (versió definitiva) === */
-const WIND_ALERT_MIN_INTERVAL_MIN = 0.17; // 2 hores
+const WIND_ALERT_MIN_INTERVAL_MIN = 120; // 2 hores
 
 async function maybeNotifyWind(kmh: number) {
   // No fem res si no està activat l'avís
