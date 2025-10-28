@@ -58,22 +58,31 @@
   },
 
   "sky_state": "Estado do ceo",
-
-  "weather_desc.clear sky": "Ceo despexado",
-  "weather_desc.few clouds": "Poucas nubes",
-  "weather_desc.scattered clouds": "Nubes dispersas",
-  "weather_desc.broken clouds": "Ceo parcialmente nublado",
-  "weather_desc.overcast clouds": "Ceo cuberto",
-  "weather_desc.light rain": "Chuvia lixeira",
-  "weather_desc.moderate rain": "Chuvia moderada",
-  "weather_desc.heavy rain": "Chuvia intensa",
-  "weather_desc.light snow": "Neve lixeira",
-  "weather_desc.snow": "Neve",
-  "weather_desc.heavy snow": "Neve intensa",
-  "weather_desc.thunderstorm": "Treboada",
-  "weather_desc.mist": "Brétema lixeira",
-  "weather_desc.fog": "Néboa",
-  "weather_desc.unknown": "Descrición non dispoñible",
+  "weather_desc": {
+    "clear sky": "Ceo despexado",
+    "few clouds": "Poucas nubes",
+    "scattered clouds": "Nubes dispersas",
+    "broken clouds": "Nubrado",
+    "overcast clouds": "Moi nubrado",
+    "light rain": "Chuvia lixeira",
+    "moderate rain": "Chuvia moderada",
+    "heavy intensity rain": "Chuvia intensa",
+    "drizzle": "Orballo",
+    "shower rain": "Chuvasco",
+    "thunderstorm": "Treboada",
+    "thunderstorm with rain": "Treboada con chuvia",
+    "snow": "Neve",
+    "light snow": "Neve lixeira",
+    "mist": "Néboa",
+    "fog": "Brétema",
+    "smoke": "Fume",
+    "haze": "Po ou poalla",
+    "dust": "Po",
+    "sand": "Area",
+    "ash": "Cinza volcánica",
+    "squall": "Refachos de vento",
+    "tornado": "Tornado"
+  },
 
   "official_links": "Ligazóns oficiais",
   "link_insst": "INSST: estrés térmico e calor",
@@ -99,25 +108,27 @@
     "windBody": "Risco por vento {{risk}}. Velocidade do vento: {{speed}} km/h"
   },
 
- "heatRisk": {
-  "moderate": "ertaina",
-  "high": "altua",
-  "extreme": "oso altua"
-},
+  "heatRisk": {
+    "moderate": "moderado",
+    "high": "alto",
+    "extreme": "extremo"
+  },
 
-"coldRisk": {
-  "lleu": "arin",
-  "moderada": "ertaina",
-  "alt": "altua",
-  "molt alt": "oso altua",
-  "extrem": "muturrekoa"
-},
+  "coldRisk": {
+    "lleu": "leve",
+    "moderada": "moderado",
+    "alt": "alto",
+    "molt alt": "moi alto",
+    "extrem": "extremo"
+  },
 
-"windRisk": {
-  "none": "arriskurik gabe",
-  "breezy": "arin haizea",
-  "moderate": "ertaina",
-  "strong": "indartsua",
-  "very_strong": "oso indartsua"
-}
+  "windRisk": {
+    "none": "sen risco",
+    "breezy": "brando",
+    "moderate": "moderado",
+    "strong": "forte",
+    "very_strong": "moi forte"
+  },
+
+  "last_update": "Actualizado hai uns minutos"
 }

@@ -31,6 +31,28 @@
    import LanguageSwitcher from './components/LanguageSwitcher';
    import { enableRiskAlerts, disableRiskAlerts } from "./push/subscribe";
 
+   // Tipus per a la resposta d'OpenWeather
+interface WeatherResponse {
+  main: {
+    temp: number;
+    feels_like: number;
+    humidity: number;
+  };
+  wind: {
+    speed: number;
+  };
+  coord: {
+    lat: number;
+    lon: number;
+  };
+  name: string;
+  // ☁️ Afegit per a l’estat del cel
+  weather?: {
+    description: string;
+    icon: string;
+  }[];
+}
+
 
 /* ──────── constants & helpers ──────── */
 const calcHI = (t: number, h: number) => {
@@ -230,6 +252,22 @@ const windRiskLabel = (r: WindRisk) =>
   const [day, setDay] = useState(isDaytime());
   const [coldRisk, setColdRisk] = useState<'cap' | 'lleu' | 'moderat' | 'alt' | 'molt alt' | 'extrem'>('cap');
 
+// ☁️ Estat del cel
+const [sky, setSky] = useState<string>('');
+const [icon, setIcon] = useState<string>('');
+
+// 🛰️ Font de les dades (GPS o cerca manual)
+const [dataSource, setDataSource] = useState<'gps' | 'search' | null>(null);
+
+// Font actual (GPS o cerca manual)
+const [currentSource, setCurrentSource] = useState<'gps' | 'search'>('gps');
+const [showSource, setShowSource] = useState(false);
+
+// Token per ignorar respostes antigues que arribin tard
+const latestRequestRef = useRef<{ source: 'gps' | 'search'; id: number }>({ source: 'gps', id: 0 });
+
+const [windDirection, setWindDirection] = useState<string>('');
+
   // 🔔 Demana permís de notificació automàticament
 useEffect(() => {
   if (typeof window !== "undefined" && "Notification" in window) {
@@ -246,6 +284,20 @@ useEffect(() => {
 useEffect(() => {
   // ... el teu codi actual de càrrega de dades
 }, [city]); 
+
+// 🔁 Mostra "Font: ..." uns segons quan canvia l'origen de dades
+useEffect(() => {
+  if (!currentSource) return;
+
+  console.log(`[DEBUG] Font canviada: ${currentSource}`);
+  setShowSource(true);
+
+  const timer = setTimeout(() => {
+    setShowSource(false);
+  }, 5000); // amaga el missatge després de 5 segons
+
+  return () => clearTimeout(timer);
+}, [currentSource]);
 
 /* === [COLD] risc per fred (amb efecte wind-chill) === */
 function getColdRisk(temp: number, windKmh: number): string {
@@ -405,9 +457,23 @@ const fetchWeather = async (cityName: string) => {
       if (data.cod === 200) {
     // Desa les dades meteorològiques
     setTemp(data.main.temp);
-    setHi(data.main.feels_like);
-    setHum(data.main.humidity);
-    setWind(data.wind.speed * 3.6); // passa de m/s a km/h
+setHi(data.main.feels_like);
+setHum(data.main.humidity);
+setWind(data.wind.speed * 3.6); // passa de m/s a km/h
+
+console.log("[DEBUG] Dades del vent:", data.wind);
+// 🌬️ Direcció del vent
+if (data.wind && typeof data.wind.deg === 'number') {
+  const deg = data.wind.deg;
+  const directions = ['N', 'NE', 'E', 'SE', 'S', 'SO', 'O', 'NO'];
+  const windDir = directions[Math.round(deg / 45) % 8];
+  setWindDirection(windDir);
+  console.log(`[DEBUG] Direcció del vent: ${deg}° → ${windDir}`);
+} else {
+  console.warn('[DEBUG] No s’ha trobat "data.wind.deg" al JSON:', data.wind);
+}
+
+    setCurrentSource('search');
   
     // Format correcte del nom de ciutat
     let cityFormatted = data.name.trim();
@@ -473,105 +539,120 @@ useEffect(() => {
 }, [wind, pushEnabled, t]);
 
 
-  /* helpers */
-  const updateAll = async (
-    tp: number,
-    hm: number,
-    fl: number,
-    lat: number,
-    lon: number,
-    nm: string,
-    silent = false,
-  ) => {
-    const today = new Date().toISOString().split('T')[0];
-    const ir = await fetchSolarIrr(lat, lon, today);
-    const uv = await getUVI(lat, lon);
+/* 🌍 HELPER: Actualitza dades generals sense sobreescriure el cel */
+const updateAll = async (
+  tp: number,
+  hm: number,
+  fl: number,
+  lat: number,
+  lon: number,
+  nm: string,
+  silent = false,
+) => {
 
-    setTemp(tp);
-    setHum(hm);
-    setIrr(ir);
-    setUvi(uv);
-    setCity(nm);
+  // 🎨 Colors per consola
+  const colorReset = "\x1b[0m";
+  const colorYellow = "\x1b[33m";
+  const colorGreen = "\x1b[32m";
+  const colorCyan = "\x1b[36m";
 
-    /*  🔒 CLAMP HEAT-INDEX  🔒
-   • Si la temperatura real (tp) és <18 °C ➜ no hi ha risc de calor,
-     usem directament tp com a “hi”.
-   • Només amb ≥18 °C apliquem la fórmula (si hi ha prou humitat). */
-const hiVal =
-  tp < 18
-    ? tp
-    : Math.abs(fl - tp) < 1 && hm > 60
-        ? calcHI(tp, hm)
-        : fl;
+  // ⛔ Evita sobreescriure l’estat del cel si la crida antiga (GPS) arriba després d’una cerca manual
+  if (currentSource === 'search' && nm !== city) {
+    console.log(
+      `${colorYellow}⚠️ [updateAll] Ignorat: resposta antiga de GPS (actualment: ${city}, rebut: ${nm})${colorReset}`
+    );
+    return;
+  }
 
-    setHi(hiVal);
-sendIfAtLeastModerate(hiVal);
-    if (!silent) setErr('');
-  };
+  // 🟢 Log quan s'executa correctament
+  console.log(
+    `${colorGreen}📡 [updateAll] Executat per ${currentSource.toUpperCase()} → ciutat: ${nm} (${lat?.toFixed(
+      2
+    )}, ${lon?.toFixed(2)})${colorReset}`
+  );
 
- /* 📍 LOCALITZACIÓ ACTUAL */
+  const today = new Date().toISOString().split('T')[0];
+  const ir = await fetchSolarIrr(lat, lon, today);
+  const uv = await getUVI(lat, lon);
+
+  setTemp(tp);
+  setHum(hm);
+  setIrr(ir);
+  setUvi(uv);
+  setCity(nm);
+
+  /* 🌡️ CLAMP HEAT-INDEX */
+  const hiVal =
+    tp < 18
+      ? tp
+      : Math.abs(fl - tp) < 1 && hm > 60
+      ? calcHI(tp, hm)
+      : fl;
+
+  setHi(hiVal);
+  sendIfAtLeastModerate(hiVal);
+  if (!silent) setErr('');
+
+  console.log(`${colorCyan}✅ [updateAll] Dades actualitzades correctament per ${nm}${colorReset}`);
+};
+
+/* 📍 LOCALITZACIÓ ACTUAL */
 const locate = (silent = false) => {
   navigator.geolocation.getCurrentPosition(
     async (p) => {
       try {
         const { latitude: lat, longitude: lon } = p.coords;
-        setInput(""); // ✅ buida el camp de cerca quan tornes a la ubicació actual
+        setInput(''); // ✅ buida el camp de cerca quan tornes a la ubicació actual
 
-        // Obté dades del temps
+        // 🌦️ Obté dades del temps per coordenades
         const d = await getWeatherByCoords(lat, lon);
         setData(d);
+        setCurrentSource('gps'); 
 
-        // Nom de ciutat
+        // 🏙️ Nom de ciutat
         const nm = (await getLocationNameFromCoords(lat, lon)) || d.name;
 
-       // 🌬️ Vent
-const wKmh = Math.round(d.wind.speed * 3.6 * 10) / 10;
-setWind(wKmh);
+        // 🌤️ Estat del cel
+        setSky(d.weather?.[0]?.description || '');
+        setIcon(d.weather?.[0]?.icon || '');
+        console.log(`🟦 [SKY - locate] Actualitzat a: ${d.weather?.[0]?.description} (${nm})`);
 
-// ❄️ Wind-chill (si fa fred i vent)
-let effForCold = d.main.temp; // per defecte, la real
-if (d.main.temp <= 10 && wKmh >= 5) {
-  const wcVal =
-    13.12 +
-    0.6215 * d.main.temp -
-    11.37 * Math.pow(wKmh, 0.16) +
-    0.3965 * d.main.temp * Math.pow(wKmh, 0.16);
-  const wcRound = Math.round(wcVal * 10) / 10;
-  setWc(wcRound);
-  effForCold = wcRound; // fem servir la “T efectiva” pel risc de fred
-} else {
-  setWc(null);
-}
+        // 🌬️ Vent
+        const wKmh = Math.round(d.wind.speed * 3.6 * 10) / 10;
+        setWind(wKmh);
 
-// 🧊 Risc de fred amb la T efectiva
-getColdRisk(effForCold, wind || 0);
-const lastAt = Number(localStorage.getItem('lastColdAlertAt') || '0');
-const cooldownOk = (Date.now() - lastAt) / 60000 >= COLD_ALERT_MIN_INTERVAL_MIN;
+        // ❄️ Wind-chill (si fa fred i vent)
+        let effForCold = d.main.temp; // per defecte, la real
+        if (d.main.temp <= 10 && wKmh >= 5) {
+          const wcVal =
+            13.12 +
+            0.6215 * d.main.temp -
+            11.37 * Math.pow(wKmh, 0.16) +
+            0.3965 * d.main.temp * Math.pow(wKmh, 0.16);
+          const wcRound = Math.round(wcVal * 10) / 10;
+          setWc(wcRound);
+          effForCold = wcRound;
+        } else {
+          setWc(null);
+        }
 
-// ✅ Calcula i desa el risc de fred amb la temperatura efectiva
-setColdRisk(getColdRisk(effForCold, wind || 0) as ColdRisk);
+        // 🧊 Calcula i desa el risc de fred
+        const coldRisk = getColdRisk(effForCold, wKmh);
+        setColdRisk(coldRisk as ColdRisk);
 
-// 🔄 Actualitza estat general
-await updateAll(d.main.temp, d.main.humidity, d.main.feels_like, lat, lon, nm);
-setRealCity(nm);
-setCity(nm);
-setErr('');
+        // ✅ Mostra notificació si puja el risc
+        await maybeNotifyCold(effForCold, wKmh);
 
-await maybeNotifyHeat(hi);
-await maybeNotifyCold(temp ?? 0, wind ?? 0);
-await maybeNotifyWind(wind ?? 0);
-
-
-        // Actualitza estat general
+        // 🔄 Actualitza estat general
         await updateAll(d.main.temp, d.main.humidity, d.main.feels_like, lat, lon, nm);
         setRealCity(nm);
         setCity(nm);
+        setDataSource('gps'); // 🛰️ Indica que la font és GPS
         setErr('');
 
+        // 🔥 Altres notificacions
         await maybeNotifyHeat(d.main.feels_like);
-        await maybeNotifyCold(d.main.temp, wKmh);
         await maybeNotifyWind(wKmh);
-
 
       } catch (e) {
         if (!silent) setErr(t('errorGPS'));
@@ -581,7 +662,7 @@ await maybeNotifyWind(wind ?? 0);
       if (!silent) setErr(t('errorGPS'));
     }
   );
-}
+};
 
 /* 🔍 CERCA PER CIUTAT */
 const search = async () => {
@@ -589,90 +670,60 @@ const search = async () => {
     setErr(t('errorCity'));
     return;
   }
+
   try {
+    // 🌦️ Obté dades del temps per ciutat
     const d = await getWeatherByCity(input);
     setData(d);
 
+    // 🏙️ Coordenades i nom de ciutat
     const { lat, lon } = (d as any).coord || { lat: null, lon: null };
-const nm = (await getLocationNameFromCoords(lat, lon)) || d.name;
-setRealCity(nm);
-setCity(nm);
+    const nm = (await getLocationNameFromCoords(lat, lon)) || d.name;
+    setRealCity(nm);
+    setCity(nm);
+    setDataSource('search'); // 🔍 Indica que la font és una cerca manual
+    setInput('');
 
-// Vent
-const wKmh = Math.round(d.wind.speed * 3.6 * 10) / 10;
-setWind(wKmh);
-maybeNotifyWind(wKmh);
+    // 🌤️ Actualitza estat del cel
+    setSky(d.weather?.[0]?.description || '');
+    setIcon(d.weather?.[0]?.icon || '');
+    console.log(`🟩 [SKY - search] Actualitzat a: ${d.weather?.[0]?.description} (${nm || input})`);
 
-// Calcula efecte del vent (wind-chill)
-let effForCold = d.main.temp;
+    // 🌬️ Vent
+    const wKmh = Math.round(d.wind.speed * 3.6 * 10) / 10;
+    setWind(wKmh);
 
-if (d.main.temp <= 10 && wKmh >= 5) {
-  effForCold =
-    13.12 +
-    0.6215 * d.main.temp -
-    11.37 * Math.pow(wKmh, 0.16) +
-    0.3965 * d.main.temp * Math.pow(wKmh, 0.16);
-}
-
-// Calcula risc de fred amb temperatura efectiva
-const cold = getColdRisk(effForCold, wKmh);
-setColdRisk(cold as ColdRisk);
-
-// Mostra notificació si puja el risc de fred
-await maybeNotifyCold(effForCold, wKmh);
-
-
-
-
-    // Wind-chill
+    // ❄️ Wind-chill (si fa fred i vent)
+    let effForCold = d.main.temp; // per defecte, la real
     if (d.main.temp <= 10 && wKmh >= 5) {
       const wcVal =
         13.12 +
         0.6215 * d.main.temp -
         11.37 * Math.pow(wKmh, 0.16) +
         0.3965 * d.main.temp * Math.pow(wKmh, 0.16);
-      setWc(Math.round(wcVal * 10) / 10);
+      const wcRound = Math.round(wcVal * 10) / 10;
+      setWc(wcRound);
+      effForCold = wcRound;
     } else {
       setWc(null);
     }
 
-  // === FRED ===
-const coldTemp = d.main.temp; // temperatura real
-const coldFeels = wc ? d.main.feels_like : d.main.temp; // usa el windchill si existeix
+    // 🧊 Calcula i desa el risc de fred amb la temperatura efectiva
+    const coldRisk = getColdRisk(effForCold, wKmh);
+    setColdRisk(coldRisk as ColdRisk);
 
-let coldRisk: ColdRisk = 'cap';
+    // ✅ Mostra notificació si puja el risc
+    await maybeNotifyCold(effForCold, wKmh);
 
-// Només calcula risc per fred si la temperatura real és baixa
-if (coldTemp <= 10) {
-  coldRisk = getColdRisk(coldFeels, wind || 0) as ColdRisk;
-  console.log(`[DEBUG] Risc per fred: ${coldRisk} (T° ${coldFeels}°C)`);
-} else {
-  coldRisk = 'cap';
-}
-
-setColdRisk(coldRisk); // actualitza estat final
-
-// 🧊 Comprova risc de fred i mostra notificació si escau
-maybeNotifyCold(coldFeels, wind || 0);
-
-if (enableColdAlerts && (coldRisk === 'alt' || coldRisk === 'extrem')) {
-  showBrowserNotification(
-    `❄️ ${t('notify.coldTitle')}`,
-    t('notify.coldBody', {
-      risk: t(`coldRisk.${coldRisk}`),
-      temp: coldFeels.toFixed(1)
-    })
-  );
-}
-
-
-    // Actualitza estat general
+    // 🔄 Actualitza estat general
     await updateAll(d.main.temp, d.main.humidity, d.main.feels_like, lat, lon, nm);
-    setRealCity(nm);
-    setCity(nm);
-    setInput('');
     setErr('');
-  } catch {
+
+    // 🔥 Altres notificacions
+    await maybeNotifyHeat(d.main.feels_like);
+    await maybeNotifyWind(wKmh);
+
+  } catch (e) {
     setErr(t('errorCity'));
   }
 };
@@ -725,6 +776,16 @@ async function maybeNotifyHeat(hi: number | null) {
   );
   console.log("[DEBUG] Notificació calor enviada (risc molt alt)");
 }
+}
+
+function formatLastUpdate(timestamp: number): string {
+  const now = Date.now() / 1000;
+  const diff = Math.floor(now - timestamp);
+
+  if (diff < 60) return `${diff} s`;
+  if (diff < 3600) return `${Math.floor(diff / 60)} min`;
+  const h = Math.floor(diff / 3600);
+  return `${h} h`;
 }
 
 return (
@@ -874,25 +935,36 @@ return (
   </p>
 )}
 
-      {/* 🌡️ DADES */}
-      {temp !== null && hum !== null ? (
-        <>
-          {city && (
-            <LocationDisplay
-              city={city}
-              realCity={realCity}
-              lang={i18n.language === 'es' ? 'es' : 'ca'}
-              label={t('location')}
-            />
-          )}
-  
-          <p>{t('humidity')}: {hum}%</p>
-  
-          <p>
-            {t('feels_like')}: <strong>{temp >= 20 ? hi : (wc ?? hi)} °C</strong>
-          </p>
-  
-          <p>{t('measured_temp')}: {temp} °C</p>
+     {/* 📊 DADES */}
+{temp !== null && hum !== null && (
+  <>
+    {city && (
+      <LocationDisplay
+        city={city}
+        realCity={realCity}
+        lang={i18n.language === 'es' ? 'es' : 'ca'}
+        label={t('location')}
+      />
+    )}
+
+   {/* 🛰️ Font de dades (GPS o Cerca manual) */}
+{showSource && currentSource === 'gps' && (
+  <p style={{ fontSize: '0.9em', color: '#6cf', transition: 'opacity 0.5s' }}>
+    🛰️ Font: GPS
+  </p>
+)}
+{showSource && currentSource === 'search' && (
+  <p style={{ fontSize: '0.9em', color: '#ffb347', transition: 'opacity 0.5s' }}>
+    🔍 Font: Cerca manual
+  </p>
+)}
+
+    {/* 🌡️ Dades meteorològiques */}
+<p>{t("humidity")}: {hum !== null ? `${hum}%` : "–"}</p>
+<p>{t("feels_like")}: <strong>{hi !== null ? `${hi.toFixed(1)}°C` : "–"}</strong></p>
+<p>{t("measured_temp")}: {temp !== null ? `${temp.toFixed(1)}°C` : "–"}</p>
+  </>
+)}
   
           {/* 🌤️ ESTAT DEL CEL */}
           {data?.weather?.[0] && (
@@ -910,6 +982,14 @@ return (
               </span>
             </div>
           )}
+
+                    {/* 🕒 Marca temporal d'actualització */}
+
+                    {data?.dt ? (
+            <p className="update-time">
+              🕒 {t('last_update')}: {formatLastUpdate(data.dt)}
+            </p>
+          ) : null}
 
 
 {/* 💨 VENT */}
@@ -934,8 +1014,9 @@ return (
       : t("wind_" + windRisk)}
     <br />
     <small>
-      {t("wind")}: {wind.toFixed(1)} km/h
-    </small>
+  {t("wind")}: {wind?.toFixed(1)} km/h
+  {windDirection && ` (${windDirection})`}
+</small>
   </div>
 )}
 
@@ -1020,19 +1101,16 @@ return (
   </ul>
 </div>
   
-          {/* 📐 ESCALA UV */}
-          {['ca', 'es', 'eu', 'gl'].includes(i18n.language) && (
-            <UVScale lang={i18n.language as any} />
-          )}
-        </>
-      ) : (
-        !err && <p>{t('loading')}</p>
-      )}
-  
-      {err && <p style={{ color: 'red' }}>{err}</p>}
-    </div>
-  );
-  
+         {/* 🟩 ESCALA-UV */}
+{['ca', 'es', 'eu', 'gl'].includes(i18n.language) ? (
+  <UVScale lang={i18n.language as any} />
+) : (
+  !err && <p>{t('loading')}</p>
+)}
+
+{err && <p style={{ color: 'red' }}>{err}</p>}
+</div>
+);
 }
 
 /* === Mostrar notificació al navegador === */

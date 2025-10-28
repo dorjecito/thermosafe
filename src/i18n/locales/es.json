@@ -58,24 +58,31 @@
   },
 
   "sky_state": "Estado del cielo",
-
-  "weather_desc.clear sky": "Cielo despejado",
-  "weather_desc.few clouds": "Pocas nubes",
-  "weather_desc.scattered clouds": "Nubes dispersas",
-  "weather_desc.broken clouds": "Cielo parcialmente nublado",
-  "weather_desc.overcast clouds": "Cielo cubierto",
-  "weather_desc.light rain": "Lluvia ligera",
-  "weather_desc.moderate rain": "Lluvia moderada",
-  "weather_desc.heavy rain": "Lluvia intensa",
-  "weather_desc.very heavy rain": "Lluvia muy intensa",
-  "weather_desc.light snow": "Nieve ligera",
-  "weather_desc.snow": "Nieve",
-  "weather_desc.heavy snow": "Nieve intensa",
-  "weather_desc.thunderstorm": "Tormenta",
-  "weather_desc.mist": "Niebla ligera",
-  "weather_desc.fog": "Niebla",
-  "weather_desc.tornado": "Tornado",
-  "weather_desc.unknown": "Descripción no disponible",
+  "weather_desc": {
+    "clear sky": "Cielo despejado",
+    "few clouds": "Pocas nubes",
+    "scattered clouds": "Nubes dispersas",
+    "broken clouds": "Nublado",
+    "overcast clouds": "Muy nublado",
+    "light rain": "Lluvia ligera",
+    "moderate rain": "Lluvia moderada",
+    "heavy intensity rain": "Lluvia intensa",
+    "drizzle": "Llovizna",
+    "shower rain": "Chubasco",
+    "thunderstorm": "Tormenta",
+    "thunderstorm with rain": "Tormenta con lluvia",
+    "snow": "Nieve",
+    "light snow": "Nieve ligera",
+    "mist": "Niebla",
+    "fog": "Niebla",
+    "smoke": "Humo",
+    "haze": "Neblina",
+    "dust": "Polvo",
+    "sand": "Arena",
+    "ash": "Ceniza volcánica",
+    "squall": "Ráfagas de viento",
+    "tornado": "Tornado"
+  },
 
   "official_links": "Enlaces oficiales",
   "link_insst": "INSST: estrés térmico y calor",
@@ -102,24 +109,26 @@
   },
 
   "heatRisk": {
-  "moderate": "moderado",
-  "high": "alto",
-  "extreme": "extremo"
-},
+    "moderate": "moderado",
+    "high": "alto",
+    "extreme": "extremo"
+  },
 
-"coldRisk": {
-  "lleu": "leve",
-  "moderada": "moderado",
-  "alt": "alto",
-  "molt alt": "muy alto",
-  "extrem": "extremo"
-},
+  "coldRisk": {
+    "lleu": "leve",
+    "moderada": "moderado",
+    "alt": "alto",
+    "molt alt": "muy alto",
+    "extrem": "extremo"
+  },
 
-"windRisk": {
-  "none": "sin riesgo",
-  "breezy": "suave",
-  "moderate": "moderado",
-  "strong": "fuerte",
-  "very_strong": "muy fuerte"
-}
+  "windRisk": {
+    "none": "sin riesgo",
+    "breezy": "suave",
+    "moderate": "moderado",
+    "strong": "fuerte",
+    "very_strong": "muy fuerte"
+  },
+
+  "last_update": "Actualizado hace"
 }

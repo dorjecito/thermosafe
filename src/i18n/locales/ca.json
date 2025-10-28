@@ -58,24 +58,31 @@
   },
 
   "sky_state": "Estat del cel",
-
-  "weather_desc.clear sky": "Cel clar",
-  "weather_desc.few clouds": "Pocs núvols",
-  "weather_desc.scattered clouds": "Núvols dispersos",
-  "weather_desc.broken clouds": "Cel parcialment ennuvolat",
-  "weather_desc.overcast clouds": "Cel cobert",
-  "weather_desc.light rain": "Pluja feble",
-  "weather_desc.moderate rain": "Pluja moderada",
-  "weather_desc.heavy rain": "Pluja intensa",
-  "weather_desc.very heavy rain": "Pluja molt intensa",
-  "weather_desc.light snow": "Neu feble",
-  "weather_desc.snow": "Neu",
-  "weather_desc.heavy snow": "Neu intensa",
-  "weather_desc.thunderstorm": "Tempesta",
-  "weather_desc.mist": "Boirina lleugera",
-  "weather_desc.fog": "Boira",
-  "weather_desc.tornado": "Tornado",
-  "weather_desc.unknown": "Descripció no disponible",
+  "weather_desc": {
+    "clear sky": "Cel clar",
+    "few clouds": "Pocs núvols",
+    "scattered clouds": "Núvols dispersos",
+    "broken clouds": "Cel parcialment ennuvolat",
+    "overcast clouds": "Cel cobert",
+    "light rain": "Pluja feble",
+    "moderate rain": "Pluja moderada",
+    "heavy intensity rain": "Pluja intensa",
+    "drizzle": "Plugim",
+    "shower rain": "Ruixat",
+    "thunderstorm": "Tempesta",
+    "thunderstorm with rain": "Tempesta amb pluja",
+    "snow": "Neu",
+    "light snow": "Neu feble",
+    "mist": "Boirina",
+    "fog": "Boira",
+    "smoke": "Fum",
+    "haze": "Calitja",
+    "dust": "Pols",
+    "sand": "Sorra",
+    "ash": "Cendra volcànica",
+    "squall": "Ratxes de vent",
+    "tornado": "Tornado"
+  },
 
   "official_links": "Enllaços oficials",
   "link_insst": "INSST: estrès tèrmic i calor",
@@ -93,36 +100,35 @@
   "moderate": "Moderat",
 
   "notify": {
-  "coldTitle": "Avís ThermoSafe",
-  "coldBody": "Risc per fred {{risk}}. Temperatura: {{temp}}°C",
+    "coldTitle": "Avís ThermoSafe",
+    "coldBody": "Risc per fred {{risk}}. Temperatura: {{temp}}°C",
+    "heatTitle": "Avís ThermoSafe",
+    "heatBody": "Risc per calor {{risk}}. Sensació tèrmica: {{hi}}°C",
+    "windTitle": "Avís ThermoSafe",
+    "windBody": "Risc per vent {{risk}}. Velocitat del vent: {{speed}} km/h"
+  },
 
-  "heatTitle": "Avís ThermoSafe",
-  "heatBody": "Risc per calor {{risk}}. Sensació tèrmica: {{hi}}°C",
+  "heatRisk": {
+    "moderate": "moderat",
+    "high": "alt",
+    "extreme": "extrem"
+  },
 
-  "windTitle": "Avís ThermoSafe",
-  "windBody": "Risc per vent {{risk}}. Velocitat del vent: {{speed}} km/h"
-},
+  "coldRisk": {
+    "lleu": "lleu",
+    "moderada": "moderada",
+    "alt": "alt",
+    "molt alt": "molt alt",
+    "extrem": "extrem"
+  },
 
-"heatRisk": {
-  "moderate": "moderat",
-  "high": "alt",
-  "extreme": "extrem"
-},
+  "windRisk": {
+    "none": "cap risc",
+    "breezy": "suau",
+    "moderate": "moderat",
+    "strong": "fort",
+    "very_strong": "molt fort"
+  },
 
-"coldRisk": {
-  "lleu": "lleu",
-  "moderada": "moderada",
-  "alt": "alt",
-  "molt alt": "molt alt",
-  "extrem": "extrem"
-},
-
-"windRisk": {
-  "none": "cap risc",
-  "breezy": "suau",
-  "moderate": "moderat",
-  "strong": "fort",
-  "very_strong": "molt fort"
-}
-  
+  "last_update": "Actualitzat fa"
 }

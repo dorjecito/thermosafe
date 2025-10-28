@@ -17,7 +17,7 @@
   "irradiance": "☀️ Eguzki-erradiazioa",
   "uvi": "🔆 UV indizea",
   "wind": "💨 Haizearen abiadura",
-  "wind_risk": "Haize arriskua",
+  "wind_risk": "Haizearen arriskua",
   "no_risk_wind": "Arriskurik ez",
   "wind_breezy": "Baxua",
   "wind_moderate": "Ertaina",
@@ -58,28 +58,37 @@
   },
 
   "sky_state": "Zeruko egoera",
-
-  "weather_desc.clear sky": "Zeru garbia",
-  "weather_desc.few clouds": "Hodei gutxi",
-  "weather_desc.scattered clouds": "Hodei sakabanatuak",
-  "weather_desc.broken clouds": "Zeru erdi hodeitsua",
-  "weather_desc.overcast clouds": "Zeru estalia",
-  "weather_desc.light rain": "Euri arina",
-  "weather_desc.moderate rain": "Euri ertaina",
-  "weather_desc.heavy rain": "Euri handia",
-  "weather_desc.light snow": "Elur arina",
-  "weather_desc.snow": "Elurra",
-  "weather_desc.heavy snow": "Elur handia",
-  "weather_desc.thunderstorm": "Ekaitza",
-  "weather_desc.mist": "Laino arina",
-  "weather_desc.fog": "Lainoa",
-  "weather_desc.unknown": "Deskribapena ez dago eskuragarri",
+  "weather_desc": {
+    "clear sky": "Zeru garbi",
+    "few clouds": "Hodei gutxi",
+    "scattered clouds": "Hodei sakabanatuak",
+    "broken clouds": "Hodeitsu",
+    "overcast clouds": "Oso hodeitsu",
+    "light rain": "Euri arina",
+    "moderate rain": "Euri ertaina",
+    "heavy intensity rain": "Euri handia",
+    "drizzle": "Eurixka",
+    "shower rain": "Zaparrada",
+    "thunderstorm": "Ekaitza",
+    "thunderstorm with rain": "Ekaitza euriarekin",
+    "snow": "Elurra",
+    "light snow": "Elur arina",
+    "mist": "Lainoa",
+    "fog": "Behe-lainoa",
+    "smoke": "Kea",
+    "haze": "Lainotxoa",
+    "dust": "Hautsa",
+    "sand": "Harea",
+    "ash": "Hautsa bolkanikoa",
+    "squall": "Haize-bolada",
+    "tornado": "Tornadoa"
+  },
 
   "official_links": "Esteka ofizialak",
   "link_insst": "INSST: estres termikoa eta beroa",
   "link_aemet": "AEMET: osasuna eta meteorologia",
 
-  "cold_alert_label": "Jaso hotz osoaren abisuak",
+  "cold_alert_label": "Jaso hotz muturreko abisuak",
   "cold_risk": "Hotz arriskua",
   "heat_risk": "Bero arriskua",
   "current_risk": "Egungo arriskua",
@@ -87,7 +96,7 @@
   "no_risk_overall": "Ez da arriskurik detektatu",
   "no_specific_risk": "Ez dago arrisku zehatzik",
   "high": "Altua",
-  "extreme": "Oso altua",
+  "extreme": "Muturrekoa",
   "moderate": "Ertaina",
 
   "notify": {
@@ -100,25 +109,26 @@
   },
 
   "heatRisk": {
-  "moderate": "ertaina",
-  "high": "altua",
-  "extreme": "oso altua"
-},
+    "moderate": "ertaina",
+    "high": "altua",
+    "extreme": "muturrekoa"
+  },
 
-"coldRisk": {
-  "lleu": "arin",
-  "moderada": "ertaina",
-  "alt": "altua",
-  "molt alt": "oso altua",
-  "extrem": "muturrekoa"
-},
+  "coldRisk": {
+    "lleu": "arin",
+    "moderada": "ertaina",
+    "alt": "altua",
+    "molt alt": "oso altua",
+    "extrem": "muturrekoa"
+  },
 
-"windRisk": {
-  "none": "arriskurik gabe",
-  "breezy": "arin haizea",
-  "moderate": "ertaina",
-  "strong": "indartsua",
-  "very_strong": "oso indartsua"
-}
+  "windRisk": {
+    "none": "arriskurik gabe",
+    "breezy": "arin haizea",
+    "moderate": "ertaina",
+    "strong": "indartsua",
+    "very_strong": "oso indartsua"
+  },
 
+  "last_update": "Eguneratuta duela"
 }
