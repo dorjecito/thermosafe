@@ -1,7 +1,7 @@
 import axios from "axios";
 
 const API_KEY = "ebd4ce67a42857776f4463c756e18b45";
-const BASE_URL = "https://api.openweathermap.org/data/2.5/weather";
+const BASE_URL = "https://api.openweathermap.org/data/2.5";
 
 // 🌦️ Tipus per a la resposta d'OpenWeather
 export interface WeatherResponse {
@@ -48,9 +48,9 @@ export interface WeatherResponse {
 export async function getWeatherByCoords(
   lat: number,
   lon: number,
-  lang = "ca"
+  lang: string
 ): Promise<WeatherResponse> {
-  const url = `${BASE_URL}?lat=${lat}&lon=${lon}&appid=${API_KEY}&units=metric&lang=${lang}`;
+  const url = `${BASE_URL}/weather?lat=${lat}&lon=${lon}&appid=${API_KEY}&units=metric&lang=${lang}`;
   const response = await axios.get<WeatherResponse>(url);
   return response.data;
 }
@@ -58,9 +58,9 @@ export async function getWeatherByCoords(
 // 🌆 Obté dades per ciutat
 export async function getWeatherByCity(
   city: string,
-  lang = "ca"
+  lang: string
 ): Promise<WeatherResponse> {
-  const url = `${BASE_URL}?q=${encodeURIComponent(
+  const url = `${BASE_URL}/weather?q=${encodeURIComponent(
     city
   )}&appid=${API_KEY}&units=metric&lang=${lang}`;
   const response = await axios.get<WeatherResponse>(url);
