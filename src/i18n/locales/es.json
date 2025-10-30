@@ -93,7 +93,11 @@
 "llovizna": "Llovizna",
 "tormenta": "Tormenta",
 "nieve": "Nieve",
-"niebla": "Niebla"
+"niebla": "Niebla",
+"clear sky": "Cielo despejado",
+"few clouds": "Pocas nubes",
+"overcast clouds": "Nublado",
+"cel net": "Cielo despejado"
   },
 
   "official_links": "Enlaces oficiales",

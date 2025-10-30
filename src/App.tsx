@@ -977,21 +977,25 @@ return (
 )}
   
           {/* 🌤️ ESTAT DEL CEL */}
-          {data?.weather?.[0] && (
-            <div className="sky-row">
-              <img
-                src={`https://openweathermap.org/img/wn/${data.weather[0].icon}@2x.png`}
-                alt={data.weather[0].description}
-                className="sky-icon"
-                width="32"
-                height="32"
-              />
-              <span className="sky-label">
-                <strong>{t('sky_state')}:</strong>{' '}
-                {t(`weather_desc.${data.weather[0].description}`) || data.weather[0].description}
-              </span>
-            </div>
-          )}
+{data?.weather?.[0] && (
+  <div className="sky-row">
+    <img
+      src={`https://openweathermap.org/img/wn/${data.weather[0].icon}@2x.png`}
+      alt={data.weather[0].description}
+      className="sky-icon"
+      width="32"
+      height="32"
+    />
+    <span className="sky-label">
+      <strong>{t('sky_state')}: </strong>
+      {t(`weather_desc.${data.weather[0].description.toLowerCase()}`, {
+        defaultValue:
+          data.weather[0].description.charAt(0).toUpperCase() +
+          data.weather[0].description.slice(1),
+      })}
+    </span>
+  </div>
+)}
 
                     {/* 🕒 Marca temporal d'actualització */}
 
