@@ -615,7 +615,7 @@ const locate = (silent = false) => {
         setInput(''); // ✅ buida el camp de cerca quan tornes a la ubicació actual
 
         // 🌦️ Obté dades del temps per coordenades
-        const d = await getWeatherByCoords(lat, lon);
+        const d = await getWeatherByCoords(lat, lon, i18n.language);
         setData(d);
         setCurrentSource('gps'); 
 
@@ -683,7 +683,7 @@ const search = async () => {
 
   try {
     // 🌦️ Obté dades del temps per ciutat
-    const d = await getWeatherByCity(input);
+    const d = await getWeatherByCity(input, i18n.language);
     setData(d);
 
     // 🏙️ Coordenades i nom de ciutat
