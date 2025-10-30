@@ -1,62 +1,68 @@
-// src/services/weatherAPI.ts
-import axios from 'axios';
+import axios from "axios";
 
-const API_KEY = 'ebd4ce67a42857776f4463c756e18b45';
-const BASE_URL = 'https://api.openweathermap.org/data/3.0/onecall';
+const API_KEY = "ebd4ce67a42857776f4463c756e18b45";
+const BASE_URL = "https://api.openweathermap.org/data/2.5/weather";
 
-// 🌦️ Tipus per a la resposta d'OpenWeather One Call
+// 🌦️ Tipus per a la resposta d'OpenWeather
 export interface WeatherResponse {
-  current: {
-    temp: number;        // Temperatura real (°C)
-    feels_like: number;  // Sensació tèrmica (°C)
-    humidity: number;    // Humitat (%)
-    wind_speed: number;  // Velocitat del vent (m/s)
-    weather: {
-      description: string;
-      icon: string;
-    }[];
+  coord: {
+    lat: number;
+    lon: number;
   };
-  alerts?: {
-    sender_name: string;  // Ex: "AEMET"
-    event: string;        // Nom de l’avís ("Temperaturas máximas", etc.)
-    description: string;  // Descripció de l’avís
-    start: number;        // Inici (timestamp)
-    end: number;          // Fi (timestamp)
+  weather: {
+    id: number;
+    main: string;
+    description: string;
+    icon: string;
   }[];
+  base: string;
+  main: {
+    temp: number;
+    feels_like: number;
+    temp_min: number;
+    temp_max: number;
+    pressure: number;
+    humidity: number;
+  };
+  visibility?: number;
+  wind: {
+    speed: number;
+    deg: number;
+  };
+  clouds?: {
+    all: number;
+  };
+  dt?: number;
+  sys?: {
+    country?: string;
+    sunrise?: number;
+    sunset?: number;
+  };
+  timezone?: number;
+  id?: number;
+  name: string;
+  cod?: number;
 }
 
-// 📍 Obté coordenades d’una ciutat
-export async function getCoordsByCity(city: string): Promise<{ lat: number; lon: number }> {
-  const geoUrl = `https://api.openweathermap.org/geo/1.0/direct?q=${encodeURIComponent(city)}&limit=1&appid=${API_KEY}`;
-  const { data } = await axios.get(geoUrl);
-
-  if (!data || data.length === 0) {
-    throw new Error("No s'han trobat coordenades per a la ciutat.");
-  }
-
-  return { lat: data[0].lat, lon: data[0].lon };
+// 📍 Obté dades per coordenades
+export async function getWeatherByCoords(
+  lat: number,
+  lon: number,
+  lang = "ca"
+): Promise<WeatherResponse> {
+  const url = `${BASE_URL}?lat=${lat}&lon=${lon}&appid=${API_KEY}&units=metric&lang=${lang}`;
+  const response = await axios.get<WeatherResponse>(url);
+  return response.data;
 }
 
-// 🌡️ Obté dades meteorològiques completes + alertes
-export async function getWeatherByCoords(lat: number, lon: number, lang: string = 'ca'): Promise<WeatherResponse> {
-  const url = `${BASE_URL}?lat=${lat}&lon=${lon}&units=metric&lang=${lang}&appid=${API_KEY}`;
-  const { data } = await axios.get<WeatherResponse>(url);
-
-  // Mostra les alertes (AEMET) a la consola
-  console.log("🔔 Alertes meteorològiques rebudes:", data.alerts);
-
-  return data;
-}
-
-// 🌆 Obté dades a partir del nom d’una ciutat
-export async function getWeatherByCity(city: string, lang: string = 'ca'): Promise<WeatherResponse> {
-  const geoUrl = `https://api.openweathermap.org/geo/1.0/direct?q=${encodeURIComponent(city)}&limit=1&appid=${API_KEY}`;
-  const geoRes = await axios.get(geoUrl);
-
-  if (!geoRes.data || geoRes.data.length === 0) {
-    throw new Error("No s'han trobat coordenades per a la ciutat.");
-  }
-
-  const { lat, lon } = geoRes.data[0];
-  return getWeatherByCoords(lat, lon, lang);
+// 🌆 Obté dades per ciutat
+export async function getWeatherByCity(
+  city: string,
+  lang = "ca"
+): Promise<WeatherResponse> {
+  const url = `${BASE_URL}?q=${encodeURIComponent(
+    city
+  )}&appid=${API_KEY}&units=metric&lang=${lang}`;
+  const response = await axios.get<WeatherResponse>(url);
+  return response.data;
 }
