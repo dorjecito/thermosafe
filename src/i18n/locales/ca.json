@@ -130,5 +130,8 @@
     "very_strong": "molt fort"
   },
 
-  "last_update": "Actualitzat fa"
+  "last_update": "Actualitzat fa",
+
+  "alerts_title": "Avisos meteorològics oficials",
+  "alerts_none": "No hi ha avisos meteorològics actius actualment."
 }

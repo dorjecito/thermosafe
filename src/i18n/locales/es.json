@@ -130,5 +130,8 @@
     "very_strong": "muy fuerte"
   },
 
-  "last_update": "Actualizado hace"
+  "last_update": "Actualizado hace",
+
+  "alerts_title": "Avisos meteorológicos oficiales",
+  "alerts_none": "No hay avisos meteorológicos activos actualmente."
 }

@@ -130,5 +130,8 @@
     "very_strong": "moi forte"
   },
 
-  "last_update": "Actualizado hai uns minutos"
+  "last_update": "Actualizado hai uns minutos",
+
+  "alerts_title": "Avisos meteorolóxicos oficiais",
+  "alerts_none": "Non hai avisos meteorolóxicos activos actualmente." 
 }

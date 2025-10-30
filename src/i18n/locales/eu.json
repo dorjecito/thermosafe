@@ -130,5 +130,8 @@
     "very_strong": "oso indartsua"
   },
 
-  "last_update": "Eguneratuta duela"
+  "last_update": "Eguneratuta duela",
+
+  "alerts_title": "Eguraldiaren abisu ofizialak",
+  "alerts_none": "Ez dago abisu meteorologikorik une honetan."
 }

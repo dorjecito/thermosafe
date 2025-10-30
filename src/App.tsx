@@ -268,6 +268,8 @@ const latestRequestRef = useRef<{ source: 'gps' | 'search'; id: number }>({ sour
 
 const [windDirection, setWindDirection] = useState<string>('');
 
+const [alerts, setAlerts] = useState<any[]>([]);
+
   // 🔔 Demana permís de notificació automàticament
 useEffect(() => {
   if (typeof window !== "undefined" && "Notification" in window) {
@@ -447,67 +449,75 @@ const lang = i18n.language || "ca";
 
 
 const fetchWeather = async (cityName: string) => {
-    try {
-      setLoading(true); // inicia el loader
-      const response = await fetch(
-        `https://api.openweathermap.org/data/2.5/weather?q=${cityName}&appid=${API_KEY}&units=metric&lang=${lang}`
-      );
-      const data = await response.json();
-  
-      if (data.cod === 200) {
-    // Desa les dades meteorològiques
-    setTemp(data.main.temp);
-setHi(data.main.feels_like);
-setHum(data.main.humidity);
-setWind(data.wind.speed * 3.6); // passa de m/s a km/h
+  try {
+    setLoading(true); // inicia el loader
+    const response = await fetch(
+      `https://api.openweathermap.org/data/2.5/weather?q=${cityName}&appid=${API_KEY}&units=metric&lang=${lang}`
+    );
+    const data = await response.json();
 
-console.log("[DEBUG] Dades del vent:", data.wind);
-// 🌬️ Direcció del vent
-if (data.wind && typeof data.wind.deg === 'number') {
-  const deg = data.wind.deg;
-  const directions = ['N', 'NE', 'E', 'SE', 'S', 'SO', 'O', 'NO'];
-  const windDir = directions[Math.round(deg / 45) % 8];
-  setWindDirection(windDir);
-  console.log(`[DEBUG] Direcció del vent: ${deg}° → ${windDir}`);
-} else {
-  console.warn('[DEBUG] No s’ha trobat "data.wind.deg" al JSON:', data.wind);
-}
+    if (data.cod === 200) {
+      // Desa les dades meteorològiques
+      setTemp(data.main.temp);
+      setHi(data.main.feels_like);
+      setHum(data.main.humidity);
+      setWind(data.wind.speed * 3.6); // passa de m/s a km/h
 
-    setCurrentSource('search');
-  
-    // Format correcte del nom de ciutat
-    let cityFormatted = data.name.trim();
-    if (cityFormatted.includes("(")) {
-      cityFormatted = cityFormatted.split("(")[0].trim();
-    }
-    cityFormatted =
-      cityFormatted.charAt(0).toUpperCase() + cityFormatted.slice(1).toLowerCase();
-  
-    setRealCity(cityFormatted);
-  
-    setErr("");
-    console.log(`[CITY fetch] ${cityFormatted}: ${data.main.temp}°C`);
-  } else {
-    // ❌ Error: ciutat no trobada
-    setErr("❌ Ciutat no trobada. Revisa el nom i torna-ho a intentar.");
-    console.warn("Ciutat no trobada:", data);
-  
-    // Neteja dades antigues per evitar mostrar ubicacions errònies
-    setRealCity("");
-    setTemp(null);
-    setHi(null);
-    setHum(null);
-    setWind(null);
-  }
-  
-  } catch (error) {
-    console.error("Error obtenint dades meteorològiques:", error);
-    setErr("⚠️ Error al obtenir dades. Revisa la connexió o torna-ho a provar.");
-  } finally {
-    setLoading(false); // atura el loader
-  }
-  };
+      console.log("[DEBUG] Dades del vent:", data.wind);
 
+      // 🌬️ Direcció del vent
+      if (data.wind && typeof data.wind.deg === "number") {
+        const deg = data.wind.deg;
+        const directions = ["N", "NE", "E", "SE", "S", "SO", "O", "NO"];
+        const windDir = directions[Math.round(deg / 45) % 8];
+        setWindDirection(windDir);
+        console.log(`[DEBUG] Direcció del vent: ${deg}° → ${windDir}`);
+      } else {
+        console.warn('[DEBUG] No s’ha trobat "data.wind.deg" al JSON:', data.wind);
+      }
+
+      // ⚠️ Avisos meteorològics oficials (AEMET / OpenWeather)
+      if (data.alerts && Array.isArray(data.alerts)) {
+        console.log("⚠️ [DEBUG] Avisos meteorològics rebuts:", data.alerts);
+        setAlerts(data.alerts);
+      } else {
+        setAlerts([]);
+      }
+
+      setCurrentSource("search");
+
+      // Format correcte del nom de ciutat
+      let cityFormatted = data.name.trim();
+      if (cityFormatted.includes("(")) {
+        cityFormatted = cityFormatted.split("(")[0].trim();
+      }
+      cityFormatted =
+        cityFormatted.charAt(0).toUpperCase() +
+        cityFormatted.slice(1).toLowerCase();
+
+      setRealCity(cityFormatted);
+
+      setErr("");
+      console.log(`[CITY fetch] ${cityFormatted}: ${data.main.temp}°C`);
+    } else {
+      // ❌ Error: ciutat no trobada
+      setErr("❌ Ciutat no trobada. Revisa el nom i torna-ho a intentar.");
+      console.warn("Ciutat no trobada:", data);
+
+      // Neteja dades antigues per evitar mostrar ubicacions errònies
+      setRealCity("");
+      setTemp(null);
+      setHi(null);
+      setHum(null);
+      setWind(null);
+    }
+  } catch (error) {
+    console.error("Error obtenint dades meteorològiques:", error);
+    setErr("⚠️ Error al obtenir dades. Revisa la connexió o torna-ho a provar.");
+  } finally {
+    setLoading(false); // atura el loader
+  }
+};
 
   /* auto-refresh */
   useEffect(() => {
@@ -1066,6 +1076,96 @@ return (
               className={`risk-level ${getHeatRisk(hi!).class}`}
             />
           </div>
+
+
+          {/* ⚠️ Avisos meteorològics oficials */}
+{alerts.length > 0 ? (
+  alerts.map((alert, i) => {
+    const text = alert.event?.toLowerCase() || "";
+    let borderColor = "#ffeb3b"; // groc per defecte
+    let icon = "⚠️";
+
+    if (text.includes("storm") || text.includes("tempesta")) {
+      borderColor = "#ff9800";
+      icon = "⛈️";
+    } else if (text.includes("rain") || text.includes("pluja")) {
+      borderColor = "#4fc3f7";
+      icon = "🌧️";
+    } else if (text.includes("heat") || text.includes("calor")) {
+      borderColor = "#f44336";
+      icon = "🌡️";
+    } else if (text.includes("snow") || text.includes("neu")) {
+      borderColor = "#90caf9";
+      icon = "❄️";
+    } else if (text.includes("wind") || text.includes("vent")) {
+      borderColor = "#81d4fa";
+      icon = "💨";
+    }
+
+    return (
+      <div
+        key={i}
+        style={{
+          borderLeft: `4px solid ${borderColor}`,
+          borderRadius: "6px",
+          padding: "10px 12px",
+          marginBottom: "10px",
+          color: window.matchMedia("(prefers-color-scheme: dark)").matches
+            ? "#eee"
+            : "#222",
+          background: window.matchMedia("(prefers-color-scheme: dark)").matches
+            ? "rgba(255,255,255,0.05)"
+            : "rgba(0,0,0,0.05)",
+          lineHeight: "1.4em",
+          display: "flex",
+          alignItems: "flex-start",
+          gap: "10px",
+          boxShadow: "0 0 6px rgba(0,0,0,0.2)",
+        }}
+      >
+                <div style={{ fontSize: "1.4rem" }}>
+          {icon}
+        </div>
+
+        <div style={{ flex: 1 }}>
+          <strong style={{ color: borderColor }}>{alert.event}</strong>
+          <p style={{ margin: "4px 0", fontSize: "0.9rem" }}>
+            {alert.description?.replace(/\n/g, " ")}
+          </p>
+          <small
+            style={{
+              color: window.matchMedia("(prefers-color-scheme: dark)").matches
+                ? "#bbb"
+                : "#555",
+            }}
+          >
+            🕒{" "}
+            {new Date(alert.start * 1000).toLocaleString(i18n.language)} –{" "}
+            {new Date(alert.end * 1000).toLocaleString(i18n.language)}
+            <br />
+            🏛️ {alert.sender_name || "AEMET"}
+          </small>
+        </div>
+      </div>
+    );
+  })
+) : (
+  <p
+    style={{
+      color: "#bbb",
+      marginTop: "10px",
+      background: "rgba(255,255,255,0.05)",
+      border: "1px solid rgba(255,255,255,0.1)",
+      borderRadius: "8px",
+      padding: "10px 12px",
+      textAlign: "center",
+      fontSize: "0.9rem",
+      boxShadow: "0 0 6px rgba(0,0,0,0.2)",
+    }}
+  >
+    🌤️ {t("alerts_none")}
+  </p>
+)}
   
           {/* 📋 RECOMANACIONS */}
           <Recommendations
