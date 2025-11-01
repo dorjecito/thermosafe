@@ -5,6 +5,7 @@
    import React, { useEffect, useRef, useState } from 'react';
    import { useTranslation } from 'react-i18next';
    import './i18n';
+  
    
    
    /* —— serveis ———————————————————————————— */
@@ -548,6 +549,28 @@ useEffect(() => {
   }
 }, [wind, pushEnabled, t]);
 
+//🌍 Sincronitza l'estat del cel amb el canvi d'idioma
+useEffect(() => {
+  if (data?.weather?.[0]?.description) {
+    const originalDesc = data.weather[0].description.toLowerCase();
+    const translatedDesc =
+      t(`weather_desc.${originalDesc}`) || data.weather[0].description;
+
+    setData((prev: any) => ({
+      ...prev,
+      weather: [
+        {
+          ...prev.weather[0],
+          description: translatedDesc,
+        },
+      ],
+    }));
+
+    console.log(
+      `[i18n] Estat del cel actualitzat: "${originalDesc}" → "${translatedDesc}"`
+    );
+  }
+}, [i18n.language])
 
 /* 🌍 HELPER: Actualitza dades generals sense sobreescriure el cel */
 const updateAll = async (
@@ -615,7 +638,7 @@ const locate = (silent = false) => {
         setInput(''); // ✅ buida el camp de cerca quan tornes a la ubicació actual
 
         // 🌦️ Obté dades del temps per coordenades
-        const d = await getWeatherByCoords(lat, lon, i18n.language);
+       const d = await getWeatherByCoords(lat, lon, "en");
         setData(d);
         setCurrentSource('gps'); 
 
@@ -623,7 +646,14 @@ const locate = (silent = false) => {
         const nm = (await getLocationNameFromCoords(lat, lon)) || d.name;
 
         // 🌤️ Estat del cel
-        setSky(d.weather?.[0]?.description || '');
+        // 🔹 Traducció automàtica segons idioma actiu
+const desc = d.weather[0].description.toLowerCase();
+const translatedDesc =
+  t(`weather_desc.${desc}`) !== `weather_desc.${desc}`
+    ? t(`weather_desc.${desc}`)
+    : desc; // fallback si no existeix al fitxer JSON
+
+setSky(translatedDesc);
         setIcon(d.weather?.[0]?.icon || '');
         console.log(`🟦 [SKY - locate] Actualitzat a: ${d.weather?.[0]?.description} (${nm})`);
 
@@ -683,7 +713,7 @@ const search = async () => {
 
   try {
     // 🌦️ Obté dades del temps per ciutat
-    const d = await getWeatherByCity(input, i18n.language);
+   const d = await getWeatherByCity(input, "en");
     setData(d);
 
     // 🏙️ Coordenades i nom de ciutat
@@ -977,25 +1007,23 @@ return (
 )}
   
           {/* 🌤️ ESTAT DEL CEL */}
-{data?.weather?.[0] && (
-  <div className="sky-row">
-    <img
-      src={`https://openweathermap.org/img/wn/${data.weather[0].icon}@2x.png`}
-      alt={data.weather[0].description}
-      className="sky-icon"
-      width="32"
-      height="32"
-    />
-    <span className="sky-label">
-      <strong>{t('sky_state')}: </strong>
-      {t(`weather_desc.${data.weather[0].description.toLowerCase()}`, {
-        defaultValue:
-          data.weather[0].description.charAt(0).toUpperCase() +
-          data.weather[0].description.slice(1),
-      })}
-    </span>
-  </div>
-)}
+          {data?.weather?.[0] && (
+            <div className="sky-row">
+              <img
+                src={`https://openweathermap.org/img/wn/${data.weather[0].icon}@2x.png`}
+                alt={data.weather[0].description}
+                className="sky-icon"
+                width="32"
+                height="32"
+              />
+              <span className="sky-label">
+                <strong>{t('sky_state')}:</strong>{' '}
+                {t(`weather_desc.${data.weather[0].description.toLowerCase()}`) !== `weather_desc.${data.weather[0].description.toLowerCase()}`
+  ? t(`weather_desc.${data.weather[0].description.toLowerCase()}`)
+  : data.weather[0].description}
+              </span>
+            </div>
+          )}
 
                     {/* 🕒 Marca temporal d'actualització */}
 
