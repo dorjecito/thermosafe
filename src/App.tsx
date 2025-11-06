@@ -1178,17 +1178,14 @@ return (
     else if (rawText === 'wind') { borderColor = '#81d4fa'; icon = '💨'; }
     else if (rawText === 'cold') { borderColor = '#4dd0e1'; icon = '🥶'; }
 
-    return (
-      <div
-        key={i}
-        style={{
-          borderLeft: `6px solid ${borderColor}`,
-          padding: '10px',
-          marginBottom: '10px',
-          backgroundColor: '#222',
-          borderRadius: '6px',
-        }}
-      >
+          return (
+              <div
+          key={i}
+          className="weather-alert"
+          style={{
+            borderLeft: `6px solid ${borderColor}`,
+          }}
+        >
         <strong>{icon} {text}</strong>
         <div>{alert.description}</div>
         <div style={{ fontSize: '0.9em', opacity: 0.8 }}>
