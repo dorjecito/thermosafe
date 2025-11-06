@@ -27,6 +27,15 @@
   "take_extreme_caution": "Evita actividades ao aire libre",
   "wind_alert_label": "Recibir avisos por vento forte",
 
+  "notify": {
+  "coldTitle": "Aviso ThermoSafe",
+  "coldBody": "Risco por frío {{risk}}. Temperatura {{temp}}°C",
+  "heatTitle": "Aviso ThermoSafe",
+  "heatBody": "Risco por calor {{risk}}. Sensación térmica {{hi}}°C",
+  "windTitle": "Aviso ThermoSafe",
+  "windBody": "Risco por vento {{risk}}. Velocidade do vento: {{speed}} km/h"
+},
+
   "highIrradianceWarning": "⚠️ Irradiancia solar moi alta. Evita a exposición directa ao sol.",
   "highUVIWarning": "⚠️ Índice UV moi alto. Protección solar imprescindible!",
   "irradianceTips": "👒 Usa sombreiro, lentes de sol e crema solar. Evita o exercicio ao sol.",
@@ -57,49 +66,51 @@
     }
   },
 
-  "sky_state": "Estado do ceo",
-  "weather_desc": {
-   "clear sky": "Ceo despexado",
-"few clouds": "Poucas nubes",
-"scattered clouds": "Nubes dispersas",
-"broken clouds": "Parcialmente nublado",
-"overcast clouds": "Ceo cuberto",
-"light rain": "Choiva feble",
-"moderate rain": "Choiva moderada",
-"heavy intensity rain": "Choiva intensa",
-"drizzle": "Orballo",
-"shower rain": "Chuvasco",
-"thunderstorm": "Treboada",
-"thunderstorm with rain": "Treboada con choiva",
-"snow": "Neve",
-"light snow": "Neve feble",
-"mist": "Brétema",
-"fog": "Néboa",
-"smoke": "Fume",
-"haze": "Calima",
-"dust": "Po",
-"sand": "Area",
-"ash": "Cinsa volcánica",
-"squall": "Refachos de vento",
-"tornado": "Tornado",
-"nublado": "Nublado",
-"parcialmente nublado": "Parcialmente nublado",
-"moi nublado": "Moi nublado",
-"despexado": "Despexado",
-"pouco nublado": "Pouco nublado",
-"nubrado": "Nubrado",
-"choiva": "Choiva",
-"chuvasco": "Chuvasco",
-"orballo": "Orballo",
-"treboada": "Treboada",
-"neve": "Neve",
-"néboa": "Néboa",
-"clear sky": "Ceo despexado",
-"few clouds": "Poucas nubes",
-"overcast clouds": "Nubrado",
-"cel net": "Ceo despexado"
+"weather_desc": {
+  "clear sky": "Ceo despexado",
+  "few clouds": "Poucas nubes",
+  "scattered clouds": "Nubes dispersas",
+  "broken clouds": "Parcialmente nublado",
+  "overcast clouds": "Ceo cuberto",
+  "light rain": "Choiva feble",
+  "moderate rain": "Choiva moderada",
+  "heavy intensity rain": "Choiva intensa",
+  "drizzle": "Orballo",
+  "shower rain": "Chuvasco",
+  "thunderstorm": "Treboada",
+  "thunderstorm with rain": "Treboada con choiva",
+  "snow": "Neve",
+  "light snow": "Neve feble",
+  "mist": "Brétema",
+  "fog": "Néboa",
+  "smoke": "Fume",
+  "haze": "Calima",
+  "dust": "Po",
+  "sand": "Area",
+  "ash": "Cinsa volcánica",
+  "squall": "Refachos de vento",
+  "tornado": "Tornado",
 
-  },
+  "nubes dispersas": "Nubes dispersas",
+  "cielo despejado": "Ceo despexado",
+  "pocas nubes": "Poucas nubes",
+  "nublado": "Nublado",
+  "parcialmente nublado": "Parcialmente nublado",
+  "moi nublado": "Moi nublado",
+  "despexado": "Despexado",
+  "pouco nublado": "Pouco nublado",
+  "nubrado": "Nubrado",
+  "choiva": "Choiva",
+  "chuvasco": "Chuvasco",
+  "orballo": "Orballo",
+  "treboada": "Treboada",
+  "neve": "Neve",
+  "néboa": "Néboa",
+  "cel net": "Ceo despexado"
+},
+"sky_state": "Estado do ceo",
+
+  
 
   "official_links": "Ligazóns oficiais",
   "link_insst": "INSST: estrés térmico e calor",
@@ -147,8 +158,31 @@
     "very_strong": "moi forte"
   },
 
-  "last_update": "Actualizado hai uns minutos",
-
+  
+  "coldRisk": {
+    "lleu": "leve",
+    "moderat": "moderado",
+    "alt": "alto",
+    "molt alt": "moi alto",
+    "extrem": "extremo"
+  },
+  "windRisk": {
+    "none": "sen risco",
+    "breezy": "suave",
+    "moderate": "moderado",
+    "strong": "forte",
+    "very_strong": "moi forte"
+  },
+  "weather_alerts": {
+    "storm": "Aviso por treboada",
+    "rain": "Aviso por choiva",
+    "snow": "Aviso por neve",
+    "wind": "Aviso por vento",
+    "heat": "Aviso por calor",
+    "cold": "Aviso por frío"
+  },
+  "last_update": "Actualizado hai",
   "alerts_title": "Avisos meteorolóxicos oficiais",
-  "alerts_none": "Non hai avisos meteorolóxicos activos actualmente." 
+  "alerts_none": "Non hai avisos meteorolóxicos activos actualmente.",
+  "no_alerts": "Non hai avisos meteorolóxicos actualmente."
 }

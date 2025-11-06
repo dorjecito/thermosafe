@@ -27,6 +27,15 @@
   "take_extreme_caution": "Evita actividades al aire libre",
   "wind_alert_label": "Recibir avisos por viento fuerte",
 
+  "notify": {
+  "coldTitle": "Aviso ThermoSafe",
+  "coldBody": "Riesgo por frío {{risk}}. Temperatura {{temp}}°C",
+  "heatTitle": "Aviso ThermoSafe",
+  "heatBody": "Riesgo por calor {{risk}}. Sensación térmica {{hi}}°C",
+  "windTitle": "Aviso ThermoSafe",
+  "windBody": "Riesgo por viento {{risk}}. Velocidad del viento: {{speed}} km/h"
+},
+
   "highIrradianceWarning": "⚠️ Irradiancia solar muy alta. Evita la exposición directa.",
   "highUVIWarning": "⚠️ Índice UV muy alto. ¡Protección solar imprescindible!",
   "irradianceTips": "👒 Usa sombrero, gafas de sol y crema solar. Evita actividades físicas al sol.",
@@ -130,14 +139,14 @@
     "extreme": "extremo"
   },
 
+  
   "coldRisk": {
     "lleu": "leve",
-    "moderada": "moderado",
+    "moderat": "moderado",
     "alt": "alto",
     "molt alt": "muy alto",
     "extrem": "extremo"
   },
-
   "windRisk": {
     "none": "sin riesgo",
     "breezy": "suave",
@@ -145,9 +154,16 @@
     "strong": "fuerte",
     "very_strong": "muy fuerte"
   },
-
+  "weather_alerts": {
+    "storm": "Aviso por tormenta",
+    "rain": "Aviso por lluvia",
+    "snow": "Aviso por nieve",
+    "wind": "Aviso por viento",
+    "heat": "Aviso por calor",
+    "cold": "Aviso por frío"
+  },
   "last_update": "Actualizado hace",
-
   "alerts_title": "Avisos meteorológicos oficiales",
-  "alerts_none": "No hay avisos meteorológicos activos actualmente."
+  "alerts_none": "No hay avisos meteorológicos activos actualmente.",
+  "no_alerts": "No hay avisos meteorológicos actualmente."
 }

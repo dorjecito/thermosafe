@@ -26,6 +26,16 @@
   "caution_outdoors": "Precaució a l'exterior",
   "take_extreme_caution": "Evita activitats a l'aire lliure",
   "wind_alert_label": "Rebre avisos per vent fort",
+  "wind_none": "Cap risc",
+
+  "notify": {
+  "coldTitle": "Avís ThermoSafe",
+  "coldBody": "Risc per fred {{risk}}. Temperatura {{temp}}°C",
+  "heatTitle": "Avís ThermoSafe",
+  "heatBody": "Risc per calor {{risk}}. Sensació tèrmica {{hi}}°C",
+  "windTitle": "Avís ThermoSafe",
+  "windBody": "Risc per vent {{risk}}. Velocitat del vent: {{speed}} km/h"
+},
 
   "highIrradianceWarning": "⚠️ Irradiància solar molt alta. Evita l'exposició directa al sol.",
   "highUVIWarning": "⚠️ Índex UV molt alt. Protecció solar imprescindible!",
@@ -57,7 +67,7 @@
     }
   },
 
- "sky_state": "Estat del cel",
+"sky_state": "Estat del cel",
 "weather_desc": {
   "clear sky": "Cel clar",
   "few clouds": "Pocs núvols",
@@ -96,7 +106,22 @@
   "plugim": "Plugim",
   "tempesta": "Tempesta",
   "neu": "Neu",
-  "boira": "Boira"
+  "boira": "Boira",
+
+  "nubes dispersas": "Núvols dispersos",
+  "cielo despejado": "Cel clar",
+  "pocas nubes": "Pocs núvols",
+  "nublado": "Ennuvolat",
+  "parcialmente nublado": "Cel parcialment ennuvolat",
+  "muy nublado": "Molt ennuvolat",
+  "pouco nublado": "Poc ennuvolat",
+  "nuboso": "Ennuvolat",
+  "lluvia": "Pluja",
+  "chubasco": "Ruixat",
+  "llovizna": "Plugim",
+  "tormenta": "Tempesta",
+  "nieve": "Neu",
+  "niebla": "Boira"
 },
 
   "official_links": "Enllaços oficials",
@@ -137,16 +162,25 @@
     "extrem": "extrem"
   },
 
-  "windRisk": {
+    "windRisk": {
     "none": "cap risc",
     "breezy": "suau",
     "moderate": "moderat",
     "strong": "fort",
     "very_strong": "molt fort"
   },
-
+  "weather_alerts": {
+    "storm": "Avís per tempesta",
+    "rain": "Avís per pluja",
+    "snow": "Avís per neu",
+    "wind": "Avís per vent",
+    "heat": "Avís per calor",
+    "cold": "Avís per fred"
+  },
   "last_update": "Actualitzat fa",
-
   "alerts_title": "Avisos meteorològics oficials",
-  "alerts_none": "No hi ha avisos meteorològics actius actualment."
+  "alerts_none": "No hi ha avisos meteorològics actius actualment.",
+  "no_alerts": "No hi ha avisos meteorològics actualment."
 }
+
+ 

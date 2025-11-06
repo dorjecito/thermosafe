@@ -1,83 +1,83 @@
 /* === Estils generals === */
 
 html, body, #root {
-  width: 100%;
-  margin: 0;
-  padding: env(safe-area-inset-top, 0) env(safe-area-inset-right, 0)
-           env(safe-area-inset-bottom, 0) env(safe-area-inset-left, 0);
-  overflow-x: hidden;
-  box-sizing: border-box;
-  font-family: 'Inter', 'Segoe UI', Roboto, sans-serif;
-  scroll-behavior: smooth;
+  width: 100%;
+  margin: 0;
+  padding: env(safe-area-inset-top, 0) env(safe-area-inset-right, 0)
+           env(safe-area-inset-bottom, 0) env(safe-area-inset-left, 0);
+  overflow-x: hidden;
+  box-sizing: border-box;
+  font-family: 'Inter', 'Segoe UI', Roboto, sans-serif;
+  scroll-behavior: smooth;
 }
 
 /* === Contenidor principal === */
 #root {
-  max-width: 100%;
-  margin: 0 auto;
-  padding: 1.5rem;
-  text-align: center;
-  transition: background-color 0.3s, color 0.3s;
+  max-width: 100%;
+  margin: 0 auto;
+  padding: 1.5rem;
+  text-align: center;
+  transition: background-color 0.3s, color 0.3s;
 }
 
 /* === Títols i text === */
 h1 {
-  font-size: 2rem;
-  margin-bottom: 1.5rem;
-  background: linear-gradient(90deg, #0056b3, #0095ff);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
+  font-size: 2rem;
+  margin-bottom: 1.5rem;
+  background: linear-gradient(90deg, #0056b3, #0095ff);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
 }
 
 /* === Mode clar === */
 body {
-  background-color: #fafafa;
-  color: #222;
+  background-color: #fafafa;
+  color: #222;
 }
 
 /* === Mode fosc === */
 @media (prefers-color-scheme: dark) {
-  body {
-    background-color: #121212;
-    color: #eee;
-  }
+  body {
+    background-color: #121212;
+    color: #eee;
+  }
 }
 
 /* === Targetes i seccions === */
 .card {
-  background-color: white;
-  padding: 1.5em;
-  border-radius: 0.75rem;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-  transition: transform 0.2s ease, box-shadow 0.3s ease;
-  will-change: transform, box-shadow;
+  background-color: white;
+  padding: 1.5em;
+  border-radius: 0.75rem;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  transition: transform 0.2s ease, box-shadow 0.3s ease;
+  will-change: transform, box-shadow;
 }
 
 .card:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
 }
 
 /* ☁️ Bloc ESTAT DEL CEL */
 .sky-row {
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-  margin: 0.5rem 0;
-  justify-content: flex-start;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin: 0.5rem 0;
+  justify-content: flex-start;
 }
 
 .sky-label {
-  font-weight: 500;
-  font-size: 1rem;
-  color: #444;
+  font-weight: 500;
+  font-size: 1rem;
+  color: #444;
 }
 
 .sky-icon {
-  width: 32px !important;
-  height: 32px !important;
-  object-fit: contain;
-  filter: drop-shadow(0 0 1px rgba(0, 0, 0, 0.1));
+  width: 32px !important;
+  height: 32px !important;
+  object-fit: contain;
+  filter: drop-shadow(0 0 1px rgba(0, 0, 0, 0.1));
 }
 
 /* === BLOCS INFORMATIUS === */
@@ -87,13 +87,13 @@ body {
 .block-uv,
 .block-heat-risk,
 .block-recom {
-  padding: 1.2rem;
-  border-radius: 0.75rem;
-  margin-bottom: 1.5rem;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
-  text-align: left;
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
-  will-change: transform, box-shadow;
+  padding: 1.2rem;
+  border-radius: 0.75rem;
+  margin-bottom: 1.5rem;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+  text-align: left;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  will-change: transform, box-shadow;
 }
 
 .block-temp:hover,
@@ -102,8 +102,8 @@ body {
 .block-uv:hover,
 .block-heat-risk:hover,
 .block-recom:hover {
-  transform: scale(1.02);
-  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15);
+  transform: scale(1.02);
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15);
 }
 
 /* 🎨 Colors de cada bloc (mode clar) */
@@ -116,126 +116,149 @@ body {
 
 /* 🎨 Colors de cada bloc (mode fosc) */
 @media (prefers-color-scheme: dark) {
-  .block-temp { background-color: #3b1f1f; }
-  .block-humidity { background-color: #1b3a3f; }
-  .block-wind { background-color: #1e2f3b; }
-  .block-uv { background-color: #3f2f1b; }
-  .block-heat-risk { background-color: #3f1b2b; }
-  .block-recom { background-color: #1f3b1f; }
+  .block-temp { background-color: #3b1f1f; }
+  .block-humidity { background-color: #1b3a3f; }
+  .block-wind { background-color: #1e2f3b; }
+  .block-uv { background-color: #3f2f1b; }
+  .block-heat-risk { background-color: #3f1b2b; }
+  .block-recom { background-color: #1f3b1f; }
 }
 
 /* 📘 Recomanacions */
 .recomanacions-box {
-  border-left: 4px solid #1565c0;
-  background-color: #e8f0fe;
-  padding: 1rem;
-  border-radius: 8px;
-  margin-top: 1.5rem;
-  text-align: left;
-  color: #0d47a1;
-  font-weight: 500;
-  line-height: 1.6;
+  border-left: 4px solid #1565c0;
+  background-color: #e8f0fe;
+  padding: 1rem;
+  border-radius: 8px;
+  margin-top: 1.5rem;
+  text-align: left;
+  color: #0d47a1;
+  font-weight: 500;
+  line-height: 1.6;
 }
 
 /* === Dades clau === */
 .data-label {
-  font-size: 1.1rem;
-  font-weight: 500;
-  margin-right: 0.4rem;
+  font-size: 1.1rem;
+  font-weight: 500;
+  margin-right: 0.4rem;
 }
 
 .data-value {
-  font-size: 1.6rem;
-  font-weight: 600;
-  color: #000;
+  font-size: 1.6rem;
+  font-weight: 600;
+  color: #000;
 }
 
 @media (prefers-color-scheme: dark) {
-  .data-value { color: #fff; }
+  .data-value { color: #fff; }
 }
 
 /* 🔗 Enllaços oficials */
 .official-links {
-  display: flex;
-  flex-direction: column;
-  gap: 0.8rem;
-  align-items: flex-start;
-  margin-top: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.8rem;
+  align-items: flex-start;
+  margin-top: 1.5rem;
 }
 
 .official-link,
 .official-link:visited {
-  display: inline-block;
-  padding: 8px 16px;
-  border-radius: 6px;
-  font-weight: 600;
-  text-decoration: none !important;
-  transition: background-color 0.3s, transform 0.2s;
+  display: inline-block;
+  padding: 8px 16px;
+  border-radius: 6px;
+  font-weight: 600;
+  text-decoration: none !important;
+  transition: background-color 0.3s, transform 0.2s;
 }
 
 button:focus,
 a:focus,
 .official-link:focus {
-  outline: 2px solid #1976d2;
-  outline-offset: 2px;
+  outline: 2px solid #1976d2;
+  outline-offset: 2px;
 }
 
 /* Mode clar */
 @media (prefers-color-scheme: light) {
-  .official-link,
-  .official-link:visited {
-    background-color: #1976d2;
-    color: #fff !important;
-  }
-  .official-link:hover {
-    background-color: #0d47a1;
-    transform: scale(1.05);
-  }
+  .official-link,
+  .official-link:visited {
+    background-color: #1976d2;
+    color: #fff !important;
+  }
+  .official-link:hover {
+    background-color: #0d47a1;
+    transform: scale(1.05);
+  }
 }
 
 /* Mode fosc */
 @media (prefers-color-scheme: dark) {
-  .official-link,
-  .official-link:visited {
-    background-color: #64b5f6;
-    color: #fff !important;
-  }
-  .official-link:hover {
-    background-color: #bbdefb;
-    color: #121212 !important;
-    transform: scale(1.05);
-  }
+  .official-link,
+  .official-link:visited {
+    background-color: #64b5f6;
+    color: #fff !important;
+  }
+  .official-link:hover {
+    background-color: #bbdefb;
+    color: #121212 !important;
+    transform: scale(1.05);
+  }
 }
 
 /* === Missatges d'activació/desactivació d'avisos === */
 .notif-msg {
-  margin-left: 1.5rem;
-  margin-top: 0.25rem;
-  font-size: 0.9rem;
-  color: #555;
-  opacity: 0.9;
-  transition: opacity 0.3s ease, color 0.3s ease;
+  margin-left: 1.5rem;
+  margin-top: 0.25rem;
+  font-size: 0.9rem;
+  color: #555;
+  opacity: 0.9;
+  transition: opacity 0.3s ease, color 0.3s ease;
 }
 
 @media (prefers-color-scheme: dark) {
-  .notif-msg {
-    color: #ccc;
-    opacity: 0.85;
-  }
+  .notif-msg {
+    color: #ccc;
+    opacity: 0.85;
+  }
+}
+
+/* === 🔔 Notificacions meteorològiques (correcció mode clar/fosc) === */
+.notification-card {
+  background-color: var(--notif-bg, #ffffff);
+  color: var(--notif-text, #000000);
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  border-radius: 8px;
+  padding: 1rem;
+  margin-top: 1rem;
+  text-align: left;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+  transition: background-color 0.3s, color 0.3s;
+}
+
+/* Mode fosc */
+@media (prefers-color-scheme: dark) {
+  .notification-card {
+    --notif-bg: #1f1f1f;
+    --notif-text: #f5f5f5;
+    border-color: rgba(255, 255, 255, 0.2);
+    box-shadow: 0 2px 8px rgba(255, 255, 255, 0.05);
+  }
 }
 
 /* === Responsive (pantalles petites i tablets) === */
 @media screen and (max-width: 768px) {
-  #root { padding: 1rem; }
-  h1 { font-size: 1.6rem; }
-  .data-value { font-size: 1.3rem; }
-  .block-temp,
-  .block-humidity,
-  .block-wind,
-  .block-uv,
-  .block-heat-risk,
-  .block-recom {
-    padding: 1rem;
-  }
-  body { overflow-x: hidden; }
+  #root { padding: 1rem; }
+  h1 { font-size: 1.6rem; }
+  .data-value { font-size: 1.3rem; }
+  .block-temp,
+  .block-humidity,
+  .block-wind,
+  .block-uv,
+  .block-heat-risk,
+  .block-recom {
+    padding: 1rem;
+  }
+  body { overflow-x: hidden; }
 }

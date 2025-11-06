@@ -9,7 +9,13 @@
    
    
    /* —— serveis ———————————————————————————— */
-   import { getWeatherByCoords, getWeatherByCity } from './services/weatherAPI';
+   //import { getWeatherByCoords, getWeatherByCity } from './services/weatherService';
+    import { 
+    getWeatherByCity, 
+    getWeatherByCoords, 
+    getWeatherAlerts, 
+    getWindDirection 
+  } from "./services/weatherService";
    import { getUVI } from './services/uviAPI';
    
    /* —— utilitats ——————————————————————————— */
@@ -31,6 +37,8 @@
 
    import LanguageSwitcher from './components/LanguageSwitcher';
    import { enableRiskAlerts, disableRiskAlerts } from "./push/subscribe";
+
+   
 
    // Tipus per a la resposta d'OpenWeather
 interface WeatherResponse {
@@ -271,6 +279,8 @@ const [windDirection, setWindDirection] = useState<string>('');
 
 const [alerts, setAlerts] = useState<any[]>([]);
 
+const [ready, setReady] = useState(false);
+
   // 🔔 Demana permís de notificació automàticament
 useEffect(() => {
   if (typeof window !== "undefined" && "Notification" in window) {
@@ -322,7 +332,7 @@ function getColdRisk(temp: number, windKmh: number): string {
 
 
 /* === [COLD] notifier amb cooldown (multilingüe i sense error await) === */
-const COLD_ALERT_MIN_INTERVAL_MIN = 120; // 2 hores
+const COLD_ALERT_MIN_INTERVAL_MIN = 60; // 1 hora
 
 async function maybeNotifyCold(temp: number, windKmh: number) {
   // Evita fer res si no està activat l’avís
@@ -359,7 +369,7 @@ console.log(`[DEBUG] Notificació fred enviada (${coldRiskValue})`);
 }
 
  /* === [WIND] notifier amb cooldown (versió definitiva) === */
-const WIND_ALERT_MIN_INTERVAL_MIN = 120; // 2 hores
+const WIND_ALERT_MIN_INTERVAL_MIN = 60; // 1 hora
 
 async function maybeNotifyWind(kmh: number) {
   // No fem res si no està activat l'avís
@@ -450,86 +460,85 @@ const lang = i18n.language || "ca";
 
 
 const fetchWeather = async (cityName: string) => {
-  try {
-    setLoading(true); // inicia el loader
-    const response = await fetch(
-      `https://api.openweathermap.org/data/2.5/weather?q=${cityName}&appid=${API_KEY}&units=metric&lang=${lang}`
-    );
-    const data = await response.json();
+  try {
+    setLoading(true);
+    setCurrentSource("search");
 
-    if (data.cod === 200) {
-      // Desa les dades meteorològiques
-      setTemp(data.main.temp);
-      setHi(data.main.feels_like);
-      setHum(data.main.humidity);
-      setWind(data.wind.speed * 3.6); // passa de m/s a km/h
+    const data = await getWeatherByCity(cityName, lang, API_KEY);
+    setTemp(data.main.temp);
+    setHi(data.main.feels_like);
+    setHum(data.main.humidity);
+    setWind(data.wind.speed * 3.6);
 
-      console.log("[DEBUG] Dades del vent:", data.wind);
+    const wDir = getWindDirection(data.wind.deg);
+    setWindDirection(wDir);
+    setSky(data.weather?.[0]?.description || "");
+    setIcon(data.weather?.[0]?.icon || "");
 
-      // 🌬️ Direcció del vent
-      if (data.wind && typeof data.wind.deg === "number") {
-        const deg = data.wind.deg;
-        const directions = ["N", "NE", "E", "SE", "S", "SO", "O", "NO"];
-        const windDir = directions[Math.round(deg / 45) % 8];
-        setWindDirection(windDir);
-        console.log(`[DEBUG] Direcció del vent: ${deg}° → ${windDir}`);
-      } else {
-        console.warn('[DEBUG] No s’ha trobat "data.wind.deg" al JSON:', data.wind);
-      }
+    const { lat, lon } = data.coord || {};
+    setCity(data.name);
+    setRealCity(data.name);
 
-      // ⚠️ Avisos meteorològics oficials (AEMET / OpenWeather)
-      if (data.alerts && Array.isArray(data.alerts)) {
-        console.log("⚠️ [DEBUG] Avisos meteorològics rebuts:", data.alerts);
-        setAlerts(data.alerts);
-      } else {
-        setAlerts([]);
-      }
+    // ⚠️ Obté avisos si tenim coordenades
+    if (lat && lon) {
+      const alerts = await getWeatherAlerts(lat, lon, lang, API_KEY);
+      setAlerts(alerts);
+    }
 
-      setCurrentSource("search");
-
-      // Format correcte del nom de ciutat
-      let cityFormatted = data.name.trim();
-      if (cityFormatted.includes("(")) {
-        cityFormatted = cityFormatted.split("(")[0].trim();
-      }
-      cityFormatted =
-        cityFormatted.charAt(0).toUpperCase() +
-        cityFormatted.slice(1).toLowerCase();
-
-      setRealCity(cityFormatted);
-
-      setErr("");
-      console.log(`[CITY fetch] ${cityFormatted}: ${data.main.temp}°C`);
-    } else {
-      // ❌ Error: ciutat no trobada
-      setErr("❌ Ciutat no trobada. Revisa el nom i torna-ho a intentar.");
-      console.warn("Ciutat no trobada:", data);
-
-      // Neteja dades antigues per evitar mostrar ubicacions errònies
-      setRealCity("");
-      setTemp(null);
-      setHi(null);
-      setHum(null);
-      setWind(null);
-    }
-  } catch (error) {
-    console.error("Error obtenint dades meteorològiques:", error);
-    setErr("⚠️ Error al obtenir dades. Revisa la connexió o torna-ho a provar.");
-  } finally {
-    setLoading(false); // atura el loader
-  }
+    setErr("");
+  } catch (err) {
+    console.error("[DEBUG] Error obtenint dades de ciutat:", err);
+    setErr(t("errorCity"));
+    setAlerts([]);
+  } finally {
+    setLoading(false);
+  }
 };
 
-  /* auto-refresh */
-  useEffect(() => {
-    locate();
-    const id1 = setInterval(() => locate(true), 30 * 60 * 1000);
-    const id2 = setInterval(() => setDay(isDaytime()), 10 * 60 * 1000);
-    return () => {
-      clearInterval(id1);
-      clearInterval(id2);
-    };
-  }, []);
+  /* 🌍 Auto-refresh i inicialització segura de localització */
+useEffect(() => {
+  const initLocate = async () => {
+    try {
+      // Espera que React i i18n estiguin inicialitzats
+      await new Promise((res) => setTimeout(res, 500));
+
+      if (!("geolocation" in navigator)) {
+        console.warn("[WARN] Geolocalització no disponible al navegador.");
+        return;
+      }
+
+      // Comprova permisos de geolocalització
+      const perm = await navigator.permissions.query({ name: "geolocation" as PermissionName });
+
+      if (perm.state === "granted") {
+        console.log("[DEBUG] Permís GPS ja concedit → ubicació inicial");
+        await locate();
+      } else if (perm.state === "prompt") {
+        console.log("[DEBUG] Demanant permís de GPS a l'usuari...");
+        navigator.geolocation.getCurrentPosition(
+          async () => await locate(),
+          (err) => console.warn("[WARN] Permís de geolocalització rebutjat:", err)
+        );
+      } else {
+        console.warn("[WARN] Permís de geolocalització denegat o restringit.");
+      }
+    } catch (e) {
+      console.error("[DEBUG] Error inicialitzant localització:", e);
+    }
+  };
+
+  // Executa només al primer render
+  initLocate();
+
+  // ♻️ Auto-refresh cada 30 min + actualització dia/nit cada 10 min
+  const id1 = setInterval(() => locate(true), 30 * 60 * 1000);
+  const id2 = setInterval(() => setDay(isDaytime()), 10 * 60 * 1000);
+
+  return () => {
+    clearInterval(id1);
+    clearInterval(id2);
+  };
+}, [lang]);
 
 // 💨 Actualitza el risc de vent quan canvia la velocitat i envia avís si és fort
 useEffect(() => {
@@ -549,28 +558,6 @@ useEffect(() => {
   }
 }, [wind, pushEnabled, t]);
 
-//🌍 Sincronitza l'estat del cel amb el canvi d'idioma
-useEffect(() => {
-  if (data?.weather?.[0]?.description) {
-    const originalDesc = data.weather[0].description.toLowerCase();
-    const translatedDesc =
-      t(`weather_desc.${originalDesc}`) || data.weather[0].description;
-
-    setData((prev: any) => ({
-      ...prev,
-      weather: [
-        {
-          ...prev.weather[0],
-          description: translatedDesc,
-        },
-      ],
-    }));
-
-    console.log(
-      `[i18n] Estat del cel actualitzat: "${originalDesc}" → "${translatedDesc}"`
-    );
-  }
-}, [i18n.language])
 
 /* 🌍 HELPER: Actualitza dades generals sense sobreescriure el cel */
 const updateAll = async (
@@ -630,78 +617,115 @@ const updateAll = async (
 };
 
 /* 📍 LOCALITZACIÓ ACTUAL */
-const locate = (silent = false) => {
-  navigator.geolocation.getCurrentPosition(
-    async (p) => {
-      try {
-        const { latitude: lat, longitude: lon } = p.coords;
-        setInput(''); // ✅ buida el camp de cerca quan tornes a la ubicació actual
+const locate = async (silent = false) => {
+  try {
+    if (!silent) setLoading(true);
+    setCurrentSource("gps");
+    setInput('');
 
-        // 🌦️ Obté dades del temps per coordenades
-       const d = await getWeatherByCoords(lat, lon, "en");
-        setData(d);
-        setCurrentSource('gps'); 
+    // 📍 1. Obté coordenades del dispositiu
+    const position = await new Promise<GeolocationPosition>((resolve, reject) => {
+      navigator.geolocation.getCurrentPosition(resolve, reject);
+    });
 
-        // 🏙️ Nom de ciutat
-        const nm = (await getLocationNameFromCoords(lat, lon)) || d.name;
+    const lat = position.coords.latitude;
+    const lon = position.coords.longitude;
 
-        // 🌤️ Estat del cel
-        // 🔹 Traducció automàtica segons idioma actiu
-const desc = d.weather[0].description.toLowerCase();
-const translatedDesc =
-  t(`weather_desc.${desc}`) !== `weather_desc.${desc}`
-    ? t(`weather_desc.${desc}`)
-    : desc; // fallback si no existeix al fitxer JSON
+    console.log(`[DEBUG] Coordenades GPS obtingudes: ${lat}, ${lon}`);
 
-setSky(translatedDesc);
-        setIcon(d.weather?.[0]?.icon || '');
-        console.log(`🟦 [SKY - locate] Actualitzat a: ${d.weather?.[0]?.description} (${nm})`);
+// 🌦️ 2. Obté dades del temps per coordenades
+const d = await getWeatherByCoords(lat, lon, lang, API_KEY);
+setData(d);
+console.log(`[DEBUG] Dades rebudes per GPS:`, d);
+setDataSource("gps");
 
-        // 🌬️ Vent
-        const wKmh = Math.round(d.wind.speed * 3.6 * 10) / 10;
-        setWind(wKmh);
+// 📊 Assigna valors bàsics de meteorologia
+setTemp(d.main?.temp ?? null);
+setHum(d.main?.humidity ?? null);
+setHi(d.main?.feels_like ?? null);
 
-        // ❄️ Wind-chill (si fa fred i vent)
-        let effForCold = d.main.temp; // per defecte, la real
-        if (d.main.temp <= 10 && wKmh >= 5) {
-          const wcVal =
-            13.12 +
-            0.6215 * d.main.temp -
-            11.37 * Math.pow(wKmh, 0.16) +
-            0.3965 * d.main.temp * Math.pow(wKmh, 0.16);
-          const wcRound = Math.round(wcVal * 10) / 10;
-          setWc(wcRound);
-          effForCold = wcRound;
-        } else {
-          setWc(null);
-        }
+// Opcional: si tens irradiació o altres camps
+// setIrr(d.main?.pressure ?? null);
+// setUvi(null);
 
-        // 🧊 Calcula i desa el risc de fred
-        const coldRisk = getColdRisk(effForCold, wKmh);
-        setColdRisk(coldRisk as ColdRisk);
+// 🔍 Mostra per consola per verificar
+console.log(`[DEBUG] Temperatura: ${d.main?.temp}°C, Humitat: ${d.main?.humidity}%, Sensació: ${d.main?.feels_like}°C`);
 
-        // ✅ Mostra notificació si puja el risc
-        await maybeNotifyCold(effForCold, wKmh);
+    // 📍 3. Nom de ciutat (nom real segons coordenades)
+let nm = "";
+try {
+  nm = (await getLocationNameFromCoords(lat, lon)) || d.name || "Ubicació desconeguda";
+  if (!nm || nm === "Ubicació desconeguda") {
+    console.warn("[WARN] Nom buit o desconegut, reintentant en 1 segon...");
+    await new Promise(res => setTimeout(res, 1000));
+    nm = (await getLocationNameFromCoords(lat, lon)) || d.name || "Ubicació desconeguda";
+  }
+  console.log(`[DEBUG] Ciutat trobada per coordenades: ${nm}`);
+} catch (e) {
+  console.warn("[WARN] No s'ha pogut obtenir el nom de ciutat:", e);
+  nm = d.name || "Ubicació desconeguda";
+}
 
-        // 🔄 Actualitza estat general
-        await updateAll(d.main.temp, d.main.humidity, d.main.feels_like, lat, lon, nm);
-        setRealCity(nm);
-        setCity(nm);
-        setDataSource('gps'); // 🛰️ Indica que la font és GPS
-        setErr('');
+// ✅ Desa sempre abans del render
+setCity(nm);
+setRealCity(nm);
+setDataSource("gps");
 
-        // 🔥 Altres notificacions
-        await maybeNotifyHeat(d.main.feels_like);
-        await maybeNotifyWind(wKmh);
+    // 🌤️ 4. Estat del cel
+    const desc = d.weather?.[0]?.description.toLowerCase() || "";
+    const translatedDesc =
+      t(`weather_desc.${desc}`) !== `weather_desc.${desc}`
+        ? t(`weather_desc.${desc}`)
+        : desc;
 
-      } catch (e) {
-        if (!silent) setErr(t('errorGPS'));
-      }
-    },
-    () => {
-      if (!silent) setErr(t('errorGPS'));
+    setSky(translatedDesc);
+    setIcon(d.weather?.[0]?.icon || "");
+    console.log(`[SKY – locate] Actualitzat a: ${translatedDesc}`);
+
+    // 💨 5. Vent (passa m/s a km/h)
+    const wKmH = Math.round((d.wind.speed || 0) * 3.6 * 10) / 10;
+    setWind(wKmH);
+    setWindDirection(getWindDirection(d.wind.deg));
+
+    // ❄️ 6. Càlcul de risc per fred (wind-chill)
+    let effForCold = d.main.temp;
+    if (d.main.temp <= 10 && wKmH >= 5) {
+      const wcVal =
+        13.12 +
+        0.6215 * d.main.temp -
+        11.37 * Math.pow(wKmH, 0.16) +
+        0.3965 * d.main.temp * Math.pow(wKmH, 0.16);
+      const wcRound = Math.round(wcVal * 10) / 10;
+      setWc(wcRound);
+      effForCold = wcRound;
+    } else {
+      setWc(null);
     }
-  );
+
+    const coldRisk = getColdRisk(effForCold, wKmH);
+    setColdRisk(coldRisk as ColdRisk);
+
+    // ⚠️ 7. Avisos meteorològics oficials (OpenWeather 3.0)
+    const alerts = await getWeatherAlerts(lat, lon, lang, API_KEY);
+    setAlerts(alerts);
+    if (alerts.length > 0)
+      console.log(`[DEBUG] Avisos meteorològics rebuts:`, alerts);
+
+    // 🔥 8. Notificacions segons risc
+    await maybeNotifyHeat(d.main.feels_like);
+    await maybeNotifyCold(effForCold, wKmH);
+    await maybeNotifyWind(wKmH);
+    setReady(true);
+
+    // ✅ Tot correcte
+    if (!silent) setErr("");
+
+  } catch (error) {
+    console.error("[DEBUG] Error obtenint dades per GPS:", error);
+    if (!silent) setErr(t("errorGPS"));
+  } finally {
+    if (!silent) setLoading(false);
+  }
 };
 
 /* 🔍 CERCA PER CIUTAT */
@@ -715,7 +739,7 @@ const search = async () => {
     // 🌦️ Obté dades del temps per ciutat
    const d = await getWeatherByCity(input, "en");
     setData(d);
-
+    console.log("[DEBUG] Dades rebudes per GPS:", d);
     // 🏙️ Coordenades i nom de ciutat
     const { lat, lon } = (d as any).coord || { lat: null, lon: null };
     const nm = (await getLocationNameFromCoords(lat, lon)) || d.name;
@@ -762,6 +786,7 @@ const search = async () => {
     // 🔥 Altres notificacions
     await maybeNotifyHeat(d.main.feels_like);
     await maybeNotifyWind(wKmh);
+    setReady(true);
 
   } catch (e) {
     setErr(t('errorCity'));
@@ -787,34 +812,49 @@ useEffect(() => {
 async function maybeNotifyHeat(hi: number | null) {
   if (!pushEnabled || hi == null) return;
 
-  // Llindars segons INSST (Risc per calor)
-  if (hi >= 27 && hi < 32) {
+  // 🌡️ Llindars segons INSST (Risc per calor)
+if (hi >= 54) {
   showBrowserNotification(
-    `🌤️ ${t('notify.heatTitle')}`,
+    `🔥 ${t('notify.heatTitle')}`,
     t('notify.heatBody', {
-      risk: t('heatRisk.moderate'),
+      risk: t('heatRisk.extreme'),
       hi: hi.toFixed(1)
     })
   );
-  console.log("[DEBUG] Notificació calor enviada (risc moderat)");
-} else if (hi >= 32 && hi < 41) {
+  console.log("[DEBUG] Notificació calor enviada (risc extrem)");
+} 
+else if (hi >= 41) {
   showBrowserNotification(
-    `🔥 ${t('notify.heatTitle')}`,
+    `🌋 ${t('notify.heatTitle')}`,
     t('notify.heatBody', {
       risk: t('heatRisk.high'),
       hi: hi.toFixed(1)
     })
   );
   console.log("[DEBUG] Notificació calor enviada (risc alt)");
-} else if (hi >= 41) {
+} 
+else if (hi >= 32) {
   showBrowserNotification(
-    `🚨 ${t('notify.heatTitle')}`,
+    `☀️ ${t('notify.heatTitle')}`,
     t('notify.heatBody', {
-      risk: t('heatRisk.extreme'),
+      risk: t('heatRisk.moderate'),
       hi: hi.toFixed(1)
     })
   );
-  console.log("[DEBUG] Notificació calor enviada (risc molt alt)");
+  console.log("[DEBUG] Notificació calor enviada (risc moderat)");
+} 
+else if (hi >= 27) {
+  showBrowserNotification(
+    `🌤️ ${t('notify.heatTitle')}`,
+    t('notify.heatBody', {
+      risk: t('heatRisk.low'),
+      hi: hi.toFixed(1)
+    })
+  );
+  console.log("[DEBUG] Notificació calor enviada (risc lleu)");
+} 
+else {
+  console.log("[DEBUG] Condicions sense risc per calor: notificació no enviada");
 }
 }
 
@@ -976,16 +1016,14 @@ return (
 )}
 
      {/* 📊 DADES */}
-{temp !== null && hum !== null && (
-  <>
-    {city && (
-      <LocationDisplay
-        city={city}
-        realCity={realCity}
-        lang={i18n.language === 'es' ? 'es' : 'ca'}
-        label={t('location')}
-      />
-    )}
+{city && (
+  <LocationDisplay
+    city={city}
+    realCity={realCity}
+    lang={i18n.language === 'es' ? 'es' : 'ca'}
+    label={t('location')}
+  />
+)}
 
    {/* 🛰️ Font de dades (GPS o Cerca manual) */}
 {showSource && currentSource === 'gps' && (
@@ -1000,11 +1038,12 @@ return (
 )}
 
     {/* 🌡️ Dades meteorològiques */}
+    <>
 <p>{t("humidity")}: {hum !== null ? `${hum}%` : "–"}</p>
 <p>{t("feels_like")}: <strong>{hi !== null ? `${hi.toFixed(1)}°C` : "–"}</strong></p>
 <p>{t("measured_temp")}: {temp !== null ? `${temp.toFixed(1)}°C` : "–"}</p>
   </>
-)}
+
   
           {/* 🌤️ ESTAT DEL CEL */}
           {data?.weather?.[0] && (
@@ -1113,90 +1152,53 @@ return (
           {/* ⚠️ Avisos meteorològics oficials */}
 {alerts.length > 0 ? (
   alerts.map((alert, i) => {
-    const text = alert.event?.toLowerCase() || "";
-    let borderColor = "#ffeb3b"; // groc per defecte
-    let icon = "⚠️";
+    let rawText = alert.event?.toLowerCase() || '';
 
-    if (text.includes("storm") || text.includes("tempesta")) {
-      borderColor = "#ff9800";
-      icon = "⛈️";
-    } else if (text.includes("rain") || text.includes("pluja")) {
-      borderColor = "#4fc3f7";
-      icon = "🌧️";
-    } else if (text.includes("heat") || text.includes("calor")) {
-      borderColor = "#f44336";
-      icon = "🌡️";
-    } else if (text.includes("snow") || text.includes("neu")) {
-      borderColor = "#90caf9";
-      icon = "❄️";
-    } else if (text.includes("wind") || text.includes("vent")) {
-      borderColor = "#81d4fa";
-      icon = "💨";
-    }
+    // 🔍 Simplifica el text per trobar la clau de traducció
+    if (rawText.includes('storm')) rawText = 'storm';
+    else if (rawText.includes('rain')) rawText = 'rain';
+    else if (rawText.includes('snow')) rawText = 'snow';
+    else if (rawText.includes('wind')) rawText = 'wind';
+    else if (rawText.includes('heat')) rawText = 'heat';
+    else if (rawText.includes('cold')) rawText = 'cold';
+
+    // 🌍 Traducció amb i18n
+    const text = t(`weather_alerts.${rawText}`) !== `weather_alerts.${rawText}`
+      ? t(`weather_alerts.${rawText}`)
+      : alert.event;
+
+    // 🎨 Defineix colors i icones per defecte
+    let borderColor = '#ffeb3b';
+    let icon = '⚠️';
+
+    if (rawText === 'storm') { borderColor = '#ff9800'; icon = '⛈️'; }
+    else if (rawText === 'rain') { borderColor = '#4fc3f7'; icon = '🌧️'; }
+    else if (rawText === 'heat') { borderColor = '#f44336'; icon = '🔥'; }
+    else if (rawText === 'snow') { borderColor = '#90caf9'; icon = '❄️'; }
+    else if (rawText === 'wind') { borderColor = '#81d4fa'; icon = '💨'; }
+    else if (rawText === 'cold') { borderColor = '#4dd0e1'; icon = '🥶'; }
 
     return (
       <div
         key={i}
         style={{
-          borderLeft: `4px solid ${borderColor}`,
-          borderRadius: "6px",
-          padding: "10px 12px",
-          marginBottom: "10px",
-          color: window.matchMedia("(prefers-color-scheme: dark)").matches
-            ? "#eee"
-            : "#222",
-          background: window.matchMedia("(prefers-color-scheme: dark)").matches
-            ? "rgba(255,255,255,0.05)"
-            : "rgba(0,0,0,0.05)",
-          lineHeight: "1.4em",
-          display: "flex",
-          alignItems: "flex-start",
-          gap: "10px",
-          boxShadow: "0 0 6px rgba(0,0,0,0.2)",
+          borderLeft: `6px solid ${borderColor}`,
+          padding: '10px',
+          marginBottom: '10px',
+          backgroundColor: '#222',
+          borderRadius: '6px',
         }}
       >
-                <div style={{ fontSize: "1.4rem" }}>
-          {icon}
-        </div>
-
-        <div style={{ flex: 1 }}>
-          <strong style={{ color: borderColor }}>{alert.event}</strong>
-          <p style={{ margin: "4px 0", fontSize: "0.9rem" }}>
-            {alert.description?.replace(/\n/g, " ")}
-          </p>
-          <small
-            style={{
-              color: window.matchMedia("(prefers-color-scheme: dark)").matches
-                ? "#bbb"
-                : "#555",
-            }}
-          >
-            🕒{" "}
-            {new Date(alert.start * 1000).toLocaleString(i18n.language)} –{" "}
-            {new Date(alert.end * 1000).toLocaleString(i18n.language)}
-            <br />
-            🏛️ {alert.sender_name || "AEMET"}
-          </small>
+        <strong>{icon} {text}</strong>
+        <div>{alert.description}</div>
+        <div style={{ fontSize: '0.9em', opacity: 0.8 }}>
+          {alert.sender_name} · {new Date(alert.start * 1000).toLocaleString()} → {new Date(alert.end * 1000).toLocaleString()}
         </div>
       </div>
     );
   })
 ) : (
-  <p
-    style={{
-      color: "#bbb",
-      marginTop: "10px",
-      background: "rgba(255,255,255,0.05)",
-      border: "1px solid rgba(255,255,255,0.1)",
-      borderRadius: "8px",
-      padding: "10px 12px",
-      textAlign: "center",
-      fontSize: "0.9rem",
-      boxShadow: "0 0 6px rgba(0,0,0,0.2)",
-    }}
-  >
-    🌤️ {t("alerts_none")}
-  </p>
+  <p>☀️ {t('no_alerts')}</p>
 )}
   
           {/* 📋 RECOMANACIONS */}
