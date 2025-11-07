@@ -38,7 +38,115 @@
    import LanguageSwitcher from './components/LanguageSwitcher';
    import { enableRiskAlerts, disableRiskAlerts } from "./push/subscribe";
 
-   
+   // 🌦️ Tradueix les descripcions dels avisos AEMET segons idioma
+type LangKey = 'ca' | 'es' | 'eu' | 'gl';
+
+export function translateAemetDescription(desc: string, lang: LangKey): string {
+  if (!desc) return "";
+
+  const text = desc.toLowerCase();
+
+  // 📘 Diccionari multilingüe per categories
+  const t: Record<string, Record<LangKey, string>> = {
+    rain: {
+      ca: "Precipitació acumulada",
+      es: "Precipitación acumulada",
+      eu: "Euri metatua",
+      gl: "Precipitación acumulada",
+    },
+    snow: {
+      ca: "Nevades o cota de neu",
+      es: "Nieve o cota de nieve",
+      eu: "Elurra edo elur maila",
+      gl: "Neve ou cota de neve",
+    },
+    wind: {
+      ca: "Ratxa màxima de vent",
+      es: "Racha máxima de viento",
+      eu: "Haize-bolada maximoa",
+      gl: "Racha máxima de vento",
+    },
+    storm: {
+      ca: "Tempestes o llamps",
+      es: "Tormentas o rayos",
+      eu: "Ekaitzak edo tximistak",
+      gl: "Treboadas ou lóstregos",
+    },
+    fog: {
+      ca: "Boira",
+      es: "Niebla",
+      eu: "Laino",
+      gl: "Néboa",
+    },
+    coastal: {
+      ca: "Mar de fons o fort onatge",
+      es: "Mar de fondo o fuerte oleaje",
+      eu: "Itsas hondoko olatuak",
+      gl: "Mar de fondo ou forte ondada",
+    },
+    heat: {
+      ca: "Temperatures molt elevades",
+      es: "Temperaturas muy elevadas",
+      eu: "Tenperatura altuak",
+      gl: "Temperaturas moi elevadas",
+    },
+    cold: {
+      ca: "Fred o gelades",
+      es: "Frío o heladas",
+      eu: "Hotz edo izozteak",
+      gl: "Frío ou xeadas",
+    },
+    generic: {
+      ca: "Avís meteorològic actiu",
+      es: "Aviso meteorológico activo",
+      eu: "Eguraldi-abisu aktiboa",
+      gl: "Aviso meteorolóxico activo",
+    },
+  };
+
+  // ☔️ Precipitacions
+  if (text.includes("accumulated precipitation")) {
+    const mm = text.match(/(\d+)\s?mm/);
+    const value = mm ? `${mm[1]} mm` : "";
+    return `${t.rain[lang]}${value ? `: ${value}` : "."}`;
+  }
+
+  // 🌬️ Vent
+  if (text.includes("gust of wind") || text.includes("wind")) {
+    const kmh = text.match(/(\d+)\s?km\/h/);
+    const value = kmh ? `${kmh[1]} km/h` : "";
+    return `${t.wind[lang]}${value ? `: ${value}` : "."}`;
+  }
+
+  // ⛈️ Tempestes o llamps
+  if (text.includes("storm") || text.includes("thunder")) {
+    return `${t.storm[lang]}.`;
+  }
+
+  // ❄️ Neu
+  if (text.includes("snow")) {
+    const mm = text.match(/(\d+)\s?mm/);
+    const value = mm ? `${mm[1]} mm` : "";
+    return `${t.snow[lang]}${value ? `: ${value}` : "."}`;
+  }
+
+  // 🌫️ Boira
+  if (text.includes("fog")) return `${t.fog[lang]}.`;
+
+  // 🌊 Mar de fons
+  if (text.includes("coastal") || text.includes("wave") || text.includes("sea")) {
+    return `${t.coastal[lang]}.`;
+  }
+
+  // 🔥 Calor extrema
+  if (text.includes("heat")) return `${t.heat[lang]}.`;
+
+  // 🧊 Fred o gelades
+  if (text.includes("cold") || text.includes("frost")) return `${t.cold[lang]}.`;
+
+  // 🔔 Si no hi ha coincidència clara
+  return `${t.generic[lang]}. ${desc}`;
+}
 
    // Tipus per a la resposta d'OpenWeather
 interface WeatherResponse {
@@ -1187,7 +1295,7 @@ return (
           }}
         >
         <strong>{icon} {text}</strong>
-        <div>{alert.description}</div>
+        <div>{translateAemetDescription(alert.description, i18n.language as LangKey)}</div>
         <div style={{ fontSize: '0.9em', opacity: 0.8 }}>
           {alert.sender_name} · {new Date(alert.start * 1000).toLocaleString()} → {new Date(alert.end * 1000).toLocaleString()}
         </div>
