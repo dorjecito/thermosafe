@@ -66,11 +66,12 @@
     }
   },
 
-  "sky_state": "Estado del cielo",
-  "weather_desc": {
-    "clear sky": "Cielo despejado",
+"sky_state": "Estado del cielo",
+"weather_desc": {
+"clear sky": "Cielo despejado",
 "few clouds": "Pocas nubes",
 "scattered clouds": "Nubes dispersas",
+"nubes dispersas": "Nubes dispersas",
 "broken clouds": "Parcialmente nublado",
 "overcast clouds": "Cielo cubierto",
 "light rain": "Lluvia débil",
