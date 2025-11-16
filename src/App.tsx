@@ -1401,3 +1401,4 @@ function showBrowserNotification(title: string, body: string) {
     });
   }
 }
+//Thermosafe, un projecte de Esteve Montalvo i Camps 
