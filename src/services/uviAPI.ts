@@ -1,30 +1,31 @@
+// 📌 Obté l’índex UV des d’OpenWeather One Call 3.0
 export async function getUVI(lat: number, lon: number): Promise<number | null> {
-  try {
-    // 💻 Mode local (durant desenvolupament)
-    if (import.meta.env.DEV) {
-      console.log("🧪 Mode local: simulant UVI 4.5");
-      return 4.5;
-    }
+  try {
+    const apiKey = import.meta.env.VITE_OPENWEATHER_API_KEY;
+    if (!apiKey) {
+      console.error("❌ Falta VITE_OPENWEATHER_API_KEY al .env");
+      return null;
+    }
 
-    // 🌍 En producció: crida al backend de Vercel (no directament a OpenUV)
-    const response = await fetch(`/api/openuv?lat=${lat}&lon=${lon}`);
+    const url =
+      `https://api.openweathermap.org/data/3.0/onecall?lat=${lat}&lon=${lon}` +
+      `&exclude=minutely,hourly,daily,alerts&appid=${apiKey}`;
 
-    console.log("📡 Resposta backend /api/openuv:", response.status);
+    console.log("🌤️ Cridant OpenWeather UVI…", url);
 
-    if (!response.ok) {
-      const text = await response.text();
-      console.error("❌ Error resposta /api/openuv:", text);
-      throw new Error(`Error backend: ${response.status}`);
-    }
+    const response = await fetch(url);
+    if (!response.ok) {
+      console.error("❌ Error OpenWeather:", await response.text());
+      return null;
+    }
 
-    const data = await response.json();
-    console.log("🌞 Dades UVI rebudes:", data);
+    const data = await response.json();
+    console.log("🌞 Dades UVI rebudes:", data);
 
-    // 🔁 Retorna el valor UV si existeix
-    return data?.result?.uv ?? null;
+    return data.current?.uvi ?? null;
 
-  } catch (error) {
-    console.error("💥 Error obtenint UVI:", error);
-    return null;
-  }
+  } catch (err) {
+    console.error("❌ Error obtenint UVI:", err);
+    return null;
+  }
 }

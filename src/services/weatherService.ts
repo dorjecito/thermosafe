@@ -16,19 +16,14 @@ export async function getWeatherByCoords(
 
   try {
     const response = await fetch(url);
-    if (!response.ok) {
-      console.error(`[OpenWeather] Error ${response.status} per coordenades: ${lat}, ${lon}`);
-      return null;
-    }
+    if (!response.ok) return null;
 
     const data = await response.json();
 
-    // 🏙️ Afegeix nom si no hi és
     if (!data.name && data.sys?.country) {
-      data.name = `${data.sys.country}`;
+      data.name = data.sys.country;
     }
 
-    console.log(`[DEBUG] Dades rebudes per coordenades: ${lat}, ${lon} → ${data.name}`);
     return data;
   } catch (err) {
     console.error("[DEBUG] Error a getWeatherByCoords:", err);
@@ -36,28 +31,32 @@ export async function getWeatherByCoords(
   }
 }
 
-// 🏙️ Obté temps actual per nom de ciutat
-export async function getWeatherByCity(cityName: string, lang: string = "en", apiKey?: string) {
+// 🏙️ Obté temps actual per ciutat
+export async function getWeatherByCity(
+  cityName: string,
+  lang: string = "en",
+  apiKey?: string
+) {
   const API_KEY = apiKey || import.meta.env.VITE_OPENWEATHER_API_KEY;
-  const url = `${BASE_URL}/weather?q=${encodeURIComponent(cityName)}&appid=${API_KEY}&units=metric&lang=${lang}`;
+  const url = `${BASE_URL}/weather?q=${encodeURIComponent(
+    cityName
+  )}&appid=${API_KEY}&units=metric&lang=${lang}`;
 
   try {
     const response = await fetch(url);
-    if (!response.ok) {
-      console.error(`[OpenWeather] Error ${response.status} per ciutat: ${cityName}`);
-      return null;
-    }
+    if (!response.ok) return null;
 
     const data = await response.json();
 
-    // 📍 Si falta coord, intenta recuperar-la via Geo API
-    if (!data.coord || !data.coord.lat || !data.coord.lon) {
-      console.warn(`[OpenWeather] Coordenades absents per ${cityName}, intentant recuperar...`);
-      const geoUrl = `${GEO_URL}/direct?q=${encodeURIComponent(cityName)}&limit=1&appid=${API_KEY}`;
+    // Si falten coordenades, recuperar-les via GeoAPI
+    if (!data.coord?.lat || !data.coord?.lon) {
+      const geoUrl = `${GEO_URL}/direct?q=${encodeURIComponent(
+        cityName
+      )}&limit=1&appid=${API_KEY}`;
       const geoResp = await fetch(geoUrl);
       const geoData = await geoResp.json();
 
-      if (Array.isArray(geoData) && geoData.length > 0) {
+      if (geoData.length > 0) {
         data.coord = { lat: geoData[0].lat, lon: geoData[0].lon };
         data.name =
           geoData[0].local_names?.[lang] ||
@@ -69,7 +68,6 @@ export async function getWeatherByCity(cityName: string, lang: string = "en", ap
 
     if (!data.name) data.name = cityName;
 
-    console.log(`[DEBUG] Dades meteorològiques per ciutat: ${data.name}`, data);
     return data;
   } catch (err) {
     console.error("[DEBUG] Error a getWeatherByCity:", err);
@@ -77,7 +75,7 @@ export async function getWeatherByCity(cityName: string, lang: string = "en", ap
   }
 }
 
-// ⚠️ Avisos meteorològics (versió 3.0)
+// ⚠️ Avisos meteorològics One Call 3.0
 export async function getWeatherAlerts(
   lat: number,
   lon: number,
@@ -89,16 +87,46 @@ export async function getWeatherAlerts(
 
   try {
     const response = await fetch(url);
-    if (!response.ok) {
-      console.warn(`[OpenWeather] Sense avisos per ${lat}, ${lon}`);
-      return [];
-    }
+    if (!response.ok) return [];
 
     const data = await response.json();
     return data.alerts || [];
   } catch (err) {
     console.error("[DEBUG] Error obtenint avisos meteorològics:", err);
     return [];
+  }
+}
+
+// ☀️ Índex UV oficial One Call API 3.0
+export async function getUVFromOW(
+  lat: number,
+  lon: number
+): Promise<number | null> {
+  try {
+    const API_KEY = import.meta.env.VITE_OPENWEATHER_API_KEY;
+    const url = `${ONECALL_URL}?lat=${lat}&lon=${lon}&appid=${API_KEY}&units=metric&exclude=minutely,hourly,daily,alerts`;
+
+    console.log("[DEBUG] Fetch UVI OW →", url);
+
+    const response = await fetch(url);
+    if (!response.ok) {
+      console.warn("[DEBUG] Error OW UVI:", response.status);
+      return null;
+    }
+
+    const data = await response.json();
+    console.log("[DEBUG] OneCall 3.0 response:", data);
+
+    // Camp correcte
+    const uvi =
+      data?.current?.uvi ?? // oficial
+      data?.current?.uv ??  // fallback ocasional
+      null;
+
+    return typeof uvi === "number" ? uvi : null;
+  } catch (err) {
+    console.error("[DEBUG] Error obtenint UVI OW:", err);
+    return null;
   }
 }
 

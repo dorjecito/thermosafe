@@ -1,7 +1,7 @@
 /* ───────────────────────────────────────────
    src/App.tsx  —  100 % camins relatius
    ─────────────────────────────────────────── */
-
+   import { getUVFromOW } from "./services/openWeatherUVI";
    import React, { useEffect, useRef, useState } from 'react';
    import { useTranslation } from 'react-i18next';
    import './i18n';
@@ -38,83 +38,99 @@
    import LanguageSwitcher from './components/LanguageSwitcher';
    import { enableRiskAlerts, disableRiskAlerts } from "./push/subscribe";
 
-// 🧩 Traducció completa dels avisos AEMET (EN + ES) amb nivell de severitat
+// =====================================================
+// Traducció completa i robusta dels avisos AEMET
+// =====================================================
+
 type LangKey = 'ca' | 'es' | 'eu' | 'gl';
 
 export function translateAemetDescription(desc: string, lang: LangKey): string {
   if (!desc) return "";
 
-  // 🔠 Normalitza text
+  // 1) Normalització inicial
   let t = desc
     .toLowerCase()
-    .replace(/coastalevent/g, "coastal event")
-    .replace(/coastalwind/g, "coastal wind")
+    .normalize("NFD").replace(/[\u0300-\u036f]/g, "")  // treu accents
     .replace(/\s+/g, " ")
     .trim();
 
-  // 🌡️ Diccionari de termes
-  const label = {
-    rain:   { ca:"pluja", es:"lluvia", eu:"euria", gl:"chuva" },
-    wind:   { ca:"vent", es:"viento", eu:"haizea", gl:"vento" },
-    snow:   { ca:"neu", es:"nieve", eu:"elurra", gl:"neve" },
-    storm:  { ca:"tempesta", es:"tormenta", eu:"ekaitza", gl:"treboada" },
-    coastal:{ ca:"mar de fons o fort onatge", es:"mar de fondo o fuerte oleaje", eu:"itsas hondoko olatuak", gl:"mar de fondo ou forte ondada" },
-    cwind:  { ca:"vent costaner", es:"viento costero", eu:"kostaldeko haizea", gl:"vento costeiro" },
-    heat:   { ca:"calor", es:"calor", eu:"bero", gl:"calor" },
-    cold:   { ca:"fred", es:"frío", eu:"hotza", gl:"frío" },
-  } as const;
+  // 2) Normalització de guions Unicode (– — ― etc.)
+  t = t.replace(/[-‐-‒–—―]/g, " ");
 
-  // ⚠️ Diccionari de severitat
-  const severity = {
-    moderate: { ca:"moderada", es:"moderada", eu:"ertaina", gl:"moderada" },
-    severe:   { ca:"severa", es:"severa", eu:"larria", gl:"severa" },
-    strong:   { ca:"forta", es:"fuerte", eu:"indartsua", gl:"forte" },
-    yellow:   { ca:"groga", es:"amarilla", eu:"horia", gl:"amarela" },
-    orange:   { ca:"taronja", es:"naranja", eu:"laranja", gl:"laranxa" },
-    red:      { ca:"vermella", es:"roja", eu:"gorria", gl:"vermella" },
-  } as const;
+  // 3) Correccions habituals d'AEMET
+  t = t.replace("lluiva", "lluvia");       // faltes comuns
+  t = t.replace("one hour", "one hour");  // unifica
+  t = t.replace("onehour", "one hour");
 
-  // 🔎 Extrau valors numèrics
-  const mm  = t.match(/(\d+)\s?mm/);
-  const kmh = t.match(/(\d+)\s?km\/h/);
-
-  // 🔎 Detecta tipus d’avís
-  const type = t.includes("rain") || t.includes("precipitación") ? "rain"
-              : t.includes("wind") || t.includes("viento") ? "wind"
-              : t.includes("storm") || t.includes("tormenta") ? "storm"
-              : t.includes("coastal event") || t.includes("oleaje") || t.includes("mar de fondo") ? "coastal"
-              : t.includes("coastal wind") || t.includes("viento costero") ? "cwind"
-              : t.includes("snow") || t.includes("nieve") ? "snow"
-              : t.includes("heat") || t.includes("calor") ? "heat"
-              : t.includes("cold") || t.includes("frío") || t.includes("heladas") || t.includes("frost") ? "cold"
-              : null;
-
-  if (!type) return desc;
-
-  // 🔎 Detecta severitat
-  const sev =
-    t.includes("moderate") ? "moderate" :
-    t.includes("severe") ? "severe" :
-    t.includes("strong") ? "strong" :
-    t.includes("yellow") ? "yellow" :
-    t.includes("orange") ? "orange" :
-    t.includes("red") ? "red" :
-    null;
-
-  // 🧠 Genera text traduït
-  let translated = "";
-
-  if (sev) {
-    translated = `Avís ${severity[sev][lang]} per ${label[type][lang]}`;
-  } else {
-    translated = `Avís per ${label[type][lang]}`;
+  // =====================================================================
+  // 4) Traducció especial → AEMET envia sovint l'event "Mode"
+  // =====================================================================
+  if (t === "mode") {
+    if (lang === "es") return "Modo operativo";
+    if (lang === "ca") return "Mode operatiu";
+    if (lang === "eu") return "Modu operatiboa";
+    if (lang === "gl") return "Modo operativo";
   }
 
-  // 📊 Afegeix valors si n'hi ha
-  if (mm) translated += `: ${mm[1]} mm`;
-  if (kmh) translated += `: ${kmh[1]} km/h`;
+  // =====================================================================
+  // 5) DETECCIÓ UNIVERSAL DE PRECIPITACIÓ ACUMULADA (tots els formats)
+  // =====================================================================
 
-  return translated.charAt(0).toUpperCase() + translated.slice(1);
+  const precipRegex = /(\d+)\s?mm/;
+
+  const isAccumulated =
+    t.includes("precip") ||   // precipitation, precipitación, etc.
+    t.includes("accum") ||    // accumulated / acumulada
+    t.includes("acum") ||     // acomulada (falta d'AEMET)
+    t.includes("hour") ||     // one hour, last hour
+    t.includes("lluvia");     // AEMET a vegades envía "lluvia 20 mm"
+
+  if (isAccumulated) {
+    const mm = t.match(precipRegex);
+    if (mm) {
+      const n = mm[1];
+
+      if (lang === "es") return `Lluvia: ${n} mm (últimas horas)`;
+      if (lang === "ca") return `Pluja: ${n} mm (últimes hores)`;
+      if (lang === "eu") return `Euria: ${n} mm (azken orduak)`;
+      if (lang === "gl") return `Chuva: ${n} mm (últimas horas)`;
+    }
+  }
+
+  // =====================================================================
+  // 6) DETECCIÓ DE TIPOLOGIA GENERAL (tempesta, vent, neu, pluja...)
+  // =====================================================================
+
+  const types = {
+    rain: { ca: "pluja", es: "lluvia", eu: "euria", gl: "chuva" },
+    storm: { ca: "tempesta", es: "tormenta", eu: "ekaitza", gl: "treboada" },
+    wind: { ca: "vent", es: "viento", eu: "haizea", gl: "vento" },
+    snow: { ca: "neu", es: "nieve", eu: "elurra", gl: "neve" },
+    cold: { ca: "fred", es: "frío", eu: "hotza", gl: "frío" }
+  };
+
+  let type: keyof typeof types | null = null;
+
+  if (t.includes("rain") || t.includes("lluvia")) type = "rain";
+  else if (t.includes("storm") || t.includes("tormenta")) type = "storm";
+  else if (t.includes("wind") || t.includes("viento")) type = "wind";
+  else if (t.includes("snow") || t.includes("nieve")) type = "snow";
+  else if (t.includes("cold") || t.includes("frio")) type = "cold";
+
+  if (type) {
+    const mm = t.match(precipRegex);
+    let base = types[type][lang];
+
+    if (mm) base += `: ${mm[1]} mm`;
+
+    return base.charAt(0).toUpperCase() + base.slice(1);
+  }
+
+  // =====================================================================
+  // 7) Si no encaixa cap cas → torna l'original traduït si és possible
+  // =====================================================================
+
+  return desc;
 }
 
 /* ──────── constants & helpers ──────── */
@@ -444,7 +460,9 @@ async function maybeNotifyWind(kmh: number) {
     very_strong: 4,
   };
 
-  const crossedUp = rank[risk] > rank[prev] && rank[risk] >= rank['moderate'];
+   const crossedUp = rank[risk] > rank[prev] && rank[risk] >= rank['moderate'];
+
+
 
   // --- Mostra notificació si risc puja i no hi ha cooldown ---
 if (crossedUp && cooldownOk) {
@@ -464,6 +482,32 @@ if (crossedUp && cooldownOk) {
     localStorage.setItem('lastWindRisk', risk);
   }
 }
+
+/* === [UV] Notificador segons índex UV === */
+async function maybeNotifyUV(uvi: number | null) {
+  if (!pushEnabled || uvi == null) return;
+
+  console.debug("[DEBUG] Verificant notificació UV. Valor:", uvi);
+
+  if (uvi >= 8) {
+    showBrowserNotification(
+      t("notify.uvTitle"),
+      t("notify.uvVeryHigh")
+    );
+  } else if (uvi >= 6) {
+    showBrowserNotification(
+      t("notify.uvTitle"),
+      t("notify.uvHigh")
+    );
+  } else if (uvi >= 3) {
+    showBrowserNotification(
+      t("notify.uvTitle"),
+      t("notify.uvModerate")
+    );
+  }
+}
+
+
 // --- ESTAT PUSH ---
 const [pushEnabled, setPushEnabled] = useState(false);
 const [pushToken, setPushToken] = useState<string | null>(null);
@@ -533,10 +577,20 @@ const fetchWeather = async (cityName: string) => {
     setCity(data.name);
     setRealCity(data.name);
 
+    console.log("[DEBUG] Coordenades per alertes:", lat, lon);
+
     // ⚠️ Obté avisos si tenim coordenades
     if (lat && lon) {
       const alerts = await getWeatherAlerts(lat, lon, lang, API_KEY);
-      setAlerts(alerts);
+
+if (!alerts || alerts.length === 0) {
+    console.log("[AEMET Vigo] Sense alertes");
+    setAlerts([]);
+} else {
+    (window as any).lastAlerts = alerts;
+    console.log("[AEMET ALERTES BRUTES]", alerts);
+    setAlerts(alerts);
+}
     }
 
     setErr("");
@@ -693,6 +747,11 @@ setData(d);
 console.log(`[DEBUG] Dades rebudes per GPS:`, d);
 setDataSource("gps");
 
+// ☀️ Obté UVI d’OpenWeather
+const uvi = await getUVFromOW(lat, lon);
+setUvi(uvi);
+console.log("[DEBUG] UV actual:", uvi);
+
 // 📊 Assigna valors bàsics de meteorologia
 setTemp(d.main?.temp ?? null);
 setHum(d.main?.humidity ?? null);
@@ -765,11 +824,14 @@ setDataSource("gps");
     if (alerts.length > 0)
       console.log(`[DEBUG] Avisos meteorològics rebuts:`, alerts);
 
+
     // 🔥 8. Notificacions segons risc
     await maybeNotifyHeat(d.main.feels_like);
     await maybeNotifyCold(effForCold, wKmH);
     await maybeNotifyWind(wKmH);
+    await maybeNotifyUV(uvi);
     setReady(true);
+    
 
     // ✅ Tot correcte
     if (!silent) setErr("");
@@ -861,6 +923,7 @@ useEffect(() => {
 (window as any).maybeNotifyWind = maybeNotifyWind;
 (window as any).maybeNotifyCold = maybeNotifyCold;
 (window as any).maybeNotifyHeat = maybeNotifyHeat;
+(window as any).maybeNotifyUV = maybeNotifyUV;
 
 /* === [HEAT] notifier amb llindars INSST === */
 async function maybeNotifyHeat(hi: number | null) {
@@ -1206,52 +1269,72 @@ return (
           {/* ⚠️ Avisos meteorològics oficials */}
 {alerts.length > 0 ? (
   alerts.map((alert, i) => {
-    let rawText = alert.event?.toLowerCase() || '';
+    let rawText = alert.event?.toLowerCase() || "";
 
-    // 🔍 Simplifica el text per trobar la clau de traducció
-    if (rawText.includes('storm')) rawText = 'storm';
-    else if (rawText.includes('rain')) rawText = 'rain';
-    else if (rawText.includes('snow')) rawText = 'snow';
-    else if (rawText.includes('wind')) rawText = 'wind';
-    else if (rawText.includes('heat')) rawText = 'heat';
-    else if (rawText.includes('cold')) rawText = 'cold';
+    // 🔍 Simplifica el text per trobar la categoria
+    if (rawText.includes("storm")) rawText = "storm";
+    else if (rawText.includes("rain")) rawText = "rain";
+    else if (rawText.includes("snow")) rawText = "snow";
+    else if (rawText.includes("wind")) rawText = "wind";
+    else if (rawText.includes("heat")) rawText = "heat";
+    else if (rawText.includes("cold")) rawText = "cold";
+    else if (rawText.includes("mode")) rawText = "mode"; // <-- Afegit per Vigo
 
-    // 🌍 Traducció amb i18n
-    const text = t(`weather_alerts.${rawText}`) !== `weather_alerts.${rawText}`
-      ? t(`weather_alerts.${rawText}`)
-      : alert.event;
+    // 🧠 Traducció amb la teva funció PRO
+    const title = translateAemetDescription(alert.event || "", i18n.language as LangKey);
+    const body  = translateAemetDescription(alert.description || "", i18n.language as LangKey);
 
-    // 🎨 Defineix colors i icones per defecte
-    let borderColor = '#ffeb3b';
-    let icon = '⚠️';
+    // 🎨 Colors i icones
+    let borderColor = "#ffeb3b";
+    let icon = "⚠️";
 
-    if (rawText === 'storm') { borderColor = '#ff9800'; icon = '⛈️'; }
-    else if (rawText === 'rain') { borderColor = '#4fc3f7'; icon = '🌧️'; }
-    else if (rawText === 'heat') { borderColor = '#f44336'; icon = '🔥'; }
-    else if (rawText === 'snow') { borderColor = '#90caf9'; icon = '❄️'; }
-    else if (rawText === 'wind') { borderColor = '#81d4fa'; icon = '💨'; }
-    else if (rawText === 'cold') { borderColor = '#4dd0e1'; icon = '🥶'; }
+    if (rawText === "storm") {
+      borderColor = "#ff9800"; icon = "⛈️";
+    } else if (rawText === "rain") {
+      borderColor = "#4fc3f7"; icon = "🌧️";
+    } else if (rawText === "heat") {
+      borderColor = "#f44336"; icon = "🔥";
+    } else if (rawText === "snow") {
+      borderColor = "#90caf9"; icon = "❄️";
+    } else if (rawText === "wind") {
+      borderColor = "#81d4fa"; icon = "🌬️";
+    } else if (rawText === "cold") {
+      borderColor = "#4dd0e1"; icon = "🥶";
+    } else if (rawText === "mode") {
+      borderColor = "#b39ddb"; icon = "ℹ️"; // <-- Afegit cas Vigo
+    }
 
-          return (
-              <div
-          key={i}
-          className="weather-alert"
-          style={{
-            borderLeft: `6px solid ${borderColor}`,
-          }}
-        >
-       <strong>
-  {icon} {translateAemetDescription(alert.event || "", i18n.language as LangKey)}
-</strong>
-<div>{translateAemetDescription(alert.description || "", i18n.language as LangKey)}</div>
-        <div style={{ fontSize: '0.9em', opacity: 0.8 }}>
-          {alert.sender_name} · {new Date(alert.start * 1000).toLocaleString()} → {new Date(alert.end * 1000).toLocaleString()}
+    return (
+      <div
+        key={i}
+        className="weather-alert"
+        style={{
+          borderLeft: `6px solid ${borderColor}`,
+          marginBottom: "10px",
+          paddingLeft: "10px",
+        }}
+      >
+
+        <strong>
+          {icon} {title}
+        </strong>
+
+        {body && (
+          <div style={{ opacity: 0.8 }}>
+            {body}
+          </div>
+        )}
+
+        <div style={{ fontSize: "0.75em", opacity: 0.6, marginTop: "3px" }}>
+          {alert.sender_name} ·{" "}
+          {new Date(alert.start * 1000).toLocaleString()} →{" "}
+          {new Date(alert.end * 1000).toLocaleString()}
         </div>
       </div>
     );
   })
 ) : (
-  <p>☀️ {t('no_alerts')}</p>
+  <p>☀️ {t("no_alerts")}</p>
 )}
   
           {/* 📋 RECOMANACIONS */}
