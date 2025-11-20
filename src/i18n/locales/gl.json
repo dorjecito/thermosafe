@@ -3,12 +3,12 @@
 
   "ph": "Introduce unha cidade ou vila",
   "btn": "🔍 Consultar",
-  "gps": "📍 Usar localización actual",
+  "gps": "📍 Usar ubicación actual",
 
   "title": "ThermoSafe – Risco actual ☀️❄️💨",
   "search_placeholder": "Introduce unha cidade ou vila",
   "search_button": "🔍 Consultar",
-  "gps_button": "📍 Usar localización actual",
+  "gps_button": "📍 Usar ubicación actual",
 
   "location": "📍 Localización",
   "humidity": "💧 Humidade",
@@ -19,35 +19,28 @@
   "wind": "💨 Velocidade do vento",
   "wind_risk": "Risco por vento",
   "no_risk_wind": "Sen risco",
-  "wind_breezy": "Baixo",
-  "wind_moderate": "Moderado",
-  "wind_strong": "Forte",
-  "wind_very_strong": "Moi forte",
+  "wind_none": "Sen risco",
+  "breezy": "Baixo",
+  "moderate_wind": "Moderado",
+  "strong_wind": "Forte",
+  "very_strong_wind": "Moi forte",
+
   "caution_outdoors": "Precaución no exterior",
   "take_extreme_caution": "Evita actividades ao aire libre",
   "wind_alert_label": "Recibir avisos por vento forte",
 
-  "notify": {
-  "coldTitle": "Aviso ThermoSafe",
-  "coldBody": "Risco por frío {{risk}}. Temperatura {{temp}}°C",
-  "heatTitle": "Aviso ThermoSafe",
-  "heatBody": "Risco por calor {{risk}}. Sensación térmica {{hi}}°C",
-  "windTitle": "Aviso ThermoSafe",
-  "windBody": "Risco por vento {{risk}}. Velocidade do vento: {{speed}} km/h"
-},
-
-  "highIrradianceWarning": "⚠️ Irradiancia solar moi alta. Evita a exposición directa ao sol.",
+  "highIrradianceWarning": "⚠️ Irradiancia solar moi alta. Evita a exposición directa.",
   "highUVIWarning": "⚠️ Índice UV moi alto. Protección solar imprescindible!",
-  "irradianceTips": "👒 Usa sombreiro, lentes de sol e crema solar. Evita o exercicio ao sol.",
+  "irradianceTips": "👒 Usa sombreiro, lentes de sol e crema solar. Evita actividade física ao sol.",
 
   "risk_level": "Risco por calor:",
-  "alert_extreme": "🚨 RISCO EXTREMO DE CALOR! Detén a actividade e hidrátate de inmediato.",
+  "alert_extreme": "🚨 RISCO EXTREMO DE CALOR! Detén a actividade e hídra-tate.",
   "alertRisk": "⚠️ Risco alto ou extremo por calor.",
 
   "loading": "Cargando datos meteorolóxicos...",
   "errorGPS": "Non se puido obter a temperatura por GPS.",
-  "errorCity": "Non se atoparon datos para esa localización.",
-  "errorNoLocation": "Non se puido obter a localización.",
+  "errorCity": "Non se atoparon datos para esa ubicación.",
+  "errorNoLocation": "Non se puido obter a ubicación.",
 
   "recommendations_title": "Recomendacións:",
   "solarProtection": "🔆 Protección solar",
@@ -59,58 +52,40 @@
     "enabled": "Avisos activados. Recibirás notificacións cando o risco sexa moderado ou superior.",
     "disabled": "Avisos desactivados.",
     "errors": {
-      "permissionDenied": "Denegaches o permiso de notificacións.",
-      "noGps": "Non se puido obter a localización (GPS).",
+      "permissionDenied": "Negaches o permiso de notificacións.",
+      "noGps": "Non se puido obter a ubicación (GPS).",
       "notSupported": "O navegador non admite Web Push.",
       "noToken": "Non se puido obter o token de notificacións."
     }
   },
 
-"weather_desc": {
-  "clear sky": "Ceo despexado",
-  "few clouds": "Poucas nubes",
-  "scattered clouds": "Nubes dispersas",
-  "broken clouds": "Parcialmente nublado",
-  "overcast clouds": "Ceo cuberto",
-  "light rain": "Choiva feble",
-  "moderate rain": "Choiva moderada",
-  "heavy intensity rain": "Choiva intensa",
-  "drizzle": "Orballo",
-  "shower rain": "Chuvasco",
-  "thunderstorm": "Treboada",
-  "thunderstorm with rain": "Treboada con choiva",
-  "snow": "Neve",
-  "light snow": "Neve feble",
-  "mist": "Brétema",
-  "fog": "Néboa",
-  "smoke": "Fume",
-  "haze": "Calima",
-  "dust": "Po",
-  "sand": "Area",
-  "ash": "Cinsa volcánica",
-  "squall": "Refachos de vento",
-  "tornado": "Tornado",
+  "sky_state": "Estado do ceo",
 
-  "nubes dispersas": "Nubes dispersas",
-  "cielo despejado": "Ceo despexado",
-  "pocas nubes": "Poucas nubes",
-  "nublado": "Nublado",
-  "parcialmente nublado": "Parcialmente nublado",
-  "moi nublado": "Moi nublado",
-  "despexado": "Despexado",
-  "pouco nublado": "Pouco nublado",
-  "nubrado": "Nubrado",
-  "choiva": "Choiva",
-  "chuvasco": "Chuvasco",
-  "orballo": "Orballo",
-  "treboada": "Treboada",
-  "neve": "Neve",
-  "néboa": "Néboa",
-  "cel net": "Ceo despexado"
-},
-"sky_state": "Estado do ceo",
-
-  
+  "weather_desc": {
+    "clear sky": "Ceo despexado",
+    "few clouds": "Poucas nubes",
+    "scattered clouds": "Nubes dispersas",
+    "broken clouds": "Ceo parcialmente nublado",
+    "overcast clouds": "Ceo cuberto",
+    "light rain": "Chuvia débil",
+    "moderate rain": "Chuvia moderada",
+    "heavy intensity rain": "Chuvia intensa",
+    "drizzle": "Orballo",
+    "shower rain": "Chuvasco",
+    "thunderstorm": "Tormenta",
+    "thunderstorm with rain": "Tormenta con chuvia",
+    "snow": "Neve",
+    "light snow": "Neve débil",
+    "mist": "Brétema",
+    "fog": "Néboa",
+    "smoke": "Fume",
+    "haze": "Calima",
+    "dust": "Po",
+    "sand": "Area",
+    "ash": "Cinsa volcánica",
+    "squall": "Refachos de vento",
+    "tornado": "Tornado"
+  },
 
   "official_links": "Ligazóns oficiais",
   "link_insst": "INSST: estrés térmico e calor",
@@ -144,28 +119,12 @@
 
   "coldRisk": {
     "lleu": "leve",
-    "moderada": "moderado",
-    "alt": "alto",
-    "molt alt": "moi alto",
-    "extrem": "extremo"
-  },
-
-  "windRisk": {
-    "none": "sen risco",
-    "breezy": "brando",
-    "moderate": "moderado",
-    "strong": "forte",
-    "very_strong": "moi forte"
-  },
-
-  
-  "coldRisk": {
-    "lleu": "leve",
     "moderat": "moderado",
     "alt": "alto",
     "molt alt": "moi alto",
     "extrem": "extremo"
   },
+
   "windRisk": {
     "none": "sen risco",
     "breezy": "suave",
@@ -173,16 +132,23 @@
     "strong": "forte",
     "very_strong": "moi forte"
   },
+
   "weather_alerts": {
-    "storm": "Aviso por treboada",
-    "rain": "Aviso por choiva",
+    "storm": "Aviso por tormenta",
+    "rain": "Aviso por chuvia",
     "snow": "Aviso por neve",
     "wind": "Aviso por vento",
     "heat": "Aviso por calor",
     "cold": "Aviso por frío"
   },
+
   "last_update": "Actualizado hai",
   "alerts_title": "Avisos meteorolóxicos oficiais",
   "alerts_none": "Non hai avisos meteorolóxicos activos actualmente.",
-  "no_alerts": "Non hai avisos meteorolóxicos actualmente."
+  "no_alerts": "Non hai avisos meteorolóxicos actualmente.",
+
+  "notifications": {
+    "enabled": "Avisos activados",
+    "disabled": "Avisos desactivados"
+  }
 }

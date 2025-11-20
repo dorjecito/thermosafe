@@ -19,23 +19,15 @@
   "wind": "💨 Velocitat del vent",
   "wind_risk": "Risc per vent",
   "no_risk_wind": "Cap risc",
-  "wind_breezy": "Baix",
-  "wind_moderate": "Moderat",
-  "wind_strong": "Fort",
-  "wind_very_strong": "Molt fort",
+  "wind_none": "Cap risc",
+  "breezy": "Baix",
+  "moderate_wind": "Moderat",
+  "strong_wind": "Fort",
+  "very_strong_wind": "Molt fort",
+
   "caution_outdoors": "Precaució a l'exterior",
   "take_extreme_caution": "Evita activitats a l'aire lliure",
   "wind_alert_label": "Rebre avisos per vent fort",
-  "wind_none": "Cap risc",
-
-  "notify": {
-  "coldTitle": "Avís ThermoSafe",
-  "coldBody": "Risc per fred {{risk}}. Temperatura {{temp}}°C",
-  "heatTitle": "Avís ThermoSafe",
-  "heatBody": "Risc per calor {{risk}}. Sensació tèrmica {{hi}}°C",
-  "windTitle": "Avís ThermoSafe",
-  "windBody": "Risc per vent {{risk}}. Velocitat del vent: {{speed}} km/h"
-},
 
   "highIrradianceWarning": "⚠️ Irradiància solar molt alta. Evita l'exposició directa al sol.",
   "highUVIWarning": "⚠️ Índex UV molt alt. Protecció solar imprescindible!",
@@ -67,62 +59,49 @@
     }
   },
 
-"sky_state": "Estat del cel",
-"weather_desc": {
-  "clear sky": "Cel clar",
-  "few clouds": "Pocs núvols",
-  "scattered clouds": "Núvols dispersos",
-  "broken clouds": "Cel parcialment ennuvolat",
-  "overcast clouds": "Cel cobert",
-  "light rain": "Pluja feble",
-  "moderate rain": "Pluja moderada",
-  "heavy intensity rain": "Pluja intensa",
-  "drizzle": "Plugim",
-  "shower rain": "Ruixat",
-  "thunderstorm": "Tempesta",
-  "thunderstorm with rain": "Tempesta amb pluja",
-  "snow": "Neu",
-  "light snow": "Neu feble",
-  "mist": "Boirina",
-  "fog": "Boira",
-  "smoke": "Fum",
-  "haze": "Calitja",
-  "dust": "Pols",
-  "sand": "Sorra",
-  "ash": "Cendra volcànica",
-  "squall": "Ràfegues de vent",
-  "tornado": "Tornado",
+  "sky_state": "Estat del cel",
 
-  "ennuvolat": "Ennuvolat",
-  "lleugerament ennuvolat": "Lleugerament ennuvolat",
-  "molt ennuvolat": "Molt ennuvolat",
-  "cel clar": "Cel clar",
-  "cel net": "Cel net",
-  "poc ennuvolat": "Poc ennuvolat",
-  "núvols dispersos": "Núvols dispersos",
-  "cel parcialment ennuvolat": "Cel parcialment ennuvolat",
-  "pluja": "Pluja",
-  "ruixat": "Ruixat",
-  "plugim": "Plugim",
-  "tempesta": "Tempesta",
-  "neu": "Neu",
-  "boira": "Boira",
+  "weather_desc": {
+    "clear sky": "Cel clar",
+    "few clouds": "Pocs núvols",
+    "scattered clouds": "Núvols dispersos",
+    "broken clouds": "Cel parcialment ennuvolat",
+    "overcast clouds": "Cel cobert",
+    "light rain": "Pluja feble",
+    "moderate rain": "Pluja moderada",
+    "heavy intensity rain": "Pluja intensa",
+    "drizzle": "Plugim",
+    "shower rain": "Ruixat",
+    "thunderstorm": "Tempesta",
+    "thunderstorm with rain": "Tempesta amb pluja",
+    "snow": "Neu",
+    "light snow": "Neu feble",
+    "mist": "Boirina",
+    "fog": "Boira",
+    "smoke": "Fum",
+    "haze": "Calitja",
+    "dust": "Pols",
+    "sand": "Sorra",
+    "ash": "Cendra volcànica",
+    "squall": "Ràfegues de vent",
+    "tornado": "Tornado",
 
-  "nubes dispersas": "Núvols dispersos",
-  "cielo despejado": "Cel clar",
-  "pocas nubes": "Pocs núvols",
-  "nublado": "Ennuvolat",
-  "parcialmente nublado": "Cel parcialment ennuvolat",
-  "muy nublado": "Molt ennuvolat",
-  "pouco nublado": "Poc ennuvolat",
-  "nuboso": "Ennuvolat",
-  "lluvia": "Pluja",
-  "chubasco": "Ruixat",
-  "llovizna": "Plugim",
-  "tormenta": "Tempesta",
-  "nieve": "Neu",
-  "niebla": "Boira"
-},
+    "ennuvolat": "Ennuvolat",
+    "lleugerament ennuvolat": "Lleugerament ennuvolat",
+    "molt ennuvolat": "Molt ennuvolat",
+    "cel clar": "Cel clar",
+    "cel net": "Cel net",
+    "poc ennuvolat": "Poc ennuvolat",
+    "núvols dispersos": "Núvols dispersos",
+    "cel parcialment ennuvolat": "Cel parcialment ennuvolat",
+    "pluja": "Pluja",
+    "ruixat": "Ruixat",
+    "plugim": "Plugim",
+    "tempesta": "Tempesta",
+    "neu": "Neu",
+    "boira": "Boira",
+    "nuvolositat_variable": "Nuvolositat variable"
+  },
 
   "official_links": "Enllaços oficials",
   "link_insst": "INSST: estrès tèrmic i calor",
@@ -156,19 +135,20 @@
 
   "coldRisk": {
     "lleu": "lleu",
-    "moderada": "moderada",
+    "moderat": "moderat",
     "alt": "alt",
     "molt alt": "molt alt",
     "extrem": "extrem"
   },
 
-    "windRisk": {
+  "windRisk": {
     "none": "cap risc",
     "breezy": "suau",
     "moderate": "moderat",
     "strong": "fort",
     "very_strong": "molt fort"
   },
+
   "weather_alerts": {
     "storm": "Avís per tempesta",
     "rain": "Avís per pluja",
@@ -177,10 +157,14 @@
     "heat": "Avís per calor",
     "cold": "Avís per fred"
   },
+
   "last_update": "Actualitzat fa",
   "alerts_title": "Avisos meteorològics oficials",
   "alerts_none": "No hi ha avisos meteorològics actius actualment.",
-  "no_alerts": "No hi ha avisos meteorològics actualment."
-}
+  "no_alerts": "No hi ha avisos meteorològics actualment.",
 
- 
+  "notifications": {
+    "enabled": "Avisos activats",
+    "disabled": "Avisos desactivats"
+  }
+}

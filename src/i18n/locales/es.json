@@ -19,29 +19,22 @@
   "wind": "💨 Velocidad del viento",
   "wind_risk": "Riesgo por viento",
   "no_risk_wind": "Sin riesgo",
-  "wind_breezy": "Bajo",
-  "wind_moderate": "Moderado",
-  "wind_strong": "Fuerte",
-  "wind_very_strong": "Muy fuerte",
+  "wind_none": "Sin riesgo",
+  "breezy": "Bajo",
+  "moderate_wind": "Moderado",
+  "strong_wind": "Fuerte",
+  "very_strong_wind": "Muy fuerte",
+
   "caution_outdoors": "Precaución en el exterior",
   "take_extreme_caution": "Evita actividades al aire libre",
   "wind_alert_label": "Recibir avisos por viento fuerte",
 
-  "notify": {
-  "coldTitle": "Aviso ThermoSafe",
-  "coldBody": "Riesgo por frío {{risk}}. Temperatura {{temp}}°C",
-  "heatTitle": "Aviso ThermoSafe",
-  "heatBody": "Riesgo por calor {{risk}}. Sensación térmica {{hi}}°C",
-  "windTitle": "Aviso ThermoSafe",
-  "windBody": "Riesgo por viento {{risk}}. Velocidad del viento: {{speed}} km/h"
-},
-
   "highIrradianceWarning": "⚠️ Irradiancia solar muy alta. Evita la exposición directa.",
   "highUVIWarning": "⚠️ Índice UV muy alto. ¡Protección solar imprescindible!",
-  "irradianceTips": "👒 Usa sombrero, gafas de sol y crema solar. Evita actividades físicas al sol.",
+  "irradianceTips": "👒 Usa sombrero, gafas de sol y crema solar. Evita actividad física al sol.",
 
   "risk_level": "Riesgo por calor:",
-  "alert_extreme": "🚨 ¡Riesgo EXTREMO de calor! Detén la actividad e hidrátate de inmediato.",
+  "alert_extreme": "🚨 ¡RIESGO EXTREMO DE CALOR! Detén la actividad e hidrátate.",
   "alertRisk": "⚠️ Riesgo alto o extremo por calor.",
 
   "loading": "Cargando datos meteorológicos...",
@@ -51,7 +44,7 @@
 
   "recommendations_title": "Recomendaciones:",
   "solarProtection": "🔆 Protección solar",
-  "irradianceLegend": "☀️ Niveles de irradiancia: <8 moderado · ≥8 alto",
+  "irradianceLegend": "☀️ Niveles de irradiancia: <8 moderada · ≥8 alta",
   "toggleLegend": "ℹ️ Mostrar/Ocultar escala UV",
 
   "push": {
@@ -66,48 +59,42 @@
     }
   },
 
-"sky_state": "Estado del cielo",
-"weather_desc": {
-"clear sky": "Cielo despejado",
-"few clouds": "Pocas nubes",
-"scattered clouds": "Nubes dispersas",
-"nubes dispersas": "Nubes dispersas",
-"broken clouds": "Parcialmente nublado",
-"overcast clouds": "Cielo cubierto",
-"light rain": "Lluvia débil",
-"moderate rain": "Lluvia moderada",
-"heavy intensity rain": "Lluvia intensa",
-"drizzle": "Llovizna",
-"shower rain": "Chubasco",
-"thunderstorm": "Tormenta",
-"thunderstorm with rain": "Tormenta con lluvia",
-"snow": "Nieve",
-"light snow": "Nieve débil",
-"mist": "Neblina",
-"fog": "Niebla",
-"smoke": "Humo",
-"haze": "Calina",
-"dust": "Polvo",
-"sand": "Arena",
-"ash": "Ceniza volcánica",
-"squall": "Rachas de viento",
-"tornado": "Tornado",
-"nublado": "Nublado",
-"parcialmente nublado": "Parcialmente nublado",
-"muy nublado": "Muy nublado",
-"despejado": "Despejado",
-"poco nublado": "Poco nublado",
-"nuboso": "Nuboso",
-"lluvia": "Lluvia",
-"chubasco": "Chubasco",
-"llovizna": "Llovizna",
-"tormenta": "Tormenta",
-"nieve": "Nieve",
-"niebla": "Niebla",
-"clear sky": "Cielo despejado",
-"few clouds": "Pocas nubes",
-"overcast clouds": "Nublado",
-"cel net": "Cielo despejado"
+  "sky_state": "Estado del cielo",
+
+  "weather_desc": {
+    "clear sky": "Cielo despejado",
+    "few clouds": "Pocas nubes",
+    "scattered clouds": "Nubes dispersas",
+    "broken clouds": "Parcialmente nublado",
+    "overcast clouds": "Cielo cubierto",
+    "light rain": "Lluvia débil",
+    "moderate rain": "Lluvia moderada",
+    "heavy intensity rain": "Lluvia intensa",
+    "drizzle": "Llovizna",
+    "shower rain": "Chubasco",
+    "thunderstorm": "Tormenta",
+    "thunderstorm with rain": "Tormenta con lluvia",
+    "snow": "Nieve",
+    "light snow": "Nieve débil",
+    "mist": "Neblina",
+    "fog": "Niebla",
+    "smoke": "Humo",
+    "haze": "Calima",
+    "dust": "Polvo",
+    "sand": "Arena",
+    "ash": "Ceniza volcánica",
+    "squall": "Rachas de viento",
+    "tornado": "Tornado",
+
+    "poco nublado": "Poco nublado",
+    "muy nublado": "Muy nublado",
+    "nuboso": "Nuboso",
+    "lluvia": "Lluvia",
+    "chubasco": "Chubasco",
+    "llovizna": "Llovizna",
+    "tormenta": "Tormenta",
+    "nieve": "Nieve",
+    "niebla": "Niebla"
   },
 
   "official_links": "Enlaces oficiales",
@@ -140,7 +127,6 @@
     "extreme": "extremo"
   },
 
-  
   "coldRisk": {
     "lleu": "leve",
     "moderat": "moderado",
@@ -148,6 +134,7 @@
     "molt alt": "muy alto",
     "extrem": "extremo"
   },
+
   "windRisk": {
     "none": "sin riesgo",
     "breezy": "suave",
@@ -155,6 +142,7 @@
     "strong": "fuerte",
     "very_strong": "muy fuerte"
   },
+
   "weather_alerts": {
     "storm": "Aviso por tormenta",
     "rain": "Aviso por lluvia",
@@ -163,8 +151,14 @@
     "heat": "Aviso por calor",
     "cold": "Aviso por frío"
   },
+
   "last_update": "Actualizado hace",
   "alerts_title": "Avisos meteorológicos oficiales",
   "alerts_none": "No hay avisos meteorológicos activos actualmente.",
-  "no_alerts": "No hay avisos meteorológicos actualmente."
+  "no_alerts": "No hay avisos meteorológicos actualmente.",
+
+  "notifications": {
+    "enabled": "Avisos activados",
+    "disabled": "Avisos desactivados"
+  }
 }

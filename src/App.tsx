@@ -168,9 +168,6 @@ const isDaytime = () => {
     : hour >= 8 && hour <= 18; // Si no és estiu, de 8h a 18h
 };
 
-
-
-
 /* === [WIND] constants & helpers === */
 type WindRisk = 'none' | 'breezy' | 'moderate' | 'strong' | 'very_strong';
 type ColdRisk = 'cap' | 'lleu' | 'moderat' | 'alt' | 'molt alt' | 'extrem';
@@ -268,6 +265,25 @@ export default function App() {
   /* i18next */
   const [loading, setLoading] = useState(false);
   const { t, i18n } = useTranslation();
+
+/* 🔔 Estat global per activar/desactivar alertes meteorològiques */
+const [notificationsEnabled, setNotificationsEnabled] = useState<boolean>(() => {
+  try {
+    const stored = localStorage.getItem("notificationsEnabled");
+    return stored ? JSON.parse(stored) : true;   // per defecte: activat
+  } catch {
+    return true;
+  }
+});
+
+// Desa la preferència quan canvïi
+useEffect(() => {
+  localStorage.setItem(
+    "notificationsEnabled",
+    JSON.stringify(notificationsEnabled)
+  );
+}, [notificationsEnabled]);
+
   useEffect(() => {
   const browserLang = navigator.language.slice(0, 2).toLowerCase();
   const supportedLangs = ['ca', 'es', 'gl', 'eu'];
@@ -277,6 +293,23 @@ export default function App() {
     i18n.changeLanguage(lang);
   }
 }, []); 
+
+// --- Recupera l'estat del push i preferències al carregar la PWA ---
+useEffect(() => {
+    const savedPush = localStorage.getItem("pushEnabled");
+    if (savedPush === "true") {
+        setPushEnabled(true);
+    }
+
+    const savedCold = localStorage.getItem("enableColdAlerts");
+    if (savedCold !== null) setEnableColdAlerts(JSON.parse(savedCold));
+
+    const savedUv = localStorage.getItem("enableUvAlerts");
+    if (savedUv !== null) setEnableUvAlerts(JSON.parse(savedUv));
+
+    const savedWind = localStorage.getItem("enableWindAlerts");
+    if (savedWind !== null) setEnableWindAlerts(JSON.parse(savedWind));
+}, []);
 
 // 🌀 Estat i refs per a risc de vent
 const [windRisk, setWindRisk] = useState<WindRisk>('none');
@@ -298,14 +331,36 @@ const [enableColdAlerts, setEnableColdAlerts] = useState<boolean>(() => {
   }
 });
 
-// Desa preferències al localStorage
+// 🌞 Estat i preferència per a risc UV
+const [enableUvAlerts, setEnableUvAlerts] = useState<boolean>(() => {
+  try {
+    return JSON.parse(localStorage.getItem('enableUvAlerts')!) || false;
+  } catch {
+    return false;
+  }
+});
+
+// --- ESTAT PUSH ---
+const [pushEnabled, setPushEnabled] = useState(false);
+const [pushToken, setPushToken] = useState<string | null>(null);
+const [busy, setBusy] = useState(false);
+
+// Guarda automàticament totes les preferències quan canvien
 useEffect(() => {
-  localStorage.setItem('enableWindAlerts', JSON.stringify(enableWindAlerts));
+    localStorage.setItem("enableWindAlerts", JSON.stringify(enableWindAlerts));
 }, [enableWindAlerts]);
 
 useEffect(() => {
-  localStorage.setItem('enableColdAlerts', JSON.stringify(enableColdAlerts));
+    localStorage.setItem("enableColdAlerts", JSON.stringify(enableColdAlerts));
 }, [enableColdAlerts]);
+
+useEffect(() => {
+    localStorage.setItem("enableUvAlerts", JSON.stringify(enableUvAlerts));
+}, [enableUvAlerts]);
+
+useEffect(() => {
+    localStorage.setItem("pushEnabled", JSON.stringify(pushEnabled));
+}, [pushEnabled]);
 
 // Tradueix etiqueta risc vent
 const windRiskLabel = (r: WindRisk) =>
@@ -507,16 +562,30 @@ async function maybeNotifyUV(uvi: number | null) {
   }
 }
 
-
-// --- ESTAT PUSH ---
-const [pushEnabled, setPushEnabled] = useState(false);
-const [pushToken, setPushToken] = useState<string | null>(null);
-const [busy, setBusy] = useState(false);
-
 // Missatges independents
 const [msgHeat, setMsgHeat] = useState<string | null>(null);
 const [msgCold, setMsgCold] = useState<string | null>(null);
 const [msgWind, setMsgWind] = useState<string | null>(null);
+
+// 🛠 Carrega totes les preferències ABANS de carregar dades
+useEffect(() => {
+    try {
+        const savedWind = localStorage.getItem("enableWindAlerts");
+        if (savedWind !== null) setEnableWindAlerts(JSON.parse(savedWind));
+
+        const savedCold = localStorage.getItem("enableColdAlerts");
+        if (savedCold !== null) setEnableColdAlerts(JSON.parse(savedCold));
+
+        const savedUv = localStorage.getItem("enableUvAlerts");
+        if (savedUv !== null) setEnableUvAlerts(JSON.parse(savedUv));
+
+        const savedPush = localStorage.getItem("pushEnabled");
+        if (savedPush !== null) setPushEnabled(JSON.parse(savedPush));
+
+    } catch (err) {
+        console.error("[DEBUG] Error carregant preferències:", err);
+    }
+}, []);   // IMPORTANT: només una vegada en arrencar
 
   /** Desa la preferència de l’usuari */
 useEffect(() => {
@@ -579,19 +648,16 @@ const fetchWeather = async (cityName: string) => {
 
     console.log("[DEBUG] Coordenades per alertes:", lat, lon);
 
-    // ⚠️ Obté avisos si tenim coordenades
-    if (lat && lon) {
-      const alerts = await getWeatherAlerts(lat, lon, lang, API_KEY);
+   // ⚠️ Obtén avisos si tenim coordenades
+if (lat && lon) {
+    const alerts = await getWeatherAlerts(lat, lon, lang, API_KEY);
 
-if (!alerts || alerts.length === 0) {
-    console.log("[AEMET Vigo] Sense alertes");
-    setAlerts([]);
-} else {
-    (window as any).lastAlerts = alerts;
-    console.log("[AEMET ALERTES BRUTES]", alerts);
-    setAlerts(alerts);
-}
+    if (!alerts || alerts.length === 0) {
+        setAlerts([]);
+    } else {
+        setAlerts(alerts);
     }
+}
 
     setErr("");
   } catch (err) {
@@ -784,16 +850,26 @@ setCity(nm);
 setRealCity(nm);
 setDataSource("gps");
 
-    // 🌤️ 4. Estat del cel
-    const desc = d.weather?.[0]?.description.toLowerCase() || "";
-    const translatedDesc =
-      t(`weather_desc.${desc}`) !== `weather_desc.${desc}`
-        ? t(`weather_desc.${desc}`)
-        : desc;
+function normalizeSky(desc: string): string {
+  return desc
+    .toLowerCase()
+    .normalize("NFD")                      // separa accents
+    .replace(/[\u0300-\u036f]/g, "")       // elimina accents
+    .replace(/\s+/g, "_")                  // espais → _
+    .replace(/[^\w_]/g, "")                // elimina caràcters rars
+    .trim();
+}
 
-    setSky(translatedDesc);
-    setIcon(d.weather?.[0]?.icon || "");
-    console.log(`[SKY – locate] Actualitzat a: ${translatedDesc}`);
+const rawDesc = d.weather?.[0]?.description || "";
+const key = normalizeSky(rawDesc);
+
+// Si existeix al JSON → traducció
+// Si no existeix → fa servir el text normalitzat sense warnings
+const translatedDesc = t(`weather_desc.${key}`, key);
+
+setSky(translatedDesc);
+setIcon(d.weather?.[0]?.icon || "");
+console.log(`[SKY – locate] Actualitzat a: ${translatedDesc}`);
 
     // 💨 5. Vent (passa m/s a km/h)
     const wKmH = Math.round((d.wind.speed || 0) * 3.6 * 10) / 10;
@@ -1038,73 +1114,68 @@ return (
 <div style={{ marginTop: "1rem" }}>
   <button onClick={() => locate(false)}>{t("gps_button")}</button>
 </div>
+
+{/* 🔔 Interruptor per activar/desactivar avisos meteorològics */}
+<div
+  style={{
+    display: 'flex',
+    alignItems: 'center',
+    gap: '12px',
+    marginTop: '10px',
+    marginBottom: '10px',
+    fontSize: '1.1rem',
+    fontWeight: '500'
+  }}
+>
+
+  {/* 🔔 Botó per activar/desactivar avisos meteorològics */}
+<div
+  style={{
+    display: "flex",
+    alignItems: "center",
+    gap: "12px",
+    marginTop: "12px",
+    marginBottom: "12px",
+  }}
+>
+  <button
+  onClick={() => {
+    const newVal = !notificationsEnabled;
+    setNotificationsEnabled(newVal);
+    localStorage.setItem("notificationsEnabled", JSON.stringify(newVal));
+
+    console.log(
+      `[TOGGLE] Notificacions meteorològiques: ${
+        newVal ? "ACTIVADES" : "DESACTIVADES"
+      }`
+    );
+  }}
+  style={{
+    backgroundColor: notificationsEnabled ? "#4CAF50" : "#888",
+    color: "white",
+    padding: "8px 14px",
+    border: "none",
+    borderRadius: "8px",
+    cursor: "pointer",
+    fontSize: "0.9rem",
+    fontWeight: "600",
+    display: "flex",
+    alignItems: "center",
+    gap: "8px"
+  }}
+>
+  {/* ICONA: normal si activat, tachada si desactivat */}
+  <span>{notificationsEnabled ? "🔔" : "🔕"}</span>
+
+  {/* TEXT TRADUÏT */}
+  {notificationsEnabled
+    ? t("notifications.enabled")
+    : t("notifications.disabled")}
+</button>
+</div>
+
+</div>
   
-   {/* 🔔 AVISOS PER RISC DE CALOR */}
-<div style={{ margin: '0.5rem 0 1rem 0', display: 'flex', flexDirection: 'column', gap: 4 }}>
-  <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-    <input
-      type="checkbox"
-      id="ts-push"
-      checked={pushEnabled}
-      disabled={false}
-      onChange={async (e) => {
-        const next = e.target.checked;
-        console.log(`[DEBUG] Avisos per CALOR ${next ? 'activats' : 'desactivats'}`);
-        setPushEnabled(next);
-        localStorage.setItem('pushEnabled', JSON.stringify(next));
-        setMsgHeat(next ? t('push.enabled') : t('push.disabled'));
-        await onTogglePush(next);
-      }}
-    />
-    <label htmlFor="ts-push">{t('push.label')}</label>
-  </div>
-
-  {msgHeat && (
-    <p style={{ marginLeft: '1.5rem', fontSize: '.9rem', color: '#ccc' }}>{msgHeat}</p>
-  )}
-</div>
-
-{/* ❄️ AVISOS PER FRED EXTREM */}
-<div style={{ margin: '0.25rem 0 1rem 0', display: 'flex', flexDirection: 'column', gap: 4 }}>
-  <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-    <input
-      type="checkbox"
-      id="cold-alert"
-      checked={enableColdAlerts}
-      onChange={(e) => {
-        const next = e.target.checked;
-        setEnableColdAlerts(next);
-        localStorage.setItem('enableColdAlerts', JSON.stringify(next));
-        console.log(`[DEBUG] Avisos per FRED ${next ? 'activats' : 'desactivats'}`);
-        setMsgCold(next ? t('push.enabled') : t('push.disabled'));
-      }}
-    />
-    <label htmlFor="cold-alert">{t('cold_alert_label')}</label>
-  </div>
-
-  {msgCold && <p className="notif-msg">{msgCold}</p>}
-</div>
-
-{/* 🌬️ AVISOS PER VENT FORT */}
-<div style={{ margin: '0.25rem 0 1rem 0', display: 'flex', flexDirection: 'column', gap: 4 }}>
-  <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-    <input
-      type="checkbox"
-      id="wind-alert"
-      checked={enableWindAlerts}
-      onChange={(e) => {
-        const next = e.target.checked;
-        setEnableWindAlerts(next);
-        localStorage.setItem('enableWindAlerts', JSON.stringify(next));
-        console.log(`[DEBUG] Avisos per VENT ${next ? 'activats' : 'desactivats'}`);
-        setMsgWind(next ? t('push.enabled') : t('push.disabled'));
-      }}
-    />
-    <label htmlFor="wind-alert">{t('wind_alert_label')}</label>
-  </div>
-
-  {msgWind && <p className="notif-msg">{msgWind}</p>}
-</div>
     
   
       {/* ⚠️ ALERTES */}
