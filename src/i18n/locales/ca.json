@@ -108,7 +108,6 @@
   "link_aemet": "AEMET: salut i meteorologia",
 
   "cold_alert_label": "Rebre avisos per fred extrem",
-  "cold_risk": "Risc per fred",
   "heat_risk": "Risc per calor",
   "current_risk": "Risc actual",
   "no_risk": "Cap risc",
@@ -134,29 +133,55 @@
   },
 
   "coldRisk": {
-    "lleu": "lleu",
-    "moderat": "moderat",
-    "alt": "alt",
-    "molt alt": "molt alt",
-    "extrem": "extrem"
-  },
+  "cap": "cap risc",
+  "lleu": "lleu",
+  "moderada": "moderada",
+  "alt": "alt",
+  "molt alt": "molt alt",
+  "extrem": "extrem"
+},
+"cold_risk": "Risc per fred",
+"wind_chill": "Temperatura efectiva",
 
   "windRisk": {
     "none": "cap risc",
     "breezy": "suau",
     "moderate": "moderat",
     "strong": "fort",
-    "very_strong": "molt fort"
+    "very_strong": "molt fort",
+    "wind_breezy": "vent"
   },
 
   "weather_alerts": {
-    "storm": "Avís per tempesta",
-    "rain": "Avís per pluja",
-    "snow": "Avís per neu",
-    "wind": "Avís per vent",
-    "heat": "Avís per calor",
-    "cold": "Avís per fred"
-  },
+  "storm": "Avís per tempesta",
+  "rain": "Avís per pluja",
+  "snow": "Avís per neu",
+  "wind": "Avís per vent",
+  "heat": "Avís per calor",
+  "cold": "Avís per fred",
+
+  "coastalevent": "Avís per risc costaner",
+  "coastal_event": "Avís per risc costaner",
+  "coastal_event_warning": "Avís per risc costaner",
+  "coastalevent_warning": "Avís per risc costaner",
+
+  "moderate_coastalevent_warning": "Avís costaner moderat",
+  "moderate_coastal_event_warning": "Avís costaner moderat",
+  "moderate coastal event warning": "Avís costaner moderat",
+  "moderate_coastalevent": "Avís costaner moderat",
+
+  "low_temperature_warning": "Avís per temperatures baixes",
+  "low temperature warning": "Avís per temperatures baixes",
+  "moderate_low_temperature_warning": "Avís moderat per temperatures baixes",
+  "moderate low temperature warning": "Avís moderat per temperatures baixes",
+
+  "snow_warning": "Avís per neu",
+  "wind_warning": "Avís per vent",
+  "rain_warning": "Avís per pluja",
+
+  "minimum_temperature": "Temperatura mínima",
+  "minimum temperature": "Temperatura mínima"
+},
 
   "last_update": "Actualitzat fa",
   "alerts_title": "Avisos meteorològics oficials",

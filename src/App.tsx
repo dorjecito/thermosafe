@@ -38,99 +38,289 @@
    import LanguageSwitcher from './components/LanguageSwitcher';
    import { enableRiskAlerts, disableRiskAlerts } from "./push/subscribe";
 
-// =====================================================
-// Traducció completa i robusta dels avisos AEMET
-// =====================================================
 
-type LangKey = 'ca' | 'es' | 'eu' | 'gl';
 
-export function translateAemetDescription(desc: string, lang: LangKey): string {
-  if (!desc) return "";
 
-  // 1) Normalització inicial
-  let t = desc
-    .toLowerCase()
-    .normalize("NFD").replace(/[\u0300-\u036f]/g, "")  // treu accents
-    .replace(/\s+/g, " ")
-    .trim();
+   // ================================
+// 🔄 FUNCIONS DE DIRECCIONS DE VENT
+// ================================
 
-  // 2) Normalització de guions Unicode (– — ― etc.)
-  t = t.replace(/[-‐-‒–—―]/g, " ");
-
-  // 3) Correccions habituals d'AEMET
-  t = t.replace("lluiva", "lluvia");       // faltes comuns
-  t = t.replace("one hour", "one hour");  // unifica
-  t = t.replace("onehour", "one hour");
-
-  // =====================================================================
-  // 4) Traducció especial → AEMET envia sovint l'event "Mode"
-  // =====================================================================
-  if (t === "mode") {
-    if (lang === "es") return "Modo operativo";
-    if (lang === "ca") return "Mode operatiu";
-    if (lang === "eu") return "Modu operatiboa";
-    if (lang === "gl") return "Modo operativo";
-  }
-
-  // =====================================================================
-  // 5) DETECCIÓ UNIVERSAL DE PRECIPITACIÓ ACUMULADA (tots els formats)
-  // =====================================================================
-
-  const precipRegex = /(\d+)\s?mm/;
-
-  const isAccumulated =
-    t.includes("precip") ||   // precipitation, precipitación, etc.
-    t.includes("accum") ||    // accumulated / acumulada
-    t.includes("acum") ||     // acomulada (falta d'AEMET)
-    t.includes("hour") ||     // one hour, last hour
-    t.includes("lluvia");     // AEMET a vegades envía "lluvia 20 mm"
-
-  if (isAccumulated) {
-    const mm = t.match(precipRegex);
-    if (mm) {
-      const n = mm[1];
-
-      if (lang === "es") return `Lluvia: ${n} mm (últimas horas)`;
-      if (lang === "ca") return `Pluja: ${n} mm (últimes hores)`;
-      if (lang === "eu") return `Euria: ${n} mm (azken orduak)`;
-      if (lang === "gl") return `Chuva: ${n} mm (últimas horas)`;
-    }
-  }
-
-  // =====================================================================
-  // 6) DETECCIÓ DE TIPOLOGIA GENERAL (tempesta, vent, neu, pluja...)
-  // =====================================================================
-
-  const types = {
-    rain: { ca: "pluja", es: "lluvia", eu: "euria", gl: "chuva" },
-    storm: { ca: "tempesta", es: "tormenta", eu: "ekaitza", gl: "treboada" },
-    wind: { ca: "vent", es: "viento", eu: "haizea", gl: "vento" },
-    snow: { ca: "neu", es: "nieve", eu: "elurra", gl: "neve" },
-    cold: { ca: "fred", es: "frío", eu: "hotza", gl: "frío" }
+// Converteix graus a punts cardinals en diferents idiomes
+function windDegreesToLocalizedCardinal(deg: number, lang: string): string {
+  const dirs: Record<string, string[]> = {
+    ca: ["N", "NE", "E", "SE", "S", "SW", "O", "NO"],
+    es: ["N", "NE", "E", "SE", "S", "SW", "O", "NO"],
+    gl: ["N", "NE", "E", "SE", "S", "SW", "O", "NO"],
+    eu: ["I", "IE", "E", "HE", "H", "HM", "M", "IM"],
+    en: ["N", "NE", "E", "SE", "S", "SW", "W", "NW"],
   };
 
-  let type: keyof typeof types | null = null;
+  const map = dirs[lang] ?? dirs["en"];
 
-  if (t.includes("rain") || t.includes("lluvia")) type = "rain";
-  else if (t.includes("storm") || t.includes("tormenta")) type = "storm";
-  else if (t.includes("wind") || t.includes("viento")) type = "wind";
-  else if (t.includes("snow") || t.includes("nieve")) type = "snow";
-  else if (t.includes("cold") || t.includes("frio")) type = "cold";
+  if (deg >= 337.5 || deg < 22.5) return map[0];
+  if (deg >= 22.5 && deg < 67.5) return map[1];
+  if (deg >= 67.5 && deg < 112.5) return map[2];
+  if (deg >= 112.5 && deg < 157.5) return map[3];
+  if (deg >= 157.5 && deg < 202.5) return map[4];
+  if (deg >= 202.5 && deg < 247.5) return map[5];
+  if (deg >= 247.5 && deg < 292.5) return map[6];
+  if (deg >= 292.5 && deg < 337.5) return map[7];
 
-  if (type) {
-    const mm = t.match(precipRegex);
-    let base = types[type][lang];
+  return "";
+}
 
-    if (mm) base += `: ${mm[1]} mm`;
+function getWindRotationFromDegrees(deg: number): number {
+  return deg ?? 0; // ja està en graus reals
+}
 
-    return base.charAt(0).toUpperCase() + base.slice(1);
+// Converteix GRANS (deg) -> punt cardinal
+export function windDegreesToCardinal16(deg: number, lang: string = "ca"): string {
+  const directions = [
+    "N", "NNE", "NE", "ENE",
+    "E", "ESE", "SE", "SSE",
+    "S", "SSW", "SW", "WSW",
+    "W", "WNW", "NW", "NNW"
+  ];
+
+  const index = Math.round(deg / 22.5) % 16;
+  const base = directions[index]; // anglès
+
+  const map: Record<string, Record<string, string>> = {
+    ca: {
+      N: "N",
+      NNE: "NNE",
+      NE: "NE",
+      ENE: "ENE",
+      E: "E",
+      ESE: "ESE",
+      SE: "SE",
+      SSE: "SSE",
+      S: "S",
+      SSW: "SSO",
+      SW: "SO",
+      WSW: "OSO",
+      W: "O",
+      WNW: "ONO",
+      NW: "NO",
+      NNW: "NNO"
+    },
+    es: {
+      N: "N",
+      NNE: "NNE",
+      NE: "NE",
+      ENE: "ENE",
+      E: "E",
+      ESE: "ESE",
+      SE: "SE",
+      SSE: "SSE",
+      S: "S",
+      SSW: "SSO",
+      SW: "SO",
+      WSW: "OSO",
+      W: "O",
+      WNW: "ONO",
+      NW: "NO",
+      NNW: "NNO"
+    },
+    gl: {
+      N: "N",
+      NNE: "NNE",
+      NE: "NE",
+      ENE: "ENE",
+      E: "E",
+      ESE: "ESE",
+      SE: "SE",
+      SSE: "SSE",
+      S: "S",
+      SSW: "SSO",
+      SW: "SO",
+      WSW: "OSO",
+      W: "O",
+      WNW: "ONO",
+      NW: "NO",
+      NNW: "NNO"
+    },
+    eu: {
+      N: "I",
+      NNE: "INE",
+      NE: "IE",
+      ENE: "EIE",
+      E: "E",
+      ESE: "ESE",
+      SE: "HE",
+      SSE: "HSE",
+      S: "H",
+      SSW: "HSO",
+      SW: "HO",
+      WSW: "OHO",
+      W: "M",
+      WNW: "MIM",
+      NW: "MI",
+      NNW: "IMI"
+    },
+    en: {
+      N: "N",
+      NNE: "NNE",
+      NE: "NE",
+      ENE: "ENE",
+      E: "E",
+      ESE: "ESE",
+      SE: "SE",
+      SSE: "SSE",
+      S: "S",
+      SSW: "SSW",
+      SW: "SW",
+      WSW: "WSW",
+      W: "W",
+      WNW: "WNW",
+      NW: "NW",
+      NNW: "NNW"
+    }
+  };
+
+  return map[lang]?.[base] ?? base;
+}
+
+// Converteix cardinal -> text
+export function windToCardinal(dir: string): string {
+  if (!dir) return "";
+  const d = dir.toUpperCase();
+  return d;
+}
+
+function getWindRotation(input: string | number): number {
+  // Si rebem graus (number), simplement retornem aquests graus
+  if (typeof input === "number") {
+    return input; 
   }
 
-  // =====================================================================
-  // 7) Si no encaixa cap cas → torna l'original traduït si és possible
-  // =====================================================================
+  const dir = input.toUpperCase();
 
-  return desc;
+  const map: Record<string, number> = {
+    N: 0,
+    NE: 45,
+    E: 90,
+    SE: 135,
+    S: 180,
+    SW: 225,
+    W: 270,
+    NW: 315
+  };
+
+  return map[dir] ?? 0;
+}
+
+type CardinalKey = "N" | "NE" | "E" | "SE" | "S" | "SW" | "W" | "NW";
+
+const CARDINAL_LABELS: Record<string, Record<CardinalKey, string>> = {
+  // Català
+  ca: {
+    N: "N",
+    NE: "NE",
+    E: "E",
+    SE: "SE",
+    S: "S",
+    SW: "SO",
+    W: "O",
+    NW: "NO",
+  },
+  // Castellà
+  es: {
+    N: "N",
+    NE: "NE",
+    E: "E",
+    SE: "SE",
+    S: "S",
+    SW: "SO",
+    W: "O",
+    NW: "NO",
+  },
+  // Gallec
+  gl: {
+    N: "N",
+    NE: "NE",
+    E: "E",
+    SE: "SE",
+    S: "S",
+    SW: "SO",
+    W: "O",
+    NW: "NO",
+  },
+  // Basc (aprox., pots ajustar si vols una altra convenció)
+  eu: {
+    N: "I",   // Ipar
+    NE: "IP", // Ipar-ekialde
+    E: "E",   // Ekialde
+    SE: "EH", // Ekialde-hego
+    S: "H",   // Hego
+    SW: "HM", // Hego-mendebalde
+    W: "M",   // Mendebalde
+    NW: "IM", // Ipar-mendebalde
+  },
+  // Fallback per altres idiomes (en cas que n’afegissis)
+  default: {
+    N: "N",
+    NE: "NE",
+    E: "E",
+    SE: "SE",
+    S: "S",
+    SW: "SW",
+    W: "W",
+    NW: "NW",
+  },
+};
+
+/** Converteix el codi cardinal intern (N, NE, ...) a etiqueta segons idioma */
+function windToLocalizedCardinal(dir: string, lang: string): string {
+  if (!dir) return "";
+
+  const key = dir.toUpperCase() as CardinalKey;
+  const short = lang?.slice(0, 2).toLowerCase();
+  const map = CARDINAL_LABELS[short] || CARDINAL_LABELS.default;
+
+  return map[key] ?? key;
+}
+
+// =============================================================
+// 🧠 FUNCIO AUTOMÀTICA PRO per traduir avisos AEMET
+// Detecta l’idioma del navegador, normalitza el text
+// i prova totes les claus del JSON (weather_alerts.*)
+// =============================================================
+export function translateAemetAuto(text: string, t: any): string {
+  if (!text) return "";
+
+  // 1. Normalització universal
+  let key = text
+    .toLowerCase()
+    .normalize("NFD").replace(/[\u0300-\u036f]/g, "")  // treu accents
+    .replace(/[-‐-‒–—―]/g, " ")                       // guions → espai
+    .replace(/\s+/g, "_")                             // espais → "_"
+    .trim();
+
+  // 2. En alguns casos AEMET envia “coastalevent” o versions rares
+  key = key.replace(/coastal_event/g, "coastalevent");
+  key = key.replace(/minimum_temperature/g, "minimum_temperature");
+
+  // 3. Intenta traducció directa
+  const direct = t(`weather_alerts.${key}`);
+  if (direct && direct !== `weather_alerts.${key}`) return direct;
+
+  // 4. Intenta variants habituals
+  const variants = [
+    key.replace(/_/g, ""),            // elimina subratllats
+    key.replace(/warning/g, ""),      // elimina “warning”
+    key.replace(/moderate/g, "moderat"),
+    key.replace(/low/g, "low"),       // per si hi ha low temperature
+    key.replace(/temperature/g, "temperature")
+  ];
+
+  for (const v of variants) {
+    const tr = t(`weather_alerts.${v}`);
+    if (tr && tr !== `weather_alerts.${v}`) return tr;
+  }
+
+  // Si no hi ha traducció → deixa el text original
+  return text;
 }
 
 /* ──────── constants & helpers ──────── */
@@ -258,7 +448,34 @@ async function getCoords(): Promise<{ lat: number; lon: number } | null> {
   });
 }
 
+// -------------------------------------------------------------
+// 🔎 Detecta categoria d’avís AEMET (unifica totes les variants)
+// -------------------------------------------------------------
+function detectAlertCategory(eventRaw: string = "") {
+  const t = eventRaw
+    .toLowerCase()
+    .normalize("NFD").replace(/[\u0300-\u036f]/g, "") // treu accents
+    .replace(/[-‐-‒–—―]/g, " ") // guions rars → espai
+    .replace(/\s+/g, " ")
+    .trim();
 
+  if (t.includes("storm") || t.includes("tormenta")) return "storm";
+  if (t.includes("rain") || t.includes("lluvia")) return "rain";
+  if (t.includes("snow") || t.includes("nieve")) return "snow";
+  if (t.includes("wind") || t.includes("viento")) return "wind";
+  if (t.includes("heat") || t.includes("calor")) return "heat";
+  if (t.includes("cold") || t.includes("frio") || t.includes("frío")) return "cold";
+
+  // AVÍS COSTANER AEMET (moltes variants)
+  if (t.includes("coastal") || t.includes("costa") || t.includes("coster") || t.includes("coastalevent"))
+    return "coastalevent";
+
+  // TEMPERATURES BAIXES
+  if (t.includes("low temperature") || t.includes("minimum temperature"))
+    return "low_temperature_warning";
+
+  return "generic"; // fallback segur
+}
 
 /* ──────── component ──────── */
 export default function App() {
@@ -385,6 +602,11 @@ const windRiskLabel = (r: WindRisk) =>
   const [leg, setLeg] = useState(false);
   const [day, setDay] = useState(isDaytime());
   const [coldRisk, setColdRisk] = useState<'cap' | 'lleu' | 'moderat' | 'alt' | 'molt alt' | 'extrem'>('cap');
+  const [windDeg, setWindDeg] = useState<number | null>(null);
+  const [effForCold, setEffForCold] = useState<number | null>(null);
+  const [windKmh, setWindKmh] = useState<number | null>(null);
+  const [lat, setLat] = useState<number | null>(null);
+  const [lon, setLon] = useState<number | null>(null);
 
 // ☁️ Estat del cel
 const [sky, setSky] = useState<string>('');
@@ -405,6 +627,15 @@ const [windDirection, setWindDirection] = useState<string>('');
 const [alerts, setAlerts] = useState<any[]>([]);
 
 const [ready, setReady] = useState(false);
+
+const COLD_COLORS = {
+  cap: "#d9d9d9",      // gris: cap risc
+  lleu: "#76b0ff",     // blau suau
+  moderat: "#4a90e2",  // blau mitjà
+  alt: "#1f5fbf",      // blau fosc
+  "molt alt": "#123c80",
+  extrem: "#0a2754",
+};
 
   // 🔔 Demana permís de notificació automàticament
 useEffect(() => {
@@ -437,22 +668,22 @@ useEffect(() => {
   return () => clearTimeout(timer);
 }, [currentSource]);
 
-/* === [COLD] risc per fred (amb efecte wind-chill) === */
-function getColdRisk(temp: number, windKmh: number): string {
-  // 🧮 Índex de refredament pel vent (wind-chill)
-  const wc =
-    13.12 +
-    0.6215 * temp -
-    11.37 * Math.pow(windKmh, 0.16) +
-    0.3965 * temp * Math.pow(windKmh, 0.16);
+/** === RISC PER FRED · VERSIÓ PRO === */
+function getColdRisk(tempEff: number | null, windKmh: number | null): ColdRisk {
+  // Validació mínima
+  if (tempEff === null || isNaN(tempEff)) return "cap";
 
-  // 🌡️ Classificació segons temperatura percebuda
-  if (wc <= -40) return 'extrem';
-  if (wc <= -25) return 'molt alt';
-  if (wc <= -15) return 'alt';
-  if (wc <= -5) return 'moderada';
-  if (wc <= 0) return 'lleu';
-  return 'cap';
+  // 🧊 PRIORITAT: només risc si fa fred de debò (≤ 0°C)
+  if (tempEff > 0) return "cap";
+
+  // Classificació científica segons temperatura efectiva (wind-chill real)
+  if (tempEff <= -40) return "extrem";     // Mort en minuts (Dudinka, Yakutia, Alaska)
+  if (tempEff <= -25) return "molt alt";   // Frostbite molt ràpid
+  if (tempEff <= -15) return "alt";        // Risc sever si s'està a l'exterior
+  if (tempEff <= -5)  return "moderat";    // Risc moderat segons exposició
+  if (tempEff <= 0)   return "lleu";       // Llegendament perillós
+
+  return "cap";
 }
 
 
@@ -463,8 +694,9 @@ async function maybeNotifyCold(temp: number, windKmh: number) {
   // Evita fer res si no està activat l’avís
   if (!enableColdAlerts) return;
 
-  const coldRiskValue = getColdRisk(temp, windKmh);
-  setColdRisk(coldRiskValue as ColdRisk);
+// 🧊 Calcula risc de fred per notificació
+const coldRiskValue = getColdRisk(temp, windKmh);
+setColdRisk(coldRiskValue as ColdRisk);
 
   // Cooldown per evitar notificacions massa seguides
   const now = Date.now();
@@ -474,7 +706,7 @@ async function maybeNotifyCold(temp: number, windKmh: number) {
   // 🔹 Envia notificació si hi ha qualsevol risc (lleu, moderada, alt, molt alt o extrem)
   if (
     coldRiskValue === "lleu" ||
-    coldRiskValue === "moderada" ||
+    coldRiskValue === "moderat" ||
     coldRiskValue === "alt" ||
     coldRiskValue === "molt alt" ||
     coldRiskValue === "extrem"
@@ -626,44 +858,95 @@ const lang = i18n.language || "ca";
 
 
 
+/* === FETCH WEATHER (ciutat cercada) === */
 const fetchWeather = async (cityName: string) => {
   try {
     setLoading(true);
     setCurrentSource("search");
 
     const data = await getWeatherByCity(cityName, lang, API_KEY);
-    setTemp(data.main.temp);
+
+    // 🌡 Temperatures bàsiques
+    const tempReal = data.main.temp;
+    setTemp(tempReal);
     setHi(data.main.feels_like);
     setHum(data.main.humidity);
-    setWind(data.wind.speed * 3.6);
 
-    const wDir = getWindDirection(data.wind.deg);
-    setWindDirection(wDir);
+    // 💨 Vent: calcula un cop i reutilitza
+    const wKmH = data.wind.speed * 3.6;
+    setWind(wKmH);
+    setWindKmh(wKmH);
+
+    const deg = data.wind.deg ?? null;
+    setWindDeg(deg);
+    setWindDirection(windDegreesToCardinal16(deg, lang));
+
+    // ❄️ WIND-CHILL per ciutat cercada
+    let effForCold = tempReal;          // per defecte, la real
+    let wcVal: number | null = null;
+
+    // Càlcul oficial només si ≤10 ºC i vent ≥5 km/h
+    if (tempReal <= 10 && wKmH >= 5) {
+      wcVal =
+        13.12 +
+        0.6215 * tempReal -
+        11.37 * Math.pow(wKmH, 0.16) +
+        0.3965 * tempReal * Math.pow(wKmH, 0.16);
+
+      wcVal = Math.round(wcVal * 10) / 10;
+      effForCold = wcVal;               // la “percebuda” passa a ser el wind-chill
+    }
+
+    // Guarda wind-chill + temperatura efectiva
+    setWc(wcVal);
+    setEffForCold(effForCold);
+
+    // ❄️ Calcula RISC PER FRED segons temperatura efectiva i vent
+    const coldRiskValue = getColdRisk(effForCold, wKmH);
+    setColdRisk(coldRiskValue as ColdRisk);
+
+
+    // ❄️ 3) Calcula RISC PER FRED només si fa fred de veritat
+    let computedColdRisk = "cap";
+
+    if (effForCold <= 5) {
+      computedColdRisk = getColdRisk(effForCold, wKmH);
+    }
+
+    setColdRisk(computedColdRisk as ColdRisk);
+
+
+    // 🌤 Cel i icona
     setSky(data.weather?.[0]?.description || "");
     setIcon(data.weather?.[0]?.icon || "");
 
-    const { lat, lon } = data.coord || {};
+    // 🏙 Nom de la ciutat real
     setCity(data.name);
     setRealCity(data.name);
 
-    console.log("[DEBUG] Coordenades per alertes:", lat, lon);
+    // 🗺 Coordenades
+    const { lat, lon } = data.coord || {};
+    console.log("[DEBUG] Coordenades rebudes:", lat, lon);
 
-   // ⚠️ Obtén avisos si tenim coordenades
-if (lat && lon) {
-    const alerts = await getWeatherAlerts(lat, lon, lang, API_KEY);
-
-    if (!alerts || alerts.length === 0) {
-        setAlerts([]);
-    } else {
-        setAlerts(alerts);
+    // 🔥 FIX IMPORTANT: actualitzar coordenades globals!!
+    if (lat != null && lon != null) {
+      setLat(lat);
+      setLon(lon);
+      console.log("[DEBUG] Coordenades ACTUALITZADES:", lat, lon);
     }
-}
 
-    setErr("");
+    // ⚠️ Avisos oficials
+    if (lat != null && lon != null) {
+      const alerts = await getWeatherAlerts(lat, lon, lang, API_KEY);
+      setAlerts(alerts || []);
+    } 
+    else {
+      setAlerts([]);
+    }
+
   } catch (err) {
-    console.error("[DEBUG] Error obtenint dades de ciutat:", err);
-    setErr(t("errorCity"));
-    setAlerts([]);
+    console.error("[DEBUG] Error obtenint dades:", err);
+    setErr("Error obtenint dades de ciutat");
   } finally {
     setLoading(false);
   }
@@ -784,7 +1067,7 @@ const updateAll = async (
       : fl;
 
   setHi(hiVal);
-  sendIfAtLeastModerate(hiVal);
+  //sendIfAtLeastModerate(hiVal);
   if (!silent) setErr('');
 
   console.log(`${colorCyan}✅ [updateAll] Dades actualitzades correctament per ${nm}${colorReset}`);
@@ -871,44 +1154,69 @@ setSky(translatedDesc);
 setIcon(d.weather?.[0]?.icon || "");
 console.log(`[SKY – locate] Actualitzat a: ${translatedDesc}`);
 
-    // 💨 5. Vent (passa m/s a km/h)
-    const wKmH = Math.round((d.wind.speed || 0) * 3.6 * 10) / 10;
-    setWind(wKmH);
-    setWindDirection(getWindDirection(d.wind.deg));
+/* ────────────────────────────────────────────────
+   🌬️ VENT + ❄️ FRED (WINDCHILL & COLD RISK)
+   Bloc complet, net i infal·lible
+─────────────────────────────────────────────────── */
 
-    // ❄️ 6. Càlcul de risc per fred (wind-chill)
-    let effForCold = d.main.temp;
-    if (d.main.temp <= 10 && wKmH >= 5) {
-      const wcVal =
-        13.12 +
-        0.6215 * d.main.temp -
-        11.37 * Math.pow(wKmH, 0.16) +
-        0.3965 * d.main.temp * Math.pow(wKmH, 0.16);
-      const wcRound = Math.round(wcVal * 10) / 10;
-      setWc(wcRound);
-      effForCold = wcRound;
-    } else {
-      setWc(null);
-    }
+// --- RESET COMPLET ABANS DE LA CONSULTA ---
+setTemp(null);
+setWc(null);
+setColdRisk(null as any);
 
-    const coldRisk = getColdRisk(effForCold, wKmH);
-    setColdRisk(coldRisk as ColdRisk);
+// 🌡️ Temperatura real i sensació tèrmica (GPS)
+setTemp(d.main.temp);
+setHi(d.main.feels_like);
+setHum(d.main.humidity);
 
-    // ⚠️ 7. Avisos meteorològics oficials (OpenWeather 3.0)
-    const alerts = await getWeatherAlerts(lat, lon, lang, API_KEY);
-    setAlerts(alerts);
-    if (alerts.length > 0)
-      console.log(`[DEBUG] Avisos meteorològics rebuts:`, alerts);
+// 💨 Conversió de vent
+const wKmH = Math.round((d.wind.speed ?? 0) * 3.6 * 10) / 10;
+setWind(wKmH);
+setWindKmh(wKmH);
+setWindDirection(getWindDirection(d.wind.deg));
+setWindDeg(d.wind.deg);
 
+// ❄️ 6. Wind-chill real
+let tempReal = d.main.temp;
+let effForCold = tempReal;
+let wcVal: number | null = null;
 
-    // 🔥 8. Notificacions segons risc
-    await maybeNotifyHeat(d.main.feels_like);
-    await maybeNotifyCold(effForCold, wKmH);
-    await maybeNotifyWind(wKmH);
-    await maybeNotifyUV(uvi);
-    setReady(true);
-    
+if (tempReal <= 10 && wKmH >= 5) {
+  wcVal =
+    13.12 +
+    0.6215 * tempReal -
+    11.37 * Math.pow(wKmH, 0.16) +
+    0.3965 * tempReal * Math.pow(wKmH, 0.16);
 
+  wcVal = Math.round(wcVal * 10) / 10;
+}
+
+if (wcVal !== null) {
+  effForCold = wcVal;
+}
+
+// Guarda la temperatura percebuda i wind-chill
+setWc(wcVal);
+setEffForCold(effForCold);
+
+// ❄️ 8. Calcula risc per fred
+const coldRiskValue = getColdRisk(effForCold, wKmH);
+setColdRisk(coldRiskValue as ColdRisk);
+
+// ⚠️ 9. Avisos oficials
+const alerts = await getWeatherAlerts(lat, lon, lang, API_KEY);
+setAlerts(alerts);
+if (alerts.length > 0) {
+  console.log("[DEBUG] Avisos meteorològics rebuts:", alerts);
+}
+
+// 🔥 10. Notificacions
+await maybeNotifyHeat(d.main.feels_like);
+await maybeNotifyCold(effForCold, wKmH);
+await maybeNotifyWind(wKmH);
+await maybeNotifyUV(uvi);
+
+setReady(true);
     // ✅ Tot correcte
     if (!silent) setErr("");
 
@@ -923,65 +1231,70 @@ console.log(`[SKY – locate] Actualitzat a: ${translatedDesc}`);
 /* 🔍 CERCA PER CIUTAT */
 const search = async () => {
   if (!input.trim()) {
-    setErr(t('errorCity'));
+    setErr(t("errorCity"));
     return;
   }
 
   try {
     // 🌦️ Obté dades del temps per ciutat
-   const d = await getWeatherByCity(input, "en");
+    const d = await getWeatherByCity(input, lang, API_KEY);
     setData(d);
-    console.log("[DEBUG] Dades rebudes per GPS:", d);
-    // 🏙️ Coordenades i nom de ciutat
-    const { lat, lon } = (d as any).coord || { lat: null, lon: null };
-    const nm = (await getLocationNameFromCoords(lat, lon)) || d.name;
+    console.log("[DEBUG] Dades rebudes per ciutat:", d);
+
+    // Coordenades i nom real
+    const { lat, lon } = d.coord || { lat: null, lon: null };
+    const nm =
+      (await getLocationNameFromCoords(lat, lon)) ||
+      d.name ||
+      input ||
+      "Ubicació desconeguda";
+
     setRealCity(nm);
     setCity(nm);
-    setDataSource('search'); // 🔍 Indica que la font és una cerca manual
-    setInput('');
+    setDataSource("search");
+    setInput("");
 
-    // 🌤️ Actualitza estat del cel
-    setSky(d.weather?.[0]?.description || '');
-    setIcon(d.weather?.[0]?.icon || '');
-    console.log(`🟩 [SKY - search] Actualitzat a: ${d.weather?.[0]?.description} (${nm || input})`);
+    // 🌤️ Estat del cel
+    setSky(d.weather?.[0]?.description || "");
+    setIcon(d.weather?.[0]?.icon || "");
+    console.log(
+      `🟩 [SKY – search] Actualitzat a: ${d.weather?.[0]?.description} (${nm})`
+    );
 
     // 🌬️ Vent
-    const wKmh = Math.round(d.wind.speed * 3.6 * 10) / 10;
-    setWind(wKmh);
+    const wKmH = Math.round((d.wind.speed * 3.6) * 10) / 10;
+    setWind(wKmH);
+    setWindKmh(wKmH); // <— IMPORTANT
+    setWindDeg(d.wind.deg);
 
-    // ❄️ Wind-chill (si fa fred i vent)
-    let effForCold = d.main.temp; // per defecte, la real
-    if (d.main.temp <= 10 && wKmh >= 5) {
-      const wcVal =
-        13.12 +
-        0.6215 * d.main.temp -
-        11.37 * Math.pow(wKmh, 0.16) +
-        0.3965 * d.main.temp * Math.pow(wKmh, 0.16);
-      const wcRound = Math.round(wcVal * 10) / 10;
-      setWc(wcRound);
-      effForCold = wcRound;
-    } else {
-      setWc(null);
-    }
+    // ❄️ Wind-chill real
+    let effForCold = d.main.temp;
+    let wcVal = null;
 
-    // 🧊 Calcula i desa el risc de fred amb la temperatura efectiva
-    const coldRisk = getColdRisk(effForCold, wKmh);
-    setColdRisk(coldRisk as ColdRisk);
+    // Desa la temperatura efectiva
+    setEffForCold(effForCold);
 
-    // ✅ Mostra notificació si puja el risc
-    await maybeNotifyCold(effForCold, wKmh);
+    // 🔥 Actualitza estat general
+    await updateAll(
+      d.main.temp,
+      d.main.humidity,
+      d.main.feels_like,
+      lat!,
+      lon!,
+      nm
+    );
 
-    // 🔄 Actualitza estat general
-    await updateAll(d.main.temp, d.main.humidity, d.main.feels_like, lat, lon, nm);
-    setErr('');
+    setErr("");
 
-    // 🔥 Altres notificacions
+    // 🔔 Notificacions
+    await maybeNotifyCold(effForCold, wKmH);
     await maybeNotifyHeat(d.main.feels_like);
-    await maybeNotifyWind(wKmh);
-    setReady(true);
+    await maybeNotifyWind(wKmH);
 
+    setReady(true);
   } catch (e) {
-    setErr(t('errorCity'));
+    console.error("[DEBUG] Error obtenint dades:", e);
+    setErr(t("errorCity"));
   }
 };
 
@@ -1060,6 +1373,10 @@ function formatLastUpdate(timestamp: number): string {
   const h = Math.floor(diff / 3600);
   return `${h} h`;
 }
+
+// Text de la direcció del vent en 16 punts, localitzat
+const windText16 =
+  windDeg !== null ? windDegreesToCardinal16(windDeg, i18n.language) : "";
 
 return (
     <div className="container">
@@ -1260,7 +1577,6 @@ return (
             </p>
           ) : null}
 
-
 {/* 💨 VENT */}
 {wind !== null && (
   <div
@@ -1268,112 +1584,148 @@ return (
       backgroundColor: WIND_COLORS[windRisk as keyof typeof WIND_COLORS],
       color: windRisk === "none" ? "#000" : "#fff",
       borderRadius: "6px",
-      padding: "0.5rem 0.75rem",
-      marginTop: "0.5rem",
+      padding: "0.55rem 0.85rem",
+      marginTop: "0.75rem",
       textAlign: "left",
-      fontWeight: "bold",
-      display: "flex",            // 🔹 activa flexbox
-      flexDirection: "column",    // 🔹 col·loca el text en columna
-      alignItems: "flex-start"    // 🔹 alinea tot el contingut a l’esquerra
+      fontWeight: 500,
+      display: "flex",
+      flexDirection: "column",
+      gap: "0.25rem",
     }}
   >
-    💨 {t("wind_risk")}:{" "}
-    {windRisk === "none"
-      ? t("no_risk_wind")
-      : t("wind_" + windRisk)}
-    <br />
-    <small>
-  {t("wind")}: {wind?.toFixed(1)} km/h
-  {windDirection && ` (${windDirection})`}
-</small>
+    {/* Línia 1: títol + risc */}
+    <div
+      style={{
+        display: "flex",
+        alignItems: "center",
+        gap: "0.4rem",
+        fontSize: "0.98rem",
+      }}
+    >
+      <span style={{ fontSize: "1.15rem" }}>💨</span>
+      <span style={{ fontWeight: 600 }}>{t("wind_risk")}:</span>
+      <span>{t(`windRisk.${windRisk}`)}</span>
+    </div>
+
+    {/* Línia 2: velocitat + direcció */}
+    <div
+      style={{
+        display: "flex",
+        alignItems: "center",
+        gap: "0.5rem",
+        fontSize: "0.9rem",
+        opacity: 0.9,
+      }}
+    >
+      <span>
+        {t("wind")}: <strong>{wind.toFixed(1)} km/h</strong>
+      </span>
+
+      {windDeg !== null && (
+        <span
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: "0.35rem",
+            marginLeft: "0.35rem",
+          }}
+        >
+          {/* Fletxa orientada segons els graus */}
+          <svg
+            width="18"
+            height="18"
+            viewBox="0 0 24 24"
+            fill="none"
+            style={{
+              transform: `rotate(${getWindRotationFromDegrees(windDeg)}deg)`,
+              transition: "transform 0.3s ease",
+            }}
+          >
+            <path
+              d="M12 2 L18 14 H6 L12 2 Z"
+              fill={windRisk === "none" ? "#222" : "#fff"}
+            />
+          </svg>
+
+          {/* Text del punt cardinal: OSO (237º), NNE (35º)... */}
+          <span style={{ fontSize: "0.85rem", opacity: 0.9 }}>
+            {windText16} ({windDeg.toFixed(0)}º)
+          </span>
+        </span>
+      )}
+    </div>
   </div>
 )}
 
-{/* ❄️ FRED */}
-{coldRisk !== 'cap' && (
-  <p>❄️ {t('cold_risk')}: <b>{coldRisk}</b></p>
+{/* ❄️ RISC PER FRED — VERSIÓ PRO */}
+{coldRisk !== "cap" && effForCold !== null && effForCold <= 0 && (
+  <div
+    style={{
+      backgroundColor: COLD_COLORS[coldRisk as keyof typeof COLD_COLORS],
+      color: coldRisk === "lleu" ? "#000" : "#fff",
+      borderRadius: "6px",
+      padding: "0.75rem",
+      marginTop: "0.9rem",
+      fontWeight: 500,
+    }}
+  >
+  
+    <div style={{ display: "flex", alignItems: "center", gap: "0.45rem" }}>
+      <span style={{ fontSize: "1.2rem" }}>❄️</span>
+      <span style={{ fontWeight: 600 }}>
+        {t("cold_risk")}: {t(`coldRisk.${coldRisk}`)}
+      </span>
+    </div>
+
+    {/* 🌡️ Wind-chill */}
+    {wc !== null && (
+      <p style={{ marginTop: "0.5rem", opacity: 0.85 }}>
+        {t("wind_chill")}: <strong>{wc}°C</strong>
+      </p>
+    )}
+  </div>
 )}
-  
-          {irr !== null && (
-            <div style={{ marginTop: '1rem', textAlign: 'center' }}>
-              <p>{t('irradiance')}: <strong>{irr} kWh/m²/dia</strong></p>
-  
-              <div style={{ marginTop: '1.2rem' }}>
-                <h3 style={{ marginBottom: '0.4rem' }}>🔆 {t('solarProtection')}</h3>
-                <button
-                  onClick={() => setLeg(!leg)}
-                  style={{
-                    backgroundColor: '#222',
-                    border: '1px solid #444',
-                    padding: '8px 16px',
-                    borderRadius: '8px',
-                    cursor: 'pointer',
-                    color: 'white',
-                    fontSize: '0.9rem',
-                  }}
-                >
-                  ℹ️ {t('toggleLegend')}
-                </button>
-              </div>
-  
-              {leg && (
-                <p style={{ fontSize: '.85rem', marginTop: '0.5rem' }}>
-                  {t('irradianceLegend')}
-                </p>
-              )}
-            </div>
-          )}
-  
-          {uvi !== null && day && (
-            <UVAdvice uvi={uvi} lang={i18n.language as any} />
-          )}
-  
-          <div style={{ marginTop: '1.5rem' }}>
-            <RiskLevelDisplay
-              temp={hi!}
-              lang={i18n.language as any}
-              className={`risk-level ${getHeatRisk(hi!).class}`}
-            />
-          </div>
 
 
-          {/* ⚠️ Avisos meteorològics oficials */}
+{/* ⚠️ Avisos meteorològics oficials (MODE PRO PRO) */}
 {alerts.length > 0 ? (
   alerts.map((alert, i) => {
-    let rawText = alert.event?.toLowerCase() || "";
 
-    // 🔍 Simplifica el text per trobar la categoria
-    if (rawText.includes("storm")) rawText = "storm";
-    else if (rawText.includes("rain")) rawText = "rain";
-    else if (rawText.includes("snow")) rawText = "snow";
-    else if (rawText.includes("wind")) rawText = "wind";
-    else if (rawText.includes("heat")) rawText = "heat";
-    else if (rawText.includes("cold")) rawText = "cold";
-    else if (rawText.includes("mode")) rawText = "mode"; // <-- Afegit per Vigo
+    const rawEvent = alert.event || "";
+    const rawDesc  = alert.description || "";
 
-    // 🧠 Traducció amb la teva funció PRO
-    const title = translateAemetDescription(alert.event || "", i18n.language as LangKey);
-    const body  = translateAemetDescription(alert.description || "", i18n.language as LangKey);
+    // 🧠 Traductor PRO PRO
+    const title = translateAemetAuto(rawEvent, t);
+    const body  = translateAemetAuto(rawDesc, t);
 
-    // 🎨 Colors i icones
-    let borderColor = "#ffeb3b";
-    let icon = "⚠️";
+    // 🖌️ Categoria detectada automàticament
+    const category = detectAlertCategory(rawEvent + " " + rawDesc);
 
-    if (rawText === "storm") {
-      borderColor = "#ff9800"; icon = "⛈️";
-    } else if (rawText === "rain") {
-      borderColor = "#4fc3f7"; icon = "🌧️";
-    } else if (rawText === "heat") {
-      borderColor = "#f44336"; icon = "🔥";
-    } else if (rawText === "snow") {
-      borderColor = "#90caf9"; icon = "❄️";
-    } else if (rawText === "wind") {
-      borderColor = "#81d4fa"; icon = "🌬️";
-    } else if (rawText === "cold") {
-      borderColor = "#4dd0e1"; icon = "🥶";
-    } else if (rawText === "mode") {
-      borderColor = "#b39ddb"; icon = "ℹ️"; // <-- Afegit cas Vigo
-    }
+    // 🎨 Colors i icones automàtics
+    const iconMap: any = {
+      storm: "⛈️",
+      rain: "🌧️",
+      snow: "❄️",
+      wind: "🌬️",
+      heat: "🔥",
+      cold: "🥶",
+      coastal_event: "🌊",
+      unknown: "⚠️"
+    };
+
+    const colorMap: any = {
+      storm: "#ff9800",
+      rain: "#4fc3f7",
+      snow: "#90caf9",
+      wind: "#81d4fa",
+      heat: "#f44336",
+      cold: "#4dd0e1",
+      coastal_event: "#00bcd4",
+      unknown: "#ffeb3b"
+    };
+
+    const icon = iconMap[category] || "⚠️";
+    const borderColor = colorMap[category] || "#ffeb3b";
 
     return (
       <div
@@ -1382,13 +1734,10 @@ return (
         style={{
           borderLeft: `6px solid ${borderColor}`,
           marginBottom: "10px",
-          paddingLeft: "10px",
+          paddingLeft: "10px"
         }}
       >
-
-        <strong>
-          {icon} {title}
-        </strong>
+        <strong>{icon} {title}</strong>
 
         {body && (
           <div style={{ opacity: 0.8 }}>

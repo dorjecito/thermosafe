@@ -117,13 +117,14 @@
     "extreme": "extremo"
   },
 
-  "coldRisk": {
-    "lleu": "leve",
-    "moderat": "moderado",
-    "alt": "alto",
-    "molt alt": "moi alto",
-    "extrem": "extremo"
-  },
+"coldRisk": {
+  "cap": "sen risco",
+  "lleu": "leve",
+  "moderat": "moderado",
+  "alt": "alto",
+  "molt_alt": "moi alto",
+  "extrem": "extremo"
+},
 
   "windRisk": {
     "none": "sen risco",

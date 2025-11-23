@@ -118,12 +118,13 @@
   },
 
   "coldRisk": {
-    "lleu": "arin",
-    "moderat": "ertaina",
-    "alt": "handia",
-    "molt alt": "oso handia",
-    "extrem": "muturrekoa"
-  },
+  "cap": "arriskurik ez",
+  "lleu": "arin",
+  "moderat": "ertaina",
+  "alt": "handia",
+  "molt_alt": "oso handia",
+  "extrem": "muturrekoa"
+},
 
   "windRisk": {
     "none": "arriskurik ez",
