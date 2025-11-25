@@ -4,11 +4,18 @@ html, body, #root {
   width: 100%;
   margin: 0;
   padding: env(safe-area-inset-top, 0) env(safe-area-inset-right, 0)
-           env(safe-area-inset-bottom, 0) env(safe-area-inset-left, 0);
+         env(safe-area-inset-bottom, 0) env(safe-area-inset-left, 0);
   overflow-x: hidden;
   box-sizing: border-box;
   font-family: 'Inter', 'Segoe UI', Roboto, sans-serif;
   scroll-behavior: smooth;
+}
+
+/* === NOVETAT: Trencament universal de paraules llargues === */
+/* (Evita desquadraments amb alertes AEMET o ciutats llargues) */
+* {
+  overflow-wrap: anywhere;
+  word-break: break-word;
 }
 
 /* === Contenidor principal === */
@@ -224,6 +231,7 @@ a:focus,
   }
 }
 
+<<<<<<< HEAD
 /* === 🔔 Targetes d'avisos AEMET === */
 .alert-description {
   white-space: normal !important;
@@ -236,6 +244,9 @@ a:focus,
 }
 
 /* === Notificacions meteorològiques === */
+=======
+/* === 🔔 Notificacions meteorològiques === */
+>>>>>>> 6b576e882c68012482082d2cb46be68296b9dec5
 .notification-card {
   background-color: var(--notif-bg, #ffffff);
   color: var(--notif-text, #000000);
@@ -258,6 +269,17 @@ a:focus,
   }
 }
 
+<<<<<<< HEAD
+=======
+/* === ALERTES AEMET: fix per paraules enganxades === */
+.weather-alert {
+  white-space: normal !important;
+  word-break: break-word !important;
+  overflow-wrap: break-word !important;
+  line-height: 1.4;
+}
+
+>>>>>>> 6b576e882c68012482082d2cb46be68296b9dec5
 /* === Responsive === */
 @media screen and (max-width: 768px) {
   #root { padding: 1rem; }
