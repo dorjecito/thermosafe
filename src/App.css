@@ -106,7 +106,7 @@ body {
   box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15);
 }
 
-/* 🎨 Colors de cada bloc (mode clar) */
+/* 🎨 Colors blocs (mode clar) */
 .block-temp { background-color: #ffe5e5; }
 .block-humidity { background-color: #e0f7fa; }
 .block-wind { background-color: #e3f2fd; }
@@ -114,7 +114,7 @@ body {
 .block-heat-risk { background-color: #fce4ec; }
 .block-recom { background-color: #e8f5e9; }
 
-/* 🎨 Colors de cada bloc (mode fosc) */
+/* 🎨 Colors (mode fosc) */
 @media (prefers-color-scheme: dark) {
   .block-temp { background-color: #3b1f1f; }
   .block-humidity { background-color: #1b3a3f; }
@@ -207,7 +207,7 @@ a:focus,
   }
 }
 
-/* === Missatges d'activació/desactivació d'avisos === */
+/* === Missatges notificacions === */
 .notif-msg {
   margin-left: 1.5rem;
   margin-top: 0.25rem;
@@ -224,7 +224,18 @@ a:focus,
   }
 }
 
-/* === 🔔 Notificacions meteorològiques (correcció mode clar/fosc) === */
+/* === 🔔 Targetes d'avisos AEMET === */
+.alert-description {
+  white-space: normal !important;
+  word-break: break-word !important;
+  overflow-wrap: anywhere !important;
+  line-height: 1.45;
+  display: block;
+  margin-top: 0.5rem;
+  text-align: left;
+}
+
+/* === Notificacions meteorològiques === */
 .notification-card {
   background-color: var(--notif-bg, #ffffff);
   color: var(--notif-text, #000000);
@@ -247,7 +258,7 @@ a:focus,
   }
 }
 
-/* === Responsive (pantalles petites i tablets) === */
+/* === Responsive === */
 @media screen and (max-width: 768px) {
   #root { padding: 1rem; }
   h1 { font-size: 1.6rem; }

@@ -427,8 +427,8 @@ const fetchSolarIrr = async (lat: number, lon: number, d: string) => {
   }
 };
 
-type Level = "moderate" | "high" | "very_high";
-type Lang  = "ca" | "es" | "eu" | "gl";
+//type Level = "moderate" | "high" | "very_high";
+//type Lang  = "ca" | "es" | "eu" | "gl";
 
 async function askNotificationPermission(): Promise<boolean> {
   if (!("Notification" in window)) return false;
@@ -475,6 +475,175 @@ function detectAlertCategory(eventRaw: string = "") {
     return "low_temperature_warning";
 
   return "generic"; // fallback segur
+}
+
+// =============================================================
+// 🧠 IA AEMET – Traducció "intel·ligent" d'avisos oficials
+// Sense dependre de claus exactes, només analitzant `alert.event`
+// =============================================================
+
+type LangKey = "ca" | "es" | "eu" | "gl";
+
+type HazardId =
+  | "rain"
+  | "snow"
+  | "wind"
+  | "storm"
+  | "coast"
+  | "fog"
+  | "temp_min"
+  | "temp_max"
+  | "other";
+
+type LevelId = "extreme" | "high" | "moderate" | "info";
+
+const HAZARD_LABELS: Record<HazardId, Record<LangKey, string>> = {
+  rain: {
+    ca: "pluja",
+    es: "lluvia",
+    eu: "euria",
+    gl: "chuva",
+  },
+  snow: {
+    ca: "neu",
+    es: "nieve",
+    eu: "elurra",
+    gl: "neve",
+  },
+  wind: {
+    ca: "vent",
+    es: "viento",
+    eu: "haizea",
+    gl: "vento",
+  },
+  storm: {
+    ca: "tempestes",
+    es: "tormentas",
+    eu: "ekaitzak",
+    gl: "treboadas",
+  },
+  coast: {
+    ca: "costa i onatge",
+    es: "costa y oleaje",
+    eu: "kostaldea eta olatuak",
+    gl: "costa e ondada",
+  },
+  fog: {
+    ca: "boira",
+    es: "niebla",
+    eu: "lainoa",
+    gl: "néboa",
+  },
+  temp_min: {
+    ca: "temperatures mínimes",
+    es: "temperaturas mínimas",
+    eu: "tenperatura baxuak",
+    gl: "temperaturas mínimas",
+  },
+  temp_max: {
+    ca: "temperatures màximes",
+    es: "temperaturas máximas",
+    eu: "tenperatura altuak",
+    gl: "temperaturas máximas",
+  },
+  other: {
+    ca: "fenòmens adversos",
+    es: "fenómenos adversos",
+    eu: "fenomeno kaltegarriak",
+    gl: "fenómenos adversos",
+  },
+};
+
+const LEVEL_LABELS: Record<LevelId, Record<LangKey, string>> = {
+  extreme: {
+    ca: "Risc extrem per",
+    es: "Riesgo extremo por",
+    eu: "Arrisku oso larria",
+    gl: "Risco extremo por",
+  },
+  high: {
+    ca: "Risc important per",
+    es: "Riesgo importante por",
+    eu: "Arrisku handia",
+    gl: "Risco importante por",
+  },
+  moderate: {
+    ca: "Avís per",
+    es: "Aviso por",
+    eu: "Abisua",
+    gl: "Aviso por",
+  },
+  info: {
+    ca: "Informació sobre",
+    es: "Información sobre",
+    eu: "Informazioa",
+    gl: "Información sobre",
+  },
+};
+
+const GENERIC_BODY: Record<LangKey, string> = {
+  ca: "Avís meteorològic oficial d'AEMET. Consulta els detalls als canals oficials.",
+  es: "Aviso meteorológico oficial de AEMET. Consulta los detalles en los canales oficiales.",
+  eu: "AEMETen abisu ofiziala. Xehetasunak kanal ofizialetan kontsultatu.",
+  gl: "Aviso meteorolóxico oficial da AEMET. Consulta os detalles nos canais oficiais.",
+};
+
+// 🔤 Neteja descripció: subratllats, dobles espais, etc.
+function cleanAemetDescription(text: string): string {
+  if (!text) return "";
+  return text
+    .replace(/_/g, " ")              // _ → espai
+    .replace(/\s{2,}/g, " ")         // espais duplicats
+    .replace(/([a-zà-ü])([A-ZÀ-Ü])/g, "$1 $2") // camelCase estrany → separa
+    .trim();
+}
+
+interface AemetAiAlert {
+  title: string;
+  body: string;
+}
+
+// 🧠 Motor IA senzill basat en paraules clau del camp `event`
+function buildAemetAiAlert(
+  rawEvent: string,
+  rawDescription: string,
+  lang: LangKey
+): AemetAiAlert {
+  const ev = (rawEvent || "").toLowerCase();
+  const desc = cleanAemetDescription(rawDescription || "");
+
+  // 1) Quin fenomen?
+  let hazard: HazardId = "other";
+  if (ev.includes("rain") || ev.includes("precipit"))
+    hazard = "rain";
+  else if (ev.includes("snow"))
+    hazard = "snow";
+  else if (ev.includes("wind"))
+    hazard = "wind";
+  else if (ev.includes("coastal") || ev.includes("coast") || ev.includes("wave"))
+    hazard = "coast";
+  else if (ev.includes("storm") || ev.includes("thunder"))
+    hazard = "storm";
+  else if (ev.includes("fog"))
+    hazard = "fog";
+  else if (ev.includes("minimum") || ev.includes("low_temperature") || ev.includes("low temp"))
+    hazard = "temp_min";
+  else if (ev.includes("maximum") || ev.includes("high_temperature") || ev.includes("high temp") || ev.includes("heat"))
+    hazard = "temp_max";
+
+  // 2) Quin nivell?
+  let level: LevelId = "info";
+  if (ev.includes("extreme") || ev.includes("red"))
+    level = "extreme";
+  else if (ev.includes("severe") || ev.includes("high") || ev.includes("important") || ev.includes("orange"))
+    level = "high";
+  else if (ev.includes("moderate") || ev.includes("yellow"))
+    level = "moderate";
+
+  const title = `${LEVEL_LABELS[level][lang]} ${HAZARD_LABELS[hazard][lang]}`.trim();
+  const body = desc || GENERIC_BODY[lang];
+
+  return { title, body };
 }
 
 /* ──────── component ──────── */
@@ -1687,74 +1856,77 @@ return (
 )}
 
 
-{/* ⚠️ Avisos meteorològics oficials (MODE PRO PRO) */}
+{/* ⚠️ Avisos meteorològics oficials */}
 {alerts.length > 0 ? (
   alerts.map((alert, i) => {
-
+    // 1) Text brut d'AEMET
     const rawEvent = alert.event || "";
     const rawDesc  = alert.description || "";
 
-    // 🧠 Traductor PRO PRO
-    const title = translateAemetAuto(rawEvent, t);
-    const body  = translateAemetAuto(rawDesc, t);
+    // 2) Idioma (ca, es, eu, gl) – primeres 2 lletres
+    const langCode = (i18n.language || "es").slice(0, 2) as LangKey;
+    const lang: LangKey =
+      langCode === "ca" || langCode === "es" || langCode === "eu" || langCode === "gl"
+        ? langCode
+        : "es";
 
-    // 🖌️ Categoria detectada automàticament
-    const category = detectAlertCategory(rawEvent + " " + rawDesc);
+    // 3) Traducció "IA"
+    const { title, body } = buildAemetAiAlert(rawEvent, rawDesc, lang);
 
-    // 🎨 Colors i icones automàtics
-    const iconMap: any = {
-      storm: "⛈️",
-      rain: "🌧️",
-      snow: "❄️",
-      wind: "🌬️",
-      heat: "🔥",
-      cold: "🥶",
-      coastal_event: "🌊",
-      unknown: "⚠️"
-    };
+    // 4) Colors / icones segons fenomen (classificació senzilla)
+    let borderColor = "#ffeb3b";
+    let icon = "⚠️";
+    const evLower = rawEvent.toLowerCase();
 
-    const colorMap: any = {
-      storm: "#ff9800",
-      rain: "#4fc3f7",
-      snow: "#90caf9",
-      wind: "#81d4fa",
-      heat: "#f44336",
-      cold: "#4dd0e1",
-      coastal_event: "#00bcd4",
-      unknown: "#ffeb3b"
-    };
-
-    const icon = iconMap[category] || "⚠️";
-    const borderColor = colorMap[category] || "#ffeb3b";
+    if (evLower.includes("storm") || evLower.includes("thunder")) {
+      borderColor = "#ff9800";
+      icon = "⛈️";
+    } else if (evLower.includes("rain") || evLower.includes("precipit")) {
+      borderColor = "#4fc3f7";
+      icon = "🌧️";
+    } else if (evLower.includes("snow")) {
+      borderColor = "#90caf9";
+      icon = "❄️";
+    } else if (evLower.includes("wind")) {
+      borderColor = "#81d4fa";
+      icon = "💨";
+    } else if (evLower.includes("coast") || evLower.includes("wave")) {
+      borderColor = "#80cbc4";
+      icon = "🌊";
+    } else if (evLower.includes("temperature") || evLower.includes("heat") || evLower.includes("cold")) {
+      borderColor = "#e57373";
+      icon = "🌡️";
+    }
 
     return (
       <div
         key={i}
-        className="weather-alert"
-        style={{
-          borderLeft: `6px solid ${borderColor}`,
-          marginBottom: "10px",
-          paddingLeft: "10px"
-        }}
+        className="notification-card"
+        style={{ borderLeft: `6px solid ${borderColor}` }}
       >
-        <strong>{icon} {title}</strong>
+        <p style={{ margin: 0, fontWeight: 700 }}>
+          {icon} {title}
+        </p>
 
-        {body && (
-          <div style={{ opacity: 0.8 }}>
-            {body}
-          </div>
+        <p className="alert-description" style={{ marginTop: "0.35rem" }}>
+          {body}
+        </p>
+
+        {alert.onset && alert.expires && (
+          <p style={{ fontSize: "0.85rem", opacity: 0.8 }}>
+            {new Date(alert.onset).toLocaleString()} →{" "}
+            {new Date(alert.expires).toLocaleString()}
+          </p>
         )}
 
-        <div style={{ fontSize: "0.75em", opacity: 0.6, marginTop: "3px" }}>
-          {alert.sender_name} ·{" "}
-          {new Date(alert.start * 1000).toLocaleString()} →{" "}
-          {new Date(alert.end * 1000).toLocaleString()}
-        </div>
+        <p style={{ fontSize: "0.8rem", opacity: 0.8 }}>
+          AEMET · Agencia Estatal de Meteorología
+        </p>
       </div>
     );
   })
 ) : (
-  <p>☀️ {t("no_alerts")}</p>
+  <p>{t("noAlerts")}</p>
 )}
   
           {/* 📋 RECOMANACIONS */}
