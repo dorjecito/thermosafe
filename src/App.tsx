@@ -449,13 +449,13 @@ async function getCoords(): Promise<{ lat: number; lon: number } | null> {
 }
 
 // -------------------------------------------------------------
-// 🔎 Detecta categoria d’avís AEMET (unifica totes les variants)
+// 🔎 Detecta categoria d’avís AEMET (compatibilitat enrere)
 // -------------------------------------------------------------
 function detectAlertCategory(eventRaw: string = "") {
   const t = eventRaw
     .toLowerCase()
-    .normalize("NFD").replace(/[\u0300-\u036f]/g, "") // treu accents
-    .replace(/[-‐-‒–—―]/g, " ") // guions rars → espai
+    .normalize("NFD").replace(/[\u0300-\u036f]/g, "")
+    .replace(/[-‐-‒–—―]/g, " ")
     .replace(/\s+/g, " ")
     .trim();
 
@@ -466,20 +466,30 @@ function detectAlertCategory(eventRaw: string = "") {
   if (t.includes("heat") || t.includes("calor")) return "heat";
   if (t.includes("cold") || t.includes("frio") || t.includes("frío")) return "cold";
 
-  // AVÍS COSTANER AEMET (moltes variants)
-  if (t.includes("coastal") || t.includes("costa") || t.includes("coster") || t.includes("coastalevent"))
+  if (
+    t.includes("coastal") ||
+    t.includes("costa") ||
+    t.includes("coster") ||
+    t.includes("coastalevent") ||
+    t.includes("oleaje") ||
+    t.includes("wave")
+  ) {
     return "coastalevent";
+  }
 
-  // TEMPERATURES BAIXES
-  if (t.includes("low temperature") || t.includes("minimum temperature"))
+  if (
+    t.includes("low temperature") ||
+    t.includes("minimum temperature") ||
+    t.includes("minima")
+  ) {
     return "low_temperature_warning";
+  }
 
-  return "generic"; // fallback segur
+  return "generic";
 }
 
 // =============================================================
 // 🧠 IA AEMET – Traducció "intel·ligent" d'avisos oficials
-// Sense dependre de claus exactes, només analitzant `alert.event`
 // =============================================================
 
 type LangKey = "ca" | "es" | "eu" | "gl";
@@ -498,121 +508,493 @@ type HazardId =
 type LevelId = "extreme" | "high" | "moderate" | "info";
 
 const HAZARD_LABELS: Record<HazardId, Record<LangKey, string>> = {
-  rain: {
-    ca: "pluja",
-    es: "lluvia",
-    eu: "euria",
-    gl: "chuva",
+  rain: { ca: "pluja", es: "lluvia", eu: "euria", gl: "chuva" },
+  snow: { ca: "neu", es: "nieve", eu: "elurra", gl: "neve" },
+  wind: { ca: "vent", es: "viento", eu: "haizea", gl: "vento" },
+  storm: { ca: "tempestes", es: "tormentas", eu: "ekaitzak", gl: "treboadas" },
+  coast: { ca: "costa i onatge", es: "costa y oleaje", eu: "kostaldea", gl: "costa e ondada" },
+  fog: { ca: "boira", es: "niebla", eu: "lainoa", gl: "néboa" },
+  temp_min: { ca: "temperatures mínimes", es: "temperaturas mínimas", eu: "tenperatura baxuak", gl: "temperaturas mínimas" },
+  temp_max: { ca: "temperatures màximes", es: "temperaturas máximas", eu: "tenperatura altuak", gl: "temperaturas máximas" },
+  other: { ca: "fenòmens adversos", es: "fenómenos adversos", eu: "fenomeno kaltegarriak", gl: "fenómenos adversos" }
+};
+
+const LEVEL_LABELS: Record<LevelId, Record<LangKey, string>> = {
+  extreme: { ca: "Risc extrem per", es: "Riesgo extremo por", eu: "Arrisku oso larria", gl: "Risco extremo por" },
+  high: { ca: "Risc important per", es: "Riesgo importante por", eu: "Arrisku handia", gl: "Risco importante por" },
+  moderate: { ca: "Avís per", es: "Aviso por", eu: "Abisua", gl: "Aviso por" },
+  info: { ca: "Informació sobre", es: "Información sobre", eu: "Informazioa", gl: "Información sobre" }
+};
+
+const GENERIC_BODY: Record<LangKey, string> = {
+  ca: "Avís meteorològic oficial d'AEMET.",
+  es: "Aviso meteorológico oficial de AEMET.",
+  eu: "AEMETen abisu ofiziala.",
+  gl: "Aviso meteorolóxico oficial da AEMET."
+};
+
+// 🔤 Neteja i separa textos enganxats d’AEMET
+function cleanAemetDescription(text: string): string {
+  if (!text) return "";
+  return text
+    .replace(/_/g, " ")                      // _ → espai
+    .replace(/\s{2,}/g, " ")                 // espais duplicats
+    .replace(/([a-zà-ü])([A-ZÀ-Ü])/g, "$1 $2") // AAAAaaa → AAAA aaa
+    .replace(/\.(?=[A-Za-zÀ-ÿ])/g, ". ")     // AEMET escriu frases enganxades
+    .trim();
+}
+
+function translateWithIA(text: string, lang: LangKey): string {
+  if (!text) return "";
+
+  let t = text.toLowerCase();
+
+  // 1) Correccions AEMET típiques
+  t = t
+    .replace(/(\d+)\s*km\/h/gi, "$1 km/h")
+    .replace(/(\d+)\s*ºc/gi, "$1 °C")
+    .replace(/twenty ?four[- ]?hours/gi, "24 hores")
+    .replace(/temperature forecast/gi, "temperatura prevista");
+
+  // 2) Diccionari complet IA
+  for (const key in IA_FULL) {
+    const reg = new RegExp(key, "gi");
+    if (reg.test(t)) {
+      const replacement =
+        IA_FULL[key][lang] ||
+        IA_FULL[key]["es"] ||
+        key;
+
+      t = t.replace(reg, replacement);
+    }
+  }
+
+  // 3) Majúscules després de punt
+  t = t.replace(/\. ([a-z])/g, (_, l) => `. ${l.toUpperCase()}`);
+
+  return t.trim();
+}
+
+const IA_KNOWLEDGE: Record<string, Record<LangKey, string>> = {
+  // --------------------------------------------------------
+  // 🌧️ PLUJA / PRECIPITACIÓ
+  // --------------------------------------------------------
+  "heavy rain": {
+    ca: "pluja intensa",
+    es: "lluvia intensa",
+    eu: "eurite handia",
+    gl: "chuva intensa",
   },
-  snow: {
-    ca: "neu",
-    es: "nieve",
-    eu: "elurra",
-    gl: "neve",
+  "moderate rain": {
+    ca: "pluja moderada",
+    es: "lluvia moderada",
+    eu: "eurite moderatua",
+    gl: "chuva moderada",
   },
-  wind: {
-    ca: "vent",
-    es: "viento",
-    eu: "haizea",
-    gl: "vento",
+  "accumulated rainfall": {
+    ca: "acumulació de pluja",
+    es: "acumulación de lluvia",
+    eu: "eurite metatua",
+    gl: "chuva acumulada",
   },
-  storm: {
-    ca: "tempestes",
-    es: "tormentas",
-    eu: "ekaitzak",
-    gl: "treboadas",
+  "precipitations": {
+    ca: "precipitacions",
+    es: "precipitaciones",
+    eu: "euriak",
+    gl: "precipitacións",
   },
-  coast: {
-    ca: "costa i onatge",
-    es: "costa y oleaje",
-    eu: "kostaldea eta olatuak",
-    gl: "costa e ondada",
+  "persistent precipitations": {
+    ca: "precipitacions persistents",
+    es: "precipitaciones persistentes",
+    eu: "euri jarraituak",
+    gl: "precipitacións persistentes",
   },
-  fog: {
+
+  // --------------------------------------------------------
+  // 🌩️ TEMPESTES
+  // --------------------------------------------------------
+  "thunderstorm": {
+    ca: "tempesta",
+    es: "tormenta",
+    eu: "ekaitza",
+    gl: "treboada",
+  },
+  "severe storm": {
+    ca: "tempesta severa",
+    es: "tormenta severa",
+    eu: "ekaitz larria",
+    gl: "treboada severa",
+  },
+  "electrical storm": {
+    ca: "tempesta elèctrica",
+    es: "tormenta eléctrica",
+    eu: "ekaitz elektrikoa",
+    gl: "treboada eléctrica",
+  },
+  "hail": {
+    ca: "calamarsa",
+    es: "granizo",
+    eu: "kazkabarra",
+    gl: "sarabia",
+  },
+
+  // --------------------------------------------------------
+  // ❄️ NEU
+  // --------------------------------------------------------
+  "snowfall": {
+    ca: "nevada",
+    es: "nevada",
+    eu: "elurtea",
+    gl: "nevada",
+  },
+  "accumulated snowfall": {
+    ca: "acumulació de neu",
+    es: "acumulación de nieve",
+    eu: "elur metatua",
+    gl: "acumulación de neve",
+  },
+  "snow level": {
+    ca: "cota de neu",
+    es: "cota de nieve",
+    eu: "elur-maila",
+    gl: "cota de neve",
+  },
+
+  // --------------------------------------------------------
+  // 🌫️ BOIRA
+  // --------------------------------------------------------
+  "fog": {
     ca: "boira",
     es: "niebla",
     eu: "lainoa",
     gl: "néboa",
   },
-  temp_min: {
-    ca: "temperatures mínimes",
-    es: "temperaturas mínimas",
-    eu: "tenperatura baxuak",
-    gl: "temperaturas mínimas",
+  "reduced visibility": {
+    ca: "visibilitat reduïda",
+    es: "visibilidad reducida",
+    eu: "ikuspen murriztua",
+    gl: "visibilidade reducida",
   },
-  temp_max: {
-    ca: "temperatures màximes",
-    es: "temperaturas máximas",
+
+  // --------------------------------------------------------
+  // 🌊 COSTA / ONATGE
+  // --------------------------------------------------------
+  "coastal event": {
+    ca: "avís costaner",
+    es: "aviso costero",
+    eu: "kostaldeko abisua",
+    gl: "aviso costeiro",
+  },
+  "strong waves": {
+    ca: "fort onatge",
+    es: "fuerte oleaje",
+    eu: "olatu handiak",
+    gl: "forte ondada",
+  },
+  "rough sea": {
+    ca: "mar molt agitada",
+    es: "mar muy agitada",
+    eu: "itsaso zakarra",
+    gl: "mar moi axitada",
+  },
+
+  // --------------------------------------------------------
+  // 🔥 CALOR / TEMPERATURES ALTES
+  // --------------------------------------------------------
+  "high temperature": {
+    ca: "temperatures altes",
+    es: "temperaturas altas",
     eu: "tenperatura altuak",
-    gl: "temperaturas máximas",
+    gl: "temperaturas altas",
   },
-  other: {
-    ca: "fenòmens adversos",
-    es: "fenómenos adversos",
-    eu: "fenomeno kaltegarriak",
-    gl: "fenómenos adversos",
+  "heat wave": {
+    ca: "onada de calor",
+    es: "ola de calor",
+    eu: "bero bolada",
+    gl: "onda de calor",
+  },
+  "maximum temperature": {
+    ca: "temperatura màxima prevista",
+    es: "temperatura máxima prevista",
+    eu: "aurreikusitako tenperatura maximoa",
+    gl: "temperatura máxima prevista",
+  },
+
+  // --------------------------------------------------------
+  // 💨 VENT (REVISAT I COMPLETAT)
+  // --------------------------------------------------------
+  "maximum gust of wind": {
+    ca: "ratxa màxima de vent",
+    es: "racha máxima de viento",
+    eu: "haize-bolada maximoa",
+    gl: "refacho máximo de vento",
+  },
+  "wind gust": {
+    ca: "ratxa de vent",
+    es: "racha de viento",
+    eu: "haize-bolada",
+    gl: "refacho de vento",
+  },
+  "wind gusts": {
+    ca: "ratxes de vent",
+    es: "rachas de viento",
+    eu: "haize-boladak",
+    gl: "refachos de vento",
+  },
+  "viento de componente norte": {
+    ca: "vent de component nord",
+    es: "viento de componente norte",
+    eu: "iparraldeko haizea",
+    gl: "vento de compoñente norte",
+  },
+  "viento de componente sur": {
+    ca: "vent de component sud",
+    es: "viento de componente sur",
+    eu: "hegoaldeko haizea",
+    gl: "vento de compoñente sur",
+  },
+
+  // --------------------------------------------------------
+  // 🧊 FRED / TEMPERATURES BAIXES
+  // --------------------------------------------------------
+  "minimum temperature": {
+    ca: "temperatura mínima prevista",
+    es: "temperatura mínima prevista",
+    eu: "aurreikusitako gutxieneko tenperatura",
+    gl: "temperatura mínima prevista",
+  },
+  "low temperature warning": {
+    ca: "avís per temperatures baixes",
+    es: "aviso por temperaturas bajas",
+    eu: "tenperatura baxuengatiko abisua",
+    gl: "aviso por temperaturas baixas",
   },
 };
 
-const LEVEL_LABELS: Record<LevelId, Record<LangKey, string>> = {
-  extreme: {
-    ca: "Risc extrem per",
-    es: "Riesgo extremo por",
-    eu: "Arrisku oso larria",
-    gl: "Risco extremo por",
+// --------------------------------------------------------
+// 🌦️ Variants generals i sinònims típics d'AEMET
+// --------------------------------------------------------
+const IA_KNOWLEDGE_EXTENDED: Record<string, Record<LangKey, string>> = {
+  // Colors (avisos)
+  "yellow warning": {
+    ca: "avís groc",
+    es: "aviso amarillo",
+    eu: "abisu horia",
+    gl: "aviso amarelo",
   },
-  high: {
-    ca: "Risc important per",
-    es: "Riesgo importante por",
-    eu: "Arrisku handia",
-    gl: "Risco importante por",
+  "orange warning": {
+    ca: "avís taronja",
+    es: "aviso naranja",
+    eu: "abisu laranja",
+    gl: "aviso laranxa",
   },
-  moderate: {
-    ca: "Avís per",
-    es: "Aviso por",
-    eu: "Abisua",
-    gl: "Aviso por",
+  "red warning": {
+    ca: "avís vermell",
+    es: "aviso rojo",
+    eu: "abisu gorria",
+    gl: "aviso vermello",
   },
-  info: {
-    ca: "Informació sobre",
-    es: "Información sobre",
-    eu: "Informazioa",
-    gl: "Información sobre",
+
+  // Vent ampliat
+  "strong wind": {
+    ca: "vent fort",
+    es: "viento fuerte",
+    eu: "haize gogorra",
+    gl: "vento forte",
+  },
+  "very strong wind": {
+    ca: "vent molt fort",
+    es: "viento muy fuerte",
+    eu: "oso haize gogorra",
+    gl: "vento moi forte",
+  },
+
+  // Pluja ampliada
+  "persistent rain": {
+    ca: "pluja persistent",
+    es: "lluvia persistente",
+    eu: "eurite jarraitua",
+    gl: "chuva persistente",
+  },
+  "intense showers": {
+    ca: "ruixats intensos",
+    es: "chubascos intensos",
+    eu: "ekaitz zaparrada handiak",
+    gl: "chuvascos intensos",
+  },
+
+  // Tempestes ampliades
+  "severe thunderstorms": {
+    ca: "tempestes severes",
+    es: "tormentas severas",
+    eu: "ekaitz bortitzak",
+    gl: "treboadas severas",
+  },
+
+  // Neu ampliada
+  "snow accumulation": {
+    ca: "acumulació de neu",
+    es: "acumulación de nieve",
+    eu: "elur metaketa",
+    gl: "acumulación de neve",
+  },
+
+  // Boira ampliada
+  "dense fog": {
+    ca: "boira densa",
+    es: "niebla densa",
+    eu: "laino trinkoa",
+    gl: "néboa densa",
+  },
+
+  // Costa ampliada
+  "very strong waves": {
+    ca: "onatge molt fort",
+    es: "oleaje muy fuerte",
+    eu: "olatu oso handiak",
+    gl: "ondada moi forte",
+  },
+
+  // Fred ampliat
+  "severe frost": {
+    ca: "gelades severes",
+    es: "heladas severas",
+    eu: "izozte larriak",
+    gl: "xeadas severas",
+  },
+
+  // Calor ampliat
+  "very high temperatures": {
+    ca: "temperatures molt altes",
+    es: "temperaturas muy altas",
+    eu: "tenperatura oso altuak",
+    gl: "temperaturas moi altas",
   },
 };
 
-const GENERIC_BODY: Record<LangKey, string> = {
-  ca: "Avís meteorològic oficial d'AEMET. Consulta els detalls als canals oficials.",
-  es: "Aviso meteorológico oficial de AEMET. Consulta los detalles en los canales oficiales.",
-  eu: "AEMETen abisu ofiziala. Xehetasunak kanal ofizialetan kontsultatu.",
-  gl: "Aviso meteorolóxico oficial da AEMET. Consulta os detalles nos canais oficiais.",
+// 🔗 Fusió diccionari base + ampliat
+const IA_FULL: Record<string, Record<LangKey, string>> = {
+  ...IA_KNOWLEDGE,
+  ...IA_KNOWLEDGE_EXTENDED,
 };
-
-// 🔤 Neteja descripció: subratllats, dobles espais, etc.
-function cleanAemetDescription(text: string): string {
-  if (!text) return "";
-  return text
-    .replace(/_/g, " ")              // _ → espai
-    .replace(/\s{2,}/g, " ")         // espais duplicats
-    .replace(/([a-zà-ü])([A-ZÀ-Ü])/g, "$1 $2") // camelCase estrany → separa
-    .trim();
-}
 
 interface AemetAiAlert {
   title: string;
   body: string;
 }
 
-// 🧠 Motor IA senzill basat en paraules clau del camp `event`
 function buildAemetAiAlert(
   rawEvent: string,
   rawDescription: string,
   lang: LangKey
 ): AemetAiAlert {
+  
+  // 🔍 DEBUG AEMET — mostra què està arribant realment
+  console.log("DEBUG AEMET RAW:", { rawEvent, rawDescription, lang });
+
   const ev = (rawEvent || "").toLowerCase();
   const desc = cleanAemetDescription(rawDescription || "");
 
-  // 1) Quin fenomen?
+function translateBody(text: string, lang: LangKey): string {
+  if (!text) return "";
+
+  // Si no és català, NO traduïm
+  if (lang !== "ca") return text;
+
+  let t = text;
+
+  // -----------------------------
+  // 🌬️ VENT
+  // -----------------------------
+  t = t
+    .replace(/Maximum gust of wind/gi, "Ratxa màxima de vent")
+    .replace(/Maximum wind gust/gi, "Ratxa màxima de vent")
+    .replace(/Viento de componente norte/gi, "Vent de component nord")
+    .replace(/Viento de componente sur/gi, "Vent de component sud")
+    .replace(/Viento de componente este/gi, "Vent de component est")
+    .replace(/Viento de componente oeste/gi, "Vent de component oest")
+    .replace(/Viento del norte/gi, "Vent del nord")
+    .replace(/Viento del sur/gi, "Vent del sud")
+    .replace(/Viento del este/gi, "Vent de l’est")
+    .replace(/Viento del oeste/gi, "Vent de l’oest")
+    .replace(/Se llegará al umbral en zonas altas/gi, "S'arribarà al llindar en zones elevades")
+    .replace(/rachas/gi, "ratxes")
+    .replace(/viento fuerte/gi, "vent fort")
+    .replace(/viento muy fuerte/gi, "vent molt fort");
+
+  // -----------------------------
+  // 🌧️ PLUJA
+  // -----------------------------
+  t = t
+    .replace(/rainfall/gi, "precipitació")
+    .replace(/heavy rain/gi, "pluja intensa")
+    .replace(/moderate rain/gi, "pluja moderada")
+    .replace(/precipitaciones persistentes/gi, "precipitacions persistents")
+    .replace(/Accumulated rainfall of (\d+) mm/gi, "Acumulació de $1 mm de pluja");
+
+  // -----------------------------
+  // ⛈️ TEMPESTES
+  // -----------------------------
+  t = t
+    .replace(/thunderstorm(s)?/gi, "tempesta")
+    .replace(/storm(s)?/gi, "tempesta")
+    .replace(/tormentas fuertes/gi, "tempestes fortes")
+    .replace(/tormentas/gi, "tempestes");
+
+  // -----------------------------
+  // ❄️ NEU
+  // -----------------------------
+  t = t
+    .replace(/Twentyfour-hours accumulated snowfall/gi, "Neu acumulada en 24 hores")
+    .replace(/accumulated snowfall/gi, "neu acumulada")
+    .replace(/snowfall/gi, "neu")
+    .replace(/Cota de nieve bajando hasta unos (\d+) m/gi, "Cota de neu baixant fins als $1 m");
+
+  // -----------------------------
+  // 🥶 FRED / TEMPERATURA MÍNIMA
+  // -----------------------------
+  t = t
+    .replace(/Minimum temperature/gi, "Temperatura mínima prevista")
+    .replace(/temperaturas mínimas/gi, "temperatures mínimes")
+    .replace(/bajo cero/gi, "sota zero");
+
+  // -----------------------------
+  // 🔥 CALOR / TEMPERATURA MÀXIMA
+  // -----------------------------
+  t = t
+    .replace(/Maximum temperature/gi, "Temperatura màxima prevista")
+    .replace(/temperaturas máximas/gi, "temperatures màximes")
+    .replace(/calor intenso/gi, "calor intens");
+
+  // -----------------------------
+  // 🌫️ BOIRA
+  // -----------------------------
+  t = t
+    .replace(/Dense fog/gi, "Boira densa")
+    .replace(/fog/gi, "boira");
+
+  // -----------------------------
+  // 🌊 COSTA / ONATGE
+  // -----------------------------
+  t = t
+    .replace(/coastal phenomena/gi, "fenòmens costaners")
+    .replace(/oleaje/gi, "onatge")
+    .replace(/mar combinado/gi, "mar combinada")
+    .replace(/olas de hasta (\d+) m/gi, "ones de fins a $1 metres");
+
+  // -----------------------------
+  // 🌡️ GENERIC
+  // -----------------------------
+  t = t
+    .replace(/Se esperan/gi, "S'esperen")
+    .replace(/Se prevén/gi, "Es preveuen")
+    .replace(/durante la jornada/gi, "durant la jornada")
+    .replace(/en zonas altas/gi, "a les zones elevades");
+
+  return t.trim();
+}
+
+  // ---- 1) Fenomen detectat ----
   let hazard: HazardId = "other";
   if (ev.includes("rain") || ev.includes("precipit"))
     hazard = "rain";
@@ -620,18 +1002,29 @@ function buildAemetAiAlert(
     hazard = "snow";
   else if (ev.includes("wind"))
     hazard = "wind";
-  else if (ev.includes("coastal") || ev.includes("coast") || ev.includes("wave"))
+  else if (ev.includes("coastal") || ev.includes("coast") || ev.includes("wave") || ev.includes("oleaje"))
     hazard = "coast";
   else if (ev.includes("storm") || ev.includes("thunder"))
     hazard = "storm";
   else if (ev.includes("fog"))
     hazard = "fog";
-  else if (ev.includes("minimum") || ev.includes("low_temperature") || ev.includes("low temp"))
-    hazard = "temp_min";
-  else if (ev.includes("maximum") || ev.includes("high_temperature") || ev.includes("high temp") || ev.includes("heat"))
+  else if (
+  ev.includes("minimum") ||
+  ev.includes("low_temperature") ||
+  ev.includes("low temperature") ||
+  ev.includes("low-temperature") ||
+  ev.includes("low temp")
+)
+  hazard = "temp_min";
+  else if (
+    ev.includes("maximum") ||
+    ev.includes("high temp") ||
+    ev.includes("high_temperature") ||
+    ev.includes("heat")
+  )
     hazard = "temp_max";
 
-  // 2) Quin nivell?
+  // ---- 2) Nivell ----
   let level: LevelId = "info";
   if (ev.includes("extreme") || ev.includes("red"))
     level = "extreme";
@@ -641,7 +1034,7 @@ function buildAemetAiAlert(
     level = "moderate";
 
   const title = `${LEVEL_LABELS[level][lang]} ${HAZARD_LABELS[hazard][lang]}`.trim();
-  const body = desc || GENERIC_BODY[lang];
+ const body = translateBody(desc, lang) || GENERIC_BODY[lang];
 
   return { title, body };
 }
@@ -1856,77 +2249,68 @@ return (
 )}
 
 
-{/* ⚠️ Avisos meteorològics oficials */}
-{alerts.length > 0 ? (
-  alerts.map((alert, i) => {
-    // 1) Text brut d'AEMET
-    const rawEvent = alert.event || "";
-    const rawDesc  = alert.description || "";
+{/* 🔔 AVISOS AEMET (amb IA real) */}
+{alerts.length > 0 && (
+  <div style={{ marginTop: "1rem" }}>
+    {alerts.map((alert, i) => {
 
-    // 2) Idioma (ca, es, eu, gl) – primeres 2 lletres
-    const langCode = (i18n.language || "es").slice(0, 2) as LangKey;
-    const lang: LangKey =
-      langCode === "ca" || langCode === "es" || langCode === "eu" || langCode === "gl"
-        ? langCode
-        : "es";
+      // 🔍 Normalitza la descripció (mai més [object Object])
+      const desc =
+        typeof alert.description === "string"
+          ? alert.description
+          : alert.description?.[i18n.language] ||
+            alert.description?.es ||
+            Object.values(alert.description || {}).join(". ");
 
-    // 3) Traducció "IA"
-    const { title, body } = buildAemetAiAlert(rawEvent, rawDesc, lang);
+      const ai = buildAemetAiAlert(
+        alert.event || "",
+        desc,
+        i18n.language as LangKey
+      );
 
-    // 4) Colors / icones segons fenomen (classificació senzilla)
-    let borderColor = "#ffeb3b";
-    let icon = "⚠️";
-    const evLower = rawEvent.toLowerCase();
+      return (
+        <div
+          key={i}
+          className="notification-card"
+          style={{
+            borderLeft: "6px solid #ff6b6b",
+            marginBottom: "1rem",
+            padding: "1rem",
+          }}
+        >
+          {/* TÍTOL TRADUÏT */}
+          <h3
+            style={{
+              margin: 0,
+              padding: 0,
+              fontSize: "1.2rem",
+              fontWeight: "600",
+            }}
+          >
+            {ai.title}
+          </h3>
 
-    if (evLower.includes("storm") || evLower.includes("thunder")) {
-      borderColor = "#ff9800";
-      icon = "⛈️";
-    } else if (evLower.includes("rain") || evLower.includes("precipit")) {
-      borderColor = "#4fc3f7";
-      icon = "🌧️";
-    } else if (evLower.includes("snow")) {
-      borderColor = "#90caf9";
-      icon = "❄️";
-    } else if (evLower.includes("wind")) {
-      borderColor = "#81d4fa";
-      icon = "💨";
-    } else if (evLower.includes("coast") || evLower.includes("wave")) {
-      borderColor = "#80cbc4";
-      icon = "🌊";
-    } else if (evLower.includes("temperature") || evLower.includes("heat") || evLower.includes("cold")) {
-      borderColor = "#e57373";
-      icon = "🌡️";
-    }
-
-    return (
-      <div
-        key={i}
-        className="notification-card"
-        style={{ borderLeft: `6px solid ${borderColor}` }}
-      >
-        <p style={{ margin: 0, fontWeight: 700 }}>
-          {icon} {title}
+          {/* COS TRADUÏT (IA!!) */}
+          <p
+          className="alert-description"
+          style={{
+            marginTop: "0.5rem",
+            whiteSpace: "normal",
+            overflowWrap: "anywhere",
+            lineHeight: 1.5,
+          }}
+        >
+          {translateWithIA(ai.body, i18n.language as LangKey)}
         </p>
 
-        <p className="alert-description" style={{ marginTop: "0.35rem" }}>
-          {body}
-        </p>
-
-        {alert.onset && alert.expires && (
-          <p style={{ fontSize: "0.85rem", opacity: 0.8 }}>
-            {new Date(alert.onset).toLocaleString()} →{" "}
-            {new Date(alert.expires).toLocaleString()}
-          </p>
-        )}
-
-        <p style={{ fontSize: "0.8rem", opacity: 0.8 }}>
-          AEMET · Agencia Estatal de Meteorología
-        </p>
-      </div>
-    );
-  })
-) : (
-  <p>{t("noAlerts")}</p>
+          {/* Peu informatiu */}
+          <p style={{ marginTop: "0.5rem", fontSize: "0.8rem", opacity: 0.7 }}>
+            AEMET · Agencia Estatal de Meteorología
+          </p>
+        </div>
+      );
+    })}
+  </div>
 )}
   
           {/* 📋 RECOMANACIONS */}
