@@ -156,5 +156,6 @@
 
   "solar_info": "Información solar",
   "uv_index_current": "Índice UV actual",
-  "uv_level": "Nivel"
+  "uv_level": "Nivel",
+  "uv_night_message": "Pola noite non hai radiación UV."
 }

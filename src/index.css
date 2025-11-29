@@ -330,3 +330,67 @@ button:focus-visible {
   line-height: 1.45;
   opacity: 0.9;
 }
+
+/* =======================================================
+   🌙 MODE FOSC — Targetes i blocs
+   ======================================================= */
+
+/* Targeta condicions actuals */
+@media (prefers-color-scheme: dark) {
+  .block-temp {
+    background-color: rgba(255, 255, 255, 0.06) !important;
+    color: #fff !important;
+    border: 1px solid rgba(255, 255, 255, 0.15);
+  }
+
+  /* Textos de dades */
+  .block-temp strong,
+  .block-temp p {
+    color: #fff !important;
+  }
+}
+
+/* Bloc UV */
+@media (prefers-color-scheme: dark) {
+  .uv-block {
+    background-color: rgba(255, 255, 255, 0.06) !important;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    color: #fff;
+  }
+
+  .uv-title {
+    color: #fff !important;
+  }
+
+  .uv-current-value {
+    color: #fff !important;
+  }
+
+  /* Els nivells UV ja tenen color propi, només ajustem bordes */
+  .uv-risk-card {
+    border: 1px solid rgba(255, 255, 255, 0.2);
+  }
+}
+
+/* Bloc recomanacions */
+@media (prefers-color-scheme: dark) {
+  .recomanacions-box {
+    background-color: rgba(255, 255, 255, 0.08) !important;
+    border-left: 4px solid #90caf9 !important;
+    color: #e3f2fd !important;
+  }
+}
+
+/* Bloc vent */
+@media (prefers-color-scheme: dark) {
+  .block-wind {
+    background-color: rgba(255, 255, 255, 0.06) !important;
+    color: #fff !important;
+    border: 1px solid rgba(255, 255, 255, 0.15);
+  }
+
+  .block-wind strong,
+  .block-wind p {
+    color: #fff !important;
+  }
+}

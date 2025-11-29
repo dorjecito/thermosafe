@@ -417,19 +417,53 @@ const d = new Date();
 const day = d.getDate();
 const month = d.getMonth(); // Gener = 0, Juny = 5, Setembre = 8
 
-// Estiu real: del 21 de juny (21/6) al 23 de setembre (23/9)
-const summer =
-  (month === 5 && day >= 21) || // Juny: a partir del dia 21
-  (month === 6) ||              // Juliol: tot
-  (month === 7) ||              // Agost: tot
-  (month === 8 && day <= 23);   // Setembre: fins al dia 23
+// =========================
+// 🌞 Funció d'hores de dia segons estació
+// =========================
 
-const isDaytime = () => {
+export function isDaytime(): boolean {
+  const d = new Date();
+  const day = d.getDate();
+  const month = d.getMonth(); // gener=0, juny=5...
+
+  // Estiu real: 21/6 → 23/9
+  const isSummer =
+    (month === 5 && day >= 21) || // juny des del 21
+    month === 6 ||                // juliol
+    month === 7 ||                // agost
+    (month === 8 && day <= 23);   // setembre fins 23
+
   const hour = d.getHours();
-  return summer
-    ? hour >= 7 && hour <= 19  // Si és estiu, es considera dia de 7h a 19h
-    : hour >= 8 && hour <= 18; // Si no és estiu, de 8h a 18h
-};
+
+  if (isSummer) {
+    return hour >= 7 && hour < 19;  // estiu
+  } else {
+    return hour >= 8 && hour < 18;  // hivern
+  }
+}
+
+
+// =========================
+// 🌞 Funció central UV amb control estacional
+// =========================
+
+async function safeUVFetch(lat: number, lon: number): Promise<number | null> {
+
+  if (!isDaytime()) {
+    console.log("[UV] Vespre detectat → no es consulta OpenUV");
+    return null;
+  }
+
+  try {
+    console.log("[UV] És de dia → consultant OpenUV…");
+    const uv = await getUVFromOpenUV(lat, lon);
+    return typeof uv === "number" ? uv : null;
+  }
+  catch (err) {
+    console.error("[UV] Error consultant OpenUV:", err);
+    return null;
+  }
+}
 
 /* === [WIND] constants & helpers === */
 type WindRisk = 'none' | 'breezy' | 'moderate' | 'strong' | 'very_strong';
@@ -2353,31 +2387,39 @@ return (
   </div>
 )}
 
-{/* ☀️ INFORMACIÓ SOLAR */}
-<div className="uv-block">
+{/* 🌞 INFORMACIÓ SOLAR (ocultació segons dia/nit) */}
+{isDaytime() ? (
+  <div className="uv-block">
 
-  {/* --- Títol UV --- */}
-  <h3 className="uv-title"> {t("solar_info")}</h3>
+    {/* ---- Títol UV ---- */}
+    <h3 className="uv-title">{t("solar_info")}</h3>
 
-  {/* --- Índex UV actual --- */}
-  <p className="data-label">
-    <strong>{t("uv_index_current")}:</strong>
-    <span className="uv-current-value">
-      {uvi !== null ? uvi.toFixed(1) : "—"}
-    </span>
-  </p>
+    {/* ---- Índex UV actual ---- */}
+    <p className="data-label">
+      <strong>{t("uv_index_current")}:</strong>
+      <span className="uv-current-value">
+        {uvi === null ? "—" : uvi.toFixed(1)}
+      </span>
+    </p>
 
-  {/* --- Targeta de nivell UV --- */}
-  <div className={`uv-risk-card uv-${getUvLevel(uvi)}`}>
-    <strong>{t("uv_level")}:</strong> {getUvText(uvi, lang)}
+    {/* ---- Targeta de nivell UV ---- */}
+    <div className={`uv-risk-card uv-${getUvLevel(uvi)}`}>
+      <strong>{t("uv_level")}:</strong> {getUvText(uvi, lang)}
+    </div>
+
+    {/* ---- Recomanació UV ---- */}
+    <p style={{ marginTop: "0.7rem" }}>
+      {getUvAdvice(uvi, lang)}
+    </p>
+
   </div>
-
-  {/* --- Recomanació --- */}
-  <p style={{ marginTop: "0.7rem" }}>
-    {getUvAdvice(uvi, lang)}
-  </p>
-
-</div>
+) : (
+  /* 🌙 MODE NIT — Mostrar missatge simple */
+  <div className="uv-block uv-night">
+    <h3 className="uv-title">{t("solar_info")}</h3>
+    <p style={{ opacity: 0.8 }}>{t("uv_night_message") || "A la nit no hi ha radiació UV."}</p>
+  </div>
+)}
 
 
 {/* ❄️ RISC PER FRED — VERSIÓ PRO */}

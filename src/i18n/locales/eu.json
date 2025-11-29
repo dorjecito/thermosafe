@@ -156,5 +156,6 @@
 
   "solar_info": "Eguzki-informazioa",
   "uv_index_current": "UV indizea",
-  "uv_level": "Maila"
+  "uv_level": "Maila",
+  "uv_night_message": "Gauetan ez dago UV erradiaziorik."
 }
