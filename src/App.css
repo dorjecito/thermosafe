@@ -11,11 +11,9 @@ html, body, #root {
   scroll-behavior: smooth;
 }
 
-/* === NOVETAT: Trencament universal de paraules llargues === */
-/* (Evita desquadraments amb alertes AEMET o ciutats llargues) */
-* {
-  overflow-wrap: anywhere;
-  word-break: break-word;
+/* Només trenca paraules llargues en textos, no en targetes */
+p, span {
+  overflow-wrap: break-word;
 }
 
 /* === Contenidor principal === */
@@ -231,7 +229,6 @@ a:focus,
   }
 }
 
-<<<<<<< HEAD
 /* === 🔔 Targetes d'avisos AEMET === */
 .alert-description {
   white-space: normal !important;
@@ -244,9 +241,6 @@ a:focus,
 }
 
 /* === Notificacions meteorològiques === */
-=======
-/* === 🔔 Notificacions meteorològiques === */
->>>>>>> 6b576e882c68012482082d2cb46be68296b9dec5
 .notification-card {
   background-color: var(--notif-bg, #ffffff);
   color: var(--notif-text, #000000);
@@ -269,17 +263,6 @@ a:focus,
   }
 }
 
-<<<<<<< HEAD
-=======
-/* === ALERTES AEMET: fix per paraules enganxades === */
-.weather-alert {
-  white-space: normal !important;
-  word-break: break-word !important;
-  overflow-wrap: break-word !important;
-  line-height: 1.4;
-}
-
->>>>>>> 6b576e882c68012482082d2cb46be68296b9dec5
 /* === Responsive === */
 @media screen and (max-width: 768px) {
   #root { padding: 1rem; }
@@ -295,3 +278,60 @@ a:focus,
   }
   body { overflow-x: hidden; }
 }
+
+
+/* 📌 Bloc UV */
+.uv-block {
+  background: #ffffff;
+  border-radius: 6px;
+  padding: 0.8rem 1rem;
+  margin-top: 1rem;
+  box-shadow:
+    0 2px 4px rgba(0,0,0,0.08),
+    inset 0 0 0 1px rgba(0,0,0,0.05);
+}
+
+/* Títol UV */
+.uv-title {
+  font-size: 1.1rem;
+  font-weight: 600;
+  margin-bottom: 0.6rem;
+}
+
+/* Valor actual */
+.uv-current-value {
+  font-weight: 600;
+  font-size: 1.05rem;
+  margin-left: 0.25rem;
+}
+
+/* Targeta de nivell UV */
+.uv-risk-card {
+  margin-top: 0.5rem;
+  padding: 0.55rem 0.85rem;
+  border-radius: 6px;
+  color: #fff;
+  font-weight: 600;
+}
+
+/* Colors segons nivell UV */
+.uv-low {
+  background-color: #2ecc71; /* verd */
+}
+
+.uv-moderate {
+  background-color: #f1c40f; /* groc */
+}
+
+.uv-high {
+  background-color: #e67e22; /* taronja */
+}
+
+.uv-very-high {
+  background-color: #e74c3c; /* vermell */
+}
+
+.uv-extreme {
+  background-color: #8b00ff; /* violeta */
+}
+

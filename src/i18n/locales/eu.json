@@ -11,9 +11,10 @@
   "gps_button": "📍 Erabili kokapen aktuala",
 
   "location": "📍 Kokapena",
-  "humidity": "💧 Hezetasuna",
-  "feels_like": "🌡️ Sentsazio termikoa",
-  "measured_temp": "📈 Tenperatura erreala",
+  "current_conditions": "Uneko baldintzak",
+  "humidity": "Hezetasuna",
+  "feels_like": "Sentsazio termikoa",
+  "real_temp": "Benetako tenperatura",
   "irradiance": "☀️ Eguzki-irradiantzia",
   "uvi": "🔆 UV indizea",
   "wind": "💨 Haize-abiadura",
@@ -151,5 +152,9 @@
   "notifications": {
     "enabled": "Abisuak aktibatuta",
     "disabled": "Abisuak desaktibatuta"
-  }
+  },
+
+  "solar_info": "Eguzki-informazioa",
+  "uv_index_current": "UV indizea",
+  "uv_level": "Maila"
 }

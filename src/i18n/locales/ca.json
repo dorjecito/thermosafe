@@ -11,9 +11,10 @@
   "gps_button": "📍 Usar ubicació actual",
 
   "location": "📍 Localització",
-  "humidity": "💧 Humitat",
-  "feels_like": "🌡️ Sensació tèrmica",
-  "measured_temp": "📈 Temperatura real",
+  "current_conditions": "Condicions actuals",
+  "humidity": "Humitat",
+  "feels_like": "Sensació tèrmica",
+  "real_temp": "Temperatura real",
   "irradiance": "☀️ Irradiància solar",
   "uvi": "🔆 Índex UV",
   "wind": "💨 Velocitat del vent",
@@ -191,5 +192,11 @@
   "notifications": {
     "enabled": "Avisos activats",
     "disabled": "Avisos desactivats"
-  }
+  },
+
+  "solar_info": "Informació solar",
+  "uv_index_current": "Índex UV actual",
+  "uv_level": "Nivell"
+  
+  
 }

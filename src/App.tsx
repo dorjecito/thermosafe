@@ -1,22 +1,19 @@
 /* ───────────────────────────────────────────
    src/App.tsx  —  100 % camins relatius
    ─────────────────────────────────────────── */
-   import { getUVFromOW } from "./services/openWeatherUVI";
    import React, { useEffect, useRef, useState } from 'react';
    import { useTranslation } from 'react-i18next';
    import './i18n';
   
-   
-   
-   /* —— serveis ———————————————————————————— */
-   //import { getWeatherByCoords, getWeatherByCity } from './services/weatherService';
-    import { 
-    getWeatherByCity, 
-    getWeatherByCoords, 
-    getWeatherAlerts, 
-    getWindDirection 
-  } from "./services/weatherService";
-   import { getUVI } from './services/uviAPI';
+ /* ── serveis ── */
+import {
+  getWeatherByCity,
+  getWeatherByCoords,
+  getWeatherAlerts,
+  getWindDirection,
+} from "./services/weatherService";
+
+import { getUVFromOpenUV } from "./services/openUV";
    
    /* —— utilitats ——————————————————————————— */
    import { getLocationNameFromCoords } from './utils/getLocationNameFromCoords';
@@ -37,6 +34,82 @@
 
    import LanguageSwitcher from './components/LanguageSwitcher';
    import { enableRiskAlerts, disableRiskAlerts } from "./push/subscribe";
+
+
+/* ======================================================
+   🌞 Helpers UV — nivell, text i recomanació multillenguatge
+   ====================================================== */
+
+export function getUvLevel(uvi: number | null): string {
+  if (uvi === null) return "low";
+  if (uvi < 3) return "low";
+  if (uvi < 6) return "moderate";
+  if (uvi < 8) return "high";
+  if (uvi < 11) return "very-high";
+  return "extreme";
+}
+
+export function getUvText(uvi: number | null, lang: string): string {
+  const level =
+    uvi === null ? -1 :
+    uvi < 3 ? 0 :
+    uvi < 6 ? 1 :
+    uvi < 8 ? 2 :
+    uvi < 11 ? 3 : 4;
+
+  const text: Record<string, string[]> = {
+    ca: ["Baix (0–2)", "Moderat (3–5)", "Alt (6–7)", "Molt alt (8–10)", "Extrem (11+)"],
+    es: ["Bajo (0–2)", "Moderado (3–5)", "Alto (6–7)", "Muy alto (8–10)", "Extremo (11+)"],
+    gl: ["Baixo (0–2)", "Moderado (3–5)", "Alto (6–7)", "Moi alto (8–10)", "Extremo (11+)"],
+    eu: ["Baxua (0–2)", "Moderatua (3–5)", "Altua (6–7)", "Oso altua (8–10)", "Muturrekoa (11+)"],
+  };
+
+  return level === -1 ? "—" : (text[lang] || text["ca"])[level];
+}
+
+
+export function getUvAdvice(uvi: number | null, lang: string): string {
+  if (uvi === null) return "";
+
+  const level =
+    uvi < 3 ? 0 :
+    uvi < 6 ? 1 :
+    uvi < 8 ? 2 :
+    uvi < 11 ? 3 : 4;
+
+  const advice: Record<string, string[]> = {
+    ca: [
+      "Protecció mínima necessària.",
+      "Gorra, ulleres i SPF 30+.",
+      "Evita el sol de 12h a 16h. Protecció extra.",
+      "Evita exposició directa. Usa roba i SPF 50+.",
+      "Risc greu. Queda’t a l’ombra o dins casa."
+    ],
+    es: [
+      "Protección mínima necesaria.",
+      "Gorra, gafas y SPF 30+.",
+      "Evita el sol de 12h a 16h. Protección extra.",
+      "Evita la exposición directa. Usa ropa y SPF 50+.",
+      "Riesgo extremo. Permanece en sombra o interior."
+    ],
+    gl: [
+      "Protección mínima necesaria.",
+      "Gorra, lentes e SPF 30+.",
+      "Evita o sol de 12h a 16h. Protección extra.",
+      "Evita exposición directa. Roupa e SPF 50+.",
+      "Risco extremo. Permanece á sombra ou interior."
+    ],
+    eu: [
+      "Gutxieneko babesa beharrezkoa.",
+      "Txanoa, betaurrekoak eta SPF 30+.",
+      "12:00–16:00 saihestu eguzkia. Babes gehigarria.",
+      "Saihestu esposizio zuzena. Arropa eta SPF 50+.",
+      "Arrisku handia. Egon itzalean edo barrualdean."
+    ]
+  };
+
+  return (advice[lang] || advice["ca"])[level];
+}
 
 
 
@@ -426,6 +499,8 @@ const fetchSolarIrr = async (lat: number, lon: number, d: string) => {
     return null;
   }
 };
+
+
 
 //type Level = "moderate" | "high" | "very_high";
 //type Lang  = "ca" | "es" | "eu" | "gl";
@@ -1487,15 +1562,30 @@ const fetchWeather = async (cityName: string) => {
     setRealCity(data.name);
 
     // 🗺 Coordenades
-    const { lat, lon } = data.coord || {};
-    console.log("[DEBUG] Coordenades rebudes:", lat, lon);
+const { lat, lon } = data.coord || {};
+console.log("[DEBUG] Coordenades rebudes:", lat, lon);
 
-    // 🔥 FIX IMPORTANT: actualitzar coordenades globals!!
-    if (lat != null && lon != null) {
-      setLat(lat);
-      setLon(lon);
-      console.log("[DEBUG] Coordenades ACTUALITZADES:", lat, lon);
-    }
+// 🔥 FIX IMPORTANT: actualitzar coordenades globals!!
+if (lat != null && lon != null) {
+  setLat(lat);
+  setLon(lon);
+  // 🟣 --- OBTÉ INDEX UV DES D’OPENUVI (GPS) --- //
+try {
+  const uv = await getUVFromOpenUV(lat, lon);
+  console.log("[TEST – GPS] UV rebut:", uv);
+  setUvi(uv);
+} catch (err) {
+  console.error("[GPS] Error obtenint UV:", err);
+}
+  console.log("[DEBUG] Coordenades ACTUALITZADES:", lat, lon);
+
+  // 🟣 --- OBTÉ INDEX UV DES D’OPENUVI --- //
+  const uv = await getUVFromOpenUV(lat, lon);
+  console.log("[TEST] UV rebut:", uv);
+  setUvi(uv);
+}
+
+    
 
     // ⚠️ Avisos oficials
     if (lat != null && lon != null) {
@@ -1610,15 +1700,28 @@ const updateAll = async (
     )}, ${lon?.toFixed(2)})${colorReset}`
   );
 
-  const today = new Date().toISOString().split('T')[0];
-  const ir = await fetchSolarIrr(lat, lon, today);
-  const uv = await getUVI(lat, lon);
+
 
   setTemp(tp);
   setHum(hm);
-  setIrr(ir);
-  setUvi(uv);
   setCity(nm);
+
+// ☀️ Obté irradiància i índex UV (OpenWeather + NASA POWER)
+try {
+  const today = new Date().toISOString().split("T")[0];
+
+  const ir = await fetchSolarIrr(lat, lon, today);
+  const uv = await getUVFromOpenUV(lat, lon);
+
+  setIrr(ir ?? null);
+  setUvi(uv ?? null);
+
+  console.log("[DEBUG] Irradiància:", ir, " - UV:", uv);
+
+  await maybeNotifyUV(uv);
+} catch (err) {
+  console.error("[DEBUG] Error obtenint IR/UV a updateAll:", err);
+}
 
   /* 🌡️ CLAMP HEAT-INDEX */
   const hiVal =
@@ -1652,18 +1755,18 @@ const locate = async (silent = false) => {
 
     console.log(`[DEBUG] Coordenades GPS obtingudes: ${lat}, ${lon}`);
 
-// 🌦️ 2. Obté dades del temps per coordenades
+// 🌦️ // 2. Obté dades del temps per coordenades
 const d = await getWeatherByCoords(lat, lon, lang, API_KEY);
 setData(d);
-console.log(`[DEBUG] Dades rebudes per GPS:`, d);
 setDataSource("gps");
 
-// ☀️ Obté UVI d’OpenWeather
-const uvi = await getUVFromOW(lat, lon);
+// 🌞 Obté UVI d’OpenWeather
+const uvi = await getUVFromOpenUV(lat, lon);
 setUvi(uvi);
-console.log("[DEBUG] UV actual:", uvi);
+console.log("[DEBUG] UVI actual:", uvi);
+console.log("[TEST] Tipus UVI:", typeof uvi, "Valor:", uvi);
 
-// 📊 Assigna valors bàsics de meteorologia
+// Meteo bàsica
 setTemp(d.main?.temp ?? null);
 setHum(d.main?.humidity ?? null);
 setHi(d.main?.feels_like ?? null);
@@ -2055,8 +2158,6 @@ return (
 
 </div>
   
-    
-  
       {/* ⚠️ ALERTES */}
       {hi !== null && hi >= 18 && getHeatRisk(hi).isHigh && (
         <div className="alert-banner">
@@ -2111,6 +2212,38 @@ return (
 <p>{t("measured_temp")}: {temp !== null ? `${temp.toFixed(1)}°C` : "–"}</p>
   </>
 
+  {/* 🌡️ CONDICIONS ACTUALS */}
+<div
+  className="block-temp"
+  style={{
+    backgroundColor: "#eaf3ff",
+    borderRadius: "6px",
+    padding: "0.9rem 1.1rem",
+    marginTop: "1rem",
+    marginBottom: "1rem",
+    textAlign: "left",
+    boxShadow: "0 2px 6px rgba(0,0,0,0.1)",
+  }}
+>
+  <h3 style={{ marginTop: 0, marginBottom: "0.6rem", fontWeight: 600 }}>
+   {t("current_conditions")}
+</h3>
+
+<p>
+  <strong> {t("humidity")}:</strong> {hum}%
+</p>
+
+<p>
+  <strong> {t("feels_like")}:</strong> 
+  {hi !== null ? hi.toFixed(1) + "ºC" : "—"}
+</p>
+
+<p>
+  <strong> {t("real_temp")}:</strong>
+  {temp !== null ? temp.toFixed(1) + "ºC" : "—"}
+</p>
+</div>
+
   
           {/* 🌤️ ESTAT DEL CEL */}
           {data?.weather?.[0] && (
@@ -2138,6 +2271,7 @@ return (
               🕒 {t('last_update')}: {formatLastUpdate(data.dt)}
             </p>
           ) : null}
+
 
 {/* 💨 VENT */}
 {wind !== null && (
@@ -2218,6 +2352,33 @@ return (
     </div>
   </div>
 )}
+
+{/* ☀️ INFORMACIÓ SOLAR */}
+<div className="uv-block">
+
+  {/* --- Títol UV --- */}
+  <h3 className="uv-title"> {t("solar_info")}</h3>
+
+  {/* --- Índex UV actual --- */}
+  <p className="data-label">
+    <strong>{t("uv_index_current")}:</strong>
+    <span className="uv-current-value">
+      {uvi !== null ? uvi.toFixed(1) : "—"}
+    </span>
+  </p>
+
+  {/* --- Targeta de nivell UV --- */}
+  <div className={`uv-risk-card uv-${getUvLevel(uvi)}`}>
+    <strong>{t("uv_level")}:</strong> {getUvText(uvi, lang)}
+  </div>
+
+  {/* --- Recomanació --- */}
+  <p style={{ marginTop: "0.7rem" }}>
+    {getUvAdvice(uvi, lang)}
+  </p>
+
+</div>
+
 
 {/* ❄️ RISC PER FRED — VERSIÓ PRO */}
 {coldRisk !== "cap" && effForCold !== null && effForCold <= 0 && (
@@ -2349,7 +2510,10 @@ return (
   
          {/* 🟩 ESCALA-UV */}
 {['ca', 'es', 'eu', 'gl'].includes(i18n.language) ? (
-  <UVScale lang={i18n.language as any} />
+  <UVScale 
+    lang={i18n.language as any} 
+    uvi={uvi ?? 0}
+/>
 ) : (
   !err && <p>{t('loading')}</p>
 )}

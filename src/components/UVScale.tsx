@@ -6,6 +6,7 @@ type Lang = 'ca' | 'es' | 'eu' | 'gl';
 
 interface UVScaleProps {
   lang: Lang;
+  uvi: number;   // <— afegit
   lat?: number;
   lon?: number;
 }
@@ -94,7 +95,7 @@ const escalaUV = [
 ] as const;
 
 /* ─── Component ────────────────────────────────────── */
-export default function UVScale({ lang, lat, lon }: UVScaleProps) {
+export default function UVScale({ lang, uvi, lat, lon }: UVScaleProps) {
   const [visible, setVisible] = useState(false);
   const { toggle, heading, night } = ui[lang];
 
