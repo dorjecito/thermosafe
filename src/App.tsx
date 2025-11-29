@@ -2239,12 +2239,20 @@ return (
   </p>
 )}
 
-    {/* 🌡️ Dades meteorològiques */}
-    <>
-<p>{t("humidity")}: {hum !== null ? `${hum}%` : "–"}</p>
-<p>{t("feels_like")}: <strong>{hi !== null ? `${hi.toFixed(1)}°C` : "–"}</strong></p>
-<p>{t("measured_temp")}: {temp !== null ? `${temp.toFixed(1)}°C` : "–"}</p>
-  </>
+  <p>
+  {t("humidity")}:{" "}
+  {hum !== null ? `${hum}%` : "—"}
+</p>
+
+<p>
+  {t("feels_like")}:{" "}
+  <strong>{hi !== null ? `${hi.toFixed(1)}°C` : "—"}</strong>
+</p>
+
+<p>
+  {t("measured_temp")}:{" "}
+  {temp !== null ? `${temp.toFixed(1)}°C` : "—"}
+</p>
 
   {/* 🌡️ CONDICIONS ACTUALS */}
 <div
@@ -2264,17 +2272,18 @@ return (
 </h3>
 
 <p>
-  <strong> {t("humidity")}:</strong> {hum}%
+  <strong>{t("humidity")}:</strong>{" "}
+  {hum !== null ? `${hum}%` : "—"}
 </p>
 
 <p>
-  <strong> {t("feels_like")}:</strong> 
-  {hi !== null ? hi.toFixed(1) + "ºC" : "—"}
+  <strong>{t("feels_like")}:</strong>{" "}
+  {hi !== null ? hi.toFixed(1) + "°C" : "—"}
 </p>
 
 <p>
-  <strong> {t("real_temp")}:</strong>
-  {temp !== null ? temp.toFixed(1) + "ºC" : "—"}
+  <strong>{t("real_temp")}:</strong>{" "}
+  {temp !== null ? temp.toFixed(1) + "°C" : "—"}
 </p>
 </div>
 

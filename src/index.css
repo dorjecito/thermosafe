@@ -394,3 +394,8 @@ button:focus-visible {
     color: #fff !important;
   }
 }
+
+.current-conditions p strong,
+.data-label strong {
+  margin-right: 0.25rem; /* ajustable 0.2–0.4rem */
+}
