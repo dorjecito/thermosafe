@@ -121,19 +121,22 @@
     "windTitle": "Aviso ThermoSafe",
     "windBody": "Riesgo por viento {{risk}}. Velocidad del viento: {{speed}} km/h"
   },
-
+  "heatRiskLabel": "Riesgo por calor",
+  "effectiveTemp": "Temperatura efectiva",
   "heatRisk": {
-    "moderate": "moderado",
-    "high": "alto",
-    "extreme": "extremo"
-  },
+  "Cap risc": "sin riesgo",
+  "Baix": "bajo",
+  "Moderat": "moderado",
+  "Alt": "alto",
+  "Extrem": "extremo"
+},
 
   "coldRisk": {
   "cap": "sin riesgo",
   "lleu": "leve",
   "moderat": "moderado",
   "alt": "alto",
-  "molt_alt": "muy alto",
+  "molt alt": "muy alto",
   "extrem": "extremo"
 },
 

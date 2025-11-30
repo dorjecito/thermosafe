@@ -126,12 +126,15 @@
     "windTitle": "Avís ThermoSafe",
     "windBody": "Risc per vent {{risk}}. Velocitat del vent: {{speed}} km/h"
   },
-
+  "heatRiskLabel": "Risc per calor",
+  "effectiveTemp": "Temperatura efectiva",
   "heatRisk": {
-    "moderate": "moderat",
-    "high": "alt",
-    "extreme": "extrem"
-  },
+  "Cap risc": "cap risc",
+  "Baix": "baix",
+  "Moderat": "moderat",
+  "Alt": "alt",
+  "Extrem": "extrem"
+},
 
   "coldRisk": {
   "cap": "cap risc",

@@ -399,3 +399,46 @@ button:focus-visible {
 .data-label strong {
   margin-right: 0.25rem; /* ajustable 0.2–0.4rem */
 }
+
+/* =========================================================
+   🔥 RISC PER CALOR — COLORS I ESTILS
+   Coincideix amb getHeatRisk(class) → safe | mild | moderate | high | ext
+   ========================================================= */
+
+/* Risc baix — 27 a 32 */
+.heat-safe {
+  background-color: #7BC043;
+  color: #fff;
+}
+
+/* Risc lleu — 27 a 32 */
+.heat-mild {
+  background-color: #F3CA40;
+  color: #000;
+}
+
+/* Moderat — 32 a 41 */
+.heat-moderate {
+  background-color: #F5A623;
+  color: #000;
+}
+
+/* Alt — 41 a 54 */
+.heat-high {
+  background-color: #F15A29;
+  color: #fff;
+}
+
+/* Extrem — ≥ 54 */
+.heat-ext {
+  background-color: #C1272D;
+  color: #fff;
+}
+
+/* Targeta unificada */
+.temp-risk-card {
+  border-radius: 8px;
+  padding: 0.75rem;
+  margin-top: 1rem;
+  font-weight: 500;
+}

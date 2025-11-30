@@ -36,6 +36,16 @@ import { getUVFromOpenUV } from "./services/openUV";
    import { enableRiskAlerts, disableRiskAlerts } from "./push/subscribe";
 
 
+
+function getColdRiskFromHI(hi: number): string {
+  if (hi <= -40) return "extrem";
+  if (hi <= -25) return "moltAlt";
+  if (hi <= -15) return "alt";
+  if (hi <= -5)  return "moderat";
+  return "lleu"; // hi <= 0
+}
+
+
 /* ======================================================
    🌞 Helpers UV — nivell, text i recomanació multillenguatge
    ====================================================== */
@@ -2428,6 +2438,7 @@ return (
       fontWeight: 500,
     }}
   >
+    
   
     <div style={{ display: "flex", alignItems: "center", gap: "0.45rem" }}>
       <span style={{ fontSize: "1.2rem" }}>❄️</span>
@@ -2508,6 +2519,39 @@ return (
       );
     })}
   </div>
+)}
+
+{/* 🔥❄️ RISC PER TEMPERATURA (UNIFICAT) */}
+{hi !== null && (
+  <>
+    {/* ❄️ Risc per fred */}
+    {hi <= 0 && (
+      <div className={`temp-risk-card cold`}>
+        <strong>
+          {t("coldRisk")}:
+          {" "}
+          {t(`coldRisk.${getColdRiskFromHI(hi)}`)}
+        </strong>
+        <p>
+          {t("effectiveTemp")}: {hi.toFixed(1)}°C
+        </p>
+      </div>
+    )}
+
+    {/* 🔥 Risc per calor */}
+   {hi >= 27 && (
+  <div className={`temp-risk-card heat heat-${getHeatRisk(hi).class}`}>
+    <strong>
+      {t("heatRiskLabel")}:{" "}
+      {t(`heatRisk.${getHeatRisk(hi).level}`)}
+    </strong>
+
+    <p>
+      {t("effectiveTemp")}: {hi.toFixed(1)}°C
+    </p>
+  </div>
+)}
+  </>
 )}
   
           {/* 📋 RECOMANACIONS */}

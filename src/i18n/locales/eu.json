@@ -111,19 +111,22 @@
     "windTitle": "ThermoSafe abisua",
     "windBody": "Haize-arriskua {{risk}}. Abiadura: {{speed}} km/h"
   },
-
+  "heatRiskLabel": "Berorako arriskua",
+  "effectiveTemp": "Tenperatura efektiboa",
   "heatRisk": {
-    "moderate": "ertaina",
-    "high": "altua",
-    "extreme": "muturrekoa"
-  },
+  "Cap risc": "sin riesgo",
+  "Baix": "bajo",
+  "Moderat": "moderado",
+  "Alt": "alto",
+  "Extrem": "extremo"
+},
 
   "coldRisk": {
   "cap": "arriskurik ez",
   "lleu": "arin",
   "moderat": "ertaina",
   "alt": "handia",
-  "molt_alt": "oso handia",
+  "molt alt": "oso handia",
   "extrem": "muturrekoa"
 },
 
