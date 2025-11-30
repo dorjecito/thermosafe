@@ -2008,7 +2008,8 @@ const search = async () => {
 };
 
   /* ──────── render ──────── */
-  const safeLangUV = ['ca', 'es', 'eu', 'gl'].includes(i18n.language) ? i18n.language : undefined;
+  // Sempre agafa el llenguatge actual, però limitat a 2 lletres
+const safeLangUV = i18n.language?.slice(0,2) || 'ca';
 
 useEffect(() => {
   const tok = localStorage.getItem("fcmToken");
@@ -2475,6 +2476,12 @@ return (
         desc,
         i18n.language as LangKey
       );
+// DEBUG: exposa funcions de notificació a la consola
+if (typeof window !== "undefined") {
+  (window as any).maybeNotifyHeat = maybeNotifyHeat;
+  (window as any).maybeNotifyCold = maybeNotifyCold;
+  (window as any).maybeNotifyWind = maybeNotifyWind;
+}
 
       return (
         <div
@@ -2524,19 +2531,7 @@ return (
 {/* 🔥❄️ RISC PER TEMPERATURA (UNIFICAT) */}
 {hi !== null && (
   <>
-    {/* ❄️ Risc per fred */}
-    {hi <= 0 && (
-      <div className={`temp-risk-card cold`}>
-        <strong>
-          {t("coldRisk")}:
-          {" "}
-          {t(`coldRisk.${getColdRiskFromHI(hi)}`)}
-        </strong>
-        <p>
-          {t("effectiveTemp")}: {hi.toFixed(1)}°C
-        </p>
-      </div>
-    )}
+    
 
     {/* 🔥 Risc per calor */}
    {hi >= 27 && (

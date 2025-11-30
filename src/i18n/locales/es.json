@@ -103,7 +103,7 @@
   "link_aemet": "AEMET: salud y meteorología",
 
   "cold_alert_label": "Recibir avisos por frío extremo",
-  "cold_risk": "Riesgo por frío",
+  "cold risk": "Riesgo por frío",
   "heat_risk": "Riesgo por calor",
   "current_risk": "Riesgo actual",
   "no_risk": "Sin riesgo",
@@ -139,6 +139,8 @@
   "molt alt": "muy alto",
   "extrem": "extremo"
 },
+
+"cold_risk": "Riesgo por frio",
 
   "windRisk": {
     "none": "sin riesgo",
