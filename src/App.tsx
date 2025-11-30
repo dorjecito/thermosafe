@@ -2239,21 +2239,6 @@ return (
   </p>
 )}
 
-  <p>
-  {t("humidity")}:{" "}
-  {hum !== null ? `${hum}%` : "—"}
-</p>
-
-<p>
-  {t("feels_like")}:{" "}
-  <strong>{hi !== null ? `${hi.toFixed(1)}°C` : "—"}</strong>
-</p>
-
-<p>
-  {t("measured_temp")}:{" "}
-  {temp !== null ? `${temp.toFixed(1)}°C` : "—"}
-</p>
-
   {/* 🌡️ CONDICIONS ACTUALS */}
 <div
   className="block-temp"
