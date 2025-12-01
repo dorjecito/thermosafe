@@ -279,5 +279,69 @@ a:focus,
   body { overflow-x: hidden; }
 }
 
+/* ================================
+   RECOMANACIONS – ESTILS UNIFICATS
+   ================================ */
+
+.recommendation-box {
+  border-radius: 12px;
+  padding: 16px;
+  margin-top: 16px;
+  background: #222;
+  color: #eee;
+  border-left: 6px solid #555;
+}
+
+/* TÍTOLS */
+.recommendation-title {
+  font-weight: bold;
+  font-size: 1.1rem;
+  margin-bottom: 8px;
+}
+
+/* ------- COLORS SEGONS RISC -------- */
+
+/* 🔥 Calor */
+.safe {
+  border-left-color: #2ecc71; /* verd */
+}
+.mild {
+  border-left-color: #f1c40f; /* groc */
+}
+.moderate {
+  border-left-color: #e67e22; /* taronja */
+}
+.high {
+  border-left-color: #d35400; /* taronja fosc */
+}
+.ext {
+  border-left-color: #c0392b; /* vermell */
+}
+
+/* ❄️ Fred */
+.cold_low {
+  border-left-color: #74b9ff; /* blau suau */
+}
+.cold_mod {
+  border-left-color: #0984e3; /* blau intens */
+}
+.cold_high {
+  border-left-color: #0a4f9c; /* blau fosc */
+}
+.cold_ext {
+  border-left-color: #001f54; /* blau quasi negre */
+}
+
+/* 🌙 Nit */
+.nightCool {
+  border-left-color: #6c5ce7; /* lila fresc */
+}
+.nightSafe {
+  border-left-color: #00cec9; /* turquesa */
+}
+.nightHeat {
+  border-left-color: #e84393; /* rosa calorosa */
+}
+
 
 

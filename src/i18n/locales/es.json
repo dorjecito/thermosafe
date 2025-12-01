@@ -10,7 +10,7 @@
   "search_button": "🔍 Consultar",
   "gps_button": "📍 Usar ubicación actual",
 
-  "location": "📍 Ubicación",
+  "location": "📍 Localización",
   "current_conditions": "Condiciones actuales",
   "humidity": "Humedad",
   "feels_like": "Sensación térmica",
@@ -26,37 +26,37 @@
   "strong_wind": "Fuerte",
   "very_strong_wind": "Muy fuerte",
 
-  "caution_outdoors": "Precaución en el exterior",
+  "caution_outdoors": "Precaución en exteriores",
   "take_extreme_caution": "Evita actividades al aire libre",
   "wind_alert_label": "Recibir avisos por viento fuerte",
 
-  "highIrradianceWarning": "⚠️ Irradiancia solar muy alta. Evita la exposición directa.",
+  "highIrradianceWarning": "⚠️ Irradiancia solar muy alta. Evita la exposición directa al sol.",
   "highUVIWarning": "⚠️ Índice UV muy alto. ¡Protección solar imprescindible!",
-  "irradianceTips": "👒 Usa sombrero, gafas de sol y crema solar. Evita actividad física al sol.",
+  "irradianceTips": "👒 Usa sombrero, gafas de sol y protector solar. Evita actividad física bajo el sol.",
 
   "risk_level": "Riesgo por calor:",
-  "alert_extreme": "🚨 ¡RIESGO EXTREMO DE CALOR! Detén la actividad e hidrátate.",
+  "alert_extreme": "🚨 ¡RIESGO EXTREMO DE CALOR! Detén la actividad e hidrátate de inmediato.",
   "alertRisk": "⚠️ Riesgo alto o extremo por calor.",
 
   "loading": "Cargando datos meteorológicos...",
-  "errorGPS": "No se pudo obtener la temperatura por GPS.",
-  "errorCity": "No se encontraron datos para esa ubicación.",
-  "errorNoLocation": "No se pudo obtener la ubicación.",
+  "errorGPS": "No se ha podido obtener la temperatura por GPS.",
+  "errorCity": "No se han encontrado datos para esta ubicación.",
+  "errorNoLocation": "No se ha podido obtener la ubicación.",
 
   "recommendations_title": "Recomendaciones:",
   "solarProtection": "🔆 Protección solar",
-  "irradianceLegend": "☀️ Niveles de irradiancia: <8 moderada · ≥8 alta",
+  "irradianceLegend": "☀️ Niveles de irradiancia: <8 moderado · ≥8 alto",
   "toggleLegend": "ℹ️ Mostrar/Ocultar escala UV",
 
   "push": {
-    "label": "Recibir avisos cuando el riesgo por calor ≥ moderado",
+    "label": "Recibir avisos cuando el riesgo por calor sea ≥ moderado",
     "enabled": "Avisos activados. Recibirás notificaciones cuando el riesgo sea moderado o superior.",
     "disabled": "Avisos desactivados.",
     "errors": {
       "permissionDenied": "Has denegado el permiso de notificaciones.",
-      "noGps": "No se pudo obtener la ubicación (GPS).",
+      "noGps": "No se ha podido obtener la ubicación (GPS).",
       "notSupported": "El navegador no admite Web Push.",
-      "noToken": "No se pudo obtener el token de notificaciones."
+      "noToken": "No se ha podido obtener el token de notificaciones."
     }
   },
 
@@ -66,7 +66,7 @@
     "clear sky": "Cielo despejado",
     "few clouds": "Pocas nubes",
     "scattered clouds": "Nubes dispersas",
-    "broken clouds": "Parcialmente nublado",
+    "broken clouds": "Cielo parcialmente nublado",
     "overcast clouds": "Cielo cubierto",
     "light rain": "Lluvia débil",
     "moderate rain": "Lluvia moderada",
@@ -87,15 +87,21 @@
     "squall": "Rachas de viento",
     "tornado": "Tornado",
 
-    "poco nublado": "Poco nublado",
-    "muy nublado": "Muy nublado",
-    "nuboso": "Nuboso",
-    "lluvia": "Lluvia",
-    "chubasco": "Chubasco",
-    "llovizna": "Llovizna",
-    "tormenta": "Tormenta",
-    "nieve": "Nieve",
-    "niebla": "Niebla"
+    "ennuvolat": "Nublado",
+    "lleugerament ennuvolat": "Ligeramente nublado",
+    "molt ennuvolat": "Muy nublado",
+    "cel clar": "Cielo despejado",
+    "cel net": "Cielo limpio",
+    "poc ennuvolat": "Poco nublado",
+    "núvols dispersos": "Nubes dispersas",
+    "cel parcialment ennuvolat": "Cielo parcialmente nublado",
+    "pluja": "Lluvia",
+    "ruixat": "Chubasco",
+    "plugim": "Llovizna",
+    "tempesta": "Tormenta",
+    "neu": "Nieve",
+    "boira": "Niebla",
+    "nuvolositat_variable": "Nubosidad variable"
   },
 
   "official_links": "Enlaces oficiales",
@@ -103,7 +109,6 @@
   "link_aemet": "AEMET: salud y meteorología",
 
   "cold_alert_label": "Recibir avisos por frío extremo",
-  "cold risk": "Riesgo por frío",
   "heat_risk": "Riesgo por calor",
   "current_risk": "Riesgo actual",
   "no_risk": "Sin riesgo",
@@ -121,33 +126,37 @@
     "windTitle": "Aviso ThermoSafe",
     "windBody": "Riesgo por viento {{risk}}. Velocidad del viento: {{speed}} km/h"
   },
+
   "heatRiskLabel": "Riesgo por calor",
   "effectiveTemp": "Temperatura efectiva",
+
   "heatRisk": {
-  "Cap risc": "sin riesgo",
-  "Baix": "bajo",
-  "Moderat": "moderado",
-  "Alt": "alto",
-  "Extrem": "extremo"
-},
+    "Cap risc": "sin riesgo",
+    "Baix": "bajo",
+    "Moderat": "moderado",
+    "Alt": "alto",
+    "Extrem": "extremo"
+  },
 
   "coldRisk": {
-  "cap": "sin riesgo",
-  "lleu": "leve",
-  "moderat": "moderado",
-  "alt": "alto",
-  "molt alt": "muy alto",
-  "extrem": "extremo"
-},
+    "cap": "sin riesgo",
+    "lleu": "leve",
+    "moderat": "moderado",
+    "alt": "alto",
+    "molt alt": "muy alto",
+    "extrem": "extremo"
+  },
 
-"cold_risk": "Riesgo por frio",
+  "cold_risk": "Riesgo por frío",
+  "wind_chill": "Temperatura efectiva",
 
   "windRisk": {
     "none": "sin riesgo",
     "breezy": "suave",
     "moderate": "moderado",
     "strong": "fuerte",
-    "very_strong": "muy fuerte"
+    "very_strong": "muy fuerte",
+    "wind_breezy": "viento"
   },
 
   "weather_alerts": {
@@ -156,7 +165,29 @@
     "snow": "Aviso por nieve",
     "wind": "Aviso por viento",
     "heat": "Aviso por calor",
-    "cold": "Aviso por frío"
+    "cold": "Aviso por frío",
+
+    "coastalevent": "Aviso por riesgo costero",
+    "coastal_event": "Aviso por riesgo costero",
+    "coastal_event_warning": "Aviso por riesgo costero",
+    "coastalevent_warning": "Aviso por riesgo costero",
+
+    "moderate_coastalevent_warning": "Aviso costero moderado",
+    "moderate_coastal_event_warning": "Aviso costero moderado",
+    "moderate coastal event warning": "Aviso costero moderado",
+    "moderate_coastalevent": "Aviso costero moderado",
+
+    "low_temperature_warning": "Aviso por temperaturas bajas",
+    "low temperature warning": "Aviso por temperaturas bajas",
+    "moderate_low_temperature_warning": "Aviso moderado por temperaturas bajas",
+    "moderate low temperature warning": "Aviso moderado por temperaturas bajas",
+
+    "snow_warning": "Aviso por nieve",
+    "wind_warning": "Aviso por viento",
+    "rain_warning": "Aviso por lluvia",
+
+    "minimum_temperature": "Temperatura mínima",
+    "minimum temperature": "Temperatura mínima"
   },
 
   "last_update": "Actualizado hace",
@@ -169,13 +200,42 @@
     "disabled": "Avisos desactivados"
   },
 
-  "update": {
-  "available": "Hay una nueva versión disponible",
-  "reload": "Actualizar"
-},
+  "solar_info": "Información solar",
+  "uv_index_current": "Índice UV actual",
+  "uv_level": "Nivel",
+  "uv_night_title": "Información solar",
+  "uv_night_message": "Por la noche no hay radiación UV.",
 
-"solar_info": "Información solar",
-"uv_index_current": "Índice UV actual",
-"uv_level": "Nivel",
-"uv_night_message": "Por la noche no hay radiación UV."
+  "recommendations_full": {
+    "heat": {
+      "low": "Mantén buena hidratación y evita el sol directo en las horas de más calor.",
+      "moderate": "Hidrátate a menudo, descansa en zonas frescas y evita esfuerzos intensos.",
+      "high": "Riesgo importante: limita la actividad exterior, bebe agua con frecuencia y busca sombra.",
+      "extreme": "Peligro extremo: evita totalmente el exterior. Riesgo elevado de golpe de calor."
+    },
+    "cold": {
+      "low": "Noche fresca: abrígate ligeramente y ventila adecuadamente.",
+      "moderate": "Vístete por capas y evita exposiciones prolongadas.",
+      "high": "Riesgo alto: protege extremidades y limita el tiempo en el exterior.",
+      "extreme": "Peligro grave: evita el exterior. Riesgo de congelación en pocos minutos."
+    },
+    "wind": {
+      "low": "Viento suave: sin medidas especiales.",
+      "moderate": "Viento moderado: asegura objetos ligeros y mantén precaución.",
+      "high": "Viento fuerte: evita zonas arboladas y asegura mobiliario exterior.",
+      "extreme": "Viento muy violento: permanece en interiores y aléjate de árboles o estructuras inestables."
+    },
+    "fog": {
+      "low": "Niebla ligera: precaución en desplazamientos.",
+      "moderate": "Niebla moderada: reduce velocidad y aumenta distancia de seguridad.",
+      "high": "Niebla densa: evita desplazamientos innecesarios.",
+      "extreme": "Visibilidad nula: detén cualquier desplazamiento hasta que mejore."
+    },
+    "coast": {
+      "low": "Oleaje débil: condiciones normales.",
+      "moderate": "Oleaje moderado: evita zonas rocosas y pasos estrechos.",
+      "high": "Fuerte oleaje: aléjate de espigones y rompientes.",
+      "extreme": "Oleaje muy fuerte: riesgo extremo. Evita totalmente paseos cerca del mar."
+    }
+  }
 }

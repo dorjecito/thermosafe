@@ -35,7 +35,11 @@ import { getUVFromOpenUV } from "./services/openUV";
    import LanguageSwitcher from './components/LanguageSwitcher';
    import { enableRiskAlerts, disableRiskAlerts } from "./push/subscribe";
 
-
+function normalizeLang(lng: string): "ca" | "es" | "eu" | "gl" {
+  const s = lng.slice(0, 2);
+  if (s === "ca" || s === "es" || s === "eu" || s === "gl") return s;
+  return "ca";
+}
 
 function getColdRiskFromHI(hi: number): string {
   if (hi <= -40) return "extrem";
@@ -1022,93 +1026,488 @@ function translateBody(text: string, lang: LangKey): string {
 
   let t = text;
 
-  // -----------------------------
-  // 🌬️ VENT
-  // -----------------------------
-  t = t
-    .replace(/Maximum gust of wind/gi, "Ratxa màxima de vent")
-    .replace(/Maximum wind gust/gi, "Ratxa màxima de vent")
-    .replace(/Viento de componente norte/gi, "Vent de component nord")
-    .replace(/Viento de componente sur/gi, "Vent de component sud")
-    .replace(/Viento de componente este/gi, "Vent de component est")
-    .replace(/Viento de componente oeste/gi, "Vent de component oest")
-    .replace(/Viento del norte/gi, "Vent del nord")
-    .replace(/Viento del sur/gi, "Vent del sud")
-    .replace(/Viento del este/gi, "Vent de l’est")
-    .replace(/Viento del oeste/gi, "Vent de l’oest")
-    .replace(/Se llegará al umbral en zonas altas/gi, "S'arribarà al llindar en zones elevades")
-    .replace(/rachas/gi, "ratxes")
-    .replace(/viento fuerte/gi, "vent fort")
-    .replace(/viento muy fuerte/gi, "vent molt fort");
+// -----------------------------
+// 🌬️ PACK VENT — Versió PRO
+// -----------------------------
+t = t
+
+  // 🔹 Termes generals de vent
+  .replace(/wind gusts?/gi, "ratxes de vent")
+  .replace(/maximum gust of wind/gi, "ratxa màxima de vent")
+  .replace(/maximum wind gust/gi, "ratxa màxima de vent")
+  .replace(/strong wind/gi, "vent fort")
+  .replace(/very strong wind/gi, "vent molt fort")
+  .replace(/gales?/gi, "ventades")
+  .replace(/high winds?/gi, "vents forts")
+
+  // 🔹 Rachas (AEMET en castellà)
+  .replace(/rachas/gi, "ratxes")
+  .replace(/rachas máximas/gi, "ratxes màximes")
+  .replace(/rachas muy fuertes/gi, "ratxes molt fortes")
+
+  // 🔹 Direccions del vent (variants AEMET + NOAA + MetOffice)
+  .replace(/viento de componente norte/gi, "vent de component nord")
+  .replace(/viento de componente sur/gi, "vent de component sud")
+  .replace(/viento de componente este/gi, "vent de component est")
+  .replace(/viento de componente oeste/gi, "vent de component oest")
+
+  .replace(/viento del norte/gi, "vent del nord")
+  .replace(/viento del sur/gi, "vent del sud")
+  .replace(/viento del este/gi, "vent de l’est")
+  .replace(/viento del oeste/gi, "vent de l’oest")
+
+  // 🔹 Direccions abreujades (AEMET/NOAA formats)
+  .replace(/\bNNE\b/gi, "NNE")
+  .replace(/\bENE\b/gi, "ENE")
+  .replace(/\bSSE\b/gi, "SSE")
+  .replace(/\bSSO\b/gi, "SSO")
+  .replace(/\bONO\b/gi, "ONO")
+  .replace(/\bNOO\b/gi, "NOO")
+
+  // 🔹 Frases típiques AEMET
+  .replace(/se llegará al umbral en zonas altas/gi, "s'arribarà al llindar en zones elevades")
+  .replace(/se alcanzarán rachas/gi, "s'arribaran ratxes")
+  .replace(/con rachas que podrán superar/gi, "amb ratxes que poden superar")
+  .replace(/vientos intensos/gi, "vents intensos")
+  .replace(/vientos muy intensos/gi, "vents molt intensos")
+
+  // 🔹 NOAA / MetOffice variants
+  .replace(/gusts? exceeding/gi, "ratxes superant")
+  .replace(/gusts? up to/gi, "ratxes de fins a")
+  .replace(/gusting to/gi, "amb ratxes de fins a")
+  .replace(/wind speeds? of/gi, "velocitat del vent de")
+  .replace(/wind speeds? up to/gi, "velocitat del vent de fins a");
 
   // -----------------------------
-  // 🌧️ PLUJA
-  // -----------------------------
-  t = t
-    .replace(/rainfall/gi, "precipitació")
-    .replace(/heavy rain/gi, "pluja intensa")
-    .replace(/moderate rain/gi, "pluja moderada")
-    .replace(/precipitaciones persistentes/gi, "precipitacions persistents")
-    .replace(/Accumulated rainfall of (\d+) mm/gi, "Acumulació de $1 mm de pluja");
+// 🌧️ PLUJA — PACK COMPLET AEMET
+// -----------------------------
+
+// 1. Pluja acumulada en 1 hora (variants AEMET / MetOffice / NOAA)
+t = t
+  .replace(/one[- ]hour accumulated precipitation/gi, "precipitació acumulada en una hora")
+  .replace(/one[- ]hour accumulated rainfall/gi, "precipitació acumulada en una hora")
+  .replace(/1[- ]hour accumulated precipitation/gi, "precipitació acumulada en una hora")
+  .replace(/1[- ]hour accumulated rainfall/gi, "precipitació acumulada en una hora")
+  .replace(/1h accumulated rainfall/gi, "precipitació acumulada en una hora")
+  .replace(/1h accumulated precipitation/gi, "precipitació acumulada en una hora")
+  .replace(/one hour precipitation/gi, "precipitació d'una hora")
+  .replace(/1 hour precipitation/gi, "precipitació d'una hora")
+  .replace(/1h precipitation/gi, "precipitació d'una hora");
+
+// 2. Pluja acumulada en X mm
+t = t.replace(/accumulated precipitation of (\d+)\s*mm/gi, "precipitació acumulada de $1 mm");
+t = t.replace(/accumulated rainfall of (\d+)\s*mm/gi, "precipitació acumulada de $1 mm");
+
+// 3. Variants curtes (AEMET a vegades envia aquestes)
+t = t.replace(/precipitation accumulation/gi, "acumulació de precipitació");
+t = t.replace(/rainfall accumulation/gi, "acumulació de precipitació");
+
+// 4. Precipitació acumulada en 12 hores
+t = t
+  .replace(/twelve[- ]hour accumulated precipitation/gi, "precipitació acumulada en 12 hores")
+  .replace(/12[- ]hour accumulated precipitation/gi, "precipitació acumulada en 12 hores")
+  .replace(/12h accumulated precipitation/gi, "precipitació acumulada en 12 hores")
+  .replace(/twelve hour precipitation/gi, "precipitació en 12 hores");
+
+// 5. Precipitació acumulada en 24 hores
+t = t
+  .replace(/twenty[- ]four[- ]hour accumulated precipitation/gi, "precipitació acumulada en 24 hores")
+  .replace(/twentyfour[- ]hour accumulated precipitation/gi, "precipitació acumulada en 24 hores")
+  .replace(/24[- ]hour accumulated precipitation/gi, "precipitació acumulada en 24 hores")
+  .replace(/24h accumulated precipitation/gi, "precipitació acumulada en 24 hores")
+  .replace(/24 hour precipitation/gi, "precipitació de 24 hores");
+
+// 6. Expressió genèrica tipus AEMET (traducció universal)
+t = t.replace(/accumulated precipitation/gi, "precipitació acumulada");
+t = t.replace(/accumulated rainfall/gi, "precipitació acumulada");
+
+// 7. Altres sinònims freqüents
+t = t.replace(/persistent precipitations/gi, "precipitacions persistents");
+t = t.replace(/persistent rainfall/gi, "precipitació persistent");
+t = t.replace(/moderate rain/gi, "pluja moderada");
+t = t.replace(/heavy rain/gi, "pluja intensa");
 
   // -----------------------------
-  // ⛈️ TEMPESTES
-  // -----------------------------
-  t = t
-    .replace(/thunderstorm(s)?/gi, "tempesta")
-    .replace(/storm(s)?/gi, "tempesta")
-    .replace(/tormentas fuertes/gi, "tempestes fortes")
-    .replace(/tormentas/gi, "tempestes");
+// ⛈️ TEMPESTES — PACK COMPLET AEMET
+// -----------------------------
+
+// 1. Tempestes bàsiques
+t = t
+  .replace(/thunderstorm(s)?/gi, "tempesta")
+  .replace(/severe thunderstorm(s)?/gi, "tempesta severa")
+  .replace(/electrical storm(s)?/gi, "tempesta elèctrica")
+  .replace(/storm(s)?/gi, "tempesta");
+
+// 2. AEMET sovint enganxa paraules: “ThunderstormHeavyRain”
+t = t
+  .replace(/thunderstorm\s*heavy\s*rain/gi, "tempesta amb pluja intensa")
+  .replace(/storm\s*with\s*rain/gi, "tempesta amb pluja")
+  .replace(/stormheavy/gi, "tempesta intensa");
+
+// 3. Calamarsa / pedra
+t = t
+  .replace(/hail/gi, "calamarsa")
+  .replace(/large hail/gi, "calamarsa gran")
+  .replace(/hailstorm/gi, "tempesta de calamarsa");
+
+// 4. Ruixats i xàfecs intensos
+t = t
+  .replace(/heavy showers/gi, "ruixats intensos")
+  .replace(/intense showers/gi, "ruixats intensos")
+  .replace(/showers/gi, "ruixats");
+
+// 5. Tempestes convectives
+t = t
+  .replace(/convective storm(s)?/gi, "tempesta convectiva")
+  .replace(/convective precipitation/gi, "precipitació convectiva");
+
+// 6. Variants castellanes d’AEMET
+t = t
+  .replace(/tormentas fuertes/gi, "tempestes fortes")
+  .replace(/tormentas severas/gi, "tempestes severes")
+  .replace(/tormentas/gi, "tempestes")
+  .replace(/tormenta eléctrica/gi, "tempesta elèctrica");
+
+// 7. Variants “internacionals”
+t = t
+  .replace(/squall line/gi, "línia de tempestes")
+  .replace(/severe weather/gi, "fenòmens severs")
+  .replace(/severe convection/gi, "convecció severa");
 
   // -----------------------------
-  // ❄️ NEU
-  // -----------------------------
-  t = t
-    .replace(/Twentyfour-hours accumulated snowfall/gi, "Neu acumulada en 24 hores")
-    .replace(/accumulated snowfall/gi, "neu acumulada")
-    .replace(/snowfall/gi, "neu")
-    .replace(/Cota de nieve bajando hasta unos (\d+) m/gi, "Cota de neu baixant fins als $1 m");
+// ❄️ NEU — PACK COMPLET AEMET
+// -----------------------------
 
-  // -----------------------------
-  // 🥶 FRED / TEMPERATURA MÍNIMA
-  // -----------------------------
-  t = t
-    .replace(/Minimum temperature/gi, "Temperatura mínima prevista")
-    .replace(/temperaturas mínimas/gi, "temperatures mínimes")
-    .replace(/bajo cero/gi, "sota zero");
+// 1. Nevades generals
+t = t
+  .replace(/snowfall/gi, "nevada")
+  .replace(/snow fall/gi, "nevada")
+  .replace(/snow/gi, "neu");
 
-  // -----------------------------
-  // 🔥 CALOR / TEMPERATURA MÀXIMA
-  // -----------------------------
-  t = t
-    .replace(/Maximum temperature/gi, "Temperatura màxima prevista")
-    .replace(/temperaturas máximas/gi, "temperatures màximes")
-    .replace(/calor intenso/gi, "calor intens");
+// 2. Acumulacions de neu
+t = t
+  .replace(/accumulated snowfall of (\d+) cm/gi, "acumulació de neu de $1 cm")
+  .replace(/accumulated snowfall of (\d+) mm/gi, "acumulació de neu de $1 mm")
+  .replace(/accumulated snowfall/gi, "acumulació de neu")
+  .replace(/snow accumulation of (\d+) cm/gi, "acumulació de neu de $1 cm")
+  .replace(/snow accumulation/gi, "acumulació de neu");
 
-  // -----------------------------
-  // 🌫️ BOIRA
-  // -----------------------------
-  t = t
-    .replace(/Dense fog/gi, "Boira densa")
-    .replace(/fog/gi, "boira");
+// 3. Cota de neu (tots els formats reals)
+t = t
+  .replace(/snow level (dropping )?to (\d+) m/gi, "cota de neu baixant fins als $2 m")
+  .replace(/snow level at around (\d+) m/gi, "cota de neu situada al voltant dels $1 m")
+  .replace(/snow level/gi, "cota de neu")
+  .replace(/cota de nieve bajando hasta unos (\d+) m/gi, "cota de neu baixant fins als $1 m");
 
-  // -----------------------------
-  // 🌊 COSTA / ONATGE
-  // -----------------------------
-  t = t
-    .replace(/coastal phenomena/gi, "fenòmens costaners")
-    .replace(/oleaje/gi, "onatge")
-    .replace(/mar combinado/gi, "mar combinada")
-    .replace(/olas de hasta (\d+) m/gi, "ones de fins a $1 metres");
+// 4. Ruixats de neu
+t = t
+  .replace(/snow showers/gi, "ruixats de neu")
+  .replace(/light snow/gi, "neu feble")
+  .replace(/moderate snow/gi, "neu moderada")
+  .replace(/heavy snow/gi, "neu intensa");
 
-  // -----------------------------
-  // 🌡️ GENERIC
-  // -----------------------------
-  t = t
-    .replace(/Se esperan/gi, "S'esperen")
-    .replace(/Se prevén/gi, "Es preveuen")
-    .replace(/durante la jornada/gi, "durant la jornada")
-    .replace(/en zonas altas/gi, "a les zones elevades");
+// 5. Torb, blizzard i variants
+t = t
+  .replace(/blizzard/gi, "torb")
+  .replace(/whiteout conditions/gi, "condicions de visibilitat nul·la per neu");
+
+// 6. Variants castellanes d’AEMET
+t = t
+  .replace(/nevada intensa/gi, "nevada intensa")
+  .replace(/nevada fuerte/gi, "nevada intensa")
+  .replace(/nevada debil/gi, "nevada feble")
+  .replace(/nevadas/gi, "nevades");
+
+// 7. Pegats típics d'AEMET (engantxats)
+t = t
+  .replace(/SnowfallAccumulated/gi, "acumulació de neu")
+  .replace(/SnowLevelDropping/gi, "cota de neu baixant")
+  .replace(/HeavySnow/gi, "neu intensa");
+
+  // --------------------------------------
+// 🥶 FRED / TEMPERATURES MÍNIMES — PACK PRO
+// --------------------------------------
+
+// 1. Frases generals
+t = t
+  .replace(/minimum temperature/gi, "temperatura mínima prevista")
+  .replace(/minimum temperatures/gi, "temperatures mínimes previstes")
+  .replace(/low temperature warning/gi, "avís per temperatures baixes")
+  .replace(/low temperatures/gi, "temperatures baixes")
+  .replace(/very low temperatures/gi, "temperatures molt baixes");
+
+// 2. Formats NOAA / WMO
+t = t
+  .replace(/temperatures? below zero/gi, "temperatures sota zero")
+  .replace(/below zero/gi, "sota zero")
+  .replace(/below (\d+) ?°?c/gi, "per sota de $1 °C")
+  .replace(/temperatures? below (\d+) ?°?c/gi, "temperatures per sota de $1 °C");
+
+// 3. Expressions AEMET típiques
+t = t
+  .replace(/heladas severas/gi, "gelades severes")
+  .replace(/heladas fuertes/gi, "gelades fortes")
+  .replace(/heladas débiles/gi, "gelades febles")
+  .replace(/heladas/gi, "gelades")
+  .replace(/temperaturas mínimas/gi, "temperatures mínimes")
+  .replace(/temperatura mínima prevista/gi, "temperatura mínima prevista");
+
+// 4. Traduccions precises de frases reals documentades
+t = t
+  .replace(/temperatura mínima de (\d+) °c/gi, "temperatura mínima de $1 °C")
+  .replace(/minimum of (\d+) °c/gi, "mínima de $1 °C")
+  .replace(/expected minimum of (\d+) °c/gi, "mínima prevista de $1 °C");
+
+// 5. Pegats internacionals
+t = t
+  .replace(/frost/gi, "gelada")
+  .replace(/severe frost/gi, "gelada severa")
+  .replace(/light frost/gi, "gelada feble");
+
+// 6. Expressions enganxades i brutícia d’AEMET
+t = t
+  .replace(/MinimumTemperature/gi, "temperatura mínima prevista")
+  .replace(/LowTemperatureWarning/gi, "avís per temperatures baixes")
+  .replace(/temperaturasminimas/gi, "temperatures mínimes");
+
+// 7. Textos meteorològics habituals
+t = t
+  .replace(/temperaturas bajo cero/gi, "temperatures sota zero")
+  .replace(/bajo cero/gi, "sota zero")
+  .replace(/por debajo de cero/gi, "sota zero");
+
+// 8. Ajustos finals
+t = t
+  .replace(/cold spell/gi, "episodi de fred")
+  .replace(/cold wave/gi, "onada de fred");
+
+  // --------------------------------------
+// 🔥 CALOR / TEMPERATURES ALTES — PACK PRO
+// --------------------------------------
+
+// 1. Terme general
+t = t
+  .replace(/high temperature/gi, "temperatures altes")
+  .replace(/very high temperature/gi, "temperatures molt altes")
+  .replace(/high temperatures/gi, "temperatures altes")
+  .replace(/very high temperatures/gi, "temperatures molt altes");
+
+// 2. Predicció màxima
+t = t
+  .replace(/maximum temperature/gi, "temperatura màxima prevista")
+  .replace(/maximum temperatures/gi, "temperatures màximes previstes")
+  .replace(/temperatura máxima prevista/gi, "temperatura màxima prevista")
+  .replace(/temperaturas máximas previstas/gi, "temperatures màximes previstes")
+  .replace(/temperaturas máximas/gi, "temperatures màximes");
+
+// 3. Onada de calor
+t = t
+  .replace(/heat wave/gi, "onada de calor")
+  .replace(/intense heat/gi, "calor intens")
+  .replace(/extreme heat/gi, "calor extrem")
+  .replace(/calor intenso/gi, "calor intens");
+
+// 4. Variants internacionals
+t = t
+  .replace(/hot weather/gi, "calor")
+  .replace(/hot conditions/gi, "condicions de calor")
+  .replace(/extreme hot weather/gi, "condicions extremes de calor")
+  .replace(/heat conditions/gi, "condicions de calor");
+
+// 5. Descripcions enganxades i brutes
+t = t
+  .replace(/maximumtemperature/gi, "temperatura màxima prevista")
+  .replace(/high_temperature/gi, "temperatures altes")
+  .replace(/maximum_temperature/gi, "temperatura màxima prevista");
+
+// 6. AEMET: casos específics reals
+t = t
+  .replace(/temperaturas máximas en ascenso/gi, "temperatures màximes en ascens")
+  .replace(/temperaturas máximas en descenso/gi, "temperatures màximes en descens")
+  .replace(/se alcanzarán temperaturas de (\d+) °c/gi, "s'assoliran temperatures de $1 °C")
+  .replace(/se esperan temperaturas de (\d+) °c/gi, "s'esperen temperatures de $1 °C");
+
+// 7. NOAA + MetOffice
+t = t
+  .replace(/maximum of (\d+) °c/gi, "màxima de $1 °C")
+  .replace(/temperatures? reaching (\d+) °c/gi, "temperatures arribant als $1 °C")
+  .replace(/temperatures? up to (\d+) °c/gi, "temperatures de fins a $1 °C");
+
+// 8. Frases generalistes
+t = t
+  .replace(/daytime temperatures/gi, "temperatures diürnes")
+  .replace(/warm conditions/gi, "condicions càlides")
+  .replace(/warm weather/gi, "clima càlid");
+
+// 9. Ajustos finals
+t = t
+  .replace(/calor extremo/gi, "calor extrem")
+  .replace(/bochorno/gi, "xafogor");
+
+  // --------------------------------------
+// 🌫️ BOIRA / NEBLA — PACK PRO
+// --------------------------------------
+
+// 1. Conceptes més comuns
+t = t
+  .replace(/fog/gi, "boira")
+  .replace(/dense fog/gi, "boira densa")
+  .replace(/thick fog/gi, "boira espessa")
+  .replace(/freezing fog/gi, "boira gebradora");
+
+// 2. Variants enganxades o estranyes d’AEMET
+t = t
+  .replace(/densefog/gi, "boira densa")
+  .replace(/fogbanks/gi, "bancs de boira")
+  .replace(/fog bank/gi, "banc de boira")
+  .replace(/foggy conditions/gi, "condicions de boira");
+
+// 3. Reduccions de visibilitat
+t = t
+  .replace(/reduced visibility/gi, "visibilitat reduïda")
+  .replace(/poor visibility/gi, "visibilitat reduïda")
+  .replace(/visibility reduced/gi, "visibilitat reduïda")
+  .replace(/visibility below (\d+) ?m/gi, "visibilitat per davall de $1 m")
+  .replace(/visibility under (\d+) ?m/gi, "visibilitat inferior als $1 m");
+
+// 4. Boira + pluja (com passa sovint a AEMET)
+t = t
+  .replace(/fog with drizzle/gi, "boira amb plugim")
+  .replace(/fog and drizzle/gi, "boira i plugim");
+
+// 5. Boira i gelades
+t = t
+  .replace(/fog with frost/gi, "boira amb gebre")
+  .replace(/freezing fog/gi, "boira gebradora");
+
+// 6. Descripcions NOAA / UK MetOffice
+t = t
+  .replace(/patchy fog/gi, "boires disperses")
+  .replace(/morning fog/gi, "boira matinal")
+  .replace(/low cloud/gi, "núvols baixos")
+  .replace(/mist/gi, "boirina");
+
+// 7. Ajustos generals
+t = t
+  .replace(/se espera/gi, "s'espera")
+  .replace(/se prev[eé]n/gi, "es preveuen")
+  .replace(/durante la madrugada/gi, "durant la matinada")
+  .replace(/durante la mañana/gi, "durant el matí");
+
+  // --------------------------------------
+// 🌊 COSTA / ONATGE — PACK PRO
+// --------------------------------------
+
+// 1. Fenòmens costaners generals
+t = t
+  .replace(/coastal phenomena/gi, "fenòmens costaners")
+  .replace(/coastal event/gi, "avís costaner")
+  .replace(/coastal events/gi, "avisos costaners")
+  .replace(/coastal warnings/gi, "avisos costaners")
+  .replace(/coastalevent/gi, "avís costaner") // format AEMET
+
+// 2. Onatge general
+t = t
+  .replace(/strong waves/gi, "fort onatge")
+  .replace(/very strong waves/gi, "onatge molt fort")
+  .replace(/rough sea/gi, "mar molt agitada")
+  .replace(/very rough sea/gi, "mar molt agitada")
+  .replace(/high waves/gi, "onatge elevat")
+  .replace(/waves up to (\d+) ?m/gi, "onades de fins a $1 metres")
+  .replace(/waves around (\d+) ?m/gi, "onades d'aproximadament $1 metres");
+
+// 3. Mar combinada, mar de fons
+t = t
+  .replace(/combined sea/gi, "mar combinada")
+  .replace(/mar combinado/gi, "mar combinada")
+  .replace(/mar combinada/gi, "mar combinada")
+  .replace(/ground swell/gi, "mar de fons")
+  .replace(/swell/gi, "mar de fons");
+
+// 4. Oleatge segons tipus
+t = t
+  .replace(/heavy swell/gi, "fort mar de fons")
+  .replace(/long-period swell/gi, "mar de fons de període llarg")
+  .replace(/short swell/gi, "mar de fons de període curt");
+
+// 5. Vents marítims associats
+t = t
+  .replace(/northerly winds/gi, "vents del nord")
+  .replace(/southerly winds/gi, "vents del sud")
+  .replace(/easterly winds/gi, "vents de l’est")
+  .replace(/westerly winds/gi, "vents de l’oest")
+  .replace(/gale/gi, "temporal")
+  .replace(/strong gale/gi, "temporal fort");
+
+// 6. AEMET errors habituals enganxats
+t = t
+  .replace(/oleaje/gi, "onatge")
+  .replace(/olaje/gi, "onatge")
+  .replace(/marcombinad[ao]/gi, "mar combinada")
+  .replace(/marejada/gi, "marejada")
+  .replace(/fuerte oleaje/gi, "fort onatge")
+  .replace(/ola(s)?/gi, "ones");
+
+// 7. Expressions qualitatives
+t = t
+  .replace(/dangerous conditions/gi, "condicions perilloses")
+  .replace(/adverse coastal conditions/gi, "condicions costaneres adverses")
+  .replace(/rough conditions/gi, "condicions agitades")
+  .replace(/coastal risk/gi, "risc costaner");
+
+// 8. Ajustos finals
+t = t
+  .replace(/en zonas costeras/gi, "a zones costaneres")
+  .replace(/en la costa/gi, "a la costa")
+  .replace(/durante la jornada/gi, "durant la jornada");
+
+// --------------------------------------
+// 🧩 GENERIC — FRASES D'ÚS GLOBAL
+// --------------------------------------
+t = t
+  // Errors d'AEMET i NOAA enganxats o sense espais
+  .replace(/(?:inmet|aemet)\s+publica/gi, "AEMET publica")
+  .replace(/iniciando en:/gi, "iniciant el:")
+  .replace(/issued on/gi, "emès el")
+  .replace(/valid from/gi, "vàlid des de")
+  .replace(/valid until/gi, "vàlid fins a")
+  .replace(/expected/gi, "previst")
+
+  // Frases meteorològiques generals
+  .replace(/Se esperan/gi, "S'esperen")
+  .replace(/Se espera/gi, "S'espera")
+  .replace(/Se prevén/gi, "Es preveuen")
+  .replace(/Se prevé/gi, "Es preveu")
+  .replace(/durante la jornada/gi, "durant la jornada")
+  .replace(/a lo largo del día/gi, "al llarg del dia")
+  .replace(/a lo largo de la jornada/gi, "al llarg de la jornada")
+  .replace(/en zonas altas/gi, "a les zones elevades")
+  .replace(/en zonas montañosas/gi, "a zones de muntanya")
+  .replace(/principalmente/gi, "principalment")
+
+  // Mesures, unitats i formats
+  .replace(/hasta (\d+) mm/gi, "fins a $1 mm")
+  .replace(/entre (\d+) y (\d+) mm/gi, "entre $1 i $2 mm")
+  .replace(/(\d+)\s*mm\/h/gi, "$1 mm/h")
+  .replace(/(\d+)\s*km\/h/gi, "$1 km/h")
+  .replace(/temperatura prevista/gi, "temperatura prevista")
+
+  // Intensitats i descripcions neutrals
+  .replace(/ligero/gi, "lleu")
+  .replace(/leve/gi, "lleu")
+  .replace(/moderado/gi, "moderat")
+  .replace(/fuerte/gi, "fort")
+  .replace(/muy fuerte/gi, "molt fort")
+
+  // Connectors comuns
+  .replace(/durante/gi, "durant")
+  .replace(/en general/gi, "en general")
+  .replace(/ocasionalmente/gi, "ocasionalment")
+  .replace(/localmente/gi, "localment")
+  .replace(/puntualmente/gi, "puntualment")
+
+  // Final net
+  .replace(/\s{2,}/g, " ");   // neteja espais duplicats
 
   return t.trim();
 }
@@ -2549,12 +2948,7 @@ if (typeof window !== "undefined") {
   </>
 )}
   
-          {/* 📋 RECOMANACIONS */}
-          <Recommendations
-            temp={hi!}
-            lang={i18n.language as any}
-            isDay={day}
-          />
+          <Recommendations temp={hi!} lang={normalizeLang(i18n.language)} isDay={day} />
   
          {/* 🔗 Enllaços oficials */}
   <div className="official-links">

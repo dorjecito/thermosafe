@@ -126,26 +126,29 @@
     "windTitle": "Avís ThermoSafe",
     "windBody": "Risc per vent {{risk}}. Velocitat del vent: {{speed}} km/h"
   },
+
   "heatRiskLabel": "Risc per calor",
   "effectiveTemp": "Temperatura efectiva",
+
   "heatRisk": {
-  "Cap risc": "cap risc",
-  "Baix": "baix",
-  "Moderat": "moderat",
-  "Alt": "alt",
-  "Extrem": "extrem"
-},
+    "Cap risc": "cap risc",
+    "Baix": "baix",
+    "Moderat": "moderat",
+    "Alt": "alt",
+    "Extrem": "extrem"
+  },
 
   "coldRisk": {
-  "cap": "cap risc",
-  "lleu": "lleu",
-  "moderat": "moderat",
-  "alt": "alt",
-  "molt alt": "molt alt",
-  "extrem": "extrem"
-},
-"cold_risk": "Risc per fred",
-"wind_chill": "Temperatura efectiva",
+    "cap": "cap risc",
+    "lleu": "lleu",
+    "moderat": "moderat",
+    "alt": "alt",
+    "molt alt": "molt alt",
+    "extrem": "extrem"
+  },
+
+  "cold_risk": "Risc per fred",
+  "wind_chill": "Temperatura efectiva",
 
   "windRisk": {
     "none": "cap risc",
@@ -157,35 +160,35 @@
   },
 
   "weather_alerts": {
-  "storm": "Avís per tempesta",
-  "rain": "Avís per pluja",
-  "snow": "Avís per neu",
-  "wind": "Avís per vent",
-  "heat": "Avís per calor",
-  "cold": "Avís per fred",
+    "storm": "Avís per tempesta",
+    "rain": "Avís per pluja",
+    "snow": "Avís per neu",
+    "wind": "Avís per vent",
+    "heat": "Avís per calor",
+    "cold": "Avís per fred",
 
-  "coastalevent": "Avís per risc costaner",
-  "coastal_event": "Avís per risc costaner",
-  "coastal_event_warning": "Avís per risc costaner",
-  "coastalevent_warning": "Avís per risc costaner",
+    "coastalevent": "Avís per risc costaner",
+    "coastal_event": "Avís per risc costaner",
+    "coastal_event_warning": "Avís per risc costaner",
+    "coastalevent_warning": "Avís per risc costaner",
 
-  "moderate_coastalevent_warning": "Avís costaner moderat",
-  "moderate_coastal_event_warning": "Avís costaner moderat",
-  "moderate coastal event warning": "Avís costaner moderat",
-  "moderate_coastalevent": "Avís costaner moderat",
+    "moderate_coastalevent_warning": "Avís costaner moderat",
+    "moderate_coastal_event_warning": "Avís costaner moderat",
+    "moderate coastal event warning": "Avís costaner moderat",
+    "moderate_coastalevent": "Avís costaner moderat",
 
-  "low_temperature_warning": "Avís per temperatures baixes",
-  "low temperature warning": "Avís per temperatures baixes",
-  "moderate_low_temperature_warning": "Avís moderat per temperatures baixes",
-  "moderate low temperature warning": "Avís moderat per temperatures baixes",
+    "low_temperature_warning": "Avís per temperatures baixes",
+    "low temperature warning": "Avís per temperatures baixes",
+    "moderate_low_temperature_warning": "Avís moderat per temperatures baixes",
+    "moderate low temperature warning": "Avís moderat per temperatures baixes",
 
-  "snow_warning": "Avís per neu",
-  "wind_warning": "Avís per vent",
-  "rain_warning": "Avís per pluja",
+    "snow_warning": "Avís per neu",
+    "wind_warning": "Avís per vent",
+    "rain_warning": "Avís per pluja",
 
-  "minimum_temperature": "Temperatura mínima",
-  "minimum temperature": "Temperatura mínima"
-},
+    "minimum_temperature": "Temperatura mínima",
+    "minimum temperature": "Temperatura mínima"
+  },
 
   "last_update": "Actualitzat fa",
   "alerts_title": "Avisos meteorològics oficials",
@@ -201,7 +204,39 @@
   "uv_index_current": "Índex UV actual",
   "uv_level": "Nivell",
   "uv_night_title": "Informació solar",
-  "uv_night_message": "A la nit no hi ha radiació UV." 
+  "uv_night_message": "A la nit no hi ha radiació UV.",
   
-  
+
+  "recommendations_full": {
+    "heat": {
+      "low": "Mantén una bona hidratació i evita el sol directe en hores punta.",
+      "moderate": "Hidrata’t sovint, fes pauses a zones fresques i evita esforços intensos.",
+      "high": "Risc important: limita l’activitat exterior, beu aigua sovint i cerca ombra.",
+      "extreme": "Perill extrem: evita l’exterior. Risc alt d’esgotament i cop de calor."
+    },
+    "cold": {
+      "low": "Nit fresca: abriga’t lleugerament i mantén una ventilació adequada.",
+      "moderate": "Vesteix-te per capes i evita exposicions prolongades a l’exterior.",
+      "high": "Risc alt: protegeix extremitats i limita el temps fora de casa.",
+      "extreme": "Perill greu: evita l’exterior. Risc de congelació en minuts."
+    },
+    "wind": {
+      "low": "Vent feble: cap mesura especial.",
+      "moderate": "Vent moderat: assegura objectes lleugers i mantén precaució.",
+      "high": "Vent fort: evita zones arbrades i assegura mobiliari exterior.",
+      "extreme": "Vent molt violent: queda't en interiors i allunya't d’arbres i estructures inestables."
+    },
+    "fog": {
+      "low": "Boira lleu: vigila en desplaçaments.",
+      "moderate": "Boira moderada: redueix la velocitat i augmenta la distància.",
+      "high": "Boira densa: evita desplaçaments innecessaris.",
+      "extreme": "Visibilitat nul·la: atura qualsevol desplaçament fins que millori."
+    },
+    "coast": {
+      "low": "Onatge feble: condicions normals.",
+      "moderate": "Onatge moderat: evita zones rocoses i passos estrets.",
+      "high": "Fort onatge: allunya’t d’espigons i rompudes.",
+      "extreme": "Onatge molt fort: risc extrem. Evita totalment passejos prop del mar."
+    }
+  }
 }
