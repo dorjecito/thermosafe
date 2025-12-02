@@ -2491,7 +2491,7 @@ const windText16 =
   windDeg !== null ? windDegreesToCardinal16(windDeg, i18n.language) : "";
 
 /* === RISC TÈRMIC GENERAL (fora del map i fora d'avisos) === */
-const risk = getThermalRisk(temp);
+const risk = temp != null ? getThermalRisk(temp) : "cap";
 
 let coldRiskLabel = "";
 if (risk === "cold_mild") coldRiskLabel = "lleu";
