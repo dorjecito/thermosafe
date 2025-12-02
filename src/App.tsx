@@ -34,6 +34,9 @@ import { getUVFromOpenUV } from "./services/openUV";
 
    import LanguageSwitcher from './components/LanguageSwitcher';
    import { enableRiskAlerts, disableRiskAlerts } from "./push/subscribe";
+   import { getThermalRisk } from "./utils/getThermalRisk";
+   
+   
 
 function normalizeLang(lng: string): "ca" | "es" | "eu" | "gl" {
   const s = lng.slice(0, 2);
@@ -1764,7 +1767,7 @@ function getColdRisk(tempEff: number | null, windKmh: number | null): ColdRisk {
   if (tempEff <= 0)   return "lleu";       // Llegendament perillós
 
   return "cap";
-}
+} 
 
 
 /* === [COLD] notifier amb cooldown (multilingüe i sense error await) === */
@@ -2487,6 +2490,15 @@ function formatLastUpdate(timestamp: number): string {
 const windText16 =
   windDeg !== null ? windDegreesToCardinal16(windDeg, i18n.language) : "";
 
+/* === RISC TÈRMIC GENERAL (fora del map i fora d'avisos) === */
+const risk = getThermalRisk(temp);
+
+let coldRiskLabel = "";
+if (risk === "cold_mild") coldRiskLabel = "lleu";
+if (risk === "cold_moderate") coldRiskLabel = "moderat";
+if (risk === "cold_severe") coldRiskLabel = "sever";
+
+
 return (
     <div className="container">
       {/* 🔄 Selector d’idioma */}
@@ -2710,6 +2722,80 @@ return (
             </p>
           ) : null}
 
+{risk.startsWith("cold_") && (
+  <div
+    className="cold-card"
+    style={{
+      backgroundColor:
+        risk === "cold_mild"
+          ? "#cfe8ff"
+          : risk === "cold_moderate"
+          ? "#7fb4ff"
+          : "#4a7dff",
+      borderLeft:
+        risk === "cold_mild"
+          ? "6px solid #8ed0ff"
+          : risk === "cold_moderate"
+          ? "6px solid #4ea1ff"
+          : "6px solid #1e5fff",
+      color: "#000",
+      padding: "0.9rem",
+      borderRadius: "8px",
+      marginTop: "1rem",
+      boxShadow: "0 0 6px rgba(0,0,0,0.25)",
+      fontWeight: 500,
+    }}
+  >
+    {/* Títol */}
+    <div
+      style={{
+        display: "flex",
+        alignItems: "center",
+        gap: "0.55rem",
+        fontSize: "1.05rem",
+        marginBottom: "0.35rem",
+      }}
+    >
+      <span style={{ fontSize: "1.25rem" }}>
+        {risk === "cold_mild"
+          ? "❄️"
+          : risk === "cold_moderate"
+          ? "❄️❄️"
+          : "❄️❄️❄️"}
+      </span>
+      <span>Risc per fred: {coldRiskLabel}</span>
+    </div>
+
+    {/* Temperatura efectiva */}
+    {wc !== null && (
+      <p style={{ marginTop: "0.3rem", opacity: 0.85 }}>
+        Temperatura efectiva: <strong>{wc}°C</strong>
+      </p>
+    )}
+  </div>
+)}
+
+{/* 🔥❄️ RISC PER TEMPERATURA (UNIFICAT) */}
+{hi !== null && (
+  <>
+    
+
+    {/* 🔥 Risc per calor */}
+   {hi >= 27 && (
+  <div className={`temp-risk-card heat heat-${getHeatRisk(hi).class}`}>
+    <strong>
+      {t("heatRiskLabel")}:{" "}
+      {t(`heatRisk.${getHeatRisk(hi).level}`)}
+    </strong>
+
+    <p>
+      {t("effectiveTemp")}: {hi.toFixed(1)}°C
+    </p>
+  </div>
+)}
+  </>
+)}
+
 
 {/* 💨 VENT */}
 {wind !== null && (
@@ -2791,6 +2877,8 @@ return (
   </div>
 )}
 
+
+
 {/* 🌞 INFORMACIÓ SOLAR (ocultació segons dia/nit) */}
 {isDaytime() ? (
   <div className="uv-block">
@@ -2826,37 +2914,6 @@ return (
 )}
 
 
-{/* ❄️ RISC PER FRED — VERSIÓ PRO */}
-{coldRisk !== "cap" && effForCold !== null && effForCold <= 0 && (
-  <div
-    style={{
-      backgroundColor: COLD_COLORS[coldRisk as keyof typeof COLD_COLORS],
-      color: coldRisk === "lleu" ? "#000" : "#fff",
-      borderRadius: "6px",
-      padding: "0.75rem",
-      marginTop: "0.9rem",
-      fontWeight: 500,
-    }}
-  >
-    
-  
-    <div style={{ display: "flex", alignItems: "center", gap: "0.45rem" }}>
-      <span style={{ fontSize: "1.2rem" }}>❄️</span>
-      <span style={{ fontWeight: 600 }}>
-        {t("cold_risk")}: {t(`coldRisk.${coldRisk}`)}
-      </span>
-    </div>
-
-    {/* 🌡️ Wind-chill */}
-    {wc !== null && (
-      <p style={{ marginTop: "0.5rem", opacity: 0.85 }}>
-        {t("wind_chill")}: <strong>{wc}°C</strong>
-      </p>
-    )}
-  </div>
-)}
-
-
 {/* 🔔 AVISOS AEMET (amb IA real) */}
 {alerts.length > 0 && (
   <div style={{ marginTop: "1rem" }}>
@@ -2881,6 +2938,8 @@ if (typeof window !== "undefined") {
   (window as any).maybeNotifyCold = maybeNotifyCold;
   (window as any).maybeNotifyWind = maybeNotifyWind;
 }
+
+
 
       return (
         <div
@@ -2927,27 +2986,6 @@ if (typeof window !== "undefined") {
   </div>
 )}
 
-{/* 🔥❄️ RISC PER TEMPERATURA (UNIFICAT) */}
-{hi !== null && (
-  <>
-    
-
-    {/* 🔥 Risc per calor */}
-   {hi >= 27 && (
-  <div className={`temp-risk-card heat heat-${getHeatRisk(hi).class}`}>
-    <strong>
-      {t("heatRiskLabel")}:{" "}
-      {t(`heatRisk.${getHeatRisk(hi).level}`)}
-    </strong>
-
-    <p>
-      {t("effectiveTemp")}: {hi.toFixed(1)}°C
-    </p>
-  </div>
-)}
-  </>
-)}
-  
           <Recommendations temp={hi!} lang={normalizeLang(i18n.language)} isDay={day} />
   
          {/* 🔗 Enllaços oficials */}
