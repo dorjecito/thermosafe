@@ -139,16 +139,16 @@
   },
 
   "coldRisk": {
-    "cap": "sin riesgo",
-    "lleu": "leve",
-    "moderat": "moderado",
-    "alt": "alto",
-    "molt alt": "muy alto",
-    "extrem": "extremo"
-  },
+  "cap": "sin riesgo",
+  "lleu": "leve",
+  "moderat": "moderado",
+  "alt": "alto",
+  "molt alt": "muy alto",
+  "extrem": "extremo"
+},
 
-  "cold_risk": "Riesgo por frío",
-  "wind_chill": "Temperatura efectiva",
+"cold_risk_title": "Riesgo por frío",
+"wind_chill": "Temperatura efectiva",
 
   "windRisk": {
     "none": "sin riesgo",

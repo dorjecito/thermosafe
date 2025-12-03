@@ -139,16 +139,16 @@
   },
 
   "coldRisk": {
-    "cap": "Arriskurik ez",
-    "lleu": "Arina",
-    "moderat": "Moderatua",
-    "alt": "Handia",
-    "molt alt": "Oso handia",
-    "extrem": "Larria"
-  },
+  "cap": "Arriskurik ez",
+  "lleu": "Arina",
+  "moderat": "Moderatua",
+  "alt": "Handia",
+  "molt alt": "Oso handia",
+  "extrem": "Larria"
+},
 
-  "cold_risk": "Hotz arriskua",
-  "wind_chill": "Benetako tenperatura",
+"cold_risk_title": "Hotz-arriskua",
+"wind_chill": "Benetako tenperatura",
 
   "windRisk": {
     "none": "Arriskurik ez",

@@ -2493,11 +2493,20 @@ const windText16 =
 /* === RISC TÈRMIC GENERAL (fora del map i fora d'avisos) === */
 const risk = temp != null ? getThermalRisk(temp) : "cap";
 
-let coldRiskLabel = "";
-if (risk === "cold_mild") coldRiskLabel = "lleu";
-if (risk === "cold_moderate") coldRiskLabel = "moderat";
-if (risk === "cold_severe") coldRiskLabel = "sever";
+// === Traducció multilingüe correcta per al risc de fred ===
+const riskKeyRaw = risk.replace("cold_", "");   // mild / moderate / severe
 
+// Map a les claus reals del JSON
+const riskKeyMap: Record<string, string> = {
+  mild: "lleu",
+  moderate: "moderat",
+  severe: "extrem"
+};
+
+const riskKey = riskKeyMap[riskKeyRaw] || "cap";
+
+// Traducció a l’idioma actiu
+const coldRiskLabel = t(`coldRisk.${riskKey}`);
 
 return (
     <div className="container">
@@ -2763,37 +2772,20 @@ return (
           ? "❄️❄️"
           : "❄️❄️❄️"}
       </span>
-      <span>Risc per fred: {coldRiskLabel}</span>
+
+      {/* ✔️ Traduït */}
+      <span>
+  {t("cold_risk_title")}: {coldRiskLabel}
+</span>
     </div>
 
-    {/* Temperatura efectiva */}
+    {/* Temperatura efectiva (✔️ també traduïda) */}
     {wc !== null && (
       <p style={{ marginTop: "0.3rem", opacity: 0.85 }}>
-        Temperatura efectiva: <strong>{wc}°C</strong>
+        {t("effectiveTemp")}: <strong>{wc}°C</strong>
       </p>
     )}
   </div>
-)}
-
-{/* 🔥❄️ RISC PER TEMPERATURA (UNIFICAT) */}
-{hi !== null && (
-  <>
-    
-
-    {/* 🔥 Risc per calor */}
-   {hi >= 27 && (
-  <div className={`temp-risk-card heat heat-${getHeatRisk(hi).class}`}>
-    <strong>
-      {t("heatRiskLabel")}:{" "}
-      {t(`heatRisk.${getHeatRisk(hi).level}`)}
-    </strong>
-
-    <p>
-      {t("effectiveTemp")}: {hi.toFixed(1)}°C
-    </p>
-  </div>
-)}
-  </>
 )}
 
 

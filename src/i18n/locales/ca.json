@@ -138,17 +138,17 @@
     "Extrem": "extrem"
   },
 
-  "coldRisk": {
-    "cap": "cap risc",
-    "lleu": "lleu",
-    "moderat": "moderat",
-    "alt": "alt",
-    "molt alt": "molt alt",
-    "extrem": "extrem"
-  },
+"coldRisk": {
+  "cap": "cap risc",
+  "lleu": "lleu",
+  "moderat": "moderat",
+  "alt": "alt",
+  "molt alt": "molt alt",
+  "extrem": "extrem"
+},
 
-  "cold_risk": "Risc per fred",
-  "wind_chill": "Temperatura efectiva",
+"cold_risk_title": "Risc per fred",
+"wind_chill": "Temperatura efectiva",
 
   "windRisk": {
     "none": "cap risc",
