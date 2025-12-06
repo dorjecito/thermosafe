@@ -35,6 +35,7 @@ import { getUVFromOpenUV } from "./services/openUV";
    import LanguageSwitcher from './components/LanguageSwitcher';
    import { enableRiskAlerts, disableRiskAlerts } from "./push/subscribe";
    import { getThermalRisk } from "./utils/getThermalRisk";
+   import { useSmartActivity } from "./hooks/useSmartActivity";
    
    
 
@@ -1711,6 +1712,8 @@ const [alerts, setAlerts] = useState<any[]>([]);
 
 const [ready, setReady] = useState(false);
 
+const [activityEnabled, setActivityEnabled] = useState(false);
+
 const COLD_COLORS = {
   cap: "#d9d9d9",      // gris: cap risc
   lleu: "#76b0ff",     // blau suau
@@ -1720,7 +1723,38 @@ const COLD_COLORS = {
   extrem: "#0a2754",
 };
 
-  // 🔔 Demana permís de notificació automàticament
+const {
+  level: activityLevel,
+  delta: activityDelta,
+  requesting: activityRequesting,
+  error: activityError,
+} = useSmartActivity();
+
+const ACTIVITY_LABELS: Record<string, string> = {
+  rest: "Repòs",
+  low: "Caminar",
+  moderate: "Esforç moderat",
+  high: "Còrrer",
+  unknown: "Detectant…"
+};
+
+const ACTIVITY_ICONS: Record<string, string> = {
+  rest: "🧘",
+  low: "🚶",
+  moderate: "🏃",
+  high: "🏃‍♂️💨",
+  unknown: "🔄"
+};
+
+const ACTIVITY_COLORS: Record<string, string> = {
+  rest: "#6c757d",
+  low: "#2f9e44",
+  moderate: "#f08c00",
+  high: "#d6336c",
+  unknown: "#6c757d"
+};
+
+// 🔔 Demana permís de notificació automàticament
 useEffect(() => {
   if (typeof window !== "undefined" && "Notification" in window) {
     if (Notification.permission === "default") {
@@ -2493,6 +2527,12 @@ const windText16 =
 /* === RISC TÈRMIC GENERAL (fora del map i fora d'avisos) === */
 const risk = temp != null ? getThermalRisk(temp) : "cap";
 
+// 🌡️ Temperatura efectiva per a recomanacions (ajustada per activitat)
+const recTemp =
+  effForCold != null
+    ? effForCold + (activityEnabled ? activityDelta : 0)
+    : hi ?? temp ?? null;
+
 // === Traducció multilingüe correcta per al risc de fred ===
 const riskKeyRaw = risk.replace("cold_", "");   // mild / moderate / severe
 
@@ -2507,6 +2547,11 @@ const riskKey = riskKeyMap[riskKeyRaw] || "cap";
 
 // Traducció a l’idioma actiu
 const coldRiskLabel = t(`coldRisk.${riskKey}`);
+
+// Activa / desactiva la detecció de moviment
+const toggleActivity = () => {
+  setActivityEnabled((prev) => !prev);
+};
 
 return (
     <div className="container">
@@ -2620,6 +2665,31 @@ return (
     : t("notifications.disabled")}
 </button>
 </div>
+
+<button
+  onClick={toggleActivity}
+  className="btn-activity"
+  style={{
+    backgroundColor: activityEnabled
+      ? ACTIVITY_COLORS[activityLevel]
+      : "#6c757d",
+    color: "white",
+    padding: "0.4rem 0.8rem",
+    borderRadius: "6px",
+    border: "none",
+    cursor: "pointer",
+    fontWeight: 600,
+    display: "flex",
+    alignItems: "center",
+    gap: "0.4rem"
+  }}
+>
+  {activityEnabled
+    ? `${ACTIVITY_ICONS[activityLevel]} Activitat: ${
+        ACTIVITY_LABELS[activityLevel]
+      } (${activityDelta} ºC extra)`
+    : "🚶‍♂️ Activar detecció de moviment"}
+</button>
 
 </div>
   
@@ -2977,8 +3047,13 @@ if (typeof window !== "undefined") {
     })}
   </div>
 )}
-
-          <Recommendations temp={hi!} lang={normalizeLang(i18n.language)} isDay={day} />
+          {recTemp != null && (
+  <Recommendations
+    temp={recTemp}
+    lang={normalizeLang(i18n.language)}
+    isDay={day}
+  />
+)}
   
          {/* 🔗 Enllaços oficials */}
   <div className="official-links">
@@ -3026,15 +3101,22 @@ if (typeof window !== "undefined") {
 function showBrowserNotification(title: string, body: string) {
   if (typeof window === "undefined" || !("Notification" in window)) return;
 
-  // funció interna per mostrar la notificació
+  // 🧐 Si la pestanya està visible, el navegador sovint NO mostra la notificació.
+  // No la bloquejam, però ho deixem registrat al log.
+  if (typeof document !== "undefined" && document.visibilityState === "visible") {
+    console.log(
+      `[DEBUG] Notificació NO visible perquè la pestanya està en primer pla →`,
+      { title, body }
+    );
+    // Tot i així, deixem que el navegador decideixi:
+    // (si vols, aquí podríem fer "return;" per no ni intentar-la)
+  }
+
   const notify = () => new Notification(title, { body });
 
-  // Si ja tenim permís, mostra la notificació directament
   if (Notification.permission === "granted") {
     notify();
-  }
-  // Si encara no s’ha denegat, demanam permís a l’usuari
-  else if (Notification.permission !== "denied") {
+  } else if (Notification.permission !== "denied") {
     Notification.requestPermission().then((perm) => {
       if (perm === "granted") notify();
     });
