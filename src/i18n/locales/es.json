@@ -237,5 +237,16 @@
       "high": "Fuerte oleaje: aléjate de espigones y rompientes.",
       "extreme": "Oleaje muy fuerte: riesgo extremo. Evita totalmente paseos cerca del mar."
     }
-  }
+  },
+
+  "activity": {
+  "inactive": "Activar detección de movimiento",
+  "active_label": "Actividad",
+  "rest": "Reposo",
+  "walk": "Caminando",
+  "moderate": "Esfuerzo moderado",
+  "intense": "Esfuerzo intenso",
+  "extra": "extra"
+}
+
 }

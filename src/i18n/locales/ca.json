@@ -238,5 +238,15 @@
       "high": "Fort onatge: allunya’t d’espigons i rompudes.",
       "extreme": "Onatge molt fort: risc extrem. Evita totalment passejos prop del mar."
     }
-  }
+  },
+
+"activity": {
+  "inactive": "Activar detecció de moviment",
+  "active_label": "Activitat",
+  "rest": "Repòs",
+  "walk": "Caminar",
+  "moderate": "Esforç moderat",
+  "intense": "Esforç intens",
+  "extra": "extra"
+}
 }

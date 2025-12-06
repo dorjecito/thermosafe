@@ -43,10 +43,10 @@ export function useSmartActivity(): SmartActivityState {
 
       let newLevel: ActivityLevel = "rest";
 
-      // llindars empírics senzills
-      if (dyn > 4) newLevel = "intense";
-      else if (dyn > 2.5) newLevel = "moderate";
-      else if (dyn > 0.8) newLevel = "walk";
+      // valors reals típics d'acceleració dinàmica
+      if (dyn > 0.50) newLevel = "intense";
+      else if (dyn > 0.20) newLevel = "moderate";
+      else if (dyn > 0.05) newLevel = "walk";
       else newLevel = "rest";
 
       // Evita canvis massa nerviosos: només actualitza si canvia realment

@@ -2672,7 +2672,7 @@ return (
   style={{
     backgroundColor: activityEnabled
       ? ACTIVITY_COLORS[activityLevel]
-      : "#6c757d",
+      : "#555",
     color: "white",
     padding: "0.4rem 0.8rem",
     borderRadius: "6px",
@@ -2684,11 +2684,17 @@ return (
     gap: "0.4rem"
   }}
 >
-  {activityEnabled
-    ? `${ACTIVITY_ICONS[activityLevel]} Activitat: ${
-        ACTIVITY_LABELS[activityLevel]
-      } (${activityDelta} ºC extra)`
-    : "🚶‍♂️ Activar detecció de moviment"}
+  {activityEnabled ? (
+    <>
+      {ACTIVITY_ICONS[activityLevel]}
+      {t("activity.active_label")}: {t(`activity.${activityLevel}`)}
+      {` (${activityDelta}ºC ${t("activity.extra")})`}
+    </>
+  ) : (
+    <>
+      🧠 {t("activity.inactive")}
+    </>
+  )}
 </button>
 
 </div>
