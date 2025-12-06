@@ -30,31 +30,45 @@ export function useSmartActivity(): SmartActivityState {
   useEffect(() => {
     if (!enabled) return;
 
-    const handleMotion = (event: DeviceMotionEvent) => {
-      if (!event.accelerationIncludingGravity) return;
+    // Buffer per suavitzar mesures (mitjana mòbil)
+const buffer = useRef<number[]>([]);
 
-      const ax = event.accelerationIncludingGravity.x ?? 0;
-      const ay = event.accelerationIncludingGravity.y ?? 0;
-      const az = event.accelerationIncludingGravity.z ?? 0;
+const handleMotion = (event: DeviceMotionEvent) => {
+  if (!event.accelerationIncludingGravity) return;
 
-      const g = 9.81;
-      const mag = Math.sqrt(ax * ax + ay * ay + az * az);
-      const dyn = Math.max(0, mag - g); // component dinàmica (moviment real)
+  const ax = event.accelerationIncludingGravity.x ?? 0;
+  const ay = event.accelerationIncludingGravity.y ?? 0;
+  const az = event.accelerationIncludingGravity.z ?? 0;
 
-      let newLevel: ActivityLevel = "rest";
+  const g = 9.81;
+  const mag = Math.sqrt(ax * ax + ay * ay + az * az);
+  const dyn = Math.max(0, Math.abs(mag - g)); // moviment real
 
-      // valors reals típics d'acceleració dinàmica
-      if (dyn > 0.50) newLevel = "intense";
-      else if (dyn > 0.20) newLevel = "moderate";
-      else if (dyn > 0.05) newLevel = "walk";
-      else newLevel = "rest";
+  // 👉 Guarda els últims valors (10 mostres = 100ms aprox.)
+  buffer.current.push(dyn);
+  if (buffer.current.length > 10) buffer.current.shift();
 
-      // Evita canvis massa nerviosos: només actualitza si canvia realment
-      if (newLevel !== lastLevelRef.current) {
-        lastLevelRef.current = newLevel;
-        setLevel(newLevel);
-      }
-    };
+  // 👉 Mitjana
+  const avg = buffer.current.reduce((a, b) => a + b, 0) / buffer.current.length;
+
+  let newLevel: ActivityLevel = "rest";
+
+  // 👉 Llindars basats en dades reals
+  if (avg > 0.50) newLevel = "intense";
+  else if (avg > 0.20) newLevel = "moderate";
+  else if (avg > 0.05) newLevel = "walk";
+
+  // 👉 Evita canvis nerviosos: només canvia si es manté 300 ms
+  if (newLevel !== lastLevelRef.current) {
+    clearTimeout((lastLevelRef as any)._timer);
+
+    (lastLevelRef as any)._timer = setTimeout(() => {
+      lastLevelRef.current = newLevel;
+      setLevel(newLevel);
+      console.log("[DEBUG] Nivell canviat →", newLevel, "(avg:", avg.toFixed(3) + ")");
+    }, 300);
+  }
+};
 
     window.addEventListener("devicemotion", handleMotion);
     return () => {
