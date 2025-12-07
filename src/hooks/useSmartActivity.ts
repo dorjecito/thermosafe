@@ -10,6 +10,7 @@ interface SmartActivityState {
   requesting: boolean;
   error: string | null;
   activate: () => Promise<void>;
+  deactivate: () => void;   
 }
 
 const DELTAS: Record<ActivityLevel, number> = {
@@ -63,11 +64,12 @@ export function useSmartActivity(): SmartActivityState {
         )}, az=${az.toFixed(2)}, dyn=${dyn.toFixed(2)}`
       );
 
-      let newLevel: ActivityLevel = "rest";
+            let newLevel: ActivityLevel = "rest";
 
-      if (dyn > 4) newLevel = "intense";
-      else if (dyn > 2.5) newLevel = "moderate";
-      else if (dyn > 0.8) newLevel = "walk";
+      // ✅ Llindars iguals que a test-devicemotion.vercel.app
+      if (dyn > 0.50) newLevel = "intense";
+      else if (dyn > 0.20) newLevel = "moderate";
+      else if (dyn > 0.05) newLevel = "walk";
       else newLevel = "rest";
 
       if (newLevel !== lastLevelRef.current) {
@@ -87,6 +89,11 @@ export function useSmartActivity(): SmartActivityState {
       console.log("[ACTIVITY] ✖ Listener devicemotion DESACTIVAT");
     };
   }, [enabled]);
+
+      const deactivate = () => {
+      console.log("[ACTIVITY] 🔴 Detecció desactivada manualment");
+      setEnabled(false);
+    };
 
   /* --------------------------------------------------------
    * 🔘 Activació manual per botó
@@ -128,5 +135,5 @@ export function useSmartActivity(): SmartActivityState {
 
   const delta = DELTAS[level];
 
-  return { level, delta, enabled, requesting, error, activate };
+  return { level, delta, enabled, requesting, error, activate, deactivate };
 }

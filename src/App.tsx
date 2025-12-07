@@ -1712,7 +1712,7 @@ const [alerts, setAlerts] = useState<any[]>([]);
 
 const [ready, setReady] = useState(false);
 
-const [activityEnabled, setActivityEnabled] = useState(false);
+//const [activityEnabled, setActivityEnabled] = useState(false);
 
 const COLD_COLORS = {
   cap: "#d9d9d9",      // gris: cap risc
@@ -1723,11 +1723,14 @@ const COLD_COLORS = {
   extrem: "#0a2754",
 };
 
-const {
+ const {
   level: activityLevel,
   delta: activityDelta,
+  enabled: activityEnabled,
   requesting: activityRequesting,
   error: activityError,
+  activate,
+  deactivate,              
 } = useSmartActivity();
 
 const ACTIVITY_LABELS: Record<string, string> = {
@@ -2548,11 +2551,6 @@ const riskKey = riskKeyMap[riskKeyRaw] || "cap";
 // Traducció a l’idioma actiu
 const coldRiskLabel = t(`coldRisk.${riskKey}`);
 
-// Activa / desactiva la detecció de moviment
-const toggleActivity = () => {
-  setActivityEnabled((prev) => !prev);
-};
-
 return (
     <div className="container">
       {/* 🔄 Selector d’idioma */}
@@ -2667,7 +2665,15 @@ return (
 </div>
 
 <button
-  onClick={toggleActivity}
+  onClick={() => {
+    if (activityEnabled) {
+      console.log("[BTN] ❌ Desactivant detecció…");
+      deactivate();            // crida al hook
+    } else {
+      console.log("[BTN] ✅ Activant detecció…");
+      activate();              // demana permís + activa
+    }
+  }}
   className="btn-activity"
   style={{
     backgroundColor: activityEnabled
@@ -2681,21 +2687,27 @@ return (
     fontWeight: 600,
     display: "flex",
     alignItems: "center",
-    gap: "0.4rem"
+    gap: "0.4rem",
   }}
 >
   {activityEnabled ? (
     <>
       {ACTIVITY_ICONS[activityLevel]}
-      {t("activity.active_label")}: {t(`activity.${activityLevel}`)}
-      {` (${activityDelta}ºC ${t("activity.extra")})`}
+      {t("activity.active_label")}: {t(`activity.${activityLevel}`)} ·{" "}
+      {activityDelta}ºC {t("activity.extra")}
     </>
   ) : (
     <>
-      🧠 {t("activity.inactive")}
+      💤 {t("activity.inactive")}
     </>
   )}
 </button>
+
+{activityError && (
+  <p style={{ color: "salmon", marginTop: "0.25rem" }}>
+    ⚠ {activityError}
+  </p>
+)}
 
 </div>
   
