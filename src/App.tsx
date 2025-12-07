@@ -36,6 +36,18 @@ import { getUVFromOpenUV } from "./services/openUV";
    import { enableRiskAlerts, disableRiskAlerts } from "./push/subscribe";
    import { getThermalRisk } from "./utils/getThermalRisk";
    import { useSmartActivity } from "./hooks/useSmartActivity";
+
+
+function useStableValue<T>(value: T, delay = 800): T {
+  const [stable, setStable] = useState(value);
+
+  useEffect(() => {
+    const id = setTimeout(() => setStable(value), delay);
+    return () => clearTimeout(id);
+  }, [value, delay]);
+
+  return stable;
+}
    
    
 
@@ -1733,6 +1745,9 @@ const COLD_COLORS = {
   deactivate,              
 } = useSmartActivity();
 
+const activityLevelStable = useStableValue(activityLevel, 800);
+const activityDeltaStable = useStableValue(activityDelta, 800);
+
 const ACTIVITY_LABELS: Record<string, string> = {
   rest: "Repòs",
   low: "Caminar",
@@ -2666,18 +2681,13 @@ return (
 
 <button
   onClick={() => {
-    if (activityEnabled) {
-      console.log("[BTN] ❌ Desactivant detecció…");
-      deactivate();            // crida al hook
-    } else {
-      console.log("[BTN] ✅ Activant detecció…");
-      activate();              // demana permís + activa
-    }
+    if (activityEnabled) deactivate();
+    else activate();
   }}
   className="btn-activity"
   style={{
     backgroundColor: activityEnabled
-      ? ACTIVITY_COLORS[activityLevel]
+      ? ACTIVITY_COLORS[activityLevelStable]
       : "#555",
     color: "white",
     padding: "0.4rem 0.8rem",
@@ -2687,14 +2697,14 @@ return (
     fontWeight: 600,
     display: "flex",
     alignItems: "center",
-    gap: "0.4rem",
+    gap: "0.4rem"
   }}
 >
   {activityEnabled ? (
     <>
-      {ACTIVITY_ICONS[activityLevel]}
-      {t("activity.active_label")}: {t(`activity.${activityLevel}`)} ·{" "}
-      {activityDelta}ºC {t("activity.extra")}
+      {ACTIVITY_ICONS[activityLevelStable]}
+      {t("activity.active_label")}: {t(`activity.${activityLevelStable}`)}
+      ({activityDeltaStable}°C {t("activity.extra")})
     </>
   ) : (
     <>
