@@ -10,7 +10,7 @@ interface SmartActivityState {
   requesting: boolean;
   error: string | null;
   activate: () => Promise<void>;
-  deactivate: () => void;   
+  deactivate: () => void;
 }
 
 const DELTAS: Record<ActivityLevel, number> = {
@@ -28,9 +28,12 @@ export function useSmartActivity(): SmartActivityState {
 
   const lastLevelRef = useRef<ActivityLevel>("rest");
 
-  /* ----------------------------------------------------------
-   * 🔍 DEBUG: MOSTRAR SI EL NAVEGADOR SUPORTA devicemotion
-   * ---------------------------------------------------------- */
+  // FILTRE SUAVITZAT (low-pass)
+  const smoothDyn = useRef(0);
+
+  // HISTÈRESI TEMPORAL (evita canvis nerviosos)
+  const stableSince = useRef(Date.now());
+
   console.log("[ACTIVITY] Support devicemotion:", "ondevicemotion" in window);
 
   useEffect(() => {
@@ -44,10 +47,7 @@ export function useSmartActivity(): SmartActivityState {
     console.log("[ACTIVITY] 🔄 Registrant listener devicemotion…");
 
     const handleMotion = (event: DeviceMotionEvent) => {
-      if (!event.accelerationIncludingGravity) {
-        console.log("[ACTIVITY] ⚠ Sense accelerationIncludingGravity");
-        return;
-      }
+      if (!event.accelerationIncludingGravity) return;
 
       const ax = event.accelerationIncludingGravity.x ?? 0;
       const ay = event.accelerationIncludingGravity.y ?? 0;
@@ -56,28 +56,34 @@ export function useSmartActivity(): SmartActivityState {
       const g = 9.81;
       const mag = Math.sqrt(ax * ax + ay * ay + az * az);
 
-      const dyn = Math.max(0, mag - g);
+      let dynRaw = Math.max(0, mag - g);
 
-      console.log(
-        `[ACTIVITY] event rebut → ax=${ax.toFixed(2)}, ay=${ay.toFixed(
-          2
-        )}, az=${az.toFixed(2)}, dyn=${dyn.toFixed(2)}`
-      );
+      // 🔻 Suavitza molt el senyal → adéu tremolors
+      smoothDyn.current = smoothDyn.current * 0.85 + dynRaw * 0.15;
+      const dyn = smoothDyn.current;
 
-            let newLevel: ActivityLevel = "rest";
+      // 🔽 CLASSIFICACIÓ REALISTA
+      let newLevel: ActivityLevel = "rest";
 
-      // ✅ Llindars iguals que a test-devicemotion.vercel.app
-      if (dyn > 0.50) newLevel = "intense";
-      else if (dyn > 0.20) newLevel = "moderate";
-      else if (dyn > 0.05) newLevel = "walk";
+      if (dyn > 2.0) newLevel = "intense";
+      else if (dyn > 1.0) newLevel = "moderate";
+      else if (dyn > 0.25) newLevel = "walk";
       else newLevel = "rest";
 
+      // 🕒 HISTÈRESI de 1 segon per evitar canvis nerviosos
+      const now = Date.now();
+
       if (newLevel !== lastLevelRef.current) {
-        console.log(
-          `[ACTIVITY] 🆕 Canvi d'activitat: ${lastLevelRef.current} → ${newLevel}`
-        );
-        lastLevelRef.current = newLevel;
-        setLevel(newLevel);
+        if (now - stableSince.current > 1000) {
+          console.log(
+            `[ACTIVITY] 🆕 Canvi confirmat: ${lastLevelRef.current} → ${newLevel}`
+          );
+          lastLevelRef.current = newLevel;
+          setLevel(newLevel);
+          stableSince.current = now;
+        }
+      } else {
+        stableSince.current = now;
       }
     };
 
@@ -90,18 +96,14 @@ export function useSmartActivity(): SmartActivityState {
     };
   }, [enabled]);
 
-      const deactivate = () => {
-      console.log("[ACTIVITY] 🔴 Detecció desactivada manualment");
-      setEnabled(false);
-    };
+  const deactivate = () => {
+    console.log("[ACTIVITY] 🔴 Detecció desactivada manualment");
+    setEnabled(false);
+  };
 
-  /* --------------------------------------------------------
-   * 🔘 Activació manual per botó
-   * -------------------------------------------------------- */
   const activate = async () => {
     setError(null);
     setRequesting(true);
-
     console.log("[ACTIVITY] 🔵 Intentant activar detecció…");
 
     try {
@@ -118,8 +120,6 @@ export function useSmartActivity(): SmartActivityState {
           setRequesting(false);
           return;
         }
-      } else {
-        console.log("[ACTIVITY] No és iOS o no requereix permís explícit.");
       }
 
       console.log("[ACTIVITY] ✔ Permís concedit → ACTIVAT");
