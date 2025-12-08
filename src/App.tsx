@@ -25,6 +25,7 @@ import { getUVFromOpenUV } from "./services/openUV";
    import Recommendations     from './components/Recommendations';
    import UVAdvice            from './components/UVAdvice';
    import UVScale             from './components/UVScale';
+   import LocationCard from "./components/LocationCard";
    
    /* —— analítica (opcional) ———————————— */
    import { inject } from '@vercel/analytics';
@@ -2748,12 +2749,12 @@ return (
 
      {/* 📊 DADES */}
 {city && (
-  <LocationDisplay
-    city={city}
-    realCity={realCity}
-    lang={i18n.language === 'es' ? 'es' : 'ca'}
-    label={t('location')}
-  />
+  <LocationCard
+  city={city}
+  realCity={realCity}
+  label={t("location")}
+/>
+
 )}
 
    {/* 🛰️ Font de dades (GPS o Cerca manual) */}
@@ -2802,32 +2803,38 @@ return (
 </div>
 
   
-          {/* 🌤️ ESTAT DEL CEL */}
-          {data?.weather?.[0] && (
-            <div className="sky-row">
-              <img
-                src={`https://openweathermap.org/img/wn/${data.weather[0].icon}@2x.png`}
-                alt={data.weather[0].description}
-                className="sky-icon"
-                width="32"
-                height="32"
-              />
-              <span className="sky-label">
-                <strong>{t('sky_state')}:</strong>{' '}
-                {t(`weather_desc.${data.weather[0].description.toLowerCase()}`) !== `weather_desc.${data.weather[0].description.toLowerCase()}`
-  ? t(`weather_desc.${data.weather[0].description.toLowerCase()}`)
-  : data.weather[0].description}
-              </span>
-            </div>
-          )}
+          {/* ESTAT DEL CEL */}
+{data?.weather?.[0] && (
+  <div className="sky-card">
+    
+    <h3 style={{ marginTop: 0, marginBottom: "0.4rem" }}>
+      {t("sky_state")}
+    </h3>
 
-                    {/* 🕒 Marca temporal d'actualització */}
+    <div className="sky-row">
+      <img
+        src={`https://openweathermap.org/img/wn/${data.weather[0].icon}@2x.png`}
+        alt={data.weather[0].description}
+        className="sky-small-icon"
+      />
+      <span className="sky-desc">
+        {t(`weather_desc.${data.weather[0].description.toLowerCase()}`)
+          || data.weather[0].description}
+      </span>
+    </div>
 
-                    {data?.dt ? (
-            <p className="update-time">
-              🕒 {t('last_update')}: {formatLastUpdate(data.dt)}
-            </p>
-          ) : null}
+  </div>
+)}
+
+                    {/* 🕒 Targeta d'actualització */}
+{data?.dt && (
+  <div className="update-card">
+    <span className="update-icon">🕒</span>
+    <span className="update-text">
+      {t("last_update")}: {formatLastUpdate(data.dt)}
+    </span>
+  </div>
+)}
 
 {risk.startsWith("cold_") && (
   <div
@@ -3004,107 +3011,82 @@ return (
 )}
 
 
-{/* 🔔 AVISOS AEMET (amb IA real) */}
+{/* 🔔 AVISOS AEMET (Targetes noves) */}
 {alerts.length > 0 && (
-  <div style={{ marginTop: "1rem" }}>
-    {alerts.map((alert, i) => {
+  <div style={{ marginTop: "1.5rem" }}>
+    {alerts.map((alert, i) => {
 
-      // 🔍 Normalitza la descripció (mai més [object Object])
-      const desc =
-        typeof alert.description === "string"
-          ? alert.description
-          : alert.description?.[i18n.language] ||
-            alert.description?.es ||
-            Object.values(alert.description || {}).join(". ");
+      // 🔍 Normalitza la descripció
+      const desc =
+        typeof alert.description === "string"
+          ? alert.description
+          : alert.description?.[i18n.language] ||
+            alert.description?.es ||
+            Object.values(alert.description || {}).join(". ");
 
-      const ai = buildAemetAiAlert(
-        alert.event || "",
-        desc,
-        i18n.language as LangKey
-      );
-// DEBUG: exposa funcions de notificació a la consola
-if (typeof window !== "undefined") {
-  (window as any).maybeNotifyHeat = maybeNotifyHeat;
-  (window as any).maybeNotifyCold = maybeNotifyCold;
-  (window as any).maybeNotifyWind = maybeNotifyWind;
-}
+      // 🎯 Processat IA per títol + cos
+      const ai = buildAemetAiAlert(
+        alert.event || "",
+        desc,
+        i18n.language as LangKey
+      );
 
+      // DEBUG opcional
+      if (typeof window !== "undefined") {
+        (window as any).maybeNotifyHeat = maybeNotifyHeat;
+        (window as any).maybeNotifyCold = maybeNotifyCold;
+        (window as any).maybeNotifyWind = maybeNotifyWind;
+      }
 
-
-      return (
-        <div
-          key={i}
-          className="notification-card"
-          style={{
-            borderLeft: "6px solid #ff6b6b",
-            marginBottom: "1rem",
-            padding: "1rem",
-          }}
-        >
-          {/* TÍTOL TRADUÏT */}
-          <h3
-            style={{
-              margin: 0,
-              padding: 0,
-              fontSize: "1.2rem",
-              fontWeight: "600",
-            }}
-          >
-            {ai.title}
-          </h3>
-
-          {/* COS TRADUÏT (IA!!) */}
-          <p
-          className="alert-description"
-          style={{
-            marginTop: "0.5rem",
-            whiteSpace: "normal",
-            overflowWrap: "anywhere",
-            lineHeight: 1.5,
-          }}
+      return (
+        <div
+          key={i}
+          className={`aemet-alert-card alert-ext`} // pots canviar dinamisme més tard
         >
-          {translateWithIA(ai.body, i18n.language as LangKey)}
-        </p>
+          {/* Títol */}
+          <div className="aemet-alert-title">
+            {ai.title}
+          </div>
 
-          {/* Peu informatiu */}
-          <p style={{ marginTop: "0.5rem", fontSize: "0.8rem", opacity: 0.7 }}>
-            AEMET · Agencia Estatal de Meteorología
-          </p>
-        </div>
-      );
-    })}
-  </div>
-)}
-          {recTemp != null && (
-  <Recommendations
-    temp={recTemp}
-    lang={normalizeLang(i18n.language)}
-    isDay={day}
-  />
+          {/* Descripció amb IA */}
+          <div className="aemet-alert-description">
+            {translateWithIA(ai.body, i18n.language as LangKey)}
+          </div>
+
+          {/* Peu - font oficial */}
+          <div className="aemet-alert-source">
+            AEMET · Agencia Estatal de Meteorología
+          </div>
+        </div>
+      );
+    })}
+  </div>
 )}
   
          {/* 🔗 Enllaços oficials */}
-  <div className="official-links">
-  <p>{t("official_links")}:</p>
-  <ul>
+<div className="official-card">
+  <h3 className="official-title">{t("official_links")}</h3>
+
+  <ul className="official-list">
     <li>
       <a
-        href="https://www.insst.es"
+        href="https://www.insst.es/documents/94886/566078/Gu%C3%ADa+T%C3%A9cnica+para+la+prevenci%C3%B3n+de+riesgos+laborales+frente+a+la+exposici%C3%B3n+al+estr%C3%A9s+t%C3%A9rmico"
         target="_blank"
         rel="noopener noreferrer"
-        className="official-link"
+        className="official-item"
       >
-        🔗 {t("link_insst")}
+        🔍 {t("insst_heat")}
       </a>
     </li>
+
     <li>
       <a
-        href="https://www.sanidad.gob.es/excesoTemperaturas2025/meteosalud.do"
+        href="https://www.aemet.es/ca/eltiempo/prediccion/salud"
         target="_blank"
         rel="noopener noreferrer"
-        className="official-link"
+        className="official-item"
       >
-        🔗 {t("link_aemet")}
+        🔍 {t("aemet_health")}
       </a>
     </li>
   </ul>

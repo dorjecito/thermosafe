@@ -101,7 +101,13 @@
     "tempesta": "Treboada",
     "neu": "Neve",
     "boira": "Néboa",
-    "nuvolositat_variable": "Nubosidade variable"
+    "nuvolositat_variable": "Nubosidade variable",
+    "algo de nubes": "Algo de nubes",
+    "muy nuboso": "Moi nuboso",
+    "algo nublado": "Lixeiramente nublado",
+    "nubes": "Nubes",
+    "poco nublado": "Pouco nublado",
+    "algo de nubosidad": "Algo de nubosidade"
   },
 
   "official_links": "Ligazóns oficiais",
@@ -255,5 +261,8 @@
   "moderate": "Esforzo moderado",
   "intense": "Esforzo intenso",
   "extra": "extra"
-}
+},
+
+"insst_heat": "INSST: estrés térmico e calor",
+"aemet_health": "AEMET: saúde e meteoroloxía"
 }

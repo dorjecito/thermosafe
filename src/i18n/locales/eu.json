@@ -60,8 +60,8 @@
     }
   },
 
-  "sky_state": "Zeruko egoera",
-
+  
+  "sky_state": "Zeruaren egoera",
   "weather_desc": {
     "clear sky": "Zeru garbia",
     "few clouds": "Hodei gutxi",
@@ -101,7 +101,46 @@
     "tempesta": "Ekaitza",
     "neu": "Elurra",
     "boira": "Lainoa",
-    "nuvolositat_variable": "Aldakorra"
+    "nuvolositat_variable": "Aldakorra",
+    "algo de nubes": "Hodei batzuk",
+    "muy nuboso": "Oso hodeitsu",
+    "algo nublado": "Pixka bat hodeitsu",
+    "nubes": "Hodeiak",
+    "poco nublado": "Hodeitsu samarra",
+    "algo de nubosidad": "Hodei apur bat",
+    "hodei_gutxi": "Hodei gutxi",
+    "hodei_sakabanatuak": "Hodei sakabanatuak",
+    "zati_batean_hodeitsu": "Zati batean hodeitsu",
+    "zeru_garbia": "Zeru garbia",
+    "zeru_oskarbi": "Zeru oskarbi",
+    "hodeitsu": "Hodeitsu",
+    "hodei_gutxiak": "Hodei gutxi",
+    "hodei_apur_bat": "Hodei apur bat",
+    "pixka_bat_hodeitsu": "Pixka bat hodeitsu",
+    "osohodeitsu": "Oso hodeitsu",
+    "hodeiak": "Hodeiak",
+    "hodeitsu_samarra": "Hodeitsu samarra",
+    "euri_arina": "Euri arina",
+    "euri_moderatua": "Euri moderatua",
+    "euri_intentsua": "Euri intentsua",
+    "zirimiria": "Zirimiria",
+    "zaparrada": "Zaparrada",
+    "ekaitza": "Ekaitza",
+    "ekaitza_euriarekin": "Ekaitza euriarekin",
+    "elurra": "Elurra",
+    "elur_arina": "Elur arina",
+    "lainoa": "Lainoa",
+    "lainobera": "Lainobera",
+    "gandua": "Gandua",
+    "ke": "Kea",
+    "hautsa": "Hautsa",
+    "harea": "Harea",
+    "hauts_bolkanikoa": "Hauts bolkanikoa",
+    "haize_bolada": "Haize-bolada",
+    "tornadoa": "Tornadoa",
+    "aldakorra": "Aldakorra",
+    "hodei gutxi": "Hodei gutxi",
+    "hodei_gutxi": "Hodei gutxi" 
   },
 
   "official_links": "Esteka ofizialak",
@@ -214,5 +253,8 @@
   "moderate": "Esfortzu ertaina",
   "intense": "Esfortzu bizia",
   "extra": "gehigarri"
-}
+},
+
+"insst_heat": "INSST: estres termikoa eta beroa",
+"aemet_health": "AEMET: osasuna eta meteorologia"
 }

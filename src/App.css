@@ -343,5 +343,55 @@ a:focus,
   border-left-color: #e84393; /* rosa calorosa */
 }
 
+/* ============================================
+   TARGETA DE LOCALITZACIÓ — ESTILS DEFINITUS
+   ============================================ */
+.location-card {
+  width: 100%;
+  background: var(--card-bg);
+  border-radius: 12px;
+  padding: 1rem 1.2rem;
+  margin: 1rem 0 1.5rem 0;
+  border: 1px solid rgba(0,0,0,0.08);
+  box-shadow: 0 4px 10px rgba(0,0,0,0.12);
+  text-align: left;
+  transition: background-color 0.3s, color 0.3s, box-shadow 0.3s ease;
+}
+
+/* Títol de la targeta */
+.location-card-title {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: var(--card-title);
+}
+
+/* Nom del municipi */
+.location-card-value {
+  margin-top: 0.35rem;
+  font-size: 1.35rem;
+  font-weight: 700;
+  color: var(--card-text);
+}
+
+.motion-btn {
+  background: #111;
+  color: white;
+  padding: 12px 18px;
+  border-radius: 8px;
+  font-size: 0.95rem;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  border: none;
+  transition: background 0.2s;
+}
+
+.motion-btn:hover {
+  background: #000;
+}
 
 

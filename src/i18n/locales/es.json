@@ -101,7 +101,14 @@
     "tempesta": "Tormenta",
     "neu": "Nieve",
     "boira": "Niebla",
-    "nuvolositat_variable": "Nubosidad variable"
+    "nuvolositat_variable": "Nubosidad variable",
+    "algo de nubes": "Algo de nubes",
+    "muy nuboso": "Muy nuboso",
+    "algo nublado": "Algo nublado",
+    "nubes": "Nublado",
+    "muy nublado": "Muy nublado",
+    "poco nublado": "Poco nublado",
+    "algo de nubosidad": "Algo de nubosidad"
   },
 
   "official_links": "Enlaces oficiales",
@@ -247,6 +254,9 @@
   "moderate": "Esfuerzo moderado",
   "intense": "Esfuerzo intenso",
   "extra": "extra"
-}
+},
+
+"insst_heat": "INSST: estrés térmico y calor",
+"aemet_health": "AEMET: salud y meteorología"
 
 }

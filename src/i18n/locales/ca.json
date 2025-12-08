@@ -104,7 +104,6 @@
     "nuvolositat_variable": "Nuvolositat variable"
   },
 
-  "official_links": "Enllaços oficials",
   "link_insst": "INSST: estrès tèrmic i calor",
   "link_aemet": "AEMET: salut i meteorologia",
 
@@ -248,5 +247,9 @@
   "moderate": "Esforç moderat",
   "intense": "Esforç intens",
   "extra": "extra"
-}
+},
+
+"official_links": "Enllaços oficials",
+"insst_heat": "INSST: estrès tèrmic i calor",
+"aemet_health": "AEMET: salut i meteorologia"
 }

@@ -442,3 +442,214 @@ button:focus-visible {
   margin-top: 1rem;
   font-weight: 500;
 }
+
+/* ===== TARGETA ESTAT DEL CEL — FINAL ===== */
+
+.sky-card {
+  background: #e8eef5 !important;          /* fons més fosc */
+  border-radius: 14px !important;
+  padding: 1rem 1.25rem !important;
+  margin: 1rem 0 !important;
+  border: 1px solid rgba(0,0,0,0.12) !important;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.08) !important;
+  text-align: left !important;
+}
+
+/* Mode fosc */
+@media (prefers-color-scheme: dark) {
+  .sky-card {
+    background: #1e293b !important;
+    border-color: rgba(255,255,255,0.1) !important;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.4) !important;
+  }
+}
+
+.sky-row {
+  display: flex !important;
+  align-items: center !important;
+  gap: 0.75rem !important;
+  margin-top: 0.5rem !important;
+}
+
+.sky-small-icon {
+  width: 26px !important;
+  height: 26px !important;
+  opacity: 0.9 !important;
+}
+
+.sky-desc {
+  font-size: 1rem !important;
+  font-weight: 500 !important;
+  color: #333 !important;
+}
+
+@media (prefers-color-scheme: dark) {
+  .sky-desc {
+    color: #e2e8f0 !important;
+  }
+}
+
+/* 🕒 Targeta d'actualització */
+.update-card {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  background-color: var(--card-bg);
+  color: var(--card-text);
+  border-radius: 12px;
+  padding: 0.6rem 0.9rem;
+  margin: 0.6rem 0 1rem 0;
+  font-size: 0.9rem;
+  border: 1px solid rgba(0,0,0,0.08);
+  box-shadow: 0 2px 6px rgba(0,0,0,0.06);
+}
+
+.update-icon {
+  font-size: 1rem;
+  opacity: 0.85;
+}
+
+.update-text {
+  font-weight: 500;
+}
+
+@media (prefers-color-scheme: dark) {
+  .update-card {
+    border: 1px solid rgba(255,255,255,0.12);
+    box-shadow: 0 2px 10px rgba(0,0,0,0.5);
+  }
+}
+
+/* 🕒 Targeta d'actualització */
+.update-card {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  background-color: var(--card-bg);
+  color: var(--card-text);
+  border-radius: 12px;
+  padding: 0.6rem 0.9rem;
+  margin: 0.6rem 0 1rem 0;
+  font-size: 0.9rem;
+  border: 1px solid rgba(0,0,0,0.08);
+  box-shadow: 0 2px 6px rgba(0,0,0,0.06);
+}
+
+.update-icon {
+  font-size: 1rem;
+  opacity: 0.85;
+}
+
+.update-text {
+  font-weight: 500;
+}
+
+@media (prefers-color-scheme: dark) {
+  .update-card {
+    border: 1px solid rgba(255,255,255,0.12);
+    box-shadow: 0 2px 10px rgba(0,0,0,0.5);
+  }
+}
+
+/* 🔗 Targeta d’enllaços oficials */
+.official-card {
+  background-color: var(--card-bg);
+  color: var(--card-text);
+  padding: 1.4rem;
+  border-radius: 12px;
+  margin-top: 1.4rem;
+  text-align: left;
+  border: 1px solid rgba(0,0,0,0.08);
+  box-shadow: 0 2px 6px rgba(0,0,0,0.08);
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+.official-title {
+  font-size: 1.1rem;
+  font-weight: 600;
+  margin-bottom: 0.8rem;
+}
+
+.official-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+
+.official-item {
+  padding: 0.6rem 0.8rem;
+  border-radius: 8px;
+  font-weight: 500;
+  text-decoration: none;
+  color: var(--card-text);
+  background: rgba(0,0,0,0.04);
+  transition: background 0.2s, transform 0.2s;
+  display: inline-block;
+}
+
+.official-item:hover {
+  background: rgba(0,0,0,0.08);
+  transform: translateX(3px);
+}
+
+/* FOSC */
+@media (prefers-color-scheme: dark) {
+  .official-item {
+    background: rgba(255,255,255,0.06);
+  }
+  .official-item:hover {
+    background: rgba(255,255,255,0.14);
+  }
+}
+
+/* ============================
+   🔔 TARGETA AVISOS AEMET
+   ============================ */
+
+.aemet-alert-card {
+  background-color: var(--card-bg);
+  color: var(--card-text);
+  border-radius: 12px;
+  padding: 1.2rem 1.4rem;
+  margin: 1.5rem 0;
+  border: 1px solid rgba(0,0,0,0.15);
+  box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+  transition: background 0.3s ease, border-color 0.3s ease;
+}
+
+.aemet-alert-title {
+  font-size: 1.1rem;
+  font-weight: 600;
+  margin-bottom: 0.6rem;
+}
+
+/* 🔴 COLORS SEGONS NIVELL */
+.alert-low {
+  border-left: 6px solid #4caf50; /* verd */
+}
+.alert-mod {
+  border-left: 6px solid #ffc107; /* groc */
+}
+.alert-high {
+  border-left: 6px solid #ff9800; /* taronja */
+}
+.alert-ext {
+  border-left: 6px solid #f44336; /* vermell */
+}
+
+/* Descripció */
+.aemet-alert-description {
+  font-size: 0.95rem;
+  line-height: 1.4;
+  margin-top: 0.5rem;
+}
+
+/* Font oficial */
+.aemet-alert-source {
+  margin-top: 0.8rem;
+  font-size: 0.85rem;
+  opacity: 0.8;
+}
