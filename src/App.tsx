@@ -2800,6 +2800,16 @@ return (
 </p>
 </div>
 
+{/* 🕒 Targeta d'actualització */}
+{data?.dt && (
+  <div className="update-card">
+    <span className="update-icon">🕒</span>
+    <span className="update-text">
+      {t("last_update")}: {formatLastUpdate(data.dt)}
+    </span>
+  </div>
+)}
+
   
           {/* 🌤️ ESTAT DEL CEL */}
 {data?.weather?.[0] && (
@@ -2824,16 +2834,6 @@ return (
       </span>
     </div>
   </div>
-)}
-
-                    {/* 🕒 Targeta d'actualització */}
-{data?.dt && (
-  <div className="update-card">
-    <span className="update-icon">🕒</span>
-    <span className="update-text">
-      {t("last_update")}: {formatLastUpdate(data.dt)}
-    </span>
-  </div>
 )}
 
 {risk.startsWith("cold_") && (
@@ -3061,6 +3061,14 @@ return (
       );
     })}
   </div>
+)}
+
+  {recTemp != null && (
+  <Recommendations
+    temp={recTemp}
+    lang={normalizeLang(i18n.language)}
+    isDay={day}
+  />
 )}
   
          {/* 🔗 Enllaços oficials */}
