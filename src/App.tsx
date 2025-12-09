@@ -2084,8 +2084,6 @@ try {
   setUvi(uv);
 }
 
-    
-
     // ⚠️ Avisos oficials
     if (lat != null && lon != null) {
       const alerts = await getWeatherAlerts(lat, lon, lang, API_KEY);
@@ -2803,10 +2801,9 @@ return (
 </div>
 
   
-          {/* ESTAT DEL CEL */}
+          {/* 🌤️ ESTAT DEL CEL */}
 {data?.weather?.[0] && (
-  <div className="sky-card">
-    
+  <div className="card sky-card">
     <h3 style={{ marginTop: 0, marginBottom: "0.4rem" }}>
       {t("sky_state")}
     </h3>
@@ -2815,14 +2812,17 @@ return (
       <img
         src={`https://openweathermap.org/img/wn/${data.weather[0].icon}@2x.png`}
         alt={data.weather[0].description}
-        className="sky-small-icon"
+        className="sky-icon"
+        width="32"
+        height="32"
       />
-      <span className="sky-desc">
-        {t(`weather_desc.${data.weather[0].description.toLowerCase()}`)
-          || data.weather[0].description}
+      <span className="sky-label">
+        {t(`weather_desc.${data.weather[0].description.toLowerCase()}`) !==
+          `weather_desc.${data.weather[0].description.toLowerCase()}`
+          ? t(`weather_desc.${data.weather[0].description.toLowerCase()}`)
+          : data.weather[0].description}
       </span>
     </div>
-
   </div>
 )}
 
@@ -3041,7 +3041,7 @@ return (
       return (
         <div
           key={i}
-          className={`aemet-alert-card alert-ext`} // pots canviar dinamisme més tard
+          className={`aemet-alert-card alert-ext`} 
         >
           {/* Títol */}
           <div className="aemet-alert-title">
