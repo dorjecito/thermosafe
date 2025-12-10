@@ -3121,8 +3121,8 @@ if (uvi != null && uvi >= 3) {
 {/* 🛡️ TARGETA DE RECOMANACIONS OFICIALS AVANÇADA */}
 <OfficialAdviceCard
   risk={risk}
-  irr={irr}
-  uvi={uvi}
+  irr={irr ?? 0}
+  uvi={uvi ?? 0}
   windRisk={windRisk}
   lang={i18n.language}
 />

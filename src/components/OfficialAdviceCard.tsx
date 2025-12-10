@@ -66,18 +66,18 @@ export default function OfficialAdviceCard({ risk, irr, uvi, windRisk, lang }: P
     if (txt !== key) dynamicAdvice.push(txt);
   }
 
-  // 4) UV
-  if (uvi >= 3) {
-    const lvl =
-      uvi < 6  ? "moderate" :
-      uvi < 8  ? "high" :
-      uvi < 11 ? "very_high" :
-                 "extreme";
+   // 4) UV
+if (typeof uvi === "number" && uvi >= 3) {
+  const lvl =
+    uvi < 6 ? "moderate" :
+    uvi < 8 ? "high" :
+    uvi < 11 ? "very_high" :
+    "extreme";
 
-    const key = `officialAdviceDynamic.uv.${lvl}`;
-    const txt = t(key);
-    if (txt !== key) dynamicAdvice.push(txt);
-  }
+  const key = `officialAdviceDynamic.uv.${lvl}`;
+  const txt = t(key);
+  if (txt !== key) dynamicAdvice.push(txt);
+}
 
   /* ───────────────────────────────────────────────
       RECOMANACIONS GENERALS INSST/AEMET
