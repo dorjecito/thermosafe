@@ -251,5 +251,56 @@
 
 "official_links": "Enllaços oficials",
 "insst_heat": "INSST: estrès tèrmic i calor",
-"aemet_health": "AEMET: salut i meteorologia"
+"aemet_health": "AEMET: salut i meteorologia",
+
+"risk_levels": {
+  "low": "Risc baix",
+  "moderate": "Risc moderat",
+  "high": "Risc alt",
+  "extreme": "Risc extrem"
+},
+
+"share": "Compartir",
+"show_advice": "Mostrar recomanacions",
+"hide_advice": "Amagar recomanacions",
+
+"official_advice_share": "Segueix les recomanacions de seguretat segons el teu risc actual.",
+
+"official_advice_title": "Recomanacions oficials de seguretat",
+"official_advice_footer": "Basat en guies de l’INSST i AEMET.",
+
+"officialAdviceDynamic": {
+  "heat": {
+    "mild": "Hidrata’t sovint i descansa en zones fresques.",
+    "moderate": "Evita esforços intensos i busca ombra regularment.",
+    "high": "Risc important: limita l’activitat exterior i hidrata’t de manera contínua.",
+    "extreme": "Perill extrem: evita completament l’exterior. Alt risc de cop de calor."
+  },
+  "cold": {
+    "mild": "Temperatura baixa: abriga’t lleugerament i protegeix les mans.",
+    "moderate": "Temperatura molt baixa: utilitza capes i evita exposicions llargues.",
+    "high": "Risc alt: protegeix extremitats i limita l’activitat exterior.",
+    "extreme": "Perill extrem: evita l’exterior. Risc de congelació."
+  },
+  "wind": {
+    "breezy": "Vents suaus: no es requereixen mesures especials.",
+    "moderate": "Vents moderats: assegura objectes i extrema precaució.",
+    "strong": "Vents forts: evita zones arbrades i assegura mobiliari exterior.",
+    "very_strong": "Vents molt intensos: roman a l’interior. Evita estructures inestables."
+  },
+  "uv": {
+    "moderate": "Aplica protecció solar SPF 30+ i utilitza ulleres de sol.",
+    "high": "Evita el sol de 12h a 16h, hidrata’t i utilitza protecció elevada.",
+    "very_high": "Protecció màxima: camisa, gorra, ulleres i SPF 50+.",
+    "extreme": "Evita exposar-te al sol. Risc extrem dany ocular i cutani."
+  }
+},
+"official_advice": {
+  "hydration": "Hidrata’t amb regularitat, encara que no tinguis set.",
+  "rest": "Descansa en zones d’ombra durant activitats prolongades.",
+  "sunAvoid": "Evita el sol intens entre les 12h i les 16h.",
+  "coldClothes": "Amb fred, utilitza capes de roba i protecció tallavents.",
+  "followAlerts": "Segueix els avisos meteorològics oficials.",
+  "symptoms": "Si tens marejos, nàusees o calfreds, atura l’activitat."
+}
 }

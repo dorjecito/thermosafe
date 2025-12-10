@@ -653,3 +653,121 @@ button:focus-visible {
   font-size: 0.85rem;
   opacity: 0.8;
 }
+/* ============================
+   🛡️ TARGETA RECOMANACIONS OFICIALS
+   ============================ */
+
+.official-advanced-card {
+  border-radius: 12px;
+  padding: 1rem 1.3rem;
+  margin: 1.4rem 0;
+  border: 1px solid rgba(0,0,0,0.12);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.16);
+  text-align: left;
+}
+
+/* Colors segons nivell de risc */
+.official-advanced-low {
+  background: #e9fbe9;        /* verd suau */
+}
+.official-advanced-moderate {
+  background: #fff8db;        /* groc suau */
+}
+.official-advanced-high {
+  background: #ffe3d6;        /* taronja suau */
+}
+.official-advanced-extreme {
+  background: #ffd6d6;        /* vermell suau */
+}
+
+/* Mode fosc: una mica més fosquet però manté el color */
+@media (prefers-color-scheme: dark) {
+  .official-advanced-low {
+    background: #1b2b1b;
+  }
+  .official-advanced-moderate {
+    background: #2e2a12;
+  }
+  .official-advanced-high {
+    background: #3a1f1f;
+  }
+  .official-advanced-extreme {
+    background: #4a0f0f;
+  }
+
+  .official-advanced-card {
+    border-color: rgba(255,255,255,0.18);
+    color: #fff;
+  }
+}
+
+/* Botó compartir */
+.official-share-btn {
+  background: #1e88e5;
+  color: #fff;
+  border: none;
+  padding: 0.35rem 0.7rem;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 0.85rem;
+}
+
+/* Botó mostrar/amagar recomanacions */
+.official-expand-btn {
+  width: 100%;
+  margin-top: 0.7rem;
+  padding: 0.45rem;
+  border-radius: 8px;
+  border: 1px solid #999;
+  background: #f3f3f3;
+  cursor: pointer;
+}
+
+@media (prefers-color-scheme: dark) {
+  .official-expand-btn {
+    background: rgba(255,255,255,0.08);
+    border-color: rgba(255,255,255,0.3);
+    color: #fff;
+  }
+}
+
+/* Peu de la targeta */
+.official-advice-footer {
+  font-size: 0.82rem;
+  opacity: 0.75;
+  margin-top: 0.8rem;
+}
+
+/* Botó 112 quan hi ha risc extrem */
+.emergency-btn {
+  width: 100%;
+  padding: 0.8rem;
+  margin-top: 1rem;
+  background: #c70000;
+  color: #fff;
+  font-weight: bold;
+  border: none;
+  border-radius: 10px;
+  font-size: 1.05rem;
+  cursor: pointer;
+}
+
+/* Botó expandir — mode clar */
+.official-expand-btn {
+  background: rgba(0, 0, 0, 0.08);
+  color: #0056b3 !important;
+  font-weight: 600;
+  width: 100%;
+  padding: 0.45rem 0.6rem;
+  border-radius: 8px;
+  border: 1px solid rgba(0,0,0,0.12);
+  cursor: pointer;
+}
+
+/* Botó expandir — mode fosc */
+@media (prefers-color-scheme: dark) {
+  .official-expand-btn {
+    background: rgba(255,255,255,0.12);
+    color: #fff !important;
+  }
+}

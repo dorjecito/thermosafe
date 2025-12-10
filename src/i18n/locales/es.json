@@ -256,7 +256,47 @@
   "extra": "extra"
 },
 
-"insst_heat": "INSST: estrés térmico y calor",
-"aemet_health": "AEMET: salud y meteorología"
+"officialAdviceDynamic": {
+  "heat": {
+    "mild": "Hidrátate a menudo y descansa en zonas frescas.",
+    "moderate": "Evita esfuerzos intensos y busca sombra con regularidad.",
+    "high": "Riesgo importante: limita la actividad exterior e hidrátate de forma continua.",
+    "extreme": "Peligro extremo: evita completamente el exterior. Alto riesgo de golpe de calor."
+  },
+  "cold": {
+    "mild": "Temperatura baja: abrígate ligeramente y protege las manos.",
+    "moderate": "Temperatura muy baja: usa varias capas y evita exposiciones prolongadas.",
+    "high": "Riesgo alto: protege las extremidades y limita la actividad exterior.",
+    "extreme": "Peligro extremo: evita el exterior. Riesgo de congelación."
+  },
+  "wind": {
+    "breezy": "Viento suave: no se requieren medidas especiales.",
+    "moderate": "Viento moderado: asegura objetos y extrema la precaución.",
+    "strong": "Viento fuerte: evita zonas arboladas y asegura el mobiliario exterior.",
+    "very_strong": "Viento muy intenso: permanece en el interior y evita estructuras inestables."
+  },
+  "uv": {
+    "moderate": "Aplica protección solar SPF 30+ y utiliza gafas de sol.",
+    "high": "Evita el sol de 12h a 16h, hidrátate y usa protección elevada.",
+    "very_high": "Protección máxima: camisa, gorra, gafas de sol y SPF 50+.",
+    "extreme": "Evita exponerte al sol. Riesgo extremo de daño cutáneo y ocular."
+  }
+},
 
+"insst_heat": "INSST: estrés térmico y calor",
+"aemet_health": "AEMET: salud y meteorología",
+"official_advice_title": "Recomendaciones oficiales de seguridad",
+"official_advice_footer": "Basado en guias del INSST y AEMET.",
+"show_advice": "Mostrar recomendaciones",
+"hide_advice": "Ocultar recomendaciones", 
+
+"official_advice": {
+  "hydration": "Hidrátate con regularidad, aunque no tengas sed.",
+  "rest": "Descansa en zonas de sombra durante actividades prolongadas.",
+  "sunAvoid": "Evita el sol intenso entre las 12 h y las 16 h.",
+  "coldClothes": "Con frío, utiliza varias capas de ropa y protección cortavientos.",
+  "followAlerts": "Sigue los avisos meteorológicos oficiales.",
+  "symptoms": "Si notas mareos, náuseas o escalofríos, detén la actividad."
 }
+}
+

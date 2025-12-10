@@ -26,6 +26,7 @@ import { getUVFromOpenUV } from "./services/openUV";
    import UVAdvice            from './components/UVAdvice';
    import UVScale             from './components/UVScale';
    import LocationCard from "./components/LocationCard";
+   import OfficialAdviceCard from "./components/OfficialAdviceCard";
    
    /* —— analítica (opcional) ———————————— */
    import { inject } from '@vercel/analytics';
@@ -3038,6 +3039,52 @@ return (
         (window as any).maybeNotifyWind = maybeNotifyWind;
       }
 
+      /* ============================================================
+   📌 RECOMANACIONS DINÀMIQUES — DEPÈN DEL TIPUS DE RISC
+   ============================================================ */
+
+const dynamicAdvice: string[] = [];
+
+/* 1) RISC PER CALOR (heat_mild, heat_moderate, heat_high, heat_extreme…) */
+if (risk.startsWith("heat")) {
+  const level = risk.replace("heat_", ""); // mild / moderate / high / extreme
+  const key = `officialAdviceDynamic.heat.${level}`;
+  const text = t(key);
+
+  if (text !== key) dynamicAdvice.push(text);
+}
+
+/* 2) RISC PER FRED (cold_mild, cold_moderate…) */
+if (risk.startsWith("cold")) {
+  const level = risk.replace("cold_", "");
+  const key = `officialAdviceDynamic.cold.${level}`;
+  const text = t(key);
+
+  if (text !== key) dynamicAdvice.push(text);
+}
+
+/* 3) RISC PER VENT (windRisk = breezy, moderate, strong, very_strong) */
+if (windRisk && windRisk !== "none") {
+  const key = `officialAdviceDynamic.wind.${windRisk}`;
+  const text = t(key);
+
+  if (text !== key) dynamicAdvice.push(text);
+}
+
+/* 4) RISC PER UV */
+if (uvi != null && uvi >= 3) {
+  let uvLevel = "moderate";
+
+  if (uvi >= 6 && uvi < 8) uvLevel = "high";
+  else if (uvi >= 8 && uvi < 11) uvLevel = "very_high";
+  else if (uvi >= 11) uvLevel = "extreme";
+
+  const key = `officialAdviceDynamic.uv.${uvLevel}`;
+  const text = t(key);
+
+  if (text !== key) dynamicAdvice.push(text);
+}
+
       return (
         <div
           key={i}
@@ -3070,35 +3117,17 @@ return (
     isDay={day}
   />
 )}
+
+{/* 🛡️ TARGETA DE RECOMANACIONS OFICIALS AVANÇADA */}
+<OfficialAdviceCard
+  risk={risk}
+  irr={irr}
+  uvi={uvi}
+  windRisk={windRisk}
+  lang={i18n.language}
+/>
   
-         {/* 🔗 Enllaços oficials */}
-<div className="official-card">
-  <h3 className="official-title">{t("official_links")}</h3>
 
-  <ul className="official-list">
-    <li>
-      <a
-        href="https://www.insst.es/documents/94886/566078/Gu%C3%ADa+T%C3%A9cnica+para+la+prevenci%C3%B3n+de+riesgos+laborales+frente+a+la+exposici%C3%B3n+al+estr%C3%A9s+t%C3%A9rmico"
-        target="_blank"
-        rel="noopener noreferrer"
-        className="official-item"
-      >
-        🔍 {t("insst_heat")}
-      </a>
-    </li>
-
-    <li>
-      <a
-        href="https://www.aemet.es/ca/eltiempo/prediccion/salud"
-        target="_blank"
-        rel="noopener noreferrer"
-        className="official-item"
-      >
-        🔍 {t("aemet_health")}
-      </a>
-    </li>
-  </ul>
-</div>
   
          {/* 🟩 ESCALA-UV */}
 {['ca', 'es', 'eu', 'gl'].includes(i18n.language) ? (

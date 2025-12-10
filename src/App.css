@@ -159,30 +159,67 @@ body {
   .data-value { color: #fff; }
 }
 
-/* 🔗 Enllaços oficials */
-.official-links {
-  display: flex;
-  flex-direction: column;
-  gap: 0.8rem;
-  align-items: flex-start;
-  margin-top: 1.5rem;
+.official-advice-card {
+  border-radius: 10px;
+  padding: 1rem;
+  margin-top: 1.4rem;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+  border-left: 6px solid;
+  transition: 0.3s ease;
 }
 
-.official-link,
-.official-link:visited {
-  display: inline-block;
-  padding: 8px 16px;
-  border-radius: 6px;
-  font-weight: 600;
-  text-decoration: none !important;
-  transition: background-color 0.3s, transform 0.2s;
+.risk-low {
+  background: #e9fbe9;
+  border-color: #62c462;
 }
 
-button:focus,
-a:focus,
-.official-link:focus {
-  outline: 2px solid #1976d2;
-  outline-offset: 2px;
+.risk-moderate {
+  background: #fff8db;
+  border-color: #f0c200;
+}
+
+.risk-high {
+  background: #ffe3d6;
+  border-color: #ff8c4a;
+}
+
+.risk-extreme {
+  background: #ffe1e1;
+  border-color: #ff3b3b;
+}
+
+.advice-toggle {
+  margin: 0.6rem 0 1rem 0;
+  padding: 0.4rem 0.6rem;
+  width: 100%;
+  border-radius: 8px;
+  border: none;
+  background: #ddd;
+  cursor: pointer;
+}
+
+.share-btn {
+  float: right;
+  margin-top: -3rem;
+  background: #1e90ff;
+  padding: 0.35rem 0.7rem;
+  border-radius: 8px;
+  color: white;
+  border: none;
+  cursor: pointer;
+}
+
+.emergency-btn {
+  width: 100%;
+  padding: 0.7rem;
+  margin-top: 1rem;
+  background: #c70000;
+  color: white;
+  font-weight: bold;
+  border: none;
+  border-radius: 8px;
+  font-size: 1.1rem;
+  cursor: pointer;
 }
 
 /* Mode clar */
@@ -394,4 +431,104 @@ a:focus,
   background: #000;
 }
 
+/* ============================
+   TARGETA OFICIAL AVANÇADA
+   ============================ */
 
+.official-advanced-card {
+  border-radius: 12px;
+  padding: 1rem 1.2rem;
+  margin-top: 1.5rem;
+  box-shadow: 0 3px 6px rgba(0,0,0,0.15);
+  border: 1px solid rgba(0,0,0,0.1);
+  color: #222 !important;
+}
+
+/* Colors segons risc */
+.official-advanced-low {
+  background: #e9fbe9;
+}
+.official-advanced-moderate {
+  background: #fff8db;
+}
+.official-advanced-high {
+  background: #ffe3d6;
+}
+.official-advanced-extreme {
+  background: #ffdad6;
+}
+
+/* Mode fosc: fons foscos + text blanc */
+@media (prefers-color-scheme: dark) {
+  .official-advanced-low {
+    background: #1b2b1b;
+    color: #fff !important;
+  }
+  .official-advanced-moderate {
+    background: #2e2a12;
+    color: #fff !important;
+  }
+  .official-advanced-high {
+    background: #3a1f1f;
+    color: #fff !important;
+  }
+  .official-advanced-extreme {
+    background: #4a0f0f;
+    color: #fff !important;
+  }
+}
+
+/* Botó compartir */
+.official-share-btn {
+  background: #1e88e5;
+  color: white !important;
+  padding: 0.35rem 0.7rem;
+  border-radius: 8px;
+  border: none;
+  cursor: pointer;
+  font-size: 0.85rem;
+}
+
+/* Botó expandir */
+.official-expand-btn {
+  margin-top: 0.6rem;
+  background: rgba(0,0,0,0.08);
+  color: #222 !important;
+  width: 100%;
+  padding: 0.4rem;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+}
+@media (prefers-color-scheme: dark) {
+  .official-expand-btn {
+    background: rgba(255,255,255,0.1);
+    color: #fff !important;
+  }
+}
+
+/* Text dels consells */
+.official-advanced-card li {
+  color: inherit !important;
+  margin-bottom: 0.35rem;
+  line-height: 1.5;
+}
+
+/* Peu */
+.official-advice-footer {
+  font-size: 0.82rem;
+  opacity: 0.75;
+  margin-top: 0.8rem;
+}
+
+/* Colors de text per la targeta de recomanacions oficials */
+.official-advanced-card {
+  color: #222 !important; /* Mode clar */
+}
+
+/* Mode fosc */
+@media (prefers-color-scheme: dark) {
+  .official-advanced-card {
+    color: #fff !important; /* Text blanc */
+  }
+} 

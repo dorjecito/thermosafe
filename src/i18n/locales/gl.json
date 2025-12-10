@@ -264,5 +264,57 @@
 },
 
 "insst_heat": "INSST: estrés térmico e calor",
-"aemet_health": "AEMET: saúde e meteoroloxía"
+"aemet_health": "AEMET: saúde e meteoroloxía",
+
+"risk_levels": {
+  "low": "Risco baixo",
+  "moderate": "Risco moderado",
+  "high": "Risco alto",
+  "extreme": "Risco extremo"
+},
+
+"share": "Compartir",
+"show_advice": "Mostrar recomendacións",
+"hide_advice": "Agochar recomendacións",
+
+"official_advice_share": "Sigue as recomendacións de seguridade segundo o teu risco actual.",
+
+"official_advice_title": "Recomendacións oficiais de seguridade",
+"official_advice_footer": "Baseado en guías do INSST e AEMET.",
+
+"officialAdviceDynamic": {
+  "heat": {
+    "mild": "Hidrátate a miúdo e descansa en zonas frescas.",
+    "moderate": "Evita esforzos intensos e procura sombra con regularidade.",
+    "high": "Risco importante: limita a actividade exterior e hidrátate continuamente.",
+    "extreme": "Perigo extremo: evita totalmente o exterior. Alto risco de golpe de calor."
+  },
+  "cold": {
+    "mild": "Temperatura baixa: abrígate lixeiramente e protexe as mans.",
+    "moderate": "Temperatura moi baixa: usa varias capas e evita exposicións longas.",
+    "high": "Risco alto: protexe as extremidades e limita a actividade exterior.",
+    "extreme": "Perigo extremo: evita o exterior. Risco de conxelación."
+  },
+  "wind": {
+    "breezy": "Vento suave: non se requiren medidas especiais.",
+    "moderate": "Vento moderado: asegura obxectos e extrema a precaución.",
+    "strong": "Vento forte: evita zonas arboredas e asegura o mobiliario exterior.",
+    "very_strong": "Vento moi intenso: permanece no interior e evita estruturas inestables."
+  },
+  "uv": {
+    "moderate": "Aplica protector solar SPF 30+ e utiliza lentes de sol.",
+    "high": "Evita o sol entre as 12h e as 16h, hidrátate e usa protección elevada.",
+    "very_high": "Protección máxima: camisa, gorra, lentes e SPF 50+.",
+    "extreme": "Evita expoñerte ao sol. Risco extremo de dano cutáneo e ocular."
+  }
+},
+
+"official_advice": {
+  "hydration": "Hidrátate con regularidade, aínda que non teñas sede.",
+  "rest": "Descansa en zonas de sombra durante actividades prolongadas.",
+  "sunAvoid": "Evita o sol intenso entre as 12h e as 16h.",
+  "coldClothes": "Con frío, usa varias capas de roupa e protección cortaventos.",
+  "followAlerts": "Segue os avisos meteorolóxicos oficiais.",
+  "symptoms": "Se tes mareos, náuseas ou arrepiados, detén a actividade."
+}
 }

@@ -256,5 +256,57 @@
 },
 
 "insst_heat": "INSST: estres termikoa eta beroa",
-"aemet_health": "AEMET: osasuna eta meteorologia"
+"aemet_health": "AEMET: osasuna eta meteorologia",
+
+"risk_levels": {
+  "low": "Arrisku baxua",
+  "moderate": "Arrisku ertaina",
+  "high": "Arrisku handia",
+  "extreme": "Arrisku muturrekoa"
+},
+
+"share": "Partekatu",
+"show_advice": "Gomendioak erakutsi",
+"hide_advice": "Gomendioak ezkutatu",
+
+"official_advice_share": "Segurtasun-gomendioak jarraitu zure uneko arrisku-mailaren arabera.",
+
+"official_advice_title": "Segurtasun gomendio ofizialak",
+"official_advice_footer": "INSST eta AEMETen gidetan oinarrituta.",
+
+"officialAdviceDynamic": {
+  "heat": {
+    "mild": "Maiz hidratatu eta atseden hartu gune freskoetan.",
+    "moderate": "Saihestu ahalegin handiak eta bilatu itzala maiz.",
+    "high": "Arrisku handia: mugatu aire libreko jarduerak eta hidratatu etengabe.",
+    "extreme": "Arrisku larria: saihestu guztiz kanpoaldea. Kolpe beroaren arrisku handia."
+  },
+  "cold": {
+    "mild": "Tenperatura baxua: jantzi arin eta babestu eskuak.",
+    "moderate": "Tenperatura oso baxua: erabili arropa-geruzak eta saihestu esposizio luzeak.",
+    "high": "Arrisku handia: babestu gorputz-adarrak eta mugatu kanpoko jarduerak.",
+    "extreme": "Arrisku larria: saihestu kanpoaldea. Izozte-arriskua."
+  },
+  "wind": {
+    "breezy": "Haize leuna: ez dira neurri berezirik behar.",
+    "moderate": "Haize moderatua: ziurtatu objektuak eta ibili kontuz.",
+    "strong": "Haize bortitza: saihestu zuhaitz eremuak eta sendotu kanpoko altzariak.",
+    "very_strong": "Haize oso bortitza: geratu barruan eta saihestu egitura ahulak."
+  },
+  "uv": {
+    "moderate": "Erabili SPF 30+ eguzki-babesa eta eguzkitako betaurrekoak.",
+    "high": "Saihestu eguzkia 12:00–16:00 artean, hidratatu eta babes handiagoa erabili.",
+    "very_high": "Babes maximoa: alkandora, txanoa, betaurrekoak eta SPF 50+.",
+    "extreme": "Saihestu eguzkitan egotea. Arrisku oso handia azal eta begietarako."
+  }
+},
+
+"official_advice": {
+  "hydration": "Ura edan maiz, egarria ez izan arren ere.",
+  "rest": "Atseden hartu itzalean jarduera luzeetan zehar.",
+  "sunAvoid": "Saihestu eguzki bizia 12:00etatik 16:00etara.",
+  "coldClothes": "Hotzarekin, erabili arropa-geruza anitz eta haize-babesak.",
+  "followAlerts": "Jarraitu eguraldiaren abisu ofizialak.",
+  "symptoms": "Zorabioak, goragalea edo hotzikarak badituzu, eten jarduera."
+}
 }
