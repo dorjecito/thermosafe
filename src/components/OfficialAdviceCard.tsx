@@ -3,8 +3,8 @@ import { useTranslation } from "react-i18next";
 
 interface Props {
   risk: string;      // heat_mild, cold_extreme, etc.
-  irr: number;
-  uvi: number;
+  irr: number | null;
+  uvi: number | null;
   windRisk: string;  // breezy, moderate, strong...
   lang: string;
 }
