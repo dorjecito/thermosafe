@@ -157,6 +157,11 @@
 "cold_risk_title": "Riesgo por frío",
 "wind_chill": "Temperatura efectiva",
 
+"notify": {
+  "windTitle": "Viento fuerte",
+  "windBody": "Riesgo por viento {{risk}}. Velocidad del viento: {{speed}} km/h"
+},
+
   "windRisk": {
     "none": "sin riesgo",
     "breezy": "suave",
@@ -285,8 +290,6 @@
 
 "insst_heat": "INSST: estrés térmico y calor",
 "aemet_health": "AEMET: salud y meteorología",
-"official_advice_title": "Recomendaciones oficiales de seguridad",
-"official_advice_footer": "Basado en guias del INSST y AEMET.",
 "show_advice": "Mostrar recomendaciones",
 "hide_advice": "Ocultar recomendaciones", 
 
@@ -294,9 +297,22 @@
   "hydration": "Hidrátate con regularidad, aunque no tengas sed.",
   "rest": "Descansa en zonas de sombra durante actividades prolongadas.",
   "sunAvoid": "Evita el sol intenso entre las 12 h y las 16 h.",
-  "coldClothes": "Con frío, utiliza varias capas de ropa y protección cortavientos.",
+  "coldClothes": "Con frío, utiliza varias capas de ropa y cortavientos.",
+  "limitExposure": "Limita el tiempo de exposición al exterior.",
+  "protectExtremities": "Protege manos, orejas y extremidades.",
+  "avoidWind": "Evita la exposición directa al viento.",
+  "secureObjects": "Asegura los objetos exteriores que puedan salir despedidos.",
+  "avoidTrees": "Evita caminar junto a árboles o ramas inestables.",
+  "avoidUnstableStructures": "Aléjate de estructuras débiles o inestables.",
+  "useSPF": "Aplica protección solar SPF 30+.",
+  "useShade": "Busca sombra siempre que sea posible.",
   "followAlerts": "Sigue los avisos meteorológicos oficiales.",
-  "symptoms": "Si notas mareos, náuseas o escalofríos, detén la actividad."
-}
+  "symptoms": "Si tienes mareos, náuseas o confusión, detén la actividad.",
+  "symptomsCold": "Si tienes temblores, escalofríos o confusión, busca refugio."
+},
+"official_advice_title": "Recomendaciones oficiales de seguridad",
+"official_advice_footer": "Basado en guías del INSST y AEMET."
+
+
 }
 

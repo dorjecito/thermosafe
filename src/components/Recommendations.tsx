@@ -210,7 +210,7 @@ export default function Recommendations({ temp, lang, isDay }: Props) {
   // -------------------------------------------------------------
   // 3️⃣ RECOMANACIONS PER CALOR (només si NO hi ha fred ni és nit)
   // -------------------------------------------------------------
-  const { level } = getHeatRisk(temp);
+  const { level } = getHeatRisk(temp, "rest");
 
   const heatMap: Record<string, keyof typeof t> = {
     "Cap risc": "safe",

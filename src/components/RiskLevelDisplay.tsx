@@ -42,7 +42,7 @@ const LEVEL: Record<
 };
 
 export default function RiskLevelDisplay({ temp, lang, className }: Props) {
-  const { level } = getHeatRisk(temp);
+  const { level } = getHeatRisk(temp, "rest");
 
   const levelClass: Record<
     "Cap risc" | "Baix" | "Moderat" | "Alt" | "Extrem",

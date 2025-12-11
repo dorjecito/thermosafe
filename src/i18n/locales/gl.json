@@ -156,6 +156,11 @@
   "cold_risk_title": "Risco por frío",
   "wind_chill": "Temperatura efectiva",
 
+  "notify": {
+  "windTitle": "Vento forte",
+  "windBody": "Risco por vento {{risk}}. Velocidade do vento: {{speed}} km/h"
+},
+
   "windRisk": {
     "none": "Sen risco",
     "breezy": "Baixo",
@@ -279,9 +284,6 @@
 
 "official_advice_share": "Sigue as recomendacións de seguridade segundo o teu risco actual.",
 
-"official_advice_title": "Recomendacións oficiais de seguridade",
-"official_advice_footer": "Baseado en guías do INSST e AEMET.",
-
 "officialAdviceDynamic": {
   "heat": {
     "mild": "Hidrátate a miúdo e descansa en zonas frescas.",
@@ -310,11 +312,22 @@
 },
 
 "official_advice": {
-  "hydration": "Hidrátate con regularidade, aínda que non teñas sede.",
+  "hydration": "Hidrátate con regularidade, incluso sen sede.",
   "rest": "Descansa en zonas de sombra durante actividades prolongadas.",
-  "sunAvoid": "Evita o sol intenso entre as 12h e as 16h.",
-  "coldClothes": "Con frío, usa varias capas de roupa e protección cortaventos.",
+  "sunAvoid": "Evita o sol intenso entre as 12 h e as 16 h.",
+  "coldClothes": "Co frío, usa varias capas de roupa e cortaventos.",
+  "limitExposure": "Limita o tempo de exposición exterior.",
+  "protectExtremities": "Protege mans, orellas e extremidades.",
+  "avoidWind": "Evita a exposición directa ao vento.",
+  "secureObjects": "Asegura obxectos exteriores que poidan saír despedidos.",
+  "avoidTrees": "Evita camiñar baixo árbores ou ramas inestables.",
+  "avoidUnstableStructures": "Mantente afastado de estruturas débiles ou inestables.",
+  "useSPF": "Aplica protección solar SPF 30+.",
+  "useShade": "Busca sombra sempre que poidas.",
   "followAlerts": "Segue os avisos meteorolóxicos oficiais.",
-  "symptoms": "Se tes mareos, náuseas ou arrepiados, detén a actividade."
-}
+  "symptoms": "Se tes mareos, náuseas ou confusión, detén a actividade.",
+  "symptomsCold": "Se tes tremores ou confusión, busca abrigo."
+},
+"official_advice_title": "Recomendacións oficiais de seguridade",
+"official_advice_footer": "Baseado en guías do INSST e AEMET."
 }

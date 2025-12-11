@@ -189,6 +189,11 @@
 "cold_risk_title": "Hotz-arriskua",
 "wind_chill": "Benetako tenperatura",
 
+"notify": {
+  "windTitle": "Haize bortitza",
+  "windBody": "Haizearen arriskua: {{risk}}. Haizearen abiadura: {{speed}} km/h"
+},
+
   "windRisk": {
     "none": "Arriskurik ez",
     "breezy": "Baxua",
@@ -271,9 +276,6 @@
 
 "official_advice_share": "Segurtasun-gomendioak jarraitu zure uneko arrisku-mailaren arabera.",
 
-"official_advice_title": "Segurtasun gomendio ofizialak",
-"official_advice_footer": "INSST eta AEMETen gidetan oinarrituta.",
-
 "officialAdviceDynamic": {
   "heat": {
     "mild": "Maiz hidratatu eta atseden hartu gune freskoetan.",
@@ -302,11 +304,22 @@
 },
 
 "official_advice": {
-  "hydration": "Ura edan maiz, egarria ez izan arren ere.",
-  "rest": "Atseden hartu itzalean jarduera luzeetan zehar.",
-  "sunAvoid": "Saihestu eguzki bizia 12:00etatik 16:00etara.",
-  "coldClothes": "Hotzarekin, erabili arropa-geruza anitz eta haize-babesak.",
-  "followAlerts": "Jarraitu eguraldiaren abisu ofizialak.",
-  "symptoms": "Zorabioak, goragalea edo hotzikarak badituzu, eten jarduera."
-}
+  "hydration": "Ura edan aldizka, egarri ez baduzu ere.",
+  "rest": "Atseden hartu itzaletan jarduera luzeetan.",
+  "sunAvoid": "Saihestu eguzki intentsua 12:00etatik 16:00etara.",
+  "coldClothes": "Hotzarekin, erabili arropa-geruzak eta haize-babesak.",
+  "limitExposure": "Mugatu kanpoan emandako denbora.",
+  "protectExtremities": "Babestu eskuak, belarriak eta gorputz-adarrak.",
+  "avoidWind": "Saihestu haize zuzena.",
+  "secureObjects": "Ziurtatu kanpoko objektuak, hegan joateko arriskua badute.",
+  "avoidTrees": "Saihestu zuhaitz ahulen edo adar solteenen ondotik pasatzea.",
+  "avoidUnstableStructures": "Ez hurbildu egitura ahuletara edo ezegonkorretara.",
+  "useSPF": "Erabili SPF 30+ eguzki-babesa.",
+  "useShade": "Erabili itzala ahal duzun guztietan.",
+  "followAlerts": "Jarraitu eguraldi-alerta ofizialak.",
+  "symptoms": "Zorabioak, goragaleak edo nahasmena badituzu, eten jarduera.",
+  "symptomsCold": "Dardarak edo konfusioa badituzu, bilatu babeslekua."
+},
+"official_advice_title": "Segurtasun gomendio ofizialak",
+"official_advice_footer": "INSST eta AEMET-en gomendioetan oinarritua."
 }

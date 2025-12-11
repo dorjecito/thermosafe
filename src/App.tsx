@@ -39,6 +39,49 @@ import { getUVFromOpenUV } from "./services/openUV";
    import { getThermalRisk } from "./utils/getThermalRisk";
    import { useSmartActivity } from "./hooks/useSmartActivity";
 
+   /* ============================================================
+   🔥 Risc de calor + activitat
+   ============================================================ */
+
+// Ordre de risc de calor (coherent amb getHeatRisk)
+const HEAT_RISK_LEVELS = [
+  "heat_safe",
+  "heat_mild",
+  "heat_moderate",
+  "heat_high",
+  "heat_extreme",
+] as const;
+
+type HeatRiskKey = (typeof HEAT_RISK_LEVELS)[number];
+
+type ActivityLevel = "rest" | "walk" | "moderate" | "intense";
+
+// Quants nivells puja cada activitat
+const ACTIVITY_BOOST: Record<ActivityLevel, number> = {
+  rest: 0,
+  walk: 1,
+  moderate: 2,
+  intense: 3,
+};
+
+/**
+ * Ajusta el risc de calor segons el nivell d’activitat.
+ * Exemple:
+ *   base: heat_mild + activity "moderate" → heat_high
+ */
+function applyActivityToHeatRisk(baseRisk: string, activity: ActivityLevel): string {
+  // Si el risc no és de calor, el deixam igual
+  if (!baseRisk.startsWith("heat_")) return baseRisk;
+
+  const idx = HEAT_RISK_LEVELS.indexOf(baseRisk as HeatRiskKey);
+  if (idx === -1) return baseRisk;
+
+  const boost = ACTIVITY_BOOST[activity] ?? 0;
+  const newIdx = Math.min(idx + boost, HEAT_RISK_LEVELS.length - 1);
+
+  return HEAT_RISK_LEVELS[newIdx];
+}
+
 
 function useStableValue<T>(value: T, delay = 800): T {
   const [stable, setStable] = useState(value);
@@ -2152,18 +2195,10 @@ useEffect(() => {
   if (wind !== null) {
     const risk = getWindRisk(wind);
     setWindRisk(risk);
-
-    // Envia notificació si el vent és fort o molt fort (traduït segons idioma)
-    if (pushEnabled && (risk === 'strong' || risk === 'very_strong')) {
-      showBrowserNotification(
-        `💨 ${t('notify.windTitle')}`,
-        `${t('notify.windBody', { risk })}`
-      );
-    }
   } else {
     setWindRisk('none');
   }
-}, [wind, pushEnabled, t]);
+}, [wind]);
 
 
 /* 🌍 HELPER: Actualitza dades generals sense sobreescriure el cel */
@@ -2566,6 +2601,9 @@ const riskKey = riskKeyMap[riskKeyRaw] || "cap";
 // Traducció a l’idioma actiu
 const coldRiskLabel = t(`coldRisk.${riskKey}`);
 
+// 🔥 Calcular risc de calor ajustat per activitat (rest, walk, moderate, intense)
+const heatRisk = hi !== null ? getHeatRisk(hi, activityLevel) : null;
+
 return (
     <div className="container">
       {/* 🔄 Selector d’idioma */}
@@ -2721,27 +2759,40 @@ return (
 
 </div>
   
-      {/* ⚠️ ALERTES */}
-      {hi !== null && hi >= 18 && getHeatRisk(hi).isHigh && (
-        <div className="alert-banner">
-          {getHeatRisk(hi).isExtreme ? t('alert_extreme') : t('alertRisk')}
-        </div>
-      )}
-  
-      {irr !== null && irr >= 8 && (
-        <div className="alert-banner">
-          <p>{t('highIrradianceWarning')}</p>
-          <p>{t('irradianceTips')}</p>
-        </div>
-      )}
-  
-  {loading && (
-  <p style={{ 
-    color: "#1e90ff", 
-    fontStyle: "italic", 
-    marginBottom: "1rem", 
-    textAlign: "center" 
-  }}>
+    {/* ⚠️ ALERTES – risc de calor + activitat */}
+{heatRisk && heatRisk.isHigh && (
+  <div className="alert-banner">
+    {heatRisk.isExtreme
+      ? t("alert_extreme")
+      : t("alertRisk")}
+  </div>
+)}
+
+{/* ⚡ ALERTA IRRADIACIÓ */}
+{irr !== null && irr >= 8 && (
+  <div className="alert-banner">
+    <p>{t("highIrradianceWarning")}</p>
+    <p>{t("irradianceTips")}</p>
+  </div>
+)}
+
+{/* 🔆 ALERTA UVI ALTA */}
+{uvi !== null && uvi >= 8 && (
+  <div className="alert-banner">
+    <p>{t("highUVIWarning")}</p>
+  </div>
+)}
+
+{/* ⏳ LOADERS */}
+{loading && (
+  <p
+    style={{
+      color: "#1e90ff",
+      fontStyle: "italic",
+      marginBottom: "1rem",
+      textAlign: "center",
+    }}
+  >
     {t("loading")}
   </p>
 )}

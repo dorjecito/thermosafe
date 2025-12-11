@@ -149,6 +149,11 @@
 "cold_risk_title": "Risc per fred",
 "wind_chill": "Temperatura efectiva",
 
+"notify": {
+  "windTitle": "Vent fort",
+  "windBody": "Risc per vent {{risk}}. Velocitat del vent: {{speed}} km/h"
+},
+
   "windRisk": {
     "none": "cap risc",
     "breezy": "suau",
@@ -266,9 +271,6 @@
 
 "official_advice_share": "Segueix les recomanacions de seguretat segons el teu risc actual.",
 
-"official_advice_title": "Recomanacions oficials de seguretat",
-"official_advice_footer": "Basat en guies de l’INSST i AEMET.",
-
 "officialAdviceDynamic": {
   "heat": {
     "mild": "Hidrata’t sovint i descansa en zones fresques.",
@@ -298,9 +300,21 @@
 "official_advice": {
   "hydration": "Hidrata’t amb regularitat, encara que no tinguis set.",
   "rest": "Descansa en zones d’ombra durant activitats prolongades.",
-  "sunAvoid": "Evita el sol intens entre les 12h i les 16h.",
+  "sunAvoid": "Evita el sol intens entre les 12 h i les 16 h.",
   "coldClothes": "Amb fred, utilitza capes de roba i protecció tallavents.",
+  "limitExposure": "Limita el temps d’exposició exterior.",
+  "protectExtremities": "Protegeix mans, orelles i extremitats.",
+  "avoidWind": "Evita exposició directa al vent.",
+  "secureObjects": "Assegura objectes exteriors que puguin sortir projectats.",
+  "avoidTrees": "Evita passar prop d’arbres o branques inestables.",
+  "avoidUnstableStructures": "Mantén-te allunyat d'estructures febles o inestables.",
+  "useSPF": "Aplica protecció solar SPF 30+.",
+  "useShade": "Fes servir ombra sempre que sigui possible.",
   "followAlerts": "Segueix els avisos meteorològics oficials.",
-  "symptoms": "Si tens marejos, nàusees o calfreds, atura l’activitat."
-}
+  "symptoms": "Si tens marejos, nàusees o confusió, atura l’activitat.",
+  "symptomsCold": "Si tens calfreds, tremolors o confusió, busca refugi i escalfor."
+},
+"official_advice_title": "Recomanacions oficials de seguretat",
+"official_advice_footer": "Basat en guies de l’INSST i AEMET."
+
 }
