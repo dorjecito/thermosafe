@@ -315,6 +315,11 @@
   "symptomsCold": "Si tens calfreds, tremolors o confusió, busca refugi i escalfor."
 },
 "official_advice_title": "Recomanacions oficials de seguretat",
-"official_advice_footer": "Basat en guies de l’INSST i AEMET."
+"official_advice_footer": "Basat en guies de l’INSST i AEMET.",
+
+"rec": {
+  "safe": "Condicions segures. Mantén la hidratació habitual.",
+  "safeWithHighUV": "Condicions tèrmiques segures. Precaució per radiació solar."
+}
 
 }
