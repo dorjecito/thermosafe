@@ -146,7 +146,7 @@ ${dynamicAdvice.map(a => `• ${a}`).join("\n")}
 
 ThermoSafe · INSST · AEMET
 
-🍎 iOS: https://apps.apple.com/app/thermosafe
+🍎 iOS: https://thermosafe.app
 🤖 Android: https://play.google.com/store/apps/details?id=app.thermosafe
 `.trim();
 
