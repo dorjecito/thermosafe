@@ -2,11 +2,12 @@ import React, { useState } from "react";
 import { useTranslation } from "react-i18next";
 
 interface Props {
-  risk: string;       // heat_mild, cold_extreme, etc.
-  irr: number | null;
-  uvi: number | null;
-  windRisk: string;   // breezy, moderate, strong...
-  lang: string;
+  risk: string;
+  irr: number | null;
+  uvi: number | null;
+  windRisk: string;
+  lang: string;
+  
 }
 
 export default function OfficialAdviceCard({
@@ -128,27 +129,65 @@ export default function OfficialAdviceCard({
   })();
 
   /* ───────────────────────────────────────────────
-     📤 COMPARTIR — text traduït + decimals
-  ──────────────────────────────────────────────── */
+     📤 COMPARTIR — text traduït + coherència de riscos
+  ─────────────────────────────────────────────── */
   const share = () => {
-    const text = `
-🛡️ ${t("official_advice_title")} – ThermoSafe
+    const lines: string[] = [];
 
-📍 ${t("current_risk")}:
-• ${t("heat_risk")}: ${t(`risk_levels.${risk.replace("heat_", "")}`, risk)}
-${uvi !== null ? `• ${t("uvi")}: ${uvi.toFixed(1)}` : ""}
-${windRisk && windRisk !== "none" ? `• ${t("wind_risk")}: ${t(`windRisk.${windRisk}`, windRisk)}` : ""}
+    lines.push(`🛡️ ${t("official_advice_title")} – ThermoSafe`);
+    lines.push("");
 
-📋 ${t("recommendations_title")}
-${dynamicAdvice.map(a => `• ${a}`).join("\n")}
+    // 📍 RISC ACTUAL — només si hi ha risc real
+const riskLines: string[] = [];
 
-ℹ️ ${t("official_advice_footer")}
+// 🔥 Calor
+if (risk.startsWith("heat_") && !risk.endsWith("_safe")) {
+  const lvl = risk.replace("heat_", "");
+  riskLines.push(`• ${t("heat_risk")}: ${t(`risk_levels.${lvl}`, lvl)}`);
+}
 
-ThermoSafe · INSST · AEMET
+// ❄️ Fred
+if (risk.startsWith("cold_") && !risk.endsWith("_safe")) {
+  const lvl = risk.replace("cold_", "");
+  riskLines.push(`• ${t("cold_risk")}: ${t(`risk_levels.${lvl}`, lvl)}`);
+}
 
-🍎 iOS: https://thermosafe.app
-🤖 Android: https://play.google.com/store/apps/details?id=app.thermosafe
-`.trim();
+// ☀️ UV
+if (typeof uvi === "number" && uvi >= 3) {
+  riskLines.push(`• ${t("uvi")}: ${uvi.toFixed(1)}`);
+}
+
+// 💨 Vent
+if (windRisk && ["moderat", "fort", "molt_fort", "extrem"].includes(windRisk)) {
+  riskLines.push(
+    `• ${t("wind_risk")}: ${t(`windRisk.${windRisk}`, windRisk)}`
+  );
+}
+
+// 👉 Només mostrem el bloc si hi ha línies
+if (riskLines.length > 0) {
+  lines.push(`📍 ${t("current_risk")}:`);
+  riskLines.forEach(l => lines.push(l));
+}
+
+    // 📋 Recomanacions
+    if (dynamicAdvice.length > 0) {
+      lines.push("");
+      lines.push(`📋 ${t("recommendations_title")}`);
+      dynamicAdvice.forEach(a => lines.push(`• ${a}`));
+    }
+
+    lines.push("");
+    lines.push(`ℹ️ ${t("official_advice_footer")}`);
+    lines.push("");
+    lines.push("ThermoSafe · INSST · AEMET");
+    lines.push("");
+    lines.push("🍎 iOS: https://thermosafe.app");
+    lines.push(
+      "🤖 Android: https://play.google.com/store/apps/details?id=app.thermosafe"
+    );
+
+    const text = lines.join("\n");
 
     if (navigator.share) {
       navigator.share({
