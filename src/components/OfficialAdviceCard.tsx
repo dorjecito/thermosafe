@@ -135,16 +135,35 @@ export default function OfficialAdviceCard({ risk, irr, uvi, windRisk, lang }: P
         COMPARTIR
   ──────────────────────────────────────────────── */
   const share = () => {
-    const text = [...dynamicAdvice, ...officialAdvice].join("\n");
-    if (navigator.share) {
-      navigator.share({
-        title: t("official_advice_title"),
-        text
-      });
-    } else {
-      alert("Funció no compatible al teu dispositiu.");
-    }
-  };
+  const text = `
+🛡️ Recomanacions oficials de seguretat – ThermoSafe
+
+Situació actual:
+• Risc per calor: ${risk}
+${uvi !== null ? `• Índex UV: ${uvi}` : ""}
+${windRisk !== "none" ? `• Risc per vent: ${windRisk}` : ""}
+
+Recomanacions:
+${dynamicAdvice.map(a => `• ${a}`).join("\n")}
+
+Font:
+ThermoSafe – Avaluació preventiva basada en criteris INSST i AEMET.
+
+📱 Descarrega ThermoSafe:
+🍎 iOS: https://thermosafe.app
+🤖 Android: https://play.google.com/store/apps/details?id=app.thermosafe
+`.trim();
+
+  if (navigator.share) {
+    navigator.share({
+      title: "ThermoSafe – Recomanacions de seguretat",
+      text
+    });
+  } else {
+    navigator.clipboard.writeText(text);
+    alert("Text copiat al porta-retalls");
+  }
+};
 
   /* ───────────────────────────────────────────────
         RENDER

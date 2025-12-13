@@ -205,6 +205,20 @@ export default function Recommendations({ temp, lang, isDay }: Props) {
     );
   }
 
+  // -------------------------------------------------------------
+// 🚫 FILTRE: NO mostrar recomanacions de calor amb temperatura fresca
+// -------------------------------------------------------------
+if (temp < 18) {
+  return (
+    <div className="recommendation-box">
+      <p className="recommendation-title safe">
+        🟢 {t.title}
+      </p>
+      <p>{t.safe}</p>
+    </div>
+  );
+}
+
 
 
   // -------------------------------------------------------------
