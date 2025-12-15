@@ -226,15 +226,25 @@ if (temp < 18) {
   // -------------------------------------------------------------
   const { level } = getHeatRisk(temp, "rest");
 
-  const heatMap: Record<string, keyof typeof t> = {
-    "Cap risc": "safe",
-    Baix: "mild",
-    Moderat: "moderate",
-    Alt: "high",
-    Extrem: "ext",
-  };
+// ❗ Només consideram calor real a partir de MODERAT
+if (level === "Cap risc" || level === "Baix") {
+  return (
+    <div className="recommendation-box">
+      <p className="recommendation-title safe">
+        🟢 {t.title}
+      </p>
+      <p>{t.safe}</p>
+    </div>
+  );
+}
 
-  const heatKey = heatMap[level] ?? "safe";
+const heatMap: Record<string, keyof typeof t> = {
+  Moderat: "moderate",
+  Alt: "high",
+  Extrem: "ext",
+};
+
+const heatKey = heatMap[level];
 
   const icon = getIcon(heatKey);
 
