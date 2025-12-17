@@ -40,14 +40,14 @@ export default function OfficialAdviceCard({
   /* ───────────────────────────────────────────────
      🎨 COLORS SEGONS RISC GLOBAL
   ──────────────────────────────────────────────── */
-  const riskClass =
-    risk.includes("extreme")
-      ? "official-advanced-extreme"
-      : risk.includes("high")
-      ? "official-advanced-high"
-      : risk.includes("moderate")
-      ? "official-advanced-moderate"
-      : "official-advanced-low";
+ const riskClass =
+  risk.includes("extreme")
+    ? "official-advanced-extreme"
+    : risk.includes("high")
+    ? "official-advanced-high"
+    : risk.includes("moderate")
+    ? "official-advanced-moderate"
+    : "official-advanced-info";
 
   /* ───────────────────────────────────────────────
      ⚡ RECOMANACIONS DINÀMIQUES (curtes)
@@ -97,17 +97,37 @@ export default function OfficialAdviceCard({
     }
 
     if (risk.startsWith("cold_")) {
-      return [
-        t("official_advice.coldClothes"),
-        t("official_advice.limitExposure"),
-        t("official_advice.protectExtremities"),
-        t("official_advice.avoidWind"),
-        t("official_advice.followAlerts"),
-        t("official_advice.symptomsCold"),
-      ];
-    }
+  const lvl = risk.replace("cold_", "");
 
-    if (windRisk && windRisk !== "none") {
+  // ❄️ Fred lleu → to informatiu
+  if (lvl === "low" || lvl === "safe") {
+    return [
+      t("official_advice.coldClothes"),
+      t("official_advice.followAlerts"),
+    ];
+  }
+
+  // ❄️ Fred moderat
+  if (lvl === "moderate") {
+    return [
+      t("official_advice.coldClothes"),
+      t("official_advice.protectExtremities"),
+      t("official_advice.followAlerts"),
+    ];
+  }
+
+  // ❄️ Fred alt o extrem
+  return [
+    t("official_advice.coldClothes"),
+    t("official_advice.limitExposure"),
+    t("official_advice.protectExtremities"),
+    t("official_advice.avoidWind"),
+    t("official_advice.followAlerts"),
+    t("official_advice.symptomsCold"),
+  ];
+}
+
+    if (windRisk && ["fort", "molt_fort", "extrem"].includes(windRisk)) {
       return [
         t("official_advice.secureObjects"),
         t("official_advice.avoidTrees"),
@@ -116,7 +136,7 @@ export default function OfficialAdviceCard({
       ];
     }
 
-    if (typeof uvi === "number" && uvi >= 8) {
+    if (typeof uvi === "number" && uvi >= 6) {
       return [
         t("official_advice.useSPF"),
         t("official_advice.useShade"),
@@ -211,9 +231,16 @@ if (riskLines.length > 0) {
         📤 {t("share")}
       </button>
 
-      <button className="emergency-btn" onClick={() => confirmCall112(lang)}>
-        🚨 112
-      </button>
+      <button
+  className={`emergency-btn ${
+    risk.includes("extreme") || risk.includes("high")
+      ? "emergency-critical"
+      : "emergency-neutral"
+  }`}
+  onClick={() => confirmCall112(lang)}
+>
+  🚨 112
+</button>
 
       <button className="official-expand-btn" onClick={() => setOpen(!open)}>
         {open ? `▲ ${t("hide_advice")}` : `▼ ${t("show_advice")}`}
