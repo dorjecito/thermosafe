@@ -1,24 +1,17 @@
 // ===============================================================
-//  📘 Recommendations.tsx — Versió llarga, clara i supercomentada
+//  📘 Recommendations.tsx — Versió corregida i robusta
 // ===============================================================
 
 import * as React from "react";
 import { getHeatRisk } from "../utils/heatRisk";
 
-
-// ---------------------------------------------------------------
-// Tipus de llengua admesos
-// ---------------------------------------------------------------
 type Lang = "ca" | "es" | "eu" | "gl";
 
-
-// ---------------------------------------------------------------
-// Propietats rebudes pel component
-// ---------------------------------------------------------------
 interface Props {
-  temp: number;  // temperatura efectiva
-  lang: Lang;    // idioma
-  isDay: boolean; // és de dia?
+  temp: number;   // temperatura efectiva rebuda
+  lang: Lang;
+  isDay: boolean;
+  forceSafe?:boolean;
 }
 
 
@@ -121,141 +114,119 @@ const TXT = {
 // ✨ Sistema d'icones segons intensitat del risc
 // ----------------------------------------------
 const getIcon = (key: string): string => {
-  // 🌙 NIT
   if (key.startsWith("night")) return "🌙";
-
-  // ❄️ FRED
   if (key === "cold_low") return "❄️";
   if (key === "cold_mod") return "❄️❄️";
   if (key === "cold_high") return "❄️❄️❄️";
   if (key === "cold_ext") return "❄️❄️❄️❄️";
-
-  // 🔥 CALOR
   if (key === "mild") return "🔥";
   if (key === "moderate") return "🔥🔥";
   if (key === "high") return "🔥🔥🔥";
   if (key === "ext") return "🔥🔥🔥🔥";
-
-  // 🟢 SENSE RISC
   if (key === "safe") return "🟢";
-
   return "";
 };
 
 
-
-// ===============================================================
-//  COMPONENT PRINCIPAL
-// ===============================================================
+/* =============================================================
+   COMPONENT PRINCIPAL
+============================================================= */
 export default function Recommendations({ temp, lang, isDay }: Props) {
+  const t = TXT[lang];
 
-  const t = TXT[lang]; // Textos de l’idioma actual
+  /* 🔒 NORMALITZACIÓ ABSOLUTA */
+  const effectiveTemp = Number(temp);
 
-
-  // -------------------------------------------------------------
-  // 1️⃣ PRIORITAT ABSOLUTA: RISC PER FRED
-  // -------------------------------------------------------------
+  /* =========================================================
+     1️⃣ PRIORITAT ABSOLUTA — RISC PER FRED
+     (NO pot caure mai a "safe")
+  ========================================================== */
   let coldRisk: keyof typeof t | null = null;
 
-  if (temp < -20) coldRisk = "cold_ext";
-  else if (temp < -10) coldRisk = "cold_high";
-  else if (temp < 0) coldRisk = "cold_mod";
-  else if (temp < 5) coldRisk = "cold_low";
+  if (effectiveTemp < -20) coldRisk = "cold_ext";
+  else if (effectiveTemp < -10) coldRisk = "cold_high";
+  else if (effectiveTemp < 5) coldRisk = "cold_mod";
+  else if (effectiveTemp < 10) coldRisk = "cold_low";
 
   if (coldRisk) {
-
-    const icon = getIcon(coldRisk);
-
     return (
       <div className="recommendation-box">
         <p className={`recommendation-title ${coldRisk}`}>
-          {icon}
-          {t.title}
+          {getIcon(coldRisk)} {t.title}
         </p>
-
         <p>{t[coldRisk]}</p>
       </div>
     );
   }
 
-
-
-  // -------------------------------------------------------------
-  // 2️⃣ RECOMANACIONS NOCTURNES (si NO fa fred)
-  // -------------------------------------------------------------
+  /* =========================================================
+     2️⃣ RECOMANACIONS NOCTURNES (només si NO hi ha fred)
+  ========================================================== */
   if (!isDay) {
-
     let nightKey: "nightCool" | "nightSafe" | "nightHeat";
 
-    if (temp < 18) nightKey = "nightCool";
-    else if (temp < 24) nightKey = "nightSafe";
+    if (effectiveTemp < 18) nightKey = "nightCool";
+    else if (effectiveTemp < 24) nightKey = "nightSafe";
     else nightKey = "nightHeat";
-
-    const icon = getIcon(nightKey);
 
     return (
       <div className="recommendation-box">
         <p className={`recommendation-title ${nightKey}`}>
-          {icon}
-          {t.title}
+          {getIcon(nightKey)} {t.title}
         </p>
-
         <p>{t[nightKey]}</p>
       </div>
     );
   }
 
-  // -------------------------------------------------------------
-// 🚫 FILTRE: NO mostrar recomanacions de calor amb temperatura fresca
-// -------------------------------------------------------------
-if (temp < 18) {
-  return (
-    <div className="recommendation-box">
-      <p className="recommendation-title safe">
-        🟢 {t.title}
-      </p>
-      <p>{t.safe}</p>
-    </div>
-  );
-}
-
-
-
-  // -------------------------------------------------------------
-  // 3️⃣ RECOMANACIONS PER CALOR (només si NO hi ha fred ni és nit)
-  // -------------------------------------------------------------
-  const { level } = getHeatRisk(temp, "rest");
-
-// ❗ Només consideram calor real a partir de MODERAT
-if (level === "Cap risc" || level === "Baix") {
-  return (
-    <div className="recommendation-box">
-      <p className="recommendation-title safe">
-        🟢 {t.title}
-      </p>
-      <p>{t.safe}</p>
-    </div>
-  );
-}
-
-const heatMap: Record<string, keyof typeof t> = {
-  Moderat: "moderate",
-  Alt: "high",
-  Extrem: "ext",
-};
-
-const heatKey = heatMap[level];
-
-  const icon = getIcon(heatKey);
+  if (effectiveTemp >= 30) {
+  // encara que getHeatRisk digui "Baix"
+  const heatKey = effectiveTemp < 33 ? "moderate" : "high";
 
   return (
     <div className="recommendation-box">
       <p className={`recommendation-title ${heatKey}`}>
-        {icon}
+        {getIcon(heatKey)}
         {t.title}
       </p>
-
       <p>{t[heatKey]}</p>
     </div>
   );
 }
+
+  /* =========================================================
+     3️⃣ ZONA NEUTRA (10–18 °C, sense fred ni calor)
+  ========================================================== */
+  if (effectiveTemp >= 10 && effectiveTemp < 18) {
+  return null;
+}
+
+  /* =========================================================
+     4️⃣ RECOMANACIONS PER CALOR
+  ========================================================== */
+  const { level } = getHeatRisk(effectiveTemp, "rest");
+
+ if (level === "Cap risc" || level === "Baix") {
+  // ❗ NO mostrar recomanacions genèriques si no hi ha risc real
+  return null;
+}
+
+  const heatMap: Record<string, keyof typeof t> = {
+    Moderat: "moderate",
+    Alt: "high",
+    Extrem: "ext",
+  };
+
+  const heatKey = heatMap[level];
+
+  return (
+    <div className="recommendation-box">
+      <p className={`recommendation-title ${heatKey}`}>
+        {getIcon(heatKey)} {t.title}
+      </p>
+      <p>{t[heatKey]}</p>
+    </div>
+  );
+}
+
+
