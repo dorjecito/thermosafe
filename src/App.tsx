@@ -39,6 +39,7 @@ import { getUVFromOpenUV } from "./services/openUV";
    import { getThermalRisk } from "./utils/getThermalRisk";
    import { useSmartActivity } from "./hooks/useSmartActivity";
    import { getUvLevel, getUvText, getUvAdvice } from "./utils/uv";
+   
 
    /* ============================================================
    🔥 Risc de calor + activitat
@@ -2019,7 +2020,30 @@ const fetchWeather = async (cityName: string) => {
 
 
     // 🌤 Cel i icona
-    setSky(data.weather?.[0]?.description || "");
+    const rawDesc = (data.weather?.[0]?.description || "").trim();
+
+    const normalize = (s: string) => s.trim().toLowerCase();
+    const humanize = (s: string) => s.replace(/_/g, " "); // per mostrar-ho bé si no hi ha traducció
+
+    const candidates = [
+      normalize(rawDesc),                 // "few clouds"
+      normalize(humanize(rawDesc)),       // "lleugerament ennuvolat" (si et ve amb _)
+    ];
+
+    let finalSky = humanize(rawDesc); // fallback per defecte (sense "_")
+
+    for (const k of candidates) {
+      const keyPath = `weather_desc.${k}`;
+      const out = t(keyPath);
+
+      // ✅ Accepta només si REALMENT ha traduït (normalment el valor és diferent i capitalitzat)
+      if (out && out !== keyPath && out !== k && out !== rawDesc) {
+        finalSky = out;
+        break;
+      }
+    }
+
+    setSky(finalSky);
     setIcon(data.weather?.[0]?.icon || "");
 
     // 🏙 Nom de la ciutat real
