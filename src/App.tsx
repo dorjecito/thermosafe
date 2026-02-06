@@ -3108,10 +3108,10 @@ if (uvi != null && uvi >= 3) {
 
   {recTemp != null && (
   <Recommendations
-    temp={recTemp}
-    lang={normalizeLang(i18n.language)}
-    isDay={day}
-  />
+  temp={recTemp}
+  lang={i18n.resolvedLanguage || i18n.language}
+  isDay={day}
+/>
 )}
 
 {/* 🛡️ TARGETA DE RECOMANACIONS OFICIALS AVANÇADA */}

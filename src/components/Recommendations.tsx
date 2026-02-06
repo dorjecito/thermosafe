@@ -1,25 +1,23 @@
 // ===============================================================
-//  📘 Recommendations.tsx — Versió corregida i robusta
+//  📘 Recommendations.tsx — Versió corregida i robusta (amb anglès)
 // ===============================================================
 
 import * as React from "react";
 import { getHeatRisk } from "../utils/heatRisk";
 
-type Lang = "ca" | "es" | "eu" | "gl";
+type Lang = "ca" | "es" | "eu" | "gl" | "en";
 
 interface Props {
   temp: number;   // temperatura efectiva rebuda
-  lang: Lang;
+  lang: Lang | string; // permet 'en-GB', 'ca-ES', etc.
   isDay: boolean;
-  forceSafe?:boolean;
+  forceSafe?: boolean;
 }
-
 
 // ---------------------------------------------------------------
 // 🗣️ Textos multillengua (calor, fred, nit)
 // ---------------------------------------------------------------
 const TXT = {
-
   // ---------------------- Català ----------------------
   ca: {
     title: "Recomanacions:",
@@ -40,9 +38,8 @@ const TXT = {
     cold_low: "Fred lleu: vesteix amb capes i protegeix-te una mica.",
     cold_mod: "Fred moderat: limita l’exposició i protegeix extremitats.",
     cold_high: "Risc alt de fred: evita exposicions llargues a l’exterior.",
-    cold_ext: "Risc extrem de fred: perill d’hipotèrmia. No surtis i mantén la calor corporal.",
+    cold_ext: "Risc extrem de fred: perill d’hipotèrmia. No surtis i mantén la calor corporal."
   },
-
 
   // ---------------------- Espanyol ----------------------
   es: {
@@ -61,9 +58,8 @@ const TXT = {
     cold_low: "Frío leve: usa capas y protégete ligeramente.",
     cold_mod: "Frío moderado: limita la exposición y protege extremidades.",
     cold_high: "Riesgo alto por frío: evita exposiciones prolongadas.",
-    cold_ext: "Riesgo extremo por frío: peligro de hipotermia. No salgas.",
+    cold_ext: "Riesgo extremo por frío: peligro de hipotermia. No salgas."
   },
-
 
   // ---------------------- Euskera ----------------------
   eu: {
@@ -82,9 +78,8 @@ const TXT = {
     cold_low: "Hotz arina: geruzak erabili eta babestu pixka bat.",
     cold_mod: "Hotz moderatua: mugatu kanpoan egotea eta babestu gorputz-adarrak.",
     cold_high: "Hotz handia: saihestu esposizio luzeak.",
-    cold_ext: "Hotz muturrekoa: hipotermiaren arriskua. Ez irten.",
+    cold_ext: "Hotz muturrekoa: hipotermiaren arriskua. Ez irten."
   },
-
 
   // ---------------------- Gallec ----------------------
   gl: {
@@ -103,12 +98,32 @@ const TXT = {
     cold_low: "Frío lixeiro: usa capas e protéxete algo.",
     cold_mod: "Frío moderado: limita exposición e protexe extremidades.",
     cold_high: "Risco alto por frío: evita estar fóra moito tempo.",
-    cold_ext: "Frío extremo: risco de hipotermia. Non saias.",
+    cold_ext: "Frío extremo: risco de hipotermia. Non saias."
   },
 
+  // ---------------------- English ----------------------
+  en: {
+    title: "Recommendations:",
+
+    // Heat
+    safe: "Safe conditions. Maintain normal hydration.",
+    mild: "Possible heat fatigue. Drink water often and rest in the shade.",
+    moderate: "Moderate risk. Breaks every 20 min, light clothing, and hydrate.",
+    high: "High risk. Avoid intense effort and increase breaks.",
+    ext: "Extreme risk. Stop activity and cool down immediately.",
+
+    // Night
+    nightCool: "Cool night: dress appropriately and keep the space ventilated.",
+    nightSafe: "Safe conditions. Keep good ventilation.",
+    nightHeat: "If it is hot at night, ventilate well and sleep in light clothing.",
+
+    // Cold
+    cold_low: "Mild cold: dress in layers and protect yourself a bit.",
+    cold_mod: "Moderate cold: limit exposure and protect extremities.",
+    cold_high: "High cold risk: avoid long periods outdoors.",
+    cold_ext: "Extreme cold risk: danger of hypothermia. Stay inside and keep warm."
+  }
 } as const;
-
-
 
 // ----------------------------------------------
 // ✨ Sistema d'icones segons intensitat del risc
@@ -127,19 +142,23 @@ const getIcon = (key: string): string => {
   return "";
 };
 
+const normalizeLang = (lang: Lang | string): Lang => {
+  const code = (lang || "ca").toString().toLowerCase().slice(0, 2) as Lang;
+  return (["ca", "es", "eu", "gl", "en"] as const).includes(code) ? code : "ca";
+};
 
 /* =============================================================
    COMPONENT PRINCIPAL
 ============================================================= */
 export default function Recommendations({ temp, lang, isDay }: Props) {
-  const t = TXT[lang];
+  const lng = normalizeLang(lang);
+  const t = TXT[lng];
 
   /* 🔒 NORMALITZACIÓ ABSOLUTA */
   const effectiveTemp = Number(temp);
 
   /* =========================================================
      1️⃣ PRIORITAT ABSOLUTA — RISC PER FRED
-     (NO pot caure mai a "safe")
   ========================================================== */
   let coldRisk: keyof typeof t | null = null;
 
@@ -179,42 +198,42 @@ export default function Recommendations({ temp, lang, isDay }: Props) {
     );
   }
 
+  /* =========================================================
+     (Extra) Força risc moderat/alt amb calor alta real
+  ========================================================== */
   if (effectiveTemp >= 30) {
-  // encara que getHeatRisk digui "Baix"
-  const heatKey = effectiveTemp < 33 ? "moderate" : "high";
+    const heatKey: keyof typeof t = effectiveTemp < 33 ? "moderate" : "high";
 
-  return (
-    <div className="recommendation-box">
-      <p className={`recommendation-title ${heatKey}`}>
-        {getIcon(heatKey)}
-        {t.title}
-      </p>
-      <p>{t[heatKey]}</p>
-    </div>
-  );
-}
+    return (
+      <div className="recommendation-box">
+        <p className={`recommendation-title ${heatKey}`}>
+          {getIcon(heatKey)} {t.title}
+        </p>
+        <p>{t[heatKey]}</p>
+      </div>
+    );
+  }
 
   /* =========================================================
      3️⃣ ZONA NEUTRA (10–18 °C, sense fred ni calor)
   ========================================================== */
   if (effectiveTemp >= 10 && effectiveTemp < 18) {
-  return null;
-}
+    return null;
+  }
 
   /* =========================================================
      4️⃣ RECOMANACIONS PER CALOR
   ========================================================== */
   const { level } = getHeatRisk(effectiveTemp, "rest");
 
- if (level === "Cap risc" || level === "Baix") {
-  // ❗ NO mostrar recomanacions genèriques si no hi ha risc real
-  return null;
-}
+  if (level === "Cap risc" || level === "Baix") {
+    return null;
+  }
 
   const heatMap: Record<string, keyof typeof t> = {
     Moderat: "moderate",
     Alt: "high",
-    Extrem: "ext",
+    Extrem: "ext"
   };
 
   const heatKey = heatMap[level];
@@ -228,5 +247,3 @@ export default function Recommendations({ temp, lang, isDay }: Props) {
     </div>
   );
 }
-
-
