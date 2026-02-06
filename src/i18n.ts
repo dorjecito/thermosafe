@@ -20,7 +20,9 @@ i18n
       gl: { translation: gl }
     },
 
-    fallbackLng: "ca",
+    // ✅ Anglès com a llengua pont quan no hi ha coincidència
+    fallbackLng: "en",
+
     supportedLngs: ["ca", "es", "en", "eu", "gl"],
 
     detection: {
@@ -32,18 +34,16 @@ i18n
 
     debug: false,
 
-    // ✅ Evita retorns "estranys" quan falta una clau
+    // ✅ Evita retorns estranys si falta una clau
     returnNull: false,
     returnEmptyString: false,
 
-    // ✅ Si falta una clau, NO facis soroll (però tampoc trenquis res)
+    // ✅ No guardar claus mancants
     saveMissing: false,
     missingKeyHandler: () => {},
 
-    // ✅ Opcional: quan falti una clau, retorna un text "humà"
-    // (això ajuda molt per claus tipus weather_desc.few_clouds)
+    // ✅ Humanitza claus mancants (ex: weather_desc.few_clouds → "few clouds")
     parseMissingKeyHandler: (key) => {
-      // agafa l'últim segment i humanitza
       const last = key.split(".").pop() || key;
       return last.replace(/_/g, " ");
     }

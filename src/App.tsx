@@ -28,6 +28,7 @@ import { getUVFromOpenUV } from "./services/openUV";
    import LocationCard from "./components/LocationCard";
    import OfficialAdviceCard from "./components/OfficialAdviceCard";
    
+   
    /* —— analítica (opcional) ———————————— */
    import { inject } from '@vercel/analytics';
    inject()
@@ -462,6 +463,7 @@ async function safeUVFetch(lat: number, lon: number): Promise<number | null> {
     return null;
   }
 }
+
 
 /* === [WIND] constants & helpers === */
 type WindRisk = 'none' | 'breezy' | 'moderate' | 'strong' | 'very_strong';
@@ -2979,10 +2981,8 @@ return (
 {isDaytime() ? (
   <div className="uv-block">
 
-    {/* ---- Títol UV ---- */}
     <h3 className="uv-title">{t("solar_info")}</h3>
 
-    {/* ---- Índex UV actual ---- */}
     <p className="data-label">
       <strong>{t("uv_index_current")}:</strong>
       <span className="uv-current-value">
@@ -2990,24 +2990,22 @@ return (
       </span>
     </p>
 
-    {/* ---- Targeta de nivell UV ---- */}
-    <div className={`uv-risk-card uv-${getUvLevel(uvi)}`}>
-      <strong>{t("uv_level")}:</strong> {getUvText(uvi, lang)}
-    </div>
-
-    {/* ---- Recomanació UV ---- */}
-    <p style={{ marginTop: "0.7rem" }}>
-      {getUvAdvice(uvi, lang)}
-    </p>
+    {/* 👇 AQUÍ VA EL COMPONENT */}
+    <UVAdvice
+      uvi={uvi}
+      lang={i18n.resolvedLanguage || i18n.language || "ca"}
+    />
 
   </div>
 ) : (
-  /* 🌙 MODE NIT — Mostrar missatge simple */
   <div className="uv-block uv-night">
     <h3 className="uv-title">{t("solar_info")}</h3>
-    <p style={{ opacity: 0.8 }}>{t("uv_night_message") || "A la nit no hi ha radiació UV."}</p>
+    <p style={{ opacity: 0.8 }}>
+      {t("uv_night_message") || "A la nit no hi ha radiació UV."}
+    </p>
   </div>
 )}
+
 
 
 {/* 🔔 AVISOS AEMET (Targetes noves) */}
