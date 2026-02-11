@@ -63,6 +63,7 @@ type HeatRiskKey = (typeof HEAT_RISK_LEVELS)[number];
 
 type ActivityLevel = "rest" | "walk" | "moderate" | "intense";
 
+
 // Quants nivells puja cada activitat
 const ACTIVITY_BOOST: Record<ActivityLevel, number> = {
   rest: 0,
@@ -476,6 +477,14 @@ useEffect(() => {
 
   return () => clearTimeout(timer);
 }, [currentSource]);
+
+type ColdRisk =
+  | "cap"
+  | "lleu"
+  | "moderat"
+  | "alt"
+  | "molt alt"
+  | "extrem";
 
 /** === RISC PER FRED · VERSIÓ PRO === */
 function getColdRisk(tempEff: number | null, windKmh: number | null): ColdRisk {
