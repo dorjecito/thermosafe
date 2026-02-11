@@ -268,5 +268,12 @@
   "rec": {
     "safe": "Safe conditions. Maintain your usual hydration.",
     "safeWithHighUV": "Thermally safe conditions. Use caution due to solar radiation."
-  }
+  },
+  
+  "wind_warning": "Wind warning",
+  "coastal_warning": "Coastal warning",
+  "adverse_weather": "Adverse weather",
+  "maximum_gust": "Maximum gust of wind",
+  "aemet_source": "AEMET - Spanish Meteorological Agency"
+
 }

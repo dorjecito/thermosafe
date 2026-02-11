@@ -532,3 +532,35 @@ body {
     color: #fff !important; /* Text blanc */
   }
 } 
+.safety-actions{
+  display:flex;
+  gap:10px;
+  align-items:center;
+
+  margin: 14px 0 18px 0;      /* aire real */
+  padding: 10px 12px;
+  border: 1px solid rgba(0,0,0,0.08);
+  border-radius: 10px;
+  background: rgba(255,255,255,0.7);
+  box-shadow: 0 2px 6px rgba(0,0,0,0.06);
+}
+
+.safety-share-btn,
+.safety-112-btn{
+  border:none;
+  border-radius:10px;
+  padding:10px 12px;
+  font-weight:700;
+  cursor:pointer;
+}
+
+.safety-share-btn{
+  background:#1e90ff; /* blau coherent amb els teus botons */
+  color:#fff;
+}
+
+.safety-112-btn{
+  background:#c92a2a;
+  color:#fff;
+}
+

@@ -8,17 +8,16 @@ import { getHeatRisk } from "../utils/heatRisk";
 type Lang = "ca" | "es" | "eu" | "gl" | "en";
 
 interface Props {
-  temp: number;   // temperatura efectiva rebuda
-  lang: Lang | string; // permet 'en-GB', 'ca-ES', etc.
+  temp: number;              // temperatura efectiva rebuda
+  lang: Lang | string;       // permet 'en-GB', 'ca-ES', etc.
   isDay: boolean;
-  forceSafe?: boolean;
+  forceSafe?: boolean;       // força mostrar recomanacions “segures”
 }
 
 // ---------------------------------------------------------------
 // 🗣️ Textos multillengua (calor, fred, nit)
 // ---------------------------------------------------------------
 const TXT = {
-  // ---------------------- Català ----------------------
   ca: {
     title: "Recomanacions:",
 
@@ -38,10 +37,12 @@ const TXT = {
     cold_low: "Fred lleu: vesteix amb capes i protegeix-te una mica.",
     cold_mod: "Fred moderat: limita l’exposició i protegeix extremitats.",
     cold_high: "Risc alt de fred: evita exposicions llargues a l’exterior.",
-    cold_ext: "Risc extrem de fred: perill d’hipotèrmia. No surtis i mantén la calor corporal."
+    cold_ext: "Risc extrem de fred: perill d’hipotèrmia. No surtis i mantén la calor corporal.",
+
+    // Fallback
+    loading: "Carregant recomanacions…",
   },
 
-  // ---------------------- Espanyol ----------------------
   es: {
     title: "Recomendaciones:",
 
@@ -58,10 +59,11 @@ const TXT = {
     cold_low: "Frío leve: usa capas y protégete ligeramente.",
     cold_mod: "Frío moderado: limita la exposición y protege extremidades.",
     cold_high: "Riesgo alto por frío: evita exposiciones prolongadas.",
-    cold_ext: "Riesgo extremo por frío: peligro de hipotermia. No salgas."
+    cold_ext: "Riesgo extremo por frío: peligro de hipotermia. No salgas.",
+
+    loading: "Cargando recomendaciones…",
   },
 
-  // ---------------------- Euskera ----------------------
   eu: {
     title: "Gomendioak:",
 
@@ -78,10 +80,11 @@ const TXT = {
     cold_low: "Hotz arina: geruzak erabili eta babestu pixka bat.",
     cold_mod: "Hotz moderatua: mugatu kanpoan egotea eta babestu gorputz-adarrak.",
     cold_high: "Hotz handia: saihestu esposizio luzeak.",
-    cold_ext: "Hotz muturrekoa: hipotermiaren arriskua. Ez irten."
+    cold_ext: "Hotz muturrekoa: hipotermiaren arriskua. Ez irten.",
+
+    loading: "Gomendioak kargatzen…",
   },
 
-  // ---------------------- Gallec ----------------------
   gl: {
     title: "Recomendacións:",
 
@@ -98,31 +101,31 @@ const TXT = {
     cold_low: "Frío lixeiro: usa capas e protéxete algo.",
     cold_mod: "Frío moderado: limita exposición e protexe extremidades.",
     cold_high: "Risco alto por frío: evita estar fóra moito tempo.",
-    cold_ext: "Frío extremo: risco de hipotermia. Non saias."
+    cold_ext: "Frío extremo: risco de hipotermia. Non saias.",
+
+    loading: "Cargando recomendacións…",
   },
 
-  // ---------------------- English ----------------------
   en: {
     title: "Recommendations:",
 
-    // Heat
     safe: "Safe conditions. Maintain normal hydration.",
     mild: "Possible heat fatigue. Drink water often and rest in the shade.",
     moderate: "Moderate risk. Breaks every 20 min, light clothing, and hydrate.",
     high: "High risk. Avoid intense effort and increase breaks.",
     ext: "Extreme risk. Stop activity and cool down immediately.",
 
-    // Night
     nightCool: "Cool night: dress appropriately and keep the space ventilated.",
     nightSafe: "Safe conditions. Keep good ventilation.",
     nightHeat: "If it is hot at night, ventilate well and sleep in light clothing.",
 
-    // Cold
     cold_low: "Mild cold: dress in layers and protect yourself a bit.",
     cold_mod: "Moderate cold: limit exposure and protect extremities.",
     cold_high: "High cold risk: avoid long periods outdoors.",
-    cold_ext: "Extreme cold risk: danger of hypothermia. Stay inside and keep warm."
-  }
+    cold_ext: "Extreme cold risk: danger of hypothermia. Stay inside and keep warm.",
+
+    loading: "Loading recommendations…",
+  },
 } as const;
 
 // ----------------------------------------------
@@ -139,28 +142,71 @@ const getIcon = (key: string): string => {
   if (key === "high") return "🔥🔥🔥";
   if (key === "ext") return "🔥🔥🔥🔥";
   if (key === "safe") return "🟢";
-  return "";
+  return "🟢";
 };
 
 const normalizeLang = (lang: Lang | string): Lang => {
-  const code = (lang || "ca").toString().toLowerCase().slice(0, 2) as Lang;
+  const code = String(lang || "ca").toLowerCase().slice(0, 2) as Lang;
   return (["ca", "es", "eu", "gl", "en"] as const).includes(code) ? code : "ca";
+};
+
+// ---------------------------------------------------------------
+// Helper: normalitza el “level” de getHeatRisk a una clau interna
+// ---------------------------------------------------------------
+type HeatKey = "safe" | "mild" | "moderate" | "high" | "ext";
+
+const mapHeatLevelToKey = (levelRaw: unknown): HeatKey => {
+  const s = String(levelRaw ?? "")
+    .trim()
+    .toLowerCase()
+    .replace(/\s+/g, " ");
+
+  // variants "sense risc"
+  if (
+    s === "cap risc" ||
+    s === "sin riesgo" ||
+    s === "no risk" ||
+    s === "none" ||
+    s === "baix" ||
+    s === "bajo" ||
+    s === "low" ||
+    s === "safe"
+  ) {
+    return "safe";
+  }
+
+  if (s.includes("lleu") || s.includes("leve") || s.includes("mild")) return "mild";
+  if (s.includes("moderat") || s.includes("moderado") || s.includes("moderate")) return "moderate";
+  if (s.includes("alt") || s.includes("alto") || s.includes("high")) return "high";
+  if (s.includes("extrem") || s.includes("extremo") || s.includes("extreme")) return "ext";
+
+  return "safe";
 };
 
 /* =============================================================
    COMPONENT PRINCIPAL
 ============================================================= */
-export default function Recommendations({ temp, lang, isDay }: Props) {
+export default function Recommendations({ temp, lang, isDay, forceSafe }: Props) {
   const lng = normalizeLang(lang);
   const t = TXT[lng];
 
-  /* 🔒 NORMALITZACIÓ ABSOLUTA */
+  // ✅ Normalització absoluta (mai NaN)
   const effectiveTemp = Number(temp);
+
+  // ❗ Mai retornam null: sempre algun bloc (evita “en blanc”)
+  if (!Number.isFinite(effectiveTemp)) {
+    return (
+      <div className="recommendation-box safe">
+        <p className="recommendation-title">{getIcon("safe")} {t.title}</p>
+        <p>{t.loading}</p>
+      </div>
+    );
+  }
 
   /* =========================================================
      1️⃣ PRIORITAT ABSOLUTA — RISC PER FRED
   ========================================================== */
-  let coldRisk: keyof typeof t | null = null;
+  let coldRisk: "cold_low" | "cold_mod" | "cold_high" | "cold_ext" | null = null;
 
   if (effectiveTemp < -20) coldRisk = "cold_ext";
   else if (effectiveTemp < -10) coldRisk = "cold_high";
@@ -169,8 +215,8 @@ export default function Recommendations({ temp, lang, isDay }: Props) {
 
   if (coldRisk) {
     return (
-      <div className="recommendation-box">
-        <p className={`recommendation-title ${coldRisk}`}>
+      <div className={`recommendation-box ${coldRisk}`}>
+        <p className="recommendation-title">
           {getIcon(coldRisk)} {t.title}
         </p>
         <p>{t[coldRisk]}</p>
@@ -182,15 +228,12 @@ export default function Recommendations({ temp, lang, isDay }: Props) {
      2️⃣ RECOMANACIONS NOCTURNES (només si NO hi ha fred)
   ========================================================== */
   if (!isDay) {
-    let nightKey: "nightCool" | "nightSafe" | "nightHeat";
-
-    if (effectiveTemp < 18) nightKey = "nightCool";
-    else if (effectiveTemp < 24) nightKey = "nightSafe";
-    else nightKey = "nightHeat";
+    const nightKey: "nightCool" | "nightSafe" | "nightHeat" =
+      effectiveTemp < 18 ? "nightCool" : effectiveTemp < 24 ? "nightSafe" : "nightHeat";
 
     return (
-      <div className="recommendation-box">
-        <p className={`recommendation-title ${nightKey}`}>
+      <div className={`recommendation-box ${nightKey}`}>
+        <p className="recommendation-title">
           {getIcon(nightKey)} {t.title}
         </p>
         <p>{t[nightKey]}</p>
@@ -199,14 +242,14 @@ export default function Recommendations({ temp, lang, isDay }: Props) {
   }
 
   /* =========================================================
-     (Extra) Força risc moderat/alt amb calor alta real
+     3️⃣ EXTRA — si fa molta calor real (protecció extra)
   ========================================================== */
   if (effectiveTemp >= 30) {
-    const heatKey: keyof typeof t = effectiveTemp < 33 ? "moderate" : "high";
+    const heatKey: HeatKey = effectiveTemp < 33 ? "moderate" : "high";
 
     return (
-      <div className="recommendation-box">
-        <p className={`recommendation-title ${heatKey}`}>
+      <div className={`recommendation-box ${heatKey}`}>
+        <p className="recommendation-title">
           {getIcon(heatKey)} {t.title}
         </p>
         <p>{t[heatKey]}</p>
@@ -215,32 +258,38 @@ export default function Recommendations({ temp, lang, isDay }: Props) {
   }
 
   /* =========================================================
-     3️⃣ ZONA NEUTRA (10–18 °C, sense fred ni calor)
+     4️⃣ RISC PER CALOR (getHeatRisk)
   ========================================================== */
-  if (effectiveTemp >= 10 && effectiveTemp < 18) {
-    return null;
+  const riskObj: any = getHeatRisk(effectiveTemp, "rest");
+  const heatKey = mapHeatLevelToKey(riskObj?.level);
+
+  // ✅ Safe: si forceSafe true o per defecte, el mostram
+  if (heatKey === "safe") {
+    if (forceSafe === false) {
+      // Si explícitament dius que NO vols safe, mostra igual un fallback visible
+      return (
+        <div className="recommendation-box safe">
+          <p className="recommendation-title">
+            {getIcon("safe")} {t.title}
+          </p>
+          <p>{t.safe}</p>
+        </div>
+      );
+    }
+
+    return (
+      <div className="recommendation-box safe">
+        <p className="recommendation-title">
+          {getIcon("safe")} {t.title}
+        </p>
+        <p>{t.safe}</p>
+      </div>
+    );
   }
-
-  /* =========================================================
-     4️⃣ RECOMANACIONS PER CALOR
-  ========================================================== */
-  const { level } = getHeatRisk(effectiveTemp, "rest");
-
-  if (level === "Cap risc" || level === "Baix") {
-    return null;
-  }
-
-  const heatMap: Record<string, keyof typeof t> = {
-    Moderat: "moderate",
-    Alt: "high",
-    Extrem: "ext"
-  };
-
-  const heatKey = heatMap[level];
 
   return (
-    <div className="recommendation-box">
-      <p className={`recommendation-title ${heatKey}`}>
+    <div className={`recommendation-box ${heatKey}`}>
+      <p className="recommendation-title">
         {getIcon(heatKey)} {t.title}
       </p>
       <p>{t[heatKey]}</p>

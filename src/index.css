@@ -771,3 +771,65 @@ button:focus-visible {
     color: #fff !important;
   }
 }
+
+/* ✅ Accions ràpides compactes */
+.safety-actions {
+  display: inline-flex;      /* 👈 clau: no ocupar 100% */
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  margin-top: 10px;
+
+  width: fit-content;        /* 👈 s’adapta al contingut */
+  max-width: 100%;
+}
+
+/* Botons (si vols una mica més “mini”) */
+.safety-share-btn,
+.safety-112-btn {
+  padding: 8px 12px;
+  border-radius: 10px;
+  border: 0;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.recommendations-block {
+  background: #f3f4f6;
+  border-left: 6px solid #16a34a;
+  border-radius: 10px;
+  padding: 0.9rem 1rem;
+  margin-top: 1rem;
+  text-align: left;
+}
+
+.recommendations-title {
+  margin: 0 0 0.35rem 0;
+  font-weight: 700;
+}
+
+.recommendations-text {
+  margin: 0;
+  opacity: 0.95;
+}
+
+/* ✅ Evita text “invisible” dins el bloc de recomanacions principal */
+.recommendations-block {
+  color: #111;              /* mode clar i per defecte */
+}
+
+@media (prefers-color-scheme: dark) {
+  .recommendations-block {
+    background: rgba(255,255,255,0.08);  /* fons coherent amb mode fosc */
+    color: #fff;                          /* text blanc visible */
+    border-left-color: #16a34a;
+  }
+
+  .recommendations-text {
+    color: #fff;
+  }
+}
+
