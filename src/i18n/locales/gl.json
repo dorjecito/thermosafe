@@ -152,13 +152,17 @@
 },
 
   "windRisk": {
-    "none": "Sen risco",
-    "breezy": "Baixo",
-    "moderate": "Moderado",
-    "strong": "Forte",
-    "very_strong": "Moi forte",
-    "wind_breezy": "vento"
-  },
+  "none": "sen risco",
+  "breezy": "baixo",
+  "moderate": "moderado",
+  "strong": "alto",
+  "very_strong": "moi alto",
+
+  "low": "baixo",
+  "high": "alto",
+  "very_high": "moi alto",
+  "extreme": "extremo"
+},
 
   "weather_alerts": {
     "storm": "Aviso por treboada",

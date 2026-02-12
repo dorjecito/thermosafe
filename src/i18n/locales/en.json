@@ -121,13 +121,13 @@
   "cold_risk_title": "Cold risk",
   "wind_chill": "Effective temperature",
   "windRisk": {
-    "none": "no risk",
-    "breezy": "breezy",
-    "moderate": "moderate",
-    "strong": "strong",
-    "very_strong": "very strong",
-    "wind_breezy": "wind"
-  },
+  "none": "no risk",
+  "breezy": "low",
+  "moderate": "moderate",
+  "strong": "high",
+  "very_strong": "very high",
+  "extreme": "extreme"
+}, 
   "weather_alerts": {
     "storm": "Storm alert",
     "rain": "Rain alert",

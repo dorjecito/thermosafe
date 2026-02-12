@@ -148,18 +148,22 @@
 "wind_chill": "Benetako tenperatura",
 
 "notify": {
-  "windTitle": "Haize bortitza",
-  "windBody": "Haizearen arriskua: {{risk}}. Haizearen abiadura: {{speed}} km/h"
+  "windTitle": "Haize arriskuaren abisua",
+  "windBody": "Haize arriskua: {{risk}}. Haizearen abiadura: {{speed}} km/h"
 },
 
-  "windRisk": {
-    "none": "Arriskurik ez",
-    "breezy": "Baxua",
-    "moderate": "Moderatua",
-    "strong": "Indartsua",
-    "very_strong": "Oso indartsua",
-    "wind_breezy": "haize"
-  },
+"windRisk": {
+  "none": "arriskurik ez",
+  "breezy": "ahula",
+  "moderate": "ertaina",
+  "strong": "altua",
+  "very_strong": "oso altua",
+
+  "low": "baxua",
+  "high": "altua",
+  "very_high": "oso altua",
+  "extreme": "muturrekoa"
+},
 
   "weather_alerts": {
     "storm": "Ekaitz abisua",

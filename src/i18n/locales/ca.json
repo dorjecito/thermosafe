@@ -16,40 +16,93 @@
   "uvi": "🔆 Índex UV",
   "wind": "💨 Velocitat del vent",
   "wind_risk": "Risc per vent",
-  "no_risk_wind": "Cap risc",
-  "wind_none": "Cap risc",
-  "breezy": "Baix",
-  "moderate_wind": "Moderat",
-  "strong_wind": "Fort",
-  "very_strong_wind": "Molt fort",
-  "caution_outdoors": "Precaució a l'exterior",
-  "take_extreme_caution": "Evita activitats a l'aire lliure",
-  "wind_alert_label": "Rebre avisos per vent fort",
-  "highIrradianceWarning": "⚠️ Irradiància solar molt alta. Evita l'exposició directa al sol.",
-  "highUVIWarning": "⚠️ Índex UV molt alt. Protecció solar imprescindible!",
-  "irradianceTips": "👒 Fes servir barret, ulleres de sol i crema solar. Evita fer activitat física sota el sol.",
-  "risk_level": "Risc per calor:",
-  "alert_extreme": "🚨 RISC EXTREM DE CALOR! Atura l'activitat i hidrata't immediatament.",
-  "alertRisk": "⚠️ Risc alt o extrem per calor.",
+
   "loading": "Carregant dades meteorològiques...",
   "errorGPS": "No s'ha pogut obtenir la temperatura per GPS.",
   "errorCity": "No s'han trobat dades per a aquesta ubicació.",
   "errorNoLocation": "No s'ha pogut obtenir la ubicació.",
+
   "recommendations_title": "Recomanacions:",
   "solarProtection": "🔆 Protecció solar",
   "irradianceLegend": "☀️ Nivells d'irradiància: <8 moderat · ≥8 alt",
   "toggleLegend": "ℹ️ Mostra/Amaga escala UV",
-  "push": {
-    "label": "Rebre avisos quan el risc per calor ≥ moderat",
-    "enabled": "Avisos activats. Rebràs notificacions quan el risc sigui moderat o superior.",
-    "disabled": "Avisos desactivats.",
-    "errors": {
-      "permissionDenied": "Has denegat el permís de notificacions.",
-      "noGps": "No s'ha pogut obtenir la ubicació (GPS).",
-      "notSupported": "El navegador no admet Web Push.",
-      "noToken": "No s'ha pogut obtenir el token de notificacions."
-    }
+
+  "highIrradianceWarning": "⚠️ Irradiància solar molt alta. Evita l'exposició directa al sol.",
+  "highUVIWarning": "⚠️ Índex UV molt alt. Protecció solar imprescindible!",
+  "irradianceTips": "👒 Fes servir barret, ulleres de sol i crema solar. Evita fer activitat física sota el sol.",
+
+  "risk_level": "Risc per calor:",
+  "alert_extreme": "🚨 RISC EXTREM DE CALOR! Atura l'activitat i hidrata't immediatament.",
+  "alertRisk": "⚠️ Risc alt o extrem per calor.",
+
+  "link_insst": "INSST: estrès tèrmic i calor",
+  "link_aemet": "AEMET: salut i meteorologia",
+
+  "cold_alert_label": "Rebre avisos per fred extrem",
+  "wind_alert_label": "Rebre avisos per vent fort",
+
+  "heat_risk": "Risc per calor",
+  "current_risk": "Risc actual",
+  "no_risk": "Cap risc",
+  "no_risk_overall": "Sense risc detectat",
+  "no_specific_risk": "Sense risc específic",
+
+  "risk_levels": {
+    "low": "Risc baix",
+    "moderate": "Risc moderat",
+    "high": "Risc alt",
+    "extreme": "Risc extrem"
   },
+
+  "high": "Alt",
+  "moderate": "Moderat",
+  "extreme": "Extrem",
+
+  "notify": {
+    "coldTitle": "Avís ThermoSafe",
+    "coldBody": "Risc per fred {{risk}}. Temperatura: {{temp}}°C",
+    "heatTitle": "Avís ThermoSafe",
+    "heatBody": "Risc per calor {{risk}}. Sensació tèrmica: {{hi}}°C",
+    "windTitle": "Avís ThermoSafe",
+    "windBody": "Risc per vent {{risk}}. Velocitat del vent: {{speed}} km/h"
+  },
+
+  "heatRiskLabel": "Risc per calor",
+  "effectiveTemp": "Temperatura efectiva",
+
+  "heatRisk": {
+    "cap": "cap risc",
+    "baix": "baix",
+    "moderat": "moderat",
+    "alt": "alt",
+    "extrem": "extrem"
+  },
+
+  "coldRisk": {
+    "cap": "cap risc",
+    "lleu": "lleu",
+    "moderat": "moderat",
+    "alt": "alt",
+    "molt_alt": "molt alt",
+    "extrem": "extrem"
+  },
+
+  "cold_risk_title": "Risc per fred",
+  "wind_chill": "Temperatura efectiva",
+
+  "windRisk": {
+  "none": "cap risc",
+  "breezy": "baix",
+  "moderate": "moderat",
+  "strong": "alt",
+  "very_strong": "molt alt",
+
+  "low": "baix",
+  "high": "alt",
+  "very_high": "molt alt",
+  "extreme": "extrem"
+},
+
   "sky_state": "Estat del cel",
   "weather_desc": {
     "clear_sky": "Cel clar",
@@ -75,6 +128,7 @@
     "ash": "Cendra volcànica",
     "squall": "Ràfegues de vent",
     "tornado": "Tornado",
+
     "ennuvolat": "Ennuvolat",
     "lleugerament_ennuvolat": "Lleugerament ennuvolat",
     "molt_ennuvolat": "Molt ennuvolat",
@@ -82,52 +136,7 @@
     "poc_ennuvolat": "Poc ennuvolat",
     "nuvolositat_variable": "Nuvolositat variable"
   },
-  "link_insst": "INSST: estrès tèrmic i calor",
-  "link_aemet": "AEMET: salut i meteorologia",
-  "cold_alert_label": "Rebre avisos per fred extrem",
-  "heat_risk": "Risc per calor",
-  "current_risk": "Risc actual",
-  "no_risk": "Cap risc",
-  "no_risk_overall": "Sense risc detectat",
-  "no_specific_risk": "Sense risc específic",
-  "high": "Alt",
-  "extreme": "Extrem",
-  "moderate": "Moderat",
-  "notify": {
-    "coldTitle": "Avís ThermoSafe",
-    "coldBody": "Risc per fred {{risk}}. Temperatura: {{temp}}°C",
-    "heatTitle": "Avís ThermoSafe",
-    "heatBody": "Risc per calor {{risk}}. Sensació tèrmica: {{hi}}°C",
-    "windTitle": "Avís ThermoSafe",
-    "windBody": "Risc per vent {{risk}}. Velocitat del vent: {{speed}} km/h"
-  },
-  "heatRiskLabel": "Risc per calor",
-  "effectiveTemp": "Temperatura efectiva",
-  "heatRisk": {
-    "Cap risc": "cap risc",
-    "Baix": "baix",
-    "Moderat": "moderat",
-    "Alt": "alt",
-    "Extrem": "extrem"
-  },
-  "coldRisk": {
-    "cap": "cap risc",
-    "lleu": "lleu",
-    "moderat": "moderat",
-    "alt": "alt",
-    "molt alt": "molt alt",
-    "extrem": "extrem"
-  },
-  "cold_risk_title": "Risc per fred",
-  "wind_chill": "Temperatura efectiva",
-  "windRisk": {
-    "none": "cap risc",
-    "breezy": "suau",
-    "moderate": "moderat",
-    "strong": "fort",
-    "very_strong": "molt fort",
-    "wind_breezy": "vent"
-  },
+
   "weather_alerts": {
     "storm": "Avís per tempesta",
     "rain": "Avís per pluja",
@@ -135,37 +144,46 @@
     "wind": "Avís per vent",
     "heat": "Avís per calor",
     "cold": "Avís per fred",
+
     "coastalevent": "Avís per risc costaner",
     "coastal_event": "Avís per risc costaner",
     "coastal_event_warning": "Avís per risc costaner",
     "coastalevent_warning": "Avís per risc costaner",
+
     "moderate_coastalevent_warning": "Avís costaner moderat",
     "moderate_coastal_event_warning": "Avís costaner moderat",
     "moderate coastal event warning": "Avís costaner moderat",
     "moderate_coastalevent": "Avís costaner moderat",
+
     "low_temperature_warning": "Avís per temperatures baixes",
     "low temperature warning": "Avís per temperatures baixes",
     "moderate_low_temperature_warning": "Avís moderat per temperatures baixes",
     "moderate low temperature warning": "Avís moderat per temperatures baixes",
+
     "snow_warning": "Avís per neu",
     "wind_warning": "Avís per vent",
     "rain_warning": "Avís per pluja",
+
     "minimum_temperature": "Temperatura mínima",
     "minimum temperature": "Temperatura mínima"
   },
+
   "last_update": "Actualitzat fa",
   "alerts_title": "Avisos meteorològics oficials",
   "alerts_none": "No hi ha avisos meteorològics actius actualment.",
   "no_alerts": "No hi ha avisos meteorològics actualment.",
+
   "notifications": {
     "enabled": "Avisos activats",
     "disabled": "Avisos desactivats"
   },
+
   "solar_info": "Informació solar",
   "uv_index_current": "Índex UV actual",
   "uv_level": "Nivell",
   "uv_night_title": "Informació solar",
   "uv_night_message": "A la nit no hi ha radiació UV.",
+
   "recommendations_full": {
     "heat": {
       "low": "Mantén una bona hidratació i evita el sol directe en hores punta.",
@@ -198,6 +216,7 @@
       "extreme": "Onatge molt fort: risc extrem. Evita totalment passejos prop del mar."
     }
   },
+
   "activity": {
     "inactive": "Activar detecció de moviment",
     "active_label": "Activitat",
@@ -205,21 +224,18 @@
     "walk": "Caminar",
     "moderate": "Esforç moderat",
     "intense": "Esforç intens",
-    "extra": "extra"
+    "extra": "Extra"
   },
+
   "official_links": "Enllaços oficials",
   "insst_heat": "INSST: estrès tèrmic i calor",
   "aemet_health": "AEMET: salut i meteorologia",
-  "risk_levels": {
-    "low": "Risc baix",
-    "moderate": "Risc moderat",
-    "high": "Risc alt",
-    "extreme": "Risc extrem"
-  },
+
   "share": "Compartir",
   "show_advice": "Mostrar recomanacions",
   "hide_advice": "Amagar recomanacions",
   "official_advice_share": "Segueix les recomanacions de seguretat segons el teu risc actual.",
+
   "officialAdviceDynamic": {
     "heat": {
       "mild": "Hidrata’t sovint i descansa en zones fresques.",
@@ -241,11 +257,12 @@
     },
     "uv": {
       "moderate": "Aplica protecció solar SPF 30+ i utilitza ulleres de sol.",
-      "high": "Evita el sol de 12h a 16h, hidrata’t i utilitza protecció elevada.",
+      "high": "Evita el sol de 12 h a 16 h, hidrata’t i utilitza protecció elevada.",
       "very_high": "Protecció màxima: camisa, gorra, ulleres i SPF 50+.",
-      "extreme": "Evita exposar-te al sol. Risc extrem dany ocular i cutani."
+      "extreme": "Evita exposar-te al sol. Risc extrem de dany ocular i cutani."
     }
   },
+
   "official_advice": {
     "hydration": "Hidrata’t amb regularitat, encara que no tinguis set.",
     "rest": "Descansa en zones d’ombra durant activitats prolongades.",
@@ -263,10 +280,24 @@
     "symptoms": "Si tens marejos, nàusees o confusió, atura l’activitat.",
     "symptomsCold": "Si tens calfreds, tremolors o confusió, busca refugi i escalfor."
   },
+
   "official_advice_title": "Recomanacions oficials de seguretat",
   "official_advice_footer": "Basat en guies de l’INSST i AEMET.",
+
   "rec": {
     "safe": "Condicions segures. Mantén la hidratació habitual.",
     "safeWithHighUV": "Condicions tèrmiques segures. Precaució per radiació solar."
+  },
+
+  "push": {
+    "label": "Rebre avisos quan el risc per calor ≥ moderat",
+    "enabled": "Avisos activats. Rebràs notificacions quan el risc sigui moderat o superior.",
+    "disabled": "Avisos desactivats.",
+    "errors": {
+      "permissionDenied": "Has denegat el permís de notificacions.",
+      "noGps": "No s'ha pogut obtenir la ubicació (GPS).",
+      "notSupported": "El navegador no admet Web Push.",
+      "noToken": "No s'ha pogut obtenir el token de notificacions."
+    }
   }
 }

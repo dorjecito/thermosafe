@@ -2024,8 +2024,6 @@ function showBrowserNotification(title: string, body: string) {
       `[DEBUG] Notificació NO visible perquè la pestanya està en primer pla →`,
       { title, body }
     );
-    // Tot i així, deixem que el navegador decideixi:
-    // (si vols, aquí podríem fer "return;" per no ni intentar-la)
   }
 
   const notify = () => new Notification(title, { body });

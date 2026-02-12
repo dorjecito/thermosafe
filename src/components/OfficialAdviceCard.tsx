@@ -204,7 +204,7 @@ if (riskLines.length > 0) {
     lines.push("");
     lines.push("🍎 iOS: https://thermosafe.app");
     lines.push(
-      "🤖 Android: https://play.google.com/store/apps/details?id=app.thermosafe"
+      "🤖 Android: https://play.google.com/store/apps/details?id=app.vercel.thermosafe.twa"
     );
 
     const text = lines.join("\n");
