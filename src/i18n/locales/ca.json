@@ -299,5 +299,11 @@
       "notSupported": "El navegador no admet Web Push.",
       "noToken": "No s'ha pogut obtenir el token de notificacions."
     }
-  }
+  },
+  "alert_time": {
+  "active": "Vigent",
+  "ended": "Finalitzat",
+  "remaining_hours": "Queden {{hours}}h {{minutes}}min",
+  "remaining_minutes": "Queden {{minutes}} min"
+}
 }

@@ -323,5 +323,11 @@
   "symptomsCold": "Se tes tremores ou confusión, busca abrigo."
 },
 "official_advice_title": "Recomendacións oficiais de seguridade",
-"official_advice_footer": "Baseado en guías do INSST e AEMET."
+"official_advice_footer": "Baseado en guías do INSST e AEMET.",
+"alert_time": {
+  "active": "Vixente",
+  "ended": "Finalizado",
+  "remaining_hours": "Quedan {{hours}}h {{minutes}}min",
+  "remaining_minutes": "Quedan {{minutes}} min"
+}
 }

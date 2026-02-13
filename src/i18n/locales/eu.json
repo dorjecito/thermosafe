@@ -283,5 +283,12 @@
   "symptomsCold": "Dardarak edo konfusioa badituzu, bilatu babeslekua."
 },
 "official_advice_title": "Segurtasun gomendio ofizialak",
-"official_advice_footer": "INSST eta AEMET-en gomendioetan oinarritua."
+"official_advice_footer": "INSST eta AEMET-en gomendioetan oinarritua.",
+
+"alert_time": {
+  "active": "Indarrean",
+  "ended": "Amaituta",
+  "remaining_hours": "{{hours}}h {{minutes}}min geratzen dira",
+  "remaining_minutes": "{{minutes}} min geratzen dira"
+}
 }

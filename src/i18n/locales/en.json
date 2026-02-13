@@ -274,6 +274,12 @@
   "coastal_warning": "Coastal warning",
   "adverse_weather": "Adverse weather",
   "maximum_gust": "Maximum gust of wind",
-  "aemet_source": "AEMET - Spanish Meteorological Agency"
+  "aemet_source": "AEMET · Spanish Meteorological Agency",
+  "alert_time": {
+    "active": "Active",
+    "ended": "Ended",
+    "remaining_hours": "{{hours}}h {{minutes}}m left",
+    "remaining_minutes": "{{minutes}}m left"
+}
 
 }

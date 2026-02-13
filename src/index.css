@@ -832,4 +832,9 @@ button:focus-visible {
     color: #fff;
   }
 }
-
+.aemet-alert-time {
+  margin-top: 0.35rem;
+  margin-bottom: 0.6rem;
+  font-size: 0.92rem;
+  opacity: 0.9;
+}

@@ -301,5 +301,12 @@
 
   "official_advice_title": "Recomendaciones oficiales de seguridad",
   "official_advice_footer": "Basado en guías del INSST y AEMET.",
-  "share": "Compartir"
+  "share": "Compartir",
+
+  "alert_time": {
+  "active": "Vigente",
+  "ended": "Finalizado",
+  "remaining_hours": "Quedan {{hours}}h {{minutes}}min",
+  "remaining_minutes": "Quedan {{minutes}} min"
+}
 }

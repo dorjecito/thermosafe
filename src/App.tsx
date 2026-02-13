@@ -249,12 +249,44 @@ async function getCoords(): Promise<{ lat: number; lon: number } | null> {
   });
 }
 
+const formatAlertTime = (unixSeconds: number, lang: string) => {
+  const d = new Date(unixSeconds * 1000);
+  return d.toLocaleString(lang, {
+    day: "2-digit",
+    month: "short",
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+};
+
+const isAlertActiveNow = (start: number, end: number) => {
+  const now = Date.now() / 1000;
+  return now >= start && now <= end;
+};
+
 /* ──────── component ──────── */
 export default function App() {
   /* i18next */
   const [loading, setLoading] = useState(false);
   const { t, i18n } = useTranslation();
   const langUI = i18n.language; // ex: "en", "en-US", "ca"
+  const getRemainingTime = (endUnix: number, lang: string) => {
+  const now = Date.now() / 1000;
+  const diff = Math.floor(endUnix - now);
+
+  if (diff <= 0) {
+    return t("alert_time.ended");
+  }
+
+  const hours = Math.floor(diff / 3600);
+  const minutes = Math.floor((diff % 3600) / 60);
+
+  if (hours > 0) {
+    return t("alert_time.remaining_hours", { hours, minutes });
+  }
+
+  return t("alert_time.remaining_minutes", { minutes });
+};
 
 /* 🔔 Estat global per activar/desactivar alertes meteorològiques */
 const [notificationsEnabled, setNotificationsEnabled] = useState<boolean>(() => {
@@ -1929,33 +1961,43 @@ if (uvi != null && uvi >= 3) {
 }
 
       return (
-        <div
-          key={i}
-          className={`aemet-alert-card alert-ext`} 
-        >
-          {/* Títol */}
-          <div className="aemet-alert-title">
-            {ai.title}
-          </div>
+  <div
+    key={i}
+    className={`aemet-alert-card alert-ext`}
+  >
+    {/* Títol */}
+    <div className="aemet-alert-title">
+      {ai.title}
+    </div>
 
-          {/* Descripció amb IA */}
-          <div className="aemet-alert-description">
-            {ai.body}
-          </div>
+    {/* 🕒 Línia temporal + temps restant */}
+    {typeof alert?.start === "number" && typeof alert?.end === "number" && (
+      <div className="aemet-alert-time">
+        🕒 {formatAlertTime(alert.start, lang)} → {formatAlertTime(alert.end, lang)}
+        {isAlertActiveNow(alert.start, alert.end) && (
+          <span> · {t("alert_time.active")}</span>
+        )}
+        <br />
+        ⏳ {getRemainingTime(alert.end, lang)}
+      </div>
+    )}
 
+    {/* Descripció */}
+    <div className="aemet-alert-description">
+      {ai.body}
+    </div>
 
-          {/* Peu – font oficial */}
-        <div className="aemet-alert-source">
-          {(
-            (alert.sender_name || "").toLowerCase().includes("aemet") ||
-            (alert.event || "").toLowerCase().includes("aemet")
-          )
-            ? "AEMET · Agencia Estatal de Meteorología"
-            : alert.sender_name || "Official weather alert"}
-</div>
-
-        </div>
-      );
+    {/* Peu – font oficial */}
+    <div className="aemet-alert-source">
+      {(
+        (alert.sender_name || "").toLowerCase().includes("aemet") ||
+        (alert.event || "").toLowerCase().includes("aemet")
+      )
+        ? "AEMET · Agencia Estatal de Meteorología"
+        : alert.sender_name || "Official weather alert"}
+    </div>
+  </div>
+);
     })}
   </div>
 )}
