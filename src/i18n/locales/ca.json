@@ -29,6 +29,7 @@
 
   "highIrradianceWarning": "⚠️ Irradiància solar molt alta. Evita l'exposició directa al sol.",
   "highUVIWarning": "⚠️ Índex UV molt alt. Protecció solar imprescindible!",
+  "extremeUVIWarning": "🚨 UV EXTREM (11+) — Evita exposició directa",
   "irradianceTips": "👒 Fes servir barret, ulleres de sol i crema solar. Evita fer activitat física sota el sol.",
 
   "risk_level": "Risc per calor:",

@@ -1,5 +1,6 @@
 // ===============================================================
 //  📘 Recommendations.tsx — Versió corregida i robusta (amb anglès)
+//  + ✅ Missatge extra si hi ha alerta AEMET activa (aemetActive)
 // ===============================================================
 
 import * as React from "react";
@@ -12,6 +13,7 @@ interface Props {
   lang: Lang | string;       // permet 'en-GB', 'ca-ES', etc.
   isDay: boolean;
   forceSafe?: boolean;       // força mostrar recomanacions “segures”
+  aemetActive?: boolean;     // ✅ hi ha avís oficial actiu ara?
 }
 
 // ---------------------------------------------------------------
@@ -20,6 +22,10 @@ interface Props {
 const TXT = {
   ca: {
     title: "Recomanacions:",
+
+    // ✅ AEMET
+    aemetActive:
+      "⚠️ Hi ha un avís oficial actiu (AEMET). Segueix les indicacions i evita zones exposades.",
 
     // Calor
     safe: "Condicions segures. Mantén la hidratació habitual.",
@@ -46,6 +52,9 @@ const TXT = {
   es: {
     title: "Recomendaciones:",
 
+    aemetActive:
+      "⚠️ Hay un aviso oficial activo (AEMET). Sigue las indicaciones y evita zonas expuestas.",
+
     safe: "Condiciones seguras. Mantén la hidratación habitual.",
     mild: "Posible fatiga por calor. Bebe agua y descansa a la sombra.",
     moderate: "Riesgo moderado. Pausas cada 20 min, ropa ligera e hidrátate.",
@@ -66,6 +75,9 @@ const TXT = {
 
   eu: {
     title: "Gomendioak:",
+
+    aemetActive:
+      "⚠️ AEMETen abisu ofizial aktiboa dago. Jarraitu jarraibideak eta saihestu eremu esposatuak.",
 
     safe: "Egoera segurua. Edan ura eta mantendu hidratazioa.",
     mild: "Bero-nekea gerta daiteke. Atseden hartu eta edan maiz.",
@@ -88,6 +100,9 @@ const TXT = {
   gl: {
     title: "Recomendacións:",
 
+    aemetActive:
+      "⚠️ Hai un aviso oficial activo (AEMET). Sigue as indicacións e evita zonas expostas.",
+
     safe: "Condicións seguras. Mantén a hidratación habitual.",
     mild: "Posible fatiga por calor. Bebe auga e descansa á sombra.",
     moderate: "Risco moderado. Pausas e hidratación frecuente.",
@@ -108,6 +123,9 @@ const TXT = {
 
   en: {
     title: "Recommendations:",
+
+    aemetActive:
+      "⚠️ An official alert is active (AEMET). Follow instructions and avoid exposed areas.",
 
     safe: "Safe conditions. Maintain normal hydration.",
     mild: "Possible heat fatigue. Drink water often and rest in the shade.",
@@ -161,7 +179,6 @@ const mapHeatLevelToKey = (levelRaw: unknown): HeatKey => {
     .toLowerCase()
     .replace(/\s+/g, " ");
 
-  // variants "sense risc"
   if (
     s === "cap risc" ||
     s === "sin riesgo" ||
@@ -171,9 +188,7 @@ const mapHeatLevelToKey = (levelRaw: unknown): HeatKey => {
     s === "bajo" ||
     s === "low" ||
     s === "safe"
-  ) {
-    return "safe";
-  }
+  ) return "safe";
 
   if (s.includes("lleu") || s.includes("leve") || s.includes("mild")) return "mild";
   if (s.includes("moderat") || s.includes("moderado") || s.includes("moderate")) return "moderate";
@@ -183,23 +198,49 @@ const mapHeatLevelToKey = (levelRaw: unknown): HeatKey => {
   return "safe";
 };
 
+// ✅ Render helper per afegir la línia AEMET sense duplicar codi
+function Box({
+  className,
+  title,
+  body,
+  extra,
+}: {
+  className: string;
+  title: string;
+  body: string;
+  extra?: string;
+}) {
+  return (
+    <div className={className}>
+      <p className="recommendation-title">{title}</p>
+      <p>{body}</p>
+      {extra ? (
+        <p style={{ marginTop: "0.6rem", opacity: 0.95 }}>
+          {extra}
+        </p>
+      ) : null}
+    </div>
+  );
+}
+
 /* =============================================================
    COMPONENT PRINCIPAL
 ============================================================= */
-export default function Recommendations({ temp, lang, isDay, forceSafe }: Props) {
+export default function Recommendations({ temp, lang, isDay, forceSafe, aemetActive }: Props) {
   const lng = normalizeLang(lang);
   const t = TXT[lng];
 
-  // ✅ Normalització absoluta (mai NaN)
   const effectiveTemp = Number(temp);
+  const extraAemet = aemetActive ? t.aemetActive : undefined;
 
-  // ❗ Mai retornam null: sempre algun bloc (evita “en blanc”)
   if (!Number.isFinite(effectiveTemp)) {
     return (
-      <div className="recommendation-box safe">
-        <p className="recommendation-title">{getIcon("safe")} {t.title}</p>
-        <p>{t.loading}</p>
-      </div>
+      <Box
+        className="recommendation-box safe"
+        title={`${getIcon("safe")} ${t.title}`}
+        body={t.loading}
+        extra={extraAemet}
+      />
     );
   }
 
@@ -215,12 +256,12 @@ export default function Recommendations({ temp, lang, isDay, forceSafe }: Props)
 
   if (coldRisk) {
     return (
-      <div className={`recommendation-box ${coldRisk}`}>
-        <p className="recommendation-title">
-          {getIcon(coldRisk)} {t.title}
-        </p>
-        <p>{t[coldRisk]}</p>
-      </div>
+      <Box
+        className={`recommendation-box ${coldRisk}`}
+        title={`${getIcon(coldRisk)} ${t.title}`}
+        body={t[coldRisk]}
+        extra={extraAemet}
+      />
     );
   }
 
@@ -232,12 +273,12 @@ export default function Recommendations({ temp, lang, isDay, forceSafe }: Props)
       effectiveTemp < 18 ? "nightCool" : effectiveTemp < 24 ? "nightSafe" : "nightHeat";
 
     return (
-      <div className={`recommendation-box ${nightKey}`}>
-        <p className="recommendation-title">
-          {getIcon(nightKey)} {t.title}
-        </p>
-        <p>{t[nightKey]}</p>
-      </div>
+      <Box
+        className={`recommendation-box ${nightKey}`}
+        title={`${getIcon(nightKey)} ${t.title}`}
+        body={t[nightKey]}
+        extra={extraAemet}
+      />
     );
   }
 
@@ -248,12 +289,12 @@ export default function Recommendations({ temp, lang, isDay, forceSafe }: Props)
     const heatKey: HeatKey = effectiveTemp < 33 ? "moderate" : "high";
 
     return (
-      <div className={`recommendation-box ${heatKey}`}>
-        <p className="recommendation-title">
-          {getIcon(heatKey)} {t.title}
-        </p>
-        <p>{t[heatKey]}</p>
-      </div>
+      <Box
+        className={`recommendation-box ${heatKey}`}
+        title={`${getIcon(heatKey)} ${t.title}`}
+        body={t[heatKey]}
+        extra={extraAemet}
+      />
     );
   }
 
@@ -263,36 +304,34 @@ export default function Recommendations({ temp, lang, isDay, forceSafe }: Props)
   const riskObj: any = getHeatRisk(effectiveTemp, "rest");
   const heatKey = mapHeatLevelToKey(riskObj?.level);
 
-  // ✅ Safe: si forceSafe true o per defecte, el mostram
   if (heatKey === "safe") {
     if (forceSafe === false) {
-      // Si explícitament dius que NO vols safe, mostra igual un fallback visible
       return (
-        <div className="recommendation-box safe">
-          <p className="recommendation-title">
-            {getIcon("safe")} {t.title}
-          </p>
-          <p>{t.safe}</p>
-        </div>
+        <Box
+          className="recommendation-box safe"
+          title={`${getIcon("safe")} ${t.title}`}
+          body={t.safe}
+          extra={extraAemet}
+        />
       );
     }
 
     return (
-      <div className="recommendation-box safe">
-        <p className="recommendation-title">
-          {getIcon("safe")} {t.title}
-        </p>
-        <p>{t.safe}</p>
-      </div>
+      <Box
+        className="recommendation-box safe"
+        title={`${getIcon("safe")} ${t.title}`}
+        body={t.safe}
+        extra={extraAemet}
+      />
     );
   }
 
   return (
-    <div className={`recommendation-box ${heatKey}`}>
-      <p className="recommendation-title">
-        {getIcon(heatKey)} {t.title}
-      </p>
-      <p>{t[heatKey]}</p>
-    </div>
+    <Box
+      className={`recommendation-box ${heatKey}`}
+      title={`${getIcon(heatKey)} ${t.title}`}
+      body={t[heatKey]}
+      extra={extraAemet}
+    />
   );
 }

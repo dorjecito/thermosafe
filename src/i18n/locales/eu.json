@@ -32,6 +32,8 @@
 
   "highIrradianceWarning": "⚠️ Eguzki-erradiazio oso altua. Saihestu eguzkipeko esposizio zuzena.",
   "highUVIWarning": "⚠️ UV indize oso altua. Babes egokia ezinbestekoa!",
+  "extremeUVIWarning": "🚨 UV MUTURREKOA (11+) — Saihestu esposizio zuzena",
+
   "irradianceTips": "👒 Erabili txanoa, betaurrekoak eta eguzki-krema. Ez egin jarduera fisikorik eguzkitan.",
 
   "risk_level": "Bero arriskua:",

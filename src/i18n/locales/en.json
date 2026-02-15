@@ -27,6 +27,7 @@
   "wind_alert_label": "Receive strong wind alerts",
   "highIrradianceWarning": "⚠️ Very high solar irradiance. Avoid direct exposure.",
   "highUVIWarning": "⚠️ Very high UV index. Sun protection is essential!",
+  "extremeUVIWarning": "🚨 EXTREME UV (11+) — Avoid direct exposure",
   "irradianceTips": "👒 Wear a hat, sunglasses, and sunscreen. Avoid physical effort under direct sunlight.",
   "risk_level": "Heat risk:",
   "alert_extreme": "🚨 EXTREME heat risk! Stop activity and hydrate immediately.",

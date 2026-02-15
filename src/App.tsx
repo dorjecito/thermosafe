@@ -1311,16 +1311,36 @@ function pickPrimaryRisk(args: {
   const windSev: Severity = windMap[windRisk] ?? 0;
   const windKey = windSev === 0 ? "wind_none" : `wind_${windRisk}`;
 
-  // --- 4) UV ---
-  let uvSev: Severity = 0;
-  let uvKey = "uv_low";
-  if (typeof uvi === "number") {
-    if (uvi >= 11) { uvSev = 4; uvKey = "uv_extreme"; }
-    else if (uvi >= 8) { uvSev = 3; uvKey = "uv_very_high"; }
-    else if (uvi >= 6) { uvSev = 2; uvKey = "uv_high"; }
-    else if (uvi >= 3) { uvSev = 1; uvKey = "uv_moderate"; }
-    else { uvSev = 0; uvKey = "uv_low"; }
+// --- 4) UV ---
+let uvSev: Severity = 0;
+let uvKey = "uv_low";
+
+if (typeof uvi === "number" && !isNaN(uvi)) {
+
+  // Arrodoniment oficial OMS + protecció contra valors negatius
+  const uviRounded = Math.max(0, Math.round(uvi));
+
+  if (uviRounded >= 11) {
+    uvSev = 4;
+    uvKey = "uv_extreme";
+
+  } else if (uviRounded >= 8) {
+    uvSev = 3;
+    uvKey = "uv_very_high";
+
+  } else if (uviRounded >= 6) {
+    uvSev = 2;
+    uvKey = "uv_high";
+
+  } else if (uviRounded >= 3) {
+    uvSev = 1;
+    uvKey = "uv_moderate";
+
+  } else {
+    uvSev = 0;
+    uvKey = "uv_low";
   }
+}
 
   // Candidates (amb ordre de desempat: Calor > Fred > Vent > UV)
   const candidates: Array<{ kind: PrimaryKind; sev: Severity; key: string; tie: number }> = [
@@ -1593,18 +1613,36 @@ return (
 
 </div>
   
-   {/* ⚠️ ALERTA PRINCIPAL (només 1) */}
+{/* ⚠️ ALERTA PRINCIPAL (només 1) */}
 {primary.kind === "heat" && heatRisk && heatRisk.isHigh && (
   <div className="alert-banner">
     {heatRisk.isExtreme ? t("alert_extreme") : t("alertRisk")}
   </div>
 )}
 
-{primary.kind === "uv" && uvi !== null && uvi >= 8 && (
-  <div className="alert-banner">
-    <p>{t("highUVIWarning")}</p>
-  </div>
-)}
+{primary.kind === "uv" && typeof uvi === "number" && Number.isFinite(uvi) && (() => {
+  const uviRounded = Math.max(0, Math.round(uvi));
+
+  // Mostrem banner a partir de "Molt alt" (8+) com abans,
+  // però ara distingim EXTREM (11+)
+  if (uviRounded >= 11) {
+    return (
+      <div className="alert-banner">
+        <p>{t("extremeUVIWarning") /* si no existeix, posa highUVIWarning */}</p>
+      </div>
+    );
+  }
+
+  if (uviRounded >= 8) {
+    return (
+      <div className="alert-banner">
+        <p>{t("highUVIWarning")}</p>
+      </div>
+    );
+  }
+
+  return null;
+})()}
 
 {primary.kind === "none" && irr !== null && irr >= 8 && (
   <div className="alert-banner">
@@ -1612,8 +1650,6 @@ return (
     <p>{t("irradianceTips")}</p>
   </div>
 )}
-
-
 
 {/* ⏳ LOADERS */}
 {loading && (
