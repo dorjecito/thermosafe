@@ -204,9 +204,10 @@
   "no_alerts": "Ez dago abisurik une honetan.",
 
   "notifications": {
-    "enabled": "Abisuak aktibatuta",
-    "disabled": "Abisuak desaktibatuta"
-  },
+  "label": "Abisuak",
+  "on": "AKTIBATUTA",
+  "off": "DESAKTIBATUTA"
+},
 
   "solar_info": "Eguzki-informazioa",
   "uv_index_current": "Uneko UV indizea",

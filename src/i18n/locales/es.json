@@ -197,9 +197,10 @@
   "no_alerts": "No hay avisos meteorológicos actualmente.",
 
   "notifications": {
-    "enabled": "Avisos activados",
-    "disabled": "Avisos desactivados"
-  },
+  "label": "Avisos",
+  "on": "ACTIVADOS",
+  "off": "DESACTIVADOS"
+}, 
 
   "solar_info": "Información solar",
   "uv_index_current": "Índice UV actual",

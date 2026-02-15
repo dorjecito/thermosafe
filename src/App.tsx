@@ -650,29 +650,36 @@ const [msgWind, setMsgWind] = useState<string | null>(null);
 
 async function onTogglePush(next: boolean) {
   setBusy(true);
+
+  // ✅ no mostram textos d'estat (enabled/disabled)
   setMsgHeat(null);
+
   try {
     if (next) {
       const token = await enableRiskAlerts({ threshold: "moderate" });
       setPushEnabled(true);
       setPushToken(token);
-      setMsgHeat(t('push.enabled'));
+      // ❌ eliminat: setMsgHeat(t("push.enabled"));
     } else {
       await disableRiskAlerts(pushToken);
       setPushEnabled(false);
       setPushToken(null);
-      setMsgHeat(t('push.disabled'));
+      // ❌ eliminat: setMsgHeat(t("push.disabled"));
     }
   } catch (e: any) {
     console.error(e);
+
     const key =
-      e?.message?.includes('permís') ? 'permissionDenied' :
-      e?.message?.includes('GPS') ? 'noGps' :
-      e?.message?.includes('Push') ? 'notSupported' :
-      e?.message?.includes('token') ? 'noToken' :
+      e?.message?.includes("permís") ? "permissionDenied" :
+      e?.message?.includes("GPS") ? "noGps" :
+      e?.message?.includes("Push") ? "notSupported" :
+      e?.message?.includes("token") ? "noToken" :
       null;
 
-    setMsgHeat(key ? t(`push.errors.${key}`) : (e?.message ?? t('error_generic')));
+    // ✅ només errors visibles
+    setMsgHeat(key ? t(`push.errors.${key}`) : (e?.message ?? t("error_generic")));
+  } finally {
+    setBusy(false);
   }
 }
 
@@ -1525,51 +1532,49 @@ return (
   }}
 >
 
-  {/* 🔔 Botó per activar/desactivar avisos meteorològics */}
+{/* 🔔 Botó REAL: activar/desactivar PUSH (FCM + Firestore) */}
 <div
   style={{
     display: "flex",
     alignItems: "center",
-    gap: "12px",
+    gap: "10px",
     marginTop: "12px",
     marginBottom: "12px",
   }}
 >
   <button
-  onClick={() => {
-    const newVal = !notificationsEnabled;
-    setNotificationsEnabled(newVal);
-    localStorage.setItem("notificationsEnabled", JSON.stringify(newVal));
-
-    console.log(
-      `[TOGGLE] Notificacions meteorològiques: ${
-        newVal ? "ACTIVADES" : "DESACTIVADES"
-      }`
-    );
-  }}
-  style={{
-    backgroundColor: notificationsEnabled ? "#4CAF50" : "#888",
-    color: "white",
-    padding: "8px 14px",
-    border: "none",
-    borderRadius: "8px",
-    cursor: "pointer",
-    fontSize: "0.9rem",
-    fontWeight: "600",
-    display: "flex",
-    alignItems: "center",
-    gap: "8px"
-  }}
->
-  {/* ICONA: normal si activat, tachada si desactivat */}
-  <span>{notificationsEnabled ? "🔔" : "🔕"}</span>
-
-  {/* TEXT TRADUÏT */}
-  {notificationsEnabled
-    ? t("notifications.enabled")
-    : t("notifications.disabled")}
-</button>
+    onClick={() => onTogglePush(!pushEnabled)}
+    style={{
+      backgroundColor: pushEnabled ? "#2f9e44" : "#555",
+      color: "white",
+      padding: "8px 14px",
+      border: "none",
+      borderRadius: "8px",
+      cursor: "pointer",
+      fontSize: "0.9rem",
+      fontWeight: 600,
+      display: "flex",
+      alignItems: "center",
+      gap: "8px",
+      transition: "all 0.2s ease"
+    }}
+  >
+    <span>{pushEnabled ? "🔔" : "🔕"}</span>
+    {t("notifications.label")}:
+    <strong>
+      {pushEnabled
+        ? t("notifications.on")
+        : t("notifications.off")}
+    </strong>
+  </button>
 </div>
+
+{/* (opcional) Missatge d’estat/errada del push */}
+{msgHeat && (
+  <p style={{ marginTop: "0.25rem", opacity: 0.9 }}>
+    {msgHeat}
+  </p>
+)}
 
 <button
   onClick={() => {

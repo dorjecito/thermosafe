@@ -159,9 +159,10 @@
   "alerts_none": "There are currently no active weather alerts.",
   "no_alerts": "No alerts at this time.",
   "notifications": {
-    "enabled": "Alerts enabled",
-    "disabled": "Alerts disabled"
-  },
+  "label": "Alerts",
+  "on": "ON",
+  "off": "OFF"
+},
   "solar_info": "Solar information",
   "uv_index_current": "Current UV index",
   "uv_level": "Level",

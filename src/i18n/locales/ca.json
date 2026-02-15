@@ -174,10 +174,11 @@
   "alerts_none": "No hi ha avisos meteorològics actius actualment.",
   "no_alerts": "No hi ha avisos meteorològics actualment.",
 
-  "notifications": {
-    "enabled": "Avisos activats",
-    "disabled": "Avisos desactivats"
-  },
+ "notifications": {
+  "label": "Avisos",
+  "on": "ACTIVATS",
+  "off": "DESACTIVATS"
+},
 
   "solar_info": "Informació solar",
   "uv_index_current": "Índex UV actual",
@@ -292,8 +293,6 @@
 
   "push": {
     "label": "Rebre avisos quan el risc per calor ≥ moderat",
-    "enabled": "Avisos activats. Rebràs notificacions quan el risc sigui moderat o superior.",
-    "disabled": "Avisos desactivats.",
     "errors": {
       "permissionDenied": "Has denegat el permís de notificacions.",
       "noGps": "No s'ha pogut obtenir la ubicació (GPS).",
