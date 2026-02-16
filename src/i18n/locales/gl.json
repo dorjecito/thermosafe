@@ -332,7 +332,10 @@
   "remaining_hours": "Quedan {{hours}}h {{minutes}}min",
   "remaining_minutes": "Quedan {{minutes}} min"
 },
-  "uvTitle": "ThermoSafe abisua",
-  "uvHigh": "UV indize oso altua. Eguzki-babesa ezinbestekoa.",
-  "uvExtreme": "🚨 UV MUTURREKOA (11+) — Saihestu esposizio zuzena"
+  "uvTitle": "Aviso ThermoSafe",
+  "uvLow": "Índice UV baixo.",
+  "uvModerate": "Índice UV moderado. Protección recomendada.",
+  "uvHigh": "Índice UV alto. Protección elevada.",
+  "uvVeryHigh": "Índice UV moi alto. Protección solar imprescindible!",
+  "uvExtreme": "🚨 UV EXTREMO (11+) — Evita a exposición directa"
 }

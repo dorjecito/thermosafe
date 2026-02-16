@@ -307,6 +307,9 @@
   "remaining_minutes": "Queden {{minutes}} min"
 },
 "uvTitle": "Avís ThermoSafe",
-"uvHigh": "Índex UV molt alt. Protecció solar imprescindible!",
+"uvLow": "Índex UV baix.",
+"uvModerate": "Índex UV moderat. Protecció recomanada.",
+"uvHigh": "Índex UV alt. Protecció elevada.",
+"uvVeryHigh": "Índex UV molt alt. Protecció solar imprescindible!",
 "uvExtreme": "🚨 UV EXTREM (11+) — Evita exposició directa"
 }

@@ -295,6 +295,9 @@
   "remaining_minutes": "{{minutes}} min geratzen dira"
 },
   "uvTitle": "ThermoSafe abisua",
-  "uvHigh": "UV indize oso altua. Eguzki-babesa ezinbestekoa.",
+  "uvLow": "UV indize baxua.",
+  "uvModerate": "UV indize moderatua. Babesa gomendatua.",
+  "uvHigh": "UV indize altua. Babes handia.",
+  "uvVeryHigh": "UV indize oso altua. Eguzki-babesa ezinbestekoa!",
   "uvExtreme": "🚨 UV MUTURREKOA (11+) — Saihestu esposizio zuzena"
 }
