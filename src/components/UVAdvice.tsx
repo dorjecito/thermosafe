@@ -65,20 +65,20 @@ const texts = {
   }
 } as const;
 
-// ✅ Arrodoniment oficial + clamp a 0
-const roundUvi = (uvi: number) => Math.max(0, Math.round(uvi));
-
-// ✅ Bandes segons OMS/AEMET, però amb ENTER arrodonit
-const band = (uvi: number) => {
-  const u = roundUvi(uvi);
-  return u <= 2 ? 0 : u <= 5 ? 1 : u <= 7 ? 2 : u <= 10 ? 3 : 4;
-};
-
 const colors = ["#4caf50", "#ffeb3b", "#ff9800", "#f44336", "#9c27b0"] as const;
 
 const normalizeLang = (lang: string): Lang => {
   const code = (lang || "ca").toLowerCase().slice(0, 2) as Lang;
   return (["ca", "es", "eu", "gl", "en"] as const).includes(code) ? code : "ca";
+};
+
+// ✅ Clamp a 0, però SENSE arrodonir per classificar
+const safeUvi = (uvi: number) => Math.max(0, uvi);
+
+// ✅ Bandes OMS amb valor REAL
+const band = (uvi: number) => {
+  const u = safeUvi(uvi);
+  return u < 3 ? 0 : u < 6 ? 1 : u < 8 ? 2 : u < 11 ? 3 : 4;
 };
 
 const UVAdvice: React.FC<UVAdviceProps> = ({ uvi, lang }) => {
@@ -102,7 +102,7 @@ const UVAdvice: React.FC<UVAdviceProps> = ({ uvi, lang }) => {
   }
 
   const b = band(uvi);
-  const uviRounded = roundUvi(uvi); // (opcional) si vols mostrar també l'enter
+  const u = safeUvi(uvi);
 
   return (
     <div
@@ -115,11 +115,9 @@ const UVAdvice: React.FC<UVAdviceProps> = ({ uvi, lang }) => {
       }}
     >
       <strong>
-        🔆 {L.idx}: {uvi.toFixed(1)} — {L.levels[b]}
+        🔆 {L.idx}: {u.toFixed(1)} — {L.levels[b]}
       </strong>
-      {/* Si vols veure l’enter que decideix el nivell (debug):
-          <div style={{ fontSize: 12 }}>({uviRounded})</div>
-      */}
+
       {L.msgs[b] && <p style={{ marginTop: ".5rem" }}>{L.msgs[b]}</p>}
     </div>
   );

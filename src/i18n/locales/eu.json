@@ -293,5 +293,8 @@
   "ended": "Amaituta",
   "remaining_hours": "{{hours}}h {{minutes}}min geratzen dira",
   "remaining_minutes": "{{minutes}} min geratzen dira"
-}
+},
+  "uvTitle": "ThermoSafe abisua",
+  "uvHigh": "UV indize oso altua. Eguzki-babesa ezinbestekoa.",
+  "uvExtreme": "🚨 UV MUTURREKOA (11+) — Saihestu esposizio zuzena"
 }

@@ -331,5 +331,8 @@
   "ended": "Finalizado",
   "remaining_hours": "Quedan {{hours}}h {{minutes}}min",
   "remaining_minutes": "Quedan {{minutes}} min"
-}
+},
+  "uvTitle": "ThermoSafe abisua",
+  "uvHigh": "UV indize oso altua. Eguzki-babesa ezinbestekoa.",
+  "uvExtreme": "🚨 UV MUTURREKOA (11+) — Saihestu esposizio zuzena"
 }

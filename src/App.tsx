@@ -1322,24 +1322,25 @@ function pickPrimaryRisk(args: {
 let uvSev: Severity = 0;
 let uvKey = "uv_low";
 
-if (typeof uvi === "number" && !isNaN(uvi)) {
+if (typeof uvi === "number" && Number.isFinite(uvi)) {
 
-  // Arrodoniment oficial OMS + protecció contra valors negatius
-  const uviRounded = Math.max(0, Math.round(uvi));
+  // Protecció contra valors negatius (OpenUV pot retornar -1 en casos rars)
+  const uviSafe = Math.max(0, uvi);
 
-  if (uviRounded >= 11) {
+  // ⚠️ Classificació OMS amb valor REAL (NO arrodonit)
+  if (uviSafe >= 11) {
     uvSev = 4;
     uvKey = "uv_extreme";
 
-  } else if (uviRounded >= 8) {
+  } else if (uviSafe >= 8) {
     uvSev = 3;
     uvKey = "uv_very_high";
 
-  } else if (uviRounded >= 6) {
+  } else if (uviSafe >= 6) {
     uvSev = 2;
     uvKey = "uv_high";
 
-  } else if (uviRounded >= 3) {
+  } else if (uviSafe >= 3) {
     uvSev = 1;
     uvKey = "uv_moderate";
 
@@ -1617,28 +1618,37 @@ return (
 )}
 
 </div>
-  
-{/* ⚠️ ALERTA PRINCIPAL (només 1) */}
-{primary.kind === "heat" && heatRisk && heatRisk.isHigh && (
-  <div className="alert-banner">
-    {heatRisk.isExtreme ? t("alert_extreme") : t("alertRisk")}
-  </div>
-)}
 
-{primary.kind === "uv" && typeof uvi === "number" && Number.isFinite(uvi) && (() => {
-  const uviRounded = Math.max(0, Math.round(uvi));
-
-  // Mostrem banner a partir de "Molt alt" (8+) com abans,
-  // però ara distingim EXTREM (11+)
-  if (uviRounded >= 11) {
+{/* ⚠️ BANNER PRINCIPAL (només 1) */}
+{(() => {
+  // 1) CALOR (prioritat màxima)
+  if (primary.kind === "heat" && heatRisk && heatRisk.isHigh) {
     return (
       <div className="alert-banner">
-        <p>{t("extremeUVIWarning") /* si no existeix, posa highUVIWarning */}</p>
+        {heatRisk.isExtreme ? t("alert_extreme") : t("alertRisk")}
       </div>
     );
   }
 
-  if (uviRounded >= 8) {
+  // UVI arrodonit + clamp 0
+  const hasUvi = typeof uvi === "number" && Number.isFinite(uvi);
+  const uviRounded = hasUvi ? Math.max(0, Math.round(uvi)) : null;
+
+  // 2) UV EXTREM (11+) — es mostra encara que UV no sigui primary
+  if (uviRounded !== null && uviRounded >= 11) {
+    const key = "extremeUVIWarning";
+    const raw = t(key);
+    const safeText = raw === key ? t("highUVIWarning") : raw;
+
+    return (
+      <div className="alert-banner">
+        <p>{safeText}</p>
+      </div>
+    );
+  }
+
+  // 3) UV MOLT ALT (8–10) — només si UV és primary
+  if (uviRounded !== null && uviRounded >= 8 && primary.kind === "uv") {
     return (
       <div className="alert-banner">
         <p>{t("highUVIWarning")}</p>
@@ -1646,29 +1656,18 @@ return (
     );
   }
 
+  // 4) IRRADIÀNCIA — només si no hi ha cap risc principal
+  if (primary.kind === "none" && irr !== null && irr >= 8) {
+    return (
+      <div className="alert-banner">
+        <p>{t("highIrradianceWarning")}</p>
+        <p>{t("irradianceTips")}</p>
+      </div>
+    );
+  }
+
   return null;
 })()}
-
-{primary.kind === "none" && irr !== null && irr >= 8 && (
-  <div className="alert-banner">
-    <p>{t("highIrradianceWarning")}</p>
-    <p>{t("irradianceTips")}</p>
-  </div>
-)}
-
-{/* ⏳ LOADERS */}
-{loading && (
-  <p
-    style={{
-      color: "#1e90ff",
-      fontStyle: "italic",
-      marginBottom: "1rem",
-      textAlign: "center",
-    }}
-  >
-    {t("loading")}
-  </p>
-)}
 
      {/* 📊 DADES */}
 {city && (

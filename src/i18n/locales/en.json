@@ -282,6 +282,9 @@
     "ended": "Ended",
     "remaining_hours": "{{hours}}h {{minutes}}m left",
     "remaining_minutes": "{{minutes}}m left"
-}
+},
+  "uvTitle": "ThermoSafe Alert",
+  "uvHigh": "Very high UV. Sun protection essential.",
+  "uvExtreme": "🚨 EXTREME UV (11+) — Avoid direct sun exposure."
 
 }

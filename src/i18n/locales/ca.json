@@ -305,5 +305,8 @@
   "ended": "Finalitzat",
   "remaining_hours": "Queden {{hours}}h {{minutes}}min",
   "remaining_minutes": "Queden {{minutes}} min"
-}
+},
+"uvTitle": "Avís ThermoSafe",
+"uvHigh": "Índex UV molt alt. Protecció solar imprescindible!",
+"uvExtreme": "🚨 UV EXTREM (11+) — Evita exposició directa"
 }
