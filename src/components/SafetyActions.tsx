@@ -1,14 +1,22 @@
 import React from "react";
 import { useTranslation } from "react-i18next";
-import type { LangKey } from "../utils/aemetAi";
+import type { LangKey as AemetLangKey } from "../utils/aemetAi";
+
+type LangKey = AemetLangKey | "en";
 
 type Props = {
-  lang: LangKey;              // "ca" | "es" | "eu" | "gl"
+  lang: LangKey;              // "ca" | "es" | "eu" | "gl" | "en"
   risk: string;               // ex: "heat_moderate", "cold_mild", "cap", ...
   uvi: number | null;
   windRisk: string;           // ex: "none" | "breezy" | "moderate" | ...
   city?: string | null;       // opcional, per fer el share més útil
 };
+
+function normalizeLang(lng: string): LangKey {
+  const s = (lng || "ca").slice(0, 2).toLowerCase();
+  if (s === "ca" || s === "es" || s === "eu" || s === "gl" || s === "en") return s;
+  return "ca";
+}
 
 export default function SafetyActions({
   lang,
@@ -19,15 +27,18 @@ export default function SafetyActions({
 }: Props) {
   const { t } = useTranslation();
 
+  const l = normalizeLang(lang);
+
   // 🆘 Confirmació 112 (multiidioma)
-  function confirmCall112(l: LangKey) {
+  function confirmCall112(lng: LangKey) {
     const msg =
-      {
+      ({
         ca: "Estàs segur que vols cridar a emergències?",
         es: "¿Seguro que quieres llamar a emergencias?",
         eu: "Larrialdietara deitu nahi duzula ziur zaude?",
         gl: "Tes certeza de que queres chamar ás emerxencias?",
-      }[l] ?? t("confirm_emergency");
+        en: "Are you sure you want to call emergency services?",
+      } as const)[lng] ?? t("confirm_emergency");
 
     if (window.confirm(msg)) window.location.href = "tel:112";
   }
@@ -69,7 +80,7 @@ export default function SafetyActions({
 
     if (riskLines.length > 0) {
       lines.push(`📍 ${t("current_risk")}:`);
-      riskLines.forEach((l) => lines.push(l));
+      riskLines.forEach((x) => lines.push(x));
       lines.push("");
     }
 
@@ -98,7 +109,7 @@ export default function SafetyActions({
 
       <button
         className="safety-112-btn"
-        onClick={() => confirmCall112(lang)}
+        onClick={() => confirmCall112(l)}
         title="Emergències"
       >
         🚨 112

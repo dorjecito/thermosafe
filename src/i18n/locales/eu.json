@@ -118,13 +118,21 @@
   "moderate": "Moderatua",
 
   "notify": {
-    "coldTitle": "ThermoSafe Abisua",
-    "coldBody": "Hotz arriskua {{risk}}. Tenperatura: {{temp}}°C",
-    "heatTitle": "ThermoSafe Abisua",
-    "heatBody": "Bero arriskua {{risk}}. Sentsazio termikoa: {{hi}}°C",
-    "windTitle": "ThermoSafe Abisua",
-    "windBody": "Haize arriskua {{risk}}. Haizearen abiadura: {{speed}} km/h"
-  },
+  "coldTitle": "ThermoSafe Abisua",
+  "coldBody": "Hotzagatik arriskua {{risk}}. Tenperatura: {{temp}}°C",
+
+  "heatTitle": "ThermoSafe Abisua",
+  "heatBody": "Beroagatik arriskua {{risk}}. Sentsazio termikoa: {{hi}}°C",
+
+  "windTitle": "ThermoSafe Abisua",
+  "windBody": "Haizeagatik arriskua {{risk}}. Haizearen abiadura: {{speed}} km/h",
+
+  "uvTitle": "ThermoSafe Abisua",
+  "uvModerate": "UV indize moderatua. Eguzki-babesa gomendatzen da esposizioan.",
+  "uvHigh": "UV indize altua. Erabili eguzki-babesa eta murriztu esposizio luzea.",
+  "uvVeryHigh": "UV indize oso altua. Eguzki-babesa ezinbestekoa da.",
+  "uvExtreme": "UV indize muturrekoa. Saihestu eguzki-esposizio zuzena."
+},
 
   "heatRiskLabel": "Bero arriskua",
   "effectiveTemp": "Benetako tenperatura",

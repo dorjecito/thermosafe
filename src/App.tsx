@@ -23,6 +23,7 @@ import { getUVFromOpenUV } from "./services/openUV";
    } from "./utils/windDirections";
    import { getWindRisk, WIND_COLORS, type WindRisk } from "./utils/windRisk";
    import { buildAemetAiAlert, translateAemetAuto, type LangKey } from "./utils/aemetAi";
+   import { getCoords } from "./utils/geolocation";
 
 
    /* —— components ————————————————————————— */
@@ -238,17 +239,6 @@ async function askNotificationPermission(): Promise<boolean> {
   return res === "granted";
 }
 
-async function getCoords(): Promise<{ lat: number; lon: number } | null> {
-  if (!("geolocation" in navigator)) return null;
-  return new Promise((resolve) => {
-    navigator.geolocation.getCurrentPosition(
-      (pos) => resolve({ lat: pos.coords.latitude, lon: pos.coords.longitude }),
-      () => resolve(null),
-      { enableHighAccuracy: false, timeout: 10000, maximumAge: 300000 }
-    );
-  });
-}
-
 const formatAlertTime = (unixSeconds: number, lang: string) => {
   const d = new Date(unixSeconds * 1000);
   return d.toLocaleString(lang, {
@@ -269,6 +259,11 @@ export default function App() {
   /* i18next */
   const [loading, setLoading] = useState(false);
   const { t, i18n } = useTranslation();
+  // ✅ Traducció segura: si falta la clau, torna un fallback llegible
+  const tr = (key: string, fallback: string) => {
+  const out = t(key);
+  return out && out !== key ? out : fallback;
+};
   const langUI = i18n.language; // ex: "en", "en-US", "ca"
   const getRemainingTime = (endUnix: number, lang: string) => {
   const now = Date.now() / 1000;
@@ -619,27 +614,18 @@ if (crossedUp && cooldownOk) {
   }
 }
 
-/* === [UV] Notificador segons índex UV === */
+/* === [UV] Notificador segons índex UV (robust) === */
 async function maybeNotifyUV(uvi: number | null) {
   if (!pushEnabled || uvi == null) return;
 
-  console.debug("[DEBUG] Verificant notificació UV. Valor:", uvi);
+  const title = tr("notify.uvTitle", "☀️ Índex UV");
 
   if (uvi >= 8) {
-    showBrowserNotification(
-      t("notify.uvTitle"),
-      t("notify.uvVeryHigh")
-    );
+    showBrowserNotification(title, tr("notify.uvVeryHigh", "🚨 UV molt alt. Protecció imprescindible."));
   } else if (uvi >= 6) {
-    showBrowserNotification(
-      t("notify.uvTitle"),
-      t("notify.uvHigh")
-    );
+    showBrowserNotification(title, tr("notify.uvHigh", "⚠️ UV alt. Crema, gorra i ombra."));
   } else if (uvi >= 3) {
-    showBrowserNotification(
-      t("notify.uvTitle"),
-      t("notify.uvModerate")
-    );
+    showBrowserNotification(title, tr("notify.uvModerate", "🟡 UV moderat. Protegeix-te si estàs al sol."));
   }
 }
 
@@ -1705,23 +1691,32 @@ return (
   }}
 >
   <h3 style={{ marginTop: 0, marginBottom: "0.6rem", fontWeight: 600 }}>
-   {t("current_conditions")}
-</h3>
-
-<p>
-  <strong>{t("humidity")}:</strong>{" "}
-  {hum !== null ? `${hum}%` : "—"}
-</p>
-
-<p>
-  <strong>{t("feels_like")}:</strong>{" "}
-  {hi !== null ? hi.toFixed(1) + "°C" : "—"}
-</p>
+    {t("current_conditions")}
+  </h3>
 
 <p>
   <strong>{t("real_temp")}:</strong>{" "}
   {temp !== null ? temp.toFixed(1) + "°C" : "—"}
 </p>
+
+  <p>
+    <strong>{t("feels_like")}:</strong>{" "}
+    {hi !== null ? hi.toFixed(1) + "°C" : "—"}
+  </p>
+
+  <p>
+    <strong>{t("humidity")}:</strong>{" "}
+    {hum !== null ? `${hum}%` : "—"}
+  </p>
+
+  {wind !== null && (
+    <p>
+      <strong>{t("wind")}:</strong>{" "}
+      {wind.toFixed(1)} km/h{" "}
+      {windDeg !== null ? `· ${windText16} (${windDeg.toFixed(0)}º)` : ""}
+    </p>
+  )}
+
 </div>
 
 {/* 🕒 Targeta d'actualització */}
@@ -1817,8 +1812,8 @@ return (
   </div>
 )}
 
-{/* 💨 VENT */}
-{wind !== null && (
+{/* 💨 RISC PER VENT (només risc) */}
+{windRisk && (
   <div
     style={{
       backgroundColor: WIND_COLORS[windRisk as keyof typeof WIND_COLORS],
@@ -1827,73 +1822,22 @@ return (
       padding: "0.55rem 0.85rem",
       marginTop: "0.75rem",
       textAlign: "left",
-      fontWeight: 500,
+      fontWeight: 600,
       display: "flex",
-      flexDirection: "column",
-      gap: "0.25rem",
+      alignItems: "center",
+      gap: "0.5rem",
     }}
   >
-    {/* Línia 1: títol + risc */}
-    <div
-      style={{
-        display: "flex",
-        alignItems: "center",
-        gap: "0.4rem",
-        fontSize: "0.98rem",
-      }}
-    >
-      <span style={{ fontSize: "1.15rem" }}>💨</span>
-      <span style={{ fontWeight: 600 }}>{t("wind_risk")}:</span>
-      <span>{t(`windRisk.${windRisk}`)}</span>
-    </div>
+    <span style={{ fontSize: "1.15rem" }}>💨</span>
+    <span>{t("wind_risk")}:</span>
+    <span>{t(`windRisk.${windRisk}`)}</span>
 
-    {/* Línia 2: velocitat + direcció */}
-    <div
-      style={{
-        display: "flex",
-        alignItems: "center",
-        gap: "0.5rem",
-        fontSize: "0.9rem",
-        opacity: 0.9,
-      }}
-    >
-      <span>
-        {t("wind")}: <strong>{wind.toFixed(1)} km/h</strong>
+    {/* (Opcional) km/h en petit a la dreta */}
+    {wind !== null && (
+      <span style={{ marginLeft: "auto", opacity: 0.85, fontWeight: 500 }}>
+        {wind.toFixed(1)} km/h
       </span>
-
-      {windDeg !== null && (
-        <span
-          style={{
-            display: "flex",
-            alignItems: "center",
-            gap: "0.35rem",
-            marginLeft: "0.35rem",
-          }}
-        >
-          {/* Fletxa orientada segons els graus */}
-          <svg
-            width="18"
-            height="18"
-            viewBox="0 0 24 24"
-            fill="none"
-            style={{
-              transform: `rotate(${getWindRotationFromDegrees(windDeg)}deg)`,
-              transition: "transform 0.3s ease",
-            }}
-          >
-            <path
-              d="M12 2 L18 14 H6 L12 2 Z"
-              fill={windRisk === "none" ? "#222" : "#fff"}
-            />
-          </svg>
-
-          {/* Text del punt cardinal: OSO (237º), NNE (35º)... */}
-          <span style={{ fontSize: "0.85rem", opacity: 0.9 }}>
-            {windText16} ({windDeg.toFixed(0)}º)
-          </span>
-        </span>
-      )}
-    </div>
+    )}
   </div>
 )}
 
@@ -1911,7 +1855,6 @@ return (
       </span>
     </p>
 
-    {/* 👇 AQUÍ VA EL COMPONENT */}
     <UVAdvice
       uvi={uvi}
       lang={i18n.resolvedLanguage || i18n.language || "ca"}
@@ -1934,11 +1877,13 @@ return (
 
       // 🔍 Normalitza la descripció
       const desc =
-        typeof alert.description === "string"
-          ? alert.description
-          : alert.description?.[i18n.language] ||
-            alert.description?.es ||
-            Object.values(alert.description || {}).join(". ");
+  typeof alert.description === "string"
+    ? alert.description
+    : alert.description?.[i18n.language] ||
+      alert.description?.es ||
+      Object.values(alert.description || {})
+        .filter((v) => typeof v === "string" && v.trim().length > 0)
+        .join(". ");
 
       // 🎯 Processat IA per títol + cos
       const ai = buildAemetAiAlert(
@@ -2002,13 +1947,11 @@ if (uvi != null && uvi >= 3) {
 
       return (
   <div
-    key={i}
-    className={`aemet-alert-card alert-ext`}
+    key={`${alert.event}-${alert.start ?? i}-${alert.end ?? ""}`}
+    className="aemet-alert-card alert-ext"
   >
     {/* Títol */}
-    <div className="aemet-alert-title">
-      {ai.title}
-    </div>
+    <div className="aemet-alert-title">{ai.title}</div>
 
     {/* 🕒 Línia temporal + temps restant */}
     {typeof alert?.start === "number" && typeof alert?.end === "number" && (
@@ -2023,9 +1966,7 @@ if (uvi != null && uvi >= 3) {
     )}
 
     {/* Descripció */}
-    <div className="aemet-alert-description">
-      {ai.body}
-    </div>
+    <div className="aemet-alert-description">{ai.body}</div>
 
     {/* Peu – font oficial */}
     <div className="aemet-alert-source">
@@ -2034,7 +1975,7 @@ if (uvi != null && uvi >= 3) {
         (alert.event || "").toLowerCase().includes("aemet")
       )
         ? "AEMET · Agencia Estatal de Meteorología"
-        : alert.sender_name || "Official weather alert"}
+        : alert.sender_name || t("official_source") || "Font oficial"}
     </div>
   </div>
 );
@@ -2073,7 +2014,7 @@ if (uvi != null && uvi >= 3) {
 
 {/* ✅ ACCIONS RÀPIDES (al final, després d'escala UV) */}
 <SafetyActions
-  lang={(i18n.language.slice(0, 2) as LangKey)}
+  lang={(i18n.resolvedLanguage || i18n.language || "ca").slice(0, 2) as any}
   risk={risk}
   uvi={uvi}
   windRisk={windRisk}
@@ -2095,26 +2036,27 @@ if (uvi != null && uvi >= 3) {
 );
 }
 
-/* === Mostrar notificació al navegador === */
 function showBrowserNotification(title: string, body: string) {
-  if (typeof window === "undefined" || !("Notification" in window)) return;
+  if (typeof window === "undefined") return;
+  if (!("Notification" in window)) return;
+  if (!("serviceWorker" in navigator)) return;
 
-  // 🧐 Si la pestanya està visible, el navegador sovint NO mostra la notificació.
-  // No la bloquejam, però ho deixem registrat al log.
-  if (typeof document !== "undefined" && document.visibilityState === "visible") {
-    console.log(
-      `[DEBUG] Notificació NO visible perquè la pestanya està en primer pla →`,
-      { title, body }
-    );
-  }
+  const show = async () => {
+    const registration = await navigator.serviceWorker.ready;
 
-  const notify = () => new Notification(title, { body });
+    registration.showNotification(title, {
+      body,
+      icon: "/icons/icon-192.png",
+      tag: "thermosafe-alert",
+      //<renotify>: true
+    });
+  };
 
   if (Notification.permission === "granted") {
-    notify();
+    show();
   } else if (Notification.permission !== "denied") {
     Notification.requestPermission().then((perm) => {
-      if (perm === "granted") notify();
+      if (perm === "granted") show();
     });
   }
 }

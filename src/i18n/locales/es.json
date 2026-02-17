@@ -116,13 +116,21 @@
   "moderate": "Moderado",
 
   "notify": {
-    "coldTitle": "Aviso ThermoSafe",
-    "coldBody": "Riesgo por frío {{risk}}. Temperatura: {{temp}}°C",
-    "heatTitle": "Aviso ThermoSafe",
-    "heatBody": "Riesgo por calor {{risk}}. Sensación térmica: {{hi}}°C",
-    "windTitle": "Aviso ThermoSafe",
-    "windBody": "Riesgo por viento {{risk}}. Velocidad del viento: {{speed}} km/h"
-  },
+  "coldTitle": "Aviso ThermoSafe",
+  "coldBody": "Riesgo por frío {{risk}}. Temperatura: {{temp}}°C",
+
+  "heatTitle": "Aviso ThermoSafe",
+  "heatBody": "Riesgo por calor {{risk}}. Sensación térmica: {{hi}}°C",
+
+  "windTitle": "Aviso ThermoSafe",
+  "windBody": "Riesgo por viento {{risk}}. Velocidad del viento: {{speed}} km/h",
+
+  "uvTitle": "Aviso ThermoSafe",
+  "uvModerate": "Índice UV moderado. Protección solar recomendada si hay exposición.",
+  "uvHigh": "Índice UV alto. Utiliza protección solar y limita la exposición prolongada.",
+  "uvVeryHigh": "Índice UV muy alto. Protección solar imprescindible.",
+  "uvExtreme": "Índice UV extremo. Evita la exposición directa al sol."
+},
 
   "heatRiskLabel": "Riesgo por calor",
   "effectiveTemp": "Temperatura efectiva",

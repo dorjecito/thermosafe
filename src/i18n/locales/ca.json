@@ -60,13 +60,20 @@
   "extreme": "Extrem",
 
   "notify": {
-    "coldTitle": "Avís ThermoSafe",
-    "coldBody": "Risc per fred {{risk}}. Temperatura: {{temp}}°C",
-    "heatTitle": "Avís ThermoSafe",
-    "heatBody": "Risc per calor {{risk}}. Sensació tèrmica: {{hi}}°C",
-    "windTitle": "Avís ThermoSafe",
-    "windBody": "Risc per vent {{risk}}. Velocitat del vent: {{speed}} km/h"
-  },
+  "coldTitle": "Avís ThermoSafe",
+  "coldBody": "Risc per fred {{risk}}. Temperatura: {{temp}}°C",
+
+  "heatTitle": "Avís ThermoSafe",
+  "heatBody": "Risc per calor {{risk}}. Sensació tèrmica: {{hi}}°C",
+
+  "windTitle": "Avís ThermoSafe",
+  "windBody": "Risc per vent {{risk}}. Velocitat del vent: {{speed}} km/h",
+
+  "uvTitle": "Avís ThermoSafe",
+  "uvModerate": "Índex UV moderat. Protegeix-te si estàs exposat al sol.",
+  "uvHigh": "Índex UV alt. Usa crema solar i evita exposició prolongada.",
+  "uvVeryHigh": "Índex UV molt alt. Protecció solar imprescindible."
+},
 
   "heatRiskLabel": "Risc per calor",
   "effectiveTemp": "Temperatura efectiva",
