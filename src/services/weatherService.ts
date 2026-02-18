@@ -4,6 +4,8 @@ const BASE_URL = "https://api.openweathermap.org/data/2.5";
 const GEO_URL = "https://api.openweathermap.org/geo/1.0";
 const ONECALL_URL = "https://api.openweathermap.org/data/3.0/onecall";
 
+const normLang2 = (lang: string) => (lang || "en").slice(0, 2).toLowerCase();
+
 // 📡 Obté temps actual per coordenades
 export async function getWeatherByCoords(
   lat: number,
@@ -12,7 +14,9 @@ export async function getWeatherByCoords(
   apiKey?: string
 ) {
   const API_KEY = apiKey || import.meta.env.VITE_OPENWEATHER_API_KEY;
-  const url = `${BASE_URL}/weather?lat=${lat}&lon=${lon}&appid=${API_KEY}&units=metric&lang=${lang}`;
+  const lang2 = normLang2(lang);
+
+  const url = `${BASE_URL}/weather?lat=${lat}&lon=${lon}&appid=${API_KEY}&units=metric&lang=${lang2}`;
 
   try {
     const response = await fetch(url);
@@ -20,9 +24,8 @@ export async function getWeatherByCoords(
 
     const data = await response.json();
 
-    if (!data.name && data.sys?.country) {
-      data.name = data.sys.country;
-    }
+    // ❗ No posam country com a "name". Si falta name, millor deixar-ho buit i resoldre-ho fora (reverse geocoding).
+    if (typeof data?.name !== "string") data.name = "";
 
     return data;
   } catch (err) {
@@ -38,9 +41,9 @@ export async function getWeatherByCity(
   apiKey?: string
 ) {
   const API_KEY = apiKey || import.meta.env.VITE_OPENWEATHER_API_KEY;
-  const url = `${BASE_URL}/weather?q=${encodeURIComponent(
-    cityName
-  )}&appid=${API_KEY}&units=metric&lang=${lang}`;
+  const lang2 = normLang2(lang);
+
+  const url = `${BASE_URL}/weather?q=${encodeURIComponent(cityName)}&appid=${API_KEY}&units=metric&lang=${lang2}`;
 
   try {
     const response = await fetch(url);
@@ -49,24 +52,30 @@ export async function getWeatherByCity(
     const data = await response.json();
 
     // Si falten coordenades, recuperar-les via GeoAPI
-    if (!data.coord?.lat || !data.coord?.lon) {
-      const geoUrl = `${GEO_URL}/direct?q=${encodeURIComponent(
-        cityName
-      )}&limit=1&appid=${API_KEY}`;
-      const geoResp = await fetch(geoUrl);
-      const geoData = await geoResp.json();
+    const missingCoords = data?.coord?.lat == null || data?.coord?.lon == null;
 
-      if (geoData.length > 0) {
-        data.coord = { lat: geoData[0].lat, lon: geoData[0].lon };
-        data.name =
-          geoData[0].local_names?.[lang] ||
-          geoData[0].local_names?.ca ||
-          geoData[0].name ||
-          cityName;
+    if (missingCoords) {
+      const geoUrl = `${GEO_URL}/direct?q=${encodeURIComponent(cityName)}&limit=1&appid=${API_KEY}`;
+
+      const geoResp = await fetch(geoUrl);
+      if (geoResp.ok) {
+        const geoData = await geoResp.json();
+
+        if (Array.isArray(geoData) && geoData.length > 0) {
+          const g0 = geoData[0];
+          data.coord = { lat: g0.lat, lon: g0.lon };
+
+          // Nom preferit: local_names[lang2] → ca → name → cityName
+          data.name =
+            g0.local_names?.[lang2] ||
+            g0.local_names?.ca ||
+            g0.name ||
+            cityName;
+        }
       }
     }
 
-    if (!data.name) data.name = cityName;
+    if (typeof data?.name !== "string" || !data.name.trim()) data.name = cityName;
 
     return data;
   } catch (err) {
@@ -75,7 +84,7 @@ export async function getWeatherByCity(
   }
 }
 
-// ⚠️ Avisos meteorològics One Call 3.0
+// ⚠️ Avisos meteorològics One Call 3.0 (alerts)
 export async function getWeatherAlerts(
   lat: number,
   lon: number,
@@ -83,14 +92,17 @@ export async function getWeatherAlerts(
   apiKey?: string
 ) {
   const API_KEY = apiKey || import.meta.env.VITE_OPENWEATHER_API_KEY;
-  const url = `${ONECALL_URL}?lat=${lat}&lon=${lon}&appid=${API_KEY}&units=metric&lang=${lang}&exclude=current,minutely,hourly,daily`;
+  const lang2 = normLang2(lang);
+
+  // Volem essencialment alerts
+  const url = `${ONECALL_URL}?lat=${lat}&lon=${lon}&appid=${API_KEY}&units=metric&lang=${lang2}&exclude=current,minutely,hourly,daily`;
 
   try {
     const response = await fetch(url);
     if (!response.ok) return [];
 
     const data = await response.json();
-    return data.alerts || [];
+    return Array.isArray(data?.alerts) ? data.alerts : [];
   } catch (err) {
     console.error("[DEBUG] Error obtenint avisos meteorològics:", err);
     return [];
@@ -100,30 +112,26 @@ export async function getWeatherAlerts(
 // ☀️ Índex UV oficial One Call API 3.0
 export async function getUVFromOW(
   lat: number,
-  lon: number
+  lon: number,
+  apiKey?: string
 ): Promise<number | null> {
   try {
-    const API_KEY = import.meta.env.VITE_OPENWEATHER_API_KEY;
+    const API_KEY = apiKey || import.meta.env.VITE_OPENWEATHER_API_KEY;
+
+    // Deixam només current
     const url = `${ONECALL_URL}?lat=${lat}&lon=${lon}&appid=${API_KEY}&units=metric&exclude=minutely,hourly,daily,alerts`;
 
-    console.log("[DEBUG] Fetch UVI OW →", url);
-
     const response = await fetch(url);
-    if (!response.ok) {
-      console.warn("[DEBUG] Error OW UVI:", response.status);
-      return null;
-    }
+    if (!response.ok) return null;
 
     const data = await response.json();
-    console.log("[DEBUG] OneCall 3.0 response:", data);
 
-    // Camp correcte
     const uvi =
       data?.current?.uvi ?? // oficial
-      data?.current?.uv ??  // fallback ocasional
+      data?.current?.uv ??  // fallback rar
       null;
 
-    return typeof uvi === "number" ? uvi : null;
+    return typeof uvi === "number" && Number.isFinite(uvi) ? uvi : null;
   } catch (err) {
     console.error("[DEBUG] Error obtenint UVI OW:", err);
     return null;
@@ -133,5 +141,6 @@ export async function getUVFromOW(
 // 💨 Converteix direcció del vent
 export function getWindDirection(deg: number): string {
   const dirs = ["N", "NE", "E", "SE", "S", "SO", "O", "NO"];
-  return dirs[Math.round(deg / 45) % 8];
+  const d = typeof deg === "number" && Number.isFinite(deg) ? deg : 0;
+  return dirs[Math.round(d / 45) % 8];
 }

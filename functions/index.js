@@ -3,12 +3,15 @@
 // ─────────────────────────────────────────────
 const admin = require('firebase-admin');
 const functions = require('firebase-functions');
+const { defineSecret } = require('firebase-functions/params');
 const fetch = (...args) => import('node-fetch').then(({ default: fetch }) => fetch(...args));
 
 admin.initializeApp();
 const db = admin.firestore();
 
-const OPENWEATHER_KEY = functions.config().openweather?.key;
+// ✅ Secret Manager (substitueix functions.config())
+const OPENWEATHER_KEY = defineSecret('OPENWEATHER_KEY');
+
 const REGION = 'europe-west1';
 
 // ─────────────────────────────────────────────
@@ -161,7 +164,10 @@ function yyyyMMdd(nowUtcMs, tzOffsetSec) {
 }
 
 async function getWeather(lat, lon) {
-  const url = `https://api.openweathermap.org/data/2.5/weather?lat=${lat}&lon=${lon}&appid=${OPENWEATHER_KEY}&units=metric`;
+  const url =
+    `https://api.openweathermap.org/data/2.5/weather?lat=${lat}&lon=${lon}` +
+    `&appid=${OPENWEATHER_KEY.value()}&units=metric`;
+
   const r = await fetch(url);
   if (!r.ok) throw new Error(`OpenWeather ${r.status}`);
   const j = await r.json();
@@ -169,7 +175,7 @@ async function getWeather(lat, lon) {
     temp: j.main?.temp,
     hum: j.main?.humidity,
     feels: j.main?.feels_like,
-    wind: j.wind?.speed,
+    wind: j.wind?.speed,   // ⚠️ OpenWeather: m/s
     tzOffset: j.timezone
   };
 }
@@ -233,9 +239,7 @@ async function sendPush(token, lang, level, hi, labelByLang, place) {
         tag: 'thermosafe-risk',
         renotify: true,
         requireInteraction: true,
-        actions: [
-          { action: 'open', title: 'Obrir ThermoSafe' }
-        ],
+        actions: [{ action: 'open', title: 'Obrir ThermoSafe' }],
         data
       },
       fcmOptions: { link: 'https://thermosafe.app' },
@@ -250,6 +254,7 @@ async function sendPush(token, lang, level, hi, labelByLang, place) {
 // ─────────────────────────────────────────────
 exports.cronCheckHeatRisk = functions
   .region(REGION)
+  .runWith({ secrets: [OPENWEATHER_KEY] })
   .pubsub.schedule('every 30 minutes')
   .timeZone('Europe/Madrid')
   .onRun(async () => {
@@ -289,6 +294,7 @@ exports.cronCheckHeatRisk = functions
 // ─────────────────────────────────────────────
 exports.cronCheckColdRisk = functions
   .region(REGION)
+  .runWith({ secrets: [OPENWEATHER_KEY] })
   .pubsub.schedule('every 30 minutes')
   .timeZone('Europe/Madrid')
   .onRun(async () => {
@@ -307,8 +313,14 @@ exports.cronCheckColdRisk = functions
           const w = await getWeather(sub.lat, sub.lon);
           if (isQuietHours(now, w.tzOffset)) return;
 
-          // Càlcul de sensació tèrmica pel vent (Wind Chill)
-          const windChill = 13.12 + 0.6215 * w.temp - 11.37 * Math.pow(w.wind, 0.16) + 0.3965 * w.temp * Math.pow(w.wind, 0.16);
+          // ✅ Wind Chill formula: vent en km/h (no m/s)
+          const windKmh = (w.wind ?? 0) * 3.6;
+
+          const windChill =
+            13.12 + 0.6215 * w.temp
+            - 11.37 * Math.pow(windKmh, 0.16)
+            + 0.3965 * w.temp * Math.pow(windKmh, 0.16);
+
           const riskLevel =
             windChill <= -10 ? 'extrem' :
             windChill <= -5 ? 'alt' :
@@ -323,10 +335,7 @@ exports.cronCheckColdRisk = functions
 
           await admin.messaging().send({
             token: sub.token,
-            notification: {
-              title: '❄️ Avisa ThermoSafe',
-              body
-            },
+            notification: { title: '❄️ Avisa ThermoSafe', body },
             webpush: { fcmOptions: { link: 'https://thermosafe.app' } }
           });
 
@@ -346,6 +355,7 @@ exports.cronCheckColdRisk = functions
 // ─────────────────────────────────────────────
 exports.cronCheckWindRisk = functions
   .region(REGION)
+  .runWith({ secrets: [OPENWEATHER_KEY] })
   .pubsub.schedule('every 30 minutes')
   .timeZone('Europe/Madrid')
   .onRun(async () => {
@@ -364,28 +374,28 @@ exports.cronCheckWindRisk = functions
           const w = await getWeather(sub.lat, sub.lon);
           if (isQuietHours(now, w.tzOffset)) return;
 
+          // ✅ Converteix a km/h per al mateix criteri que el frontend
+          const windKmh = Math.round((w.wind ?? 0) * 3.6);
+
           let risk = null;
-          if (w.wind >= 90) risk = 'extrem';
-          else if (w.wind >= 70) risk = 'alt';
-          else if (w.wind >= 50) risk = 'moderat';
+          if (windKmh >= 90) risk = 'extrem';
+          else if (windKmh >= 70) risk = 'alt';
+          else if (windKmh >= 50) risk = 'moderat';
 
           if (!risk) return;
 
           const body =
-            risk === 'extrem' ? `🌪️ Vent extrem (${w.wind} km/h). Evita treballs a l’exterior.` :
-            risk === 'alt' ? `💨 Vent molt fort (${w.wind} km/h). Retira objectes solts.` :
-            `🌬️ Vent fort (${w.wind} km/h). Precaució a l’exterior.`;
+            risk === 'extrem' ? `🌪️ Vent extrem (${windKmh} km/h). Evita treballs a l’exterior.` :
+            risk === 'alt' ? `💨 Vent molt fort (${windKmh} km/h). Retira objectes solts.` :
+            `🌬️ Vent fort (${windKmh} km/h). Precaució a l’exterior.`;
 
           await admin.messaging().send({
             token: sub.token,
-            notification: {
-              title: '🌬️ Avisa ThermoSafe',
-              body
-            },
+            notification: { title: '🌬️ Avisa ThermoSafe', body },
             webpush: { fcmOptions: { link: 'https://thermosafe.app' } }
           });
 
-          console.log(`[WIND] Notificació ${risk} enviada a ${sub.place}`);
+          console.log(`[WIND] Notificació ${risk} enviada a ${sub.place}`, { windKmh });
         } catch (e) {
           console.error('cron wind error', e);
         }
@@ -417,10 +427,7 @@ exports.sendTestNotification = functions
       if (type === 'heat') body = '🔥 Risc per calor alt';
       else if (type === 'cold') body = '❄️ Fred extrem';
       else if (type === 'wind') body = '🌬️ Vent fort';
-      await admin.messaging().send({
-        token,
-        notification: { title, body }
-      });
+      await admin.messaging().send({ token, notification: { title, body } });
       res.json({ ok: true });
     } catch (e) {
       console.error(e);

@@ -767,14 +767,6 @@ const fetchWeather = async (cityName: string) => {
     setSky(finalSky);
     setIcon(data.weather?.[0]?.icon || "");
 
-    // 🏙 Nom de la ciutat real
-    setCity(data.name);
-    setRealCity(data.name);
-
-    // 🗺 Coordenades
-const { lat, lon } = data.coord || {};
-console.log("[DEBUG] Coordenades rebudes:", lat, lon);
-
 // 🔥 FIX IMPORTANT: actualitzar coordenades globals!!
 if (lat != null && lon != null) {
   setLat(lat);
@@ -990,18 +982,29 @@ console.log(`[DEBUG] Temperatura: ${d.main?.temp}°C, Humitat: ${d.main?.humidit
 
     // 📍 3. Nom de ciutat (nom real segons coordenades)
 let nm = "";
-try {
-  nm = (await getLocationNameFromCoords(lat, lon)) || d.name || "Ubicació desconeguda";
-  if (!nm || nm === "Ubicació desconeguda") {
-    console.warn("[WARN] Nom buit o desconegut, reintentant en 1 segon...");
-    await new Promise(res => setTimeout(res, 1000));
-    nm = (await getLocationNameFromCoords(lat, lon)) || d.name || "Ubicació desconeguda";
+
+if (lat != null && lon != null) {
+  try {
+    nm = (await getLocationNameFromCoords(lat, lon)) || "";
+
+    // Retry només si realment ha tornat buit
+    if (!nm) {
+      console.warn("[WARN] Nom buit, reintentant en 800ms...");
+      await new Promise(res => setTimeout(res, 800));
+      nm = (await getLocationNameFromCoords(lat, lon)) || "";
+    }
+
+    console.log(`[DEBUG] Ciutat trobada per coordenades: ${nm}`);
+  } catch (e) {
+    console.warn("[WARN] Error obtenint nom de ciutat:", e);
   }
-  console.log(`[DEBUG] Ciutat trobada per coordenades: ${nm}`);
-} catch (e) {
-  console.warn("[WARN] No s'ha pogut obtenir el nom de ciutat:", e);
-  nm = d.name || "Ubicació desconeguda";
 }
+
+// Fallback final
+nm = nm || d.name || "Ubicació desconeguda";
+
+setCity(nm);
+setRealCity(nm);
 
 // ✅ Desa sempre abans del render
 setCity(nm);
