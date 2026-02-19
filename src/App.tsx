@@ -2063,4 +2063,4 @@ function showBrowserNotification(title: string, body: string) {
     });
   }
 }
-//Thermosafe, un projecte de Esteve Montalvo i Camps 2026
+//Thermosafe, un projecte desenvolupat per Esteve Montalvo i Camps 2026
