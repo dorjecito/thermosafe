@@ -10,12 +10,13 @@
     }
   },
   "rewrites": [
-    { "source": "/api/openuv", "destination": "/api/openuv.ts" },
-    { "source": "/manifest.webmanifest", "destination": "/manifest.webmanifest" },
-    { "source": "/sw.js", "destination": "/sw.js" },
-    { "source": "/assets/(.*)", "destination": "/assets/$1" },
-    { "source": "/(.*)", "destination": "/index.html" }
-  ],
+  { "source": "/api/openuv", "destination": "/api/openuv.ts" },
+  { "source": "/manifest.json", "destination": "/manifest.json" },
+  { "source": "/manifest.webmanifest", "destination": "/manifest.webmanifest" },
+  { "source": "/sw.js", "destination": "/sw.js" },
+  { "source": "/assets/(.*)", "destination": "/assets/$1" },
+  { "source": "/(.*)", "destination": "/index.html" }
+],
   "headers": [
     {
       "source": "/api/openuv",
