@@ -1,4 +1,5 @@
 {
+  "id": "/",
   "name": "ThermoSafe – Risc climàtic",
   "short_name": "ThermoSafe",
   "description": "Consulta el risc per calor, fred i vent segons la teva ubicació, amb dades reals i criteris oficials de l'INSST i del Ministeri de Sanitat.",
