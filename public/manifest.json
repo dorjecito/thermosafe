@@ -1,5 +1,4 @@
 {
-  "id": "/",
   "name": "ThermoSafe – Risc climàtic",
   "short_name": "ThermoSafe",
   "description": "Consulta el risc per calor, fred i vent segons la teva ubicació, amb dades reals i criteris oficials de l'INSST i del Ministeri de Sanitat.",
@@ -10,7 +9,6 @@
   "background_color": "#ffffff",
   "theme_color": "#f59e0b",
   "lang": "ca",
-  "dir": "ltr",
   "icons": [
     {
       "src": "/icons/icon-192.png",
@@ -28,6 +26,5 @@
       "type": "image/png",
       "purpose": "maskable any"
     }
-  ],
-  "prefer_related_applications": false
+  ]
 }
