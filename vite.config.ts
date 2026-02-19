@@ -7,14 +7,18 @@ export default defineConfig({
 
   plugins: [
     react(),
+
     VitePWA({
       registerType: "autoUpdate",
 
-      includeAssets: [
-        "favicon.ico",
-        "robots.txt",
-        "apple-touch-icon.png"
-      ],
+      // IMPORTANT: el teu index.html enllaça /manifest.webmanifest
+      manifestFilename: "manifest.webmanifest",
+
+      // Només inclou assets que EXISTEIXIN dins /public
+      // - favicon.ico -> /public/favicon.ico ✅
+      // - robots.txt  -> /public/robots.txt ✅
+      // - apple-touch-icon.png -> /public/apple-touch-icon.png (si NO existeix, elimina'l o crea'l)
+      includeAssets: ["favicon.ico", "robots.txt", "apple-touch-icon.png"],
 
       manifest: {
         name: "ThermoSafe – Risc climàtic",
@@ -33,26 +37,26 @@ export default defineConfig({
           {
             src: "/icons/icon-192.png",
             sizes: "192x192",
-            type: "image/png"
+            type: "image/png",
           },
           {
             src: "/icons/icon-512.png",
             sizes: "512x512",
-            type: "image/png"
+            type: "image/png",
           },
           {
             src: "/icons/icon-maskable-512.png",
             sizes: "512x512",
             type: "image/png",
-            purpose: "maskable any"
-          }
-        ]
+            purpose: "maskable any",
+          },
+        ],
       },
 
       // Ajuda a no tornar-te boig en local
       devOptions: {
-        enabled: true
-      }
-    })
-  ]
+        enabled: true,
+      },
+    }),
+  ],
 });
