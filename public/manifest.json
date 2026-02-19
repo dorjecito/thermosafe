@@ -10,6 +10,7 @@
   "background_color": "#ffffff",
   "theme_color": "#f59e0b",
   "lang": "ca",
+  "categories": ["weather", "utilities", "health"],
   "icons": [
     {
       "src": "/icons/icon-192.png",
