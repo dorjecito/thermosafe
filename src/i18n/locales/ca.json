@@ -22,7 +22,7 @@
   "errorCity": "No s'han trobat dades per a aquesta ubicació.",
   "errorNoLocation": "No s'ha pogut obtenir la ubicació.",
 
-  "recommendations_title": "Recomanacions:",
+  "recommendations_title": "Recomanacions segons condicions actuals:",
   "solarProtection": "🔆 Protecció solar",
   "irradianceLegend": "☀️ Nivells d'irradiància: <8 moderat · ≥8 alt",
   "toggleLegend": "ℹ️ Mostra/Amaga escala UV",

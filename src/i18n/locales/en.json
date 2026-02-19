@@ -36,7 +36,7 @@
   "errorGPS": "Unable to obtain temperature via GPS.",
   "errorCity": "No data found for this location.",
   "errorNoLocation": "Unable to obtain location.",
-  "recommendations_title": "Recommendations:",
+  "recommendations_title": "Recommendations based on current conditions:",
   "solarProtection": "🔆 Sun protection",
   "irradianceLegend": "☀️ Irradiance levels: <8 moderate · ≥8 high",
   "toggleLegend": "ℹ️ Show/Hide UV scale",

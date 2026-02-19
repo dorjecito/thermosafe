@@ -44,7 +44,7 @@
   "errorCity": "Non se atoparon datos para esta ubicación.",
   "errorNoLocation": "Non se puido obter a ubicación.",
 
-  "recommendations_title": "Recomendacións:",
+  "recommendations_title": "Recomendacións segundo as condicións actuais:",
   "solarProtection": "🔆 Protección solar",
   "irradianceLegend": "☀️ Niveis de irradiancia: <8 moderado · ≥8 alto",
   "toggleLegend": "ℹ️ Mostrar/agochar escala UV",
