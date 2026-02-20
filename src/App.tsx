@@ -683,6 +683,8 @@ const fetchWeather = async (cityName: string) => {
 
     const data = await getWeatherByCity(cityName, lang, API_KEY);
     // 🌞 Dia/nit REAL per la ciutat (no per Mallorca)
+    const newLat = data.coord?.lat ?? null;
+    const newLon = data.coord?.lon ?? null;
     const nowUtc = Math.floor(Date.now() / 1000);
     const tz = data.timezone ?? 0;           // segons (OpenWeather)
     const sunrise = data.sys?.sunrise;       // UTC seconds
@@ -767,34 +769,25 @@ const fetchWeather = async (cityName: string) => {
     setSky(finalSky);
     setIcon(data.weather?.[0]?.icon || "");
 
-// 🔥 FIX IMPORTANT: actualitzar coordenades globals!!
-if (lat != null && lon != null) {
-  setLat(lat);
-  setLon(lon);
-  // 🟣 --- OBTÉ INDEX UV DES D’OPENUVI (GPS) --- //
-try {
-  const uv = await getUVFromOpenUV(lat, lon);
-  console.log("[TEST – GPS] UV rebut:", uv);
-  setUvi(uv);
-} catch (err) {
-  console.error("[GPS] Error obtenint UV:", err);
-}
-  console.log("[DEBUG] Coordenades ACTUALITZADES:", lat, lon);
+// ✅ Coordenades reals de la ciutat cercada (OpenWeather)
+if (newLat != null && newLon != null) {
+  setLat(newLat);
+  setLon(newLon);
 
-  // 🟣 --- OBTÉ INDEX UV DES D’OPENUVI --- //
-  const uv = await getUVFromOpenUV(lat, lon);
-  console.log("[TEST] UV rebut:", uv);
+  // 🟣 UVI (OpenUV) per la ciutat cercada
+  const uv = await getUVFromOpenUV(newLat, newLon);
+  console.log("[SEARCH] UV rebut:", uv);
   setUvi(uv);
-}
 
-    // ⚠️ Avisos oficials
-    if (lat != null && lon != null) {
-      const alerts = await getWeatherAlerts(lat, lon, lang, API_KEY);
-      setAlerts(alerts || []);
-    } 
-    else {
-      setAlerts([]);
-    }
+  console.log("[DEBUG] Coordenades ciutat cercada:", newLat, newLon);
+
+  // ⚠️ Avisos oficials per la ciutat cercada
+  const alerts = await getWeatherAlerts(newLat, newLon, lang, API_KEY);
+  setAlerts(alerts || []);
+} else {
+  setUvi(null);
+  setAlerts([]);
+}
 
   } catch (err) {
     console.error("[DEBUG] Error obtenint dades:", err);
@@ -2063,4 +2056,4 @@ function showBrowserNotification(title: string, body: string) {
     });
   }
 }
-//Thermosafe, un projecte desenvolupat per Esteve Montalvo i Camps 2026
+//Thermosafe, un projecte de Esteve Montalvo i Camps 2026
