@@ -16,8 +16,8 @@ const texts = {
       "Evita el sol de 12 h a 16 h. Protecció extra.",
       "Evita el sol de 12 h a 16 h. Protecció extra.",
       "Evita el sol en hores centrals i utilitza protecció màxima.",
-      "Evita totalment l’exposició solar. Risc molt elevat."
-    ]
+      "Evita totalment l’exposició solar. Risc molt elevat.",
+    ],
   },
   es: {
     idx: "Índice UV",
@@ -27,8 +27,8 @@ const texts = {
       "Evita el sol de 12 h a 16 h. Protección extra.",
       "Evita el sol de 12 h a 16 h. Protección extra.",
       "Evita el sol en horas centrales y usa protección máxima.",
-      "Evita totalmente la exposición solar. Riesgo muy elevado."
-    ]
+      "Evita totalmente la exposición solar. Riesgo muy elevado.",
+    ],
   },
   eu: {
     idx: "UV indizea",
@@ -38,8 +38,8 @@ const texts = {
       "12etatik 16etara eguzkia saihestu. Babes gehigarria.",
       "12etatik 16etara eguzkia saihestu. Babes gehigarria.",
       "Eguneko ordu nagusietan saihestu eguzkia eta babes maximoa erabili.",
-      "Saihestu guztiz eguzki-esposizioa. Arrisku oso handia."
-    ]
+      "Saihestu guztiz eguzki-esposizioa. Arrisku oso handia.",
+    ],
   },
   gl: {
     idx: "Índice UV",
@@ -49,8 +49,8 @@ const texts = {
       "Evita o sol de 12 h a 16 h. Protección extra.",
       "Evita o sol de 12 h a 16 h. Protección extra.",
       "Evita o sol nas horas centrais e usa protección máxima.",
-      "Evita totalmente a exposición solar. Risco moi elevado."
-    ]
+      "Evita totalmente a exposición solar. Risco moi elevado.",
+    ],
   },
   en: {
     idx: "UV index",
@@ -60,28 +60,27 @@ const texts = {
       "Avoid sun from 12:00 to 16:00. Extra protection.",
       "Avoid sun from 12:00 to 16:00. Extra protection.",
       "Avoid peak hours and use maximum protection.",
-      "Avoid sun exposure completely. Very high risk."
-    ]
-  }
+      "Avoid sun exposure completely. Very high risk.",
+    ],
+  },
 } as const;
 
 const colors = ["#4caf50", "#ffeb3b", "#ff9800", "#f44336", "#9c27b0"] as const;
 
 const normalizeLang = (lang: string): Lang => {
-  const code = (lang || "ca").toLowerCase().slice(0, 2) as Lang;
-  return (["ca", "es", "eu", "gl", "en"] as const).includes(code) ? code : "ca";
+  const raw = String(lang || "ca").trim().toLowerCase();
+  const primary = raw.split(/[-_]/)[0].slice(0, 2) as Lang;
+  return (["ca", "es", "eu", "gl", "en"] as const).includes(primary) ? primary : "ca";
 };
 
 // ✅ Clamp a 0
 const safeUvi = (uvi: number) => Math.max(0, uvi);
 
-// ✅ Arrodoniment (enter) per classificar (escala oficial)
-const roundUvi = (uvi: number) => Math.max(0, Math.round(uvi));
-
-// ✅ Bandes OMS/WHO amb ENTER arrodonit
-const band = (uvi: number) => {
-  const u = roundUvi(uvi);
-  return u <= 2 ? 0 : u <= 5 ? 1 : u <= 7 ? 2 : u <= 10 ? 3 : 4;
+// ✅ Bandes OMS/WHO (0–2, 3–5, 6–7, 8–10, 11+)
+// IMPORTANT: classificar amb el mateix valor que es mostra (1 decimal)
+const band = (uviRounded1: number) => {
+  const u = safeUvi(uviRounded1);
+  return u < 3 ? 0 : u < 6 ? 1 : u < 8 ? 2 : u < 11 ? 3 : 4;
 };
 
 const UVAdvice: React.FC<UVAdviceProps> = ({ uvi, lang }) => {
@@ -96,7 +95,7 @@ const UVAdvice: React.FC<UVAdviceProps> = ({ uvi, lang }) => {
           color: "#000",
           padding: "1rem",
           borderRadius: 8,
-          marginTop: "1rem"
+          marginTop: "1rem",
         }}
       >
         <strong>🔆 {L.idx}: —</strong>
@@ -104,8 +103,11 @@ const UVAdvice: React.FC<UVAdviceProps> = ({ uvi, lang }) => {
     );
   }
 
-  const u = safeUvi(uvi);          // per mostrar (1 decimal)
-  const b = band(u);               // per classificar (enter arrodonit)
+  // ✅ 1) Clamp + 2) arrodonim a 1 decimal (això és el que mostrarem)
+  const u = Number(safeUvi(uvi).toFixed(1));
+
+  // ✅ classifiquem amb el mateix valor arrodonit que mostrem (evita 3.0 → "Baix (0–2)")
+  const b = band(u);
 
   return (
     <div
@@ -114,14 +116,14 @@ const UVAdvice: React.FC<UVAdviceProps> = ({ uvi, lang }) => {
         color: "#000",
         padding: "1rem",
         borderRadius: 8,
-        marginTop: "1rem"
+        marginTop: "1rem",
       }}
     >
       <strong>
         🔆 {L.idx}: {u.toFixed(1)} — {L.levels[b]}
       </strong>
 
-      {L.msgs[b] && <p style={{ marginTop: ".5rem" }}>{L.msgs[b]}</p>}
+      {L.msgs[b] ? <p style={{ marginTop: ".5rem" }}>{L.msgs[b]}</p> : null}
     </div>
   );
 };

@@ -1,6 +1,8 @@
 // ===============================================================
-//  📘 Recommendations.tsx — Versió corregida i robusta (amb anglès)
-//  + ✅ Missatge extra si hi ha alerta AEMET activa (aemetActive)
+//  📘 Recommendations.tsx — Versió robusta (CA/ES/EU/GL/EN)
+//  ✅ Fallback segur per evitar t undefined
+//  ✅ Títol coherent: “segons condicions actuals” a tots els idiomes
+//  ✅ Missatge extra si hi ha alerta AEMET activa (aemetActive)
 // ===============================================================
 
 import * as React from "react";
@@ -8,164 +10,288 @@ import { getHeatRisk } from "../utils/heatRisk";
 
 type Lang = "ca" | "es" | "eu" | "gl" | "en";
 
+type TextKeys =
+  | "title"
+  | "aemetActive"
+  | "safe"
+  | "mild"
+  | "moderate"
+  | "high"
+  | "ext"
+  | "nightCool"
+  | "nightSafe"
+  | "nightHeat"
+  | "cold_low"
+  | "cold_mod"
+  | "cold_high"
+  | "cold_ext"
+  | "loading";
+
+type TextPack = Record<TextKeys, string>;
+type TxtDict = Record<Lang, TextPack>;
+
 interface Props {
-  temp: number;              // temperatura efectiva rebuda
-  lang: Lang | string;       // permet 'en-GB', 'ca-ES', etc.
-  isDay: boolean;
-  forceSafe?: boolean;       // força mostrar recomanacions “segures”
-  aemetActive?: boolean;     // ✅ hi ha avís oficial actiu ara?
+  temp: number;              // temperatura efectiva rebuda
+  lang: Lang | string;       // permet 'en-GB', 'ca-ES', etc.
+  isDay: boolean;
+  forceSafe?: boolean;       // força mostrar recomanacions “segures”
+  aemetActive?: boolean;     // ✅ hi ha avís oficial actiu ara?
 }
 
 // ---------------------------------------------------------------
 // 🗣️ Textos multillengua (calor, fred, nit)
 // ---------------------------------------------------------------
-const TXT = {
-  ca: {
-    title: "Recomanacions:",
+const TXT: TxtDict = {
+  ca: {
+  title: "Recomanacions segons condicions actuals:",
 
-    // ✅ AEMET
-    aemetActive:
-      "⚠️ Hi ha un avís oficial actiu (AEMET). Segueix les indicacions i evita zones exposades.",
+  aemetActive:
+    "⚠️ Hi ha un avís oficial actiu (AEMET). Prioritza les indicacions oficials i evita zones de risc.",
 
-    // Calor
-    safe: "Condicions segures. Mantén la hidratació habitual.",
-    mild: "Possible fatiga per calor. Beu aigua sovint i descansa a l’ombra.",
-    moderate: "Risc moderat. Pauses cada 20 min, roba lleugera i hidrata’t.",
-    high: "Risc alt. Evita l’esforç intens i incrementa les pauses.",
-    ext: "Risc extrem. Atura l’activitat i refresca’t immediatament.",
+  safe:
+    "Condicions tèrmiques dins paràmetres segurs. Mantén hidratació habitual i vigilància preventiva bàsica.",
 
-    // Nit
-    nightCool: "Nit fresca: abriga’t adequadament i mantén l’espai ventilat.",
-    nightSafe: "Condicions segures. Mantén una bona ventilació.",
-    nightHeat: "Si fa calor a la nit, ventila bé l’espai i dorm amb roba lleugera.",
+  mild:
+    "Precaució per calor. Pot aparèixer fatiga tèrmica. Incrementa la ingesta d’aigua i programa pauses en zones ombrejades.",
 
-    // Fred
-    cold_low: "Fred lleu: vesteix amb capes i protegeix-te una mica.",
-    cold_mod: "Fred moderat: limita l’exposició i protegeix extremitats.",
-    cold_high: "Risc alt de fred: evita exposicions llargues a l’exterior.",
-    cold_ext: "Risc extrem de fred: perill d’hipotèrmia. No surtis i mantén la calor corporal.",
+  moderate:
+    "Precaució extrema per estrès tèrmic. Programa pauses freqüents, redueix la càrrega física i mantén hidratació constant.",
 
-    // Fallback
-    loading: "Carregant recomanacions…",
-  },
+  high:
+    "Perill per calor. Limita l’exposició prolongada i evita treballs físics intensos.",
 
-  es: {
-    title: "Recomendaciones:",
+  ext:
+    "Perill extrem per calor. Interromp immediatament l’activitat i aplica mesures actives de refredament corporal.",
 
-    aemetActive:
-      "⚠️ Hay un aviso oficial activo (AEMET). Sigue las indicaciones y evita zonas expuestas.",
+  nightCool:
+    "Condicions nocturnes fresques. Utilitza roba adequada i mantén ventilació controlada.",
 
-    safe: "Condiciones seguras. Mantén la hidratación habitual.",
-    mild: "Posible fatiga por calor. Bebe agua y descansa a la sombra.",
-    moderate: "Riesgo moderado. Pausas cada 20 min, ropa ligera e hidrátate.",
-    high: "Riesgo alto. Evita el esfuerzo intenso y aumenta las pausas.",
-    ext: "Riesgo extremo. Detén la actividad y refréscate.",
+  nightSafe:
+    "Condicions nocturnes estables. Mantén ventilació adequada de l’espai.",
 
-    nightCool: "Noche fresca: abrígate y ventila la habitación adecuadamente.",
-    nightSafe: "Condiciones seguras. Mantén buena ventilación.",
-    nightHeat: "Si hace calor por la noche, ventila bien y usa ropa ligera.",
+  nightHeat:
+    "Temperatures nocturnes elevades. Assegura ventilació creuada i utilitza roba lleugera.",
 
-    cold_low: "Frío leve: usa capas y protégete ligeramente.",
-    cold_mod: "Frío moderado: limita la exposición y protege extremidades.",
-    cold_high: "Riesgo alto por frío: evita exposiciones prolongadas.",
-    cold_ext: "Riesgo extremo por frío: peligro de hipotermia. No salgas.",
+  cold_low:
+    "Fred lleu. Utilitza sistema de capes i protegeix extremitats.",
 
-    loading: "Cargando recomendaciones…",
-  },
+  cold_mod:
+    "Fred moderat. Limita l’exposició exterior i protegeix mans, peus i vies respiratòries.",
 
-  eu: {
-    title: "Gomendioak:",
+  cold_high:
+    "Alt risc per fred. Evita permanències prolongades a l’exterior.",
 
-    aemetActive:
-      "⚠️ AEMETen abisu ofizial aktiboa dago. Jarraitu jarraibideak eta saihestu eremu esposatuak.",
+  cold_ext:
+    "Risc extrem per fred. Possible hipotèrmia. Roman en interiors i conserva la calor corporal.",
 
-    safe: "Egoera segurua. Edan ura eta mantendu hidratazioa.",
-    mild: "Bero-nekea gerta daiteke. Atseden hartu eta edan maiz.",
-    moderate: "Arrisku moderatua. Geldialdiak eta hidratazio ona.",
-    high: "Arrisku handia. Saihestu ahalegin handia.",
-    ext: "Arrisku larria. Utzi jarduera eta freskatu.",
+  loading: "Carregant recomanacions…",
+},
 
-    nightCool: "Gau freskoa: estali zaitez eta aireztatu gela.",
-    nightSafe: "Egoera segurua. Mantendu aireztapen ona.",
-    nightHeat: "Gauean beroa bada, aireztatu eta erabili arropa arina.",
+  es: {
+  title: "Recomendaciones según las condiciones actuales:",
 
-    cold_low: "Hotz arina: geruzak erabili eta babestu pixka bat.",
-    cold_mod: "Hotz moderatua: mugatu kanpoan egotea eta babestu gorputz-adarrak.",
-    cold_high: "Hotz handia: saihestu esposizio luzeak.",
-    cold_ext: "Hotz muturrekoa: hipotermiaren arriskua. Ez irten.",
+  aemetActive:
+    "⚠️ Existe un aviso oficial activo (AEMET). Prioriza las indicaciones oficiales y evita zonas de riesgo.",
 
-    loading: "Gomendioak kargatzen…",
-  },
+  safe:
+    "Condiciones térmicas dentro de parámetros seguros. Mantén hidratación habitual y vigilancia preventiva básica.",
 
-  gl: {
-    title: "Recomendacións:",
+  mild:
+    "Precaución por calor. Puede aparecer fatiga térmica. Incrementa la ingesta de agua y programa pausas en zonas sombreadas.",
 
-    aemetActive:
-      "⚠️ Hai un aviso oficial activo (AEMET). Sigue as indicacións e evita zonas expostas.",
+  moderate:
+    "Precaución extrema por estrés térmico. Programa pausas frecuentes, reduce la carga física y mantén hidratación constante.",
 
-    safe: "Condicións seguras. Mantén a hidratación habitual.",
-    mild: "Posible fatiga por calor. Bebe auga e descansa á sombra.",
-    moderate: "Risco moderado. Pausas e hidratación frecuente.",
-    high: "Risco alto. Evita esforzos intensos.",
-    ext: "Risco extremo. Detén a actividade e arrefréscate.",
+  high:
+    "Peligro por calor. Limita la exposición prolongada, incrementa las pausas y evita trabajos físicos intensos.",
 
-    nightCool: "Noite fresca: abrígate e ventila ben o espazo.",
-    nightSafe: "Condicións seguras. Mantén boa ventilación.",
-    nightHeat: "Se fai calor pola noite, ventila e usa roupa lixeira.",
+  ext:
+    "Peligro extremo por calor. Interrumpe la actividad inmediatamente y aplica medidas activas de enfriamiento corporal.",
 
-    cold_low: "Frío lixeiro: usa capas e protéxete algo.",
-    cold_mod: "Frío moderado: limita exposición e protexe extremidades.",
-    cold_high: "Risco alto por frío: evita estar fóra moito tempo.",
-    cold_ext: "Frío extremo: risco de hipotermia. Non saias.",
+  nightCool:
+    "Condiciones nocturnas frescas. Utiliza ropa adecuada y mantén ventilación controlada.",
 
-    loading: "Cargando recomendacións…",
-  },
+  nightSafe:
+    "Condiciones nocturnas estables. Mantén ventilación adecuada del espacio.",
 
-  en: {
-    title: "Recommendations:",
+  nightHeat:
+    "Temperaturas nocturnas elevadas. Garantiza ventilación cruzada y utiliza ropa ligera.",
 
-    aemetActive:
-      "⚠️ An official alert is active (AEMET). Follow instructions and avoid exposed areas.",
+  cold_low:
+    "Frío leve. Utiliza sistema de capas y protege extremidades.",
 
-    safe: "Safe conditions. Maintain normal hydration.",
-    mild: "Possible heat fatigue. Drink water often and rest in the shade.",
-    moderate: "Moderate risk. Breaks every 20 min, light clothing, and hydrate.",
-    high: "High risk. Avoid intense effort and increase breaks.",
-    ext: "Extreme risk. Stop activity and cool down immediately.",
+  cold_mod:
+    "Frío moderado. Limita la exposición exterior y protege adecuadamente manos, pies y vías respiratorias.",
 
-    nightCool: "Cool night: dress appropriately and keep the space ventilated.",
-    nightSafe: "Safe conditions. Keep good ventilation.",
-    nightHeat: "If it is hot at night, ventilate well and sleep in light clothing.",
+  cold_high:
+    "Alto riesgo por frío. Evita permanencias prolongadas en exteriores.",
 
-    cold_low: "Mild cold: dress in layers and protect yourself a bit.",
-    cold_mod: "Moderate cold: limit exposure and protect extremities.",
-    cold_high: "High cold risk: avoid long periods outdoors.",
-    cold_ext: "Extreme cold risk: danger of hypothermia. Stay inside and keep warm.",
+  cold_ext:
+    "Riesgo extremo por frío. Posible hipotermia. Permanece en interiores y conserva el calor corporal.",
 
-    loading: "Loading recommendations…",
-  },
+  loading: "Cargando recomendaciones…",
+},
+
+  eu: {
+  title: "Gomendioak uneko baldintzen arabera:",
+
+  aemetActive:
+    "⚠️ AEMETen abisu ofiziala aktibo dago. Jarraitu jarraibide ofizialak eta saihestu arrisku-eremuak.",
+
+  safe:
+    "Tenperatura baldintza seguruak. Mantendu hidratazio arrunta eta prebentziozko zaintza.",
+
+  mild:
+    "Beroagatiko kontuz. Nekea ager daiteke. Ura gehiago edan eta atsedenaldiak programatu itzaletan.",
+
+  moderate:
+    "Bero-estresagatik kontu handia. Atsedenaldi maizak egin, lan-karga murriztu eta hidratazio konstantea mantendu.",
+
+  high:
+    "Bero-arrisku handia. Mugatu esposizio luzea eta saihestu ahalegin fisiko handia.",
+
+  ext:
+    "Bero-arrisku muturrekoa. Gelditu jarduera berehala eta aplikatu gorputz-hozte neurriak.",
+
+  nightCool:
+    "Gau freskoa. Erabili arropa egokia eta mantendu aireztapen kontrolatua.",
+
+  nightSafe:
+    "Gau baldintza egonkorrak. Mantendu aireztapen egokia.",
+
+  nightHeat:
+    "Gaueko tenperatura altuak. Aireztapen gurutzatua bermatu eta arropa arina erabili.",
+
+  cold_low:
+    "Hotz arina. Geruzak erabili eta muturrak babestu.",
+
+  cold_mod:
+    "Hotz ertaina. Mugatu kanpoko esposizioa eta babestu eskuak, oinak eta arnasketa-bideak.",
+
+  cold_high:
+    "Hotz arrisku handia. Saihestu kanpoan denbora luzea ematea.",
+
+  cold_ext:
+    "Hotz arrisku muturrekoa. Hipotermia arriskua. Egon barruan eta mantendu gorputz-berotasuna.",
+
+  loading: "Gomendioak kargatzen…",
+},
+
+  gl: {
+  title: "Recomendacións segundo as condicións actuais:",
+
+  aemetActive:
+    "⚠️ Hai un aviso oficial activo (AEMET). Prioriza as indicacións oficiais e evita zonas de risco.",
+
+  safe:
+    "Condicións térmicas dentro de parámetros seguros. Mantén hidratación habitual e vixilancia preventiva básica.",
+
+  mild:
+    "Precaución por calor. Pode aparecer fatiga térmica. Incrementa a inxesta de auga e programa pausas en zonas sombreadas.",
+
+  moderate:
+    "Precaución extrema por estrés térmico. Programa pausas frecuentes, reduce a carga física e mantén hidratación constante.",
+
+  high:
+    "Perigo por calor. Limita a exposición prolongada e evita traballos físicos intensos.",
+
+  ext:
+    "Perigo extremo por calor. Interrompe a actividade inmediatamente e aplica medidas activas de arrefriamento corporal.",
+
+  nightCool:
+    "Noite fresca. Emprega roupa adecuada e mantén ventilación controlada.",
+
+  nightSafe:
+    "Condicións nocturnas estables. Mantén ventilación adecuada do espazo.",
+
+  nightHeat:
+    "Temperaturas nocturnas elevadas. Garante ventilación cruzada e emprega roupa lixeira.",
+
+  cold_low:
+    "Frío leve. Emprega sistema de capas e protexe extremidades.",
+
+  cold_mod:
+    "Frío moderado. Limita a exposición exterior e protexe mans, pés e vías respiratorias.",
+
+  cold_high:
+    "Alto risco por frío. Evita permanencias prolongadas no exterior.",
+
+  cold_ext:
+    "Risco extremo por frío. Posible hipotermia. Permanece en interiores e conserva a calor corporal.",
+
+  loading: "Cargando recomendacións…",
+},
+
+  en: {
+  title: "Recommendations based on current conditions:",
+
+  aemetActive:
+    "⚠️ An official alert is active (AEMET). Follow official instructions and avoid risk areas.",
+
+  safe:
+    "Thermal conditions within safe parameters. Maintain normal hydration and basic preventive vigilance.",
+
+  mild:
+    "Heat caution. Heat fatigue may occur. Increase water intake and schedule breaks in shaded areas.",
+
+  moderate:
+    "Extreme caution due to heat stress. Schedule frequent breaks, reduce physical workload and maintain constant hydration.",
+
+  high:
+    "Heat danger. Limit prolonged exposure and avoid intense physical activity.",
+
+  ext:
+    "Extreme heat danger. Stop activity immediately and apply active body cooling measures.",
+
+  nightCool:
+    "Cool night conditions. Dress appropriately and maintain controlled ventilation.",
+
+  nightSafe:
+    "Stable night conditions. Maintain adequate space ventilation.",
+
+  nightHeat:
+    "Elevated nighttime temperatures. Ensure cross-ventilation and wear light clothing.",
+
+  cold_low:
+    "Mild cold. Use layered clothing and protect extremities.",
+
+  cold_mod:
+    "Moderate cold. Limit outdoor exposure and protect hands, feet and airways.",
+
+  cold_high:
+    "High cold risk. Avoid prolonged outdoor stays.",
+
+  cold_ext:
+    "Extreme cold risk. Possible hypothermia. Stay indoors and preserve body heat.",
+
+  loading: "Loading recommendations…",
+},
 } as const;
 
 // ----------------------------------------------
 // ✨ Sistema d'icones segons intensitat del risc
 // ----------------------------------------------
 const getIcon = (key: string): string => {
-  if (key.startsWith("night")) return "🌙";
-  if (key === "cold_low") return "❄️";
-  if (key === "cold_mod") return "❄️❄️";
-  if (key === "cold_high") return "❄️❄️❄️";
-  if (key === "cold_ext") return "❄️❄️❄️❄️";
-  if (key === "mild") return "🔥";
-  if (key === "moderate") return "🔥🔥";
-  if (key === "high") return "🔥🔥🔥";
-  if (key === "ext") return "🔥🔥🔥🔥";
-  if (key === "safe") return "🟢";
-  return "🟢";
+  if (key.startsWith("night")) return "🌙";
+  if (key === "cold_low") return "❄️";
+  if (key === "cold_mod") return "❄️❄️";
+  if (key === "cold_high") return "❄️❄️❄️";
+  if (key === "cold_ext") return "❄️❄️❄️❄️";
+  if (key === "mild") return "🔥";
+  if (key === "moderate") return "🔥🔥";
+  if (key === "high") return "🔥🔥🔥";
+  if (key === "ext") return "🔥🔥🔥🔥";
+  if (key === "safe") return "🟢";
+  return "🟢";
 };
 
 const normalizeLang = (lang: Lang | string): Lang => {
-  const code = String(lang || "ca").toLowerCase().slice(0, 2) as Lang;
-  return (["ca", "es", "eu", "gl", "en"] as const).includes(code) ? code : "ca";
+  const raw = String(lang || "ca").trim().toLowerCase();
+
+  // agafa subtags tipus "eu-ES", "eu_ES", etc.
+  const primary = raw.split(/[-_]/)[0].slice(0, 2) as Lang;
+
+  return (["ca", "es", "eu", "gl", "en"] as const).includes(primary) ? primary : "ca";
 };
 
 // ---------------------------------------------------------------
@@ -174,164 +300,163 @@ const normalizeLang = (lang: Lang | string): Lang => {
 type HeatKey = "safe" | "mild" | "moderate" | "high" | "ext";
 
 const mapHeatLevelToKey = (levelRaw: unknown): HeatKey => {
-  const s = String(levelRaw ?? "")
-    .trim()
-    .toLowerCase()
-    .replace(/\s+/g, " ");
+  const s = String(levelRaw ?? "")
+    .trim()
+    .toLowerCase()
+    .replace(/\s+/g, " ");
 
-  if (
-    s === "cap risc" ||
-    s === "sin riesgo" ||
-    s === "no risk" ||
-    s === "none" ||
-    s === "baix" ||
-    s === "bajo" ||
-    s === "low" ||
-    s === "safe"
-  ) return "safe";
+  if (
+    s === "cap risc" ||
+    s === "sin riesgo" ||
+    s === "no risk" ||
+    s === "none" ||
+    s === "baix" ||
+    s === "bajo" ||
+    s === "low" ||
+    s === "safe"
+  ) return "safe";
 
-  if (s.includes("lleu") || s.includes("leve") || s.includes("mild")) return "mild";
-  if (s.includes("moderat") || s.includes("moderado") || s.includes("moderate")) return "moderate";
-  if (s.includes("alt") || s.includes("alto") || s.includes("high")) return "high";
-  if (s.includes("extrem") || s.includes("extremo") || s.includes("extreme")) return "ext";
+  if (s.includes("lleu") || s.includes("leve") || s.includes("mild")) return "mild";
+  if (s.includes("moderat") || s.includes("moderado") || s.includes("moderate")) return "moderate";
+  if (s.includes("alt") || s.includes("alto") || s.includes("high")) return "high";
+  if (s.includes("extrem") || s.includes("extremo") || s.includes("extreme")) return "ext";
 
-  return "safe";
+  return "safe";
 };
 
 // ✅ Render helper per afegir la línia AEMET sense duplicar codi
 function Box({
-  className,
-  title,
-  body,
-  extra,
+  className,
+  title,
+  body,
+  extra,
 }: {
-  className: string;
-  title: string;
-  body: string;
-  extra?: string;
+  className: string;
+  title: string;
+  body: string;
+  extra?: string;
 }) {
-  return (
-    <div className={className}>
-      <p className="recommendation-title">{title}</p>
-      <p>{body}</p>
-      {extra ? (
-        <p style={{ marginTop: "0.6rem", opacity: 0.95 }}>
-          {extra}
-        </p>
-      ) : null}
-    </div>
-  );
+  return (
+    <div className={className}>
+      <p className="recommendation-title">{title}</p>
+      <p>{body}</p>
+      {extra ? <p style={{ marginTop: "0.6rem", opacity: 0.95 }}>{extra}</p> : null}
+    </div>
+  );
 }
 
 /* =============================================================
-   COMPONENT PRINCIPAL
+   COMPONENT PRINCIPAL
 ============================================================= */
 export default function Recommendations({ temp, lang, isDay, forceSafe, aemetActive }: Props) {
-  const lng = normalizeLang(lang);
-  const t = TXT[lng];
+  const lng = normalizeLang(lang);
 
-  const effectiveTemp = Number(temp);
-  const extraAemet = aemetActive ? t.aemetActive : undefined;
+  // ✅ Blindatge: MAI permetre t undefined
+  // (Important per evitar l'error "Cannot read properties of undefined (reading 'title')")
+  const t = (TXT as Record<string, (typeof TXT)["ca"]>)[lng] ?? TXT.ca;
 
-  if (!Number.isFinite(effectiveTemp)) {
-    return (
-      <Box
-        className="recommendation-box safe"
-        title={`${getIcon("safe")} ${t.title}`}
-        body={t.loading}
-        extra={extraAemet}
-      />
-    );
-  }
+  const effectiveTemp = Number(temp);
+  const extraAemet = aemetActive ? t.aemetActive : undefined;
 
-  /* =========================================================
-     1️⃣ PRIORITAT ABSOLUTA — RISC PER FRED
-  ========================================================== */
-  let coldRisk: "cold_low" | "cold_mod" | "cold_high" | "cold_ext" | null = null;
+  if (!Number.isFinite(effectiveTemp)) {
+    return (
+      <Box
+        className="recommendation-box safe"
+        title={`${getIcon("safe")} ${t.title}`}
+        body={t.loading}
+        extra={extraAemet}
+      />
+    );
+  }
 
-  if (effectiveTemp < -20) coldRisk = "cold_ext";
-  else if (effectiveTemp < -10) coldRisk = "cold_high";
-  else if (effectiveTemp < 5) coldRisk = "cold_mod";
-  else if (effectiveTemp < 10) coldRisk = "cold_low";
+  /* =========================================================
+     1️⃣ PRIORITAT ABSOLUTA — RISC PER FRED
+  ========================================================== */
+  let coldRisk: "cold_low" | "cold_mod" | "cold_high" | "cold_ext" | null = null;
 
-  if (coldRisk) {
-    return (
-      <Box
-        className={`recommendation-box ${coldRisk}`}
-        title={`${getIcon(coldRisk)} ${t.title}`}
-        body={t[coldRisk]}
-        extra={extraAemet}
-      />
-    );
-  }
+  if (effectiveTemp < -20) coldRisk = "cold_ext";
+  else if (effectiveTemp < -10) coldRisk = "cold_high";
+  else if (effectiveTemp < 5) coldRisk = "cold_mod";
+  else if (effectiveTemp < 10) coldRisk = "cold_low";
 
-  /* =========================================================
-     2️⃣ RECOMANACIONS NOCTURNES (només si NO hi ha fred)
-  ========================================================== */
-  if (!isDay) {
-    const nightKey: "nightCool" | "nightSafe" | "nightHeat" =
-      effectiveTemp < 18 ? "nightCool" : effectiveTemp < 24 ? "nightSafe" : "nightHeat";
+  if (coldRisk) {
+    return (
+      <Box
+        className={`recommendation-box ${coldRisk}`}
+        title={`${getIcon(coldRisk)} ${t.title}`}
+        body={t[coldRisk]}
+        extra={extraAemet}
+      />
+    );
+  }
 
-    return (
-      <Box
-        className={`recommendation-box ${nightKey}`}
-        title={`${getIcon(nightKey)} ${t.title}`}
-        body={t[nightKey]}
-        extra={extraAemet}
-      />
-    );
-  }
+  /* =========================================================
+     2️⃣ RECOMANACIONS NOCTURNES (només si NO hi ha fred)
+  ========================================================== */
+  if (!isDay) {
+    const nightKey: "nightCool" | "nightSafe" | "nightHeat" =
+      effectiveTemp < 18 ? "nightCool" : effectiveTemp < 24 ? "nightSafe" : "nightHeat";
 
-  /* =========================================================
-     3️⃣ EXTRA — si fa molta calor real (protecció extra)
-  ========================================================== */
-  if (effectiveTemp >= 30) {
-    const heatKey: HeatKey = effectiveTemp < 33 ? "moderate" : "high";
+    return (
+      <Box
+        className={`recommendation-box ${nightKey}`}
+        title={`${getIcon(nightKey)} ${t.title}`}
+        body={t[nightKey]}
+        extra={extraAemet}
+      />
+    );
+  }
 
-    return (
-      <Box
-        className={`recommendation-box ${heatKey}`}
-        title={`${getIcon(heatKey)} ${t.title}`}
-        body={t[heatKey]}
-        extra={extraAemet}
-      />
-    );
-  }
+  /* =========================================================
+     3️⃣ EXTRA — si fa molta calor real (protecció extra)
+  ========================================================== */
+  if (effectiveTemp >= 30) {
+    const heatKey: HeatKey = effectiveTemp < 33 ? "moderate" : "high";
 
-  /* =========================================================
-     4️⃣ RISC PER CALOR (getHeatRisk)
-  ========================================================== */
-  const riskObj: any = getHeatRisk(effectiveTemp, "rest");
-  const heatKey = mapHeatLevelToKey(riskObj?.level);
+    return (
+      <Box
+        className={`recommendation-box ${heatKey}`}
+        title={`${getIcon(heatKey)} ${t.title}`}
+        body={t[heatKey]}
+        extra={extraAemet}
+      />
+    );
+  }
 
-  if (heatKey === "safe") {
-    if (forceSafe === false) {
-      return (
-        <Box
-          className="recommendation-box safe"
-          title={`${getIcon("safe")} ${t.title}`}
-          body={t.safe}
-          extra={extraAemet}
-        />
-      );
-    }
+  /* =========================================================
+     4️⃣ RISC PER CALOR (getHeatRisk)
+  ========================================================== */
+  const riskObj: any = getHeatRisk(effectiveTemp, "rest");
+  const heatKey = mapHeatLevelToKey(riskObj?.level);
 
-    return (
-      <Box
-        className="recommendation-box safe"
-        title={`${getIcon("safe")} ${t.title}`}
-        body={t.safe}
-        extra={extraAemet}
-      />
-    );
-  }
+  if (heatKey === "safe") {
+    if (forceSafe === false) {
+      return (
+        <Box
+          className="recommendation-box safe"
+          title={`${getIcon("safe")} ${t.title}`}
+          body={t.safe}
+          extra={extraAemet}
+        />
+      );
+    }
 
-  return (
-    <Box
-      className={`recommendation-box ${heatKey}`}
-      title={`${getIcon(heatKey)} ${t.title}`}
-      body={t[heatKey]}
-      extra={extraAemet}
-    />
-  );
+    return (
+      <Box
+        className="recommendation-box safe"
+        title={`${getIcon("safe")} ${t.title}`}
+        body={t.safe}
+        extra={extraAemet}
+      />
+    );
+  }
+
+  return (
+    <Box
+      className={`recommendation-box ${heatKey}`}
+      title={`${getIcon(heatKey)} ${t.title}`}
+      body={t[heatKey]}
+      extra={extraAemet}
+    />
+  );
 }
