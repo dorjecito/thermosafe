@@ -1,5 +1,5 @@
 import * as React from "react";
-import { getUVDetailFromOpenUV } from "../services/openUV"; // ✅ IMPORTANT: ajusta al nom real del fitxer (openuv.ts)
+import { getUVDetailFromOpenUV } from "../services/openUV"; 
 
 type Lang = "ca" | "es" | "eu" | "gl" | "en";
 

@@ -108,9 +108,9 @@ function useStableValue<T>(value: T, delay = 800): T {
   return stable;
 }
 
-function normalizeLang(lng: string): "ca" | "es" | "eu" | "gl" {
+function normalizeLang(lng: string): "ca" | "es" | "eu" | "gl" | "en" {
   const s = lng.slice(0, 2);
-  if (s === "ca" || s === "es" || s === "eu" || s === "gl") return s;
+  if (s === "ca" || s === "es" || s === "eu" || s === "gl" || s === "en" ) return s;
   return "ca";
 }
 
@@ -316,9 +316,13 @@ useEffect(() => {
 }, [notificationsEnabled]);
 
   useEffect(() => {
-  const browserLang = navigator.language.slice(0, 2).toLowerCase();
-  const supportedLangs = ['ca', 'es', 'gl', 'eu'];
-  const lang = supportedLangs.includes(browserLang) ? browserLang : 'ca';
+  const browserLang = navigator.language?.slice(0, 2) || "ca";
+
+  const supportedLangs = ["ca", "es", "eu", "gl", "en"];
+
+  const lang = supportedLangs.includes(browserLang)
+    ? browserLang
+    : "ca";
 
   if (i18n.language !== lang) {
     i18n.changeLanguage(lang);
@@ -685,7 +689,7 @@ async function onTogglePush(next: boolean) {
 
 /* === CONFIGURACIÓ GENERAL === */
 const API_KEY = "ebd4ce67a42857776f4463c756e18b45"; // 🔑 substitueix per la teva clau real
-const lang = i18n.language || "ca";
+const lang = i18n.resolvedLanguage?.slice(0,2) || "ca";
 
 
 
@@ -2027,7 +2031,7 @@ if (uvi != null && uvi >= 3) {
   </div>
 )}
 
-{/* ✅ ACCIONS RÀPIDES (al final, després d'escala UV) */}
+{/* ✅ ACCIONS RÀPIDES */}
 <SafetyActions
   lang={(i18n.resolvedLanguage || i18n.language || "ca").slice(0, 2) as any}
   risk={risk}
@@ -2037,7 +2041,7 @@ if (uvi != null && uvi >= 3) {
 />
 
  {/* 🟩 ESCALA-UV */}
-{['ca', 'es', 'eu', 'gl'].includes(i18n.language) ? (
+{['ca', 'es', 'eu', 'gl', 'gl'].includes(i18n.language) ? (
   <UVScale 
     lang={i18n.language as any} 
     uvi={uvi ?? 0}

@@ -29,7 +29,6 @@ export type OpenUVCurrentResponse = {
     // ✅ AFEGITS (per sortida i posta)
     sun_info?: OpenUVSunInfo;
 
-    // ✅ Ja els tenies
     safe_exposure_time?: Record<string, number>;
     ozone?: number;
     ozone_time?: string;

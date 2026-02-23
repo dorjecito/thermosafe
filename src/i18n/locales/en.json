@@ -40,6 +40,7 @@
   "solarProtection": "🔆 Sun protection",
   "irradianceLegend": "☀️ Irradiance levels: <8 moderate · ≥8 high",
   "toggleLegend": "ℹ️ Show/Hide UV scale",
+
   "push": {
     "label": "Receive alerts when heat risk ≥ moderate",
     "enabled": "Alerts enabled. You will receive notifications when risk is moderate or higher.",
@@ -51,6 +52,7 @@
       "noToken": "Unable to obtain notification token."
     }
   },
+
   "sky_state": "Sky condition",
   "weather_desc": {
     "clear_sky": "Clear sky",
@@ -76,6 +78,7 @@
     "ash": "Volcanic ash",
     "squall": "Wind gusts",
     "tornado": "Tornado",
+
     "ennuvolat": "Cloudy",
     "lleugerament_ennuvolat": "Lightly cloudy",
     "molt_ennuvolat": "Very cloudy",
@@ -83,8 +86,10 @@
     "poc_ennuvolat": "Slightly cloudy",
     "nuvolositat_variable": "Variable cloudiness"
   },
+
   "link_insst": "INSST: Heat stress and thermal risk",
   "link_aemet": "AEMET: Health and meteorology",
+
   "cold_alert_label": "Receive alerts for extreme cold",
   "heat_risk": "Heat risk",
   "current_risk": "Current risk",
@@ -94,24 +99,24 @@
   "high": "High",
   "extreme": "Extreme",
   "moderate": "Moderate",
+
   "notify": {
-  "coldTitle": "ThermoSafe Alert",
-  "coldBody": "Cold risk {{risk}}. Temperature: {{temp}}°C",
+    "coldTitle": "ThermoSafe Alert",
+    "coldBody": "Cold risk {{risk}}. Temperature: {{temp}}°C",
+    "heatTitle": "ThermoSafe Alert",
+    "heatBody": "Heat risk {{risk}}. Heat index: {{hi}}°C",
+    "windTitle": "ThermoSafe Alert",
+    "windBody": "Wind risk {{risk}}. Wind speed: {{speed}} km/h",
+    "uvTitle": "ThermoSafe Alert",
+    "uvModerate": "Moderate UV index. Sun protection recommended if exposed.",
+    "uvHigh": "High UV index. Use sun protection and limit prolonged exposure.",
+    "uvVeryHigh": "Very high UV index. Sun protection is essential.",
+    "uvExtreme": "Extreme UV index. Avoid direct sun exposure."
+  },
 
-  "heatTitle": "ThermoSafe Alert",
-  "heatBody": "Heat risk {{risk}}. Heat index: {{hi}}°C",
-
-  "windTitle": "ThermoSafe Alert",
-  "windBody": "Wind risk {{risk}}. Wind speed: {{speed}} km/h",
-
-  "uvTitle": "ThermoSafe Alert",
-  "uvModerate": "Moderate UV index. Sun protection recommended if exposed.",
-  "uvHigh": "High UV index. Use sun protection and limit prolonged exposure.",
-  "uvVeryHigh": "Very high UV index. Sun protection is essential.",
-  "uvExtreme": "Extreme UV index. Avoid direct sun exposure."
-},
   "heatRiskLabel": "Heat risk",
   "effectiveTemp": "Effective temperature",
+
   "heatRisk": {
     "Cap risc": "no risk",
     "Baix": "low",
@@ -119,24 +124,30 @@
     "Alt": "high",
     "Extrem": "extreme"
   },
+
   "coldRisk": {
     "cap": "no risk",
     "lleu": "mild",
     "moderat": "moderate",
     "alt": "high",
-    "molt alt": "very high",
-    "extrem": "extreme"
+    "molt_alt": "very high",
+    "extrem": "extreme",
+
+    "molt alt": "very high"
   },
+
   "cold_risk_title": "Cold risk",
   "wind_chill": "Effective temperature",
+
   "windRisk": {
-  "none": "no risk",
-  "breezy": "low",
-  "moderate": "moderate",
-  "strong": "high",
-  "very_strong": "very high",
-  "extreme": "extreme"
-}, 
+    "none": "no risk",
+    "breezy": "low",
+    "moderate": "moderate",
+    "strong": "high",
+    "very_strong": "very high",
+    "extreme": "extreme"
+  },
+
   "weather_alerts": {
     "storm": "Storm alert",
     "rain": "Rain alert",
@@ -144,39 +155,60 @@
     "wind": "Wind alert",
     "heat": "Heat alert",
     "cold": "Cold alert",
+
     "coastalevent": "Coastal risk alert",
     "coastal_event": "Coastal risk alert",
-    "coastal_event_warning": "Coastal risk alert",
-    "coastalevent_warning": "Avís per risc costaner",
-    "moderate_coastalevent_warning": "Moderate coastal alert",
-    "moderate_coastal_event_warning": "Avís costaner moderat",
-    "moderate coastal event warning": "Avís costaner moderat",
-    "moderate_coastalevent": "Avís costaner moderat",
-    "low_temperature_warning": "Low temperature alert",
-    "low temperature warning": "Avís per temperatures baixes",
-    "moderate_low_temperature_warning": "Moderate low temperature alert",
-    "moderate low temperature warning": "Avís moderat per temperatures baixes",
-    "snow_warning": "Avís per neu",
-    "wind_warning": "Avís per vent",
-    "rain_warning": "Avís per pluja",
+    "coastal_event_warning": "Coastal risk warning",
+    "coastalevent_warning": "Coastal risk warning",
+
+    "moderate_coastalevent_warning": "Moderate coastal warning",
+    "moderate_coastal_event_warning": "Moderate coastal warning",
+    "moderate coastal event warning": "Moderate coastal warning",
+    "moderate_coastalevent": "Moderate coastal warning",
+
+    "low_temperature_warning": "Low temperature warning",
+    "low temperature warning": "Low temperature warning",
+    "moderate_low_temperature_warning": "Moderate low temperature warning",
+    "moderate low temperature warning": "Moderate low temperature warning",
+
+    "snow_warning": "Snow warning",
+    "wind_warning": "Wind warning",
+    "rain_warning": "Rain warning",
+
     "minimum_temperature": "Minimum temperature",
-    "minimum temperature": "Temperatura mínima"
+    "minimum temperature": "Minimum temperature"
   },
+
   "last_update": "Updated",
   "alerts_title": "Official weather alerts",
   "alerts_none": "There are currently no active weather alerts.",
   "no_alerts": "No alerts at this time.",
+
   "notifications": {
-  "label": "Alerts",
-  "on": "ON",
-  "off": "OFF"
-},
+    "label": "Alerts",
+    "on": "ON",
+    "off": "OFF"
+  },
+
   "solar_info": "Solar information",
   "uv_index_current": "Current UV index",
   "uv_level": "Level",
   "uv_night_title": "Solar information",
   "uv_night_message": "There is no UV radiation at night.",
   "uv_night_info": "It is nighttime. There is no UV radiation risk.",
+
+  "uv": {
+    "safe_time_title": "Safe exposure time",
+    "phototype": "Phototype",
+    "safe_time_hint": "Indicative estimate. Use sun protection and reduce exposure during peak hours.",
+    "max_today": "Max UV today",
+    "sunrise": "Sunrise",
+    "sunset": "Sunset",
+    "details": "Details",
+    "updated_at": "Updated",
+    "ozone": "Ozone"
+  },
+
   "recommendations_full": {
     "heat": {
       "low": "Safe conditions. Stay hydrated and avoid direct sun during peak hours.",
@@ -209,6 +241,7 @@
       "extreme": "Very heavy swell: extreme risk. Avoid walking near the sea."
     }
   },
+
   "activity": {
     "inactive": "Enable motion detection",
     "active_label": "Activity",
@@ -218,22 +251,27 @@
     "intense": "Intense effort",
     "extra": "extra"
   },
+
   "official_links": "Official links",
   "insst_heat": "INSST: Heat stress and thermal risk",
   "aemet_health": "AEMET: Health and meteorology",
+
   "risk_levels": {
     "low": "Low risk",
     "moderate": "Moderate risk",
     "high": "High risk",
     "extreme": "Extreme risk"
   },
-    "skin": {
-  "toggle": "Show/Hide phototype information"
+
+  "skin": {
+    "toggle": "Show/Hide phototype information"
   },
+
   "share": "Share",
   "show_advice": "Show recommendations",
   "hide_advice": "Hide recommendations",
   "official_advice_share": "Follow safety recommendations based on your current risk.",
+
   "officialAdviceDynamic": {
     "heat": {
       "mild": "Hydrate often and rest in cool areas.",
@@ -260,6 +298,7 @@
       "extreme": "Avoid sun exposure. Extreme risk of eye and skin damage."
     }
   },
+
   "official_advice": {
     "hydration": "Hydrate regularly, even if you are not thirsty.",
     "rest": "Rest in the shade during prolonged activity.",
@@ -277,29 +316,32 @@
     "symptoms": "If you feel dizzy, nauseous, or confused, stop activity.",
     "symptomsCold": "If you have chills, shivering, or confusion, seek shelter and warmth."
   },
+
   "official_advice_title": "Official safety recommendations",
   "official_advice_footer": "Based on INSST and AEMET guidance.",
+
   "rec": {
     "safe": "Safe conditions. Maintain your usual hydration.",
     "safeWithHighUV": "Thermally safe conditions. Use caution due to solar radiation."
   },
-  
+
   "wind_warning": "Wind warning",
   "coastal_warning": "Coastal warning",
   "adverse_weather": "Adverse weather",
   "maximum_gust": "Maximum gust of wind",
   "aemet_source": "AEMET · Spanish Meteorological Agency",
+
   "alert_time": {
     "active": "Active",
     "ended": "Ended",
     "remaining_hours": "{{hours}}h {{minutes}}m left",
     "remaining_minutes": "{{minutes}}m left"
-},
+  },
+
   "uvTitle": "ThermoSafe alert",
   "uvLow": "Low UV index.",
   "uvModerate": "Moderate UV index. Protection recommended.",
   "uvHigh": "High UV index. Strong protection advised.",
   "uvVeryHigh": "Very high UV index. Sun protection is essential!",
   "uvExtreme": "🚨 EXTREME UV (11+) — Avoid direct exposure"
-
 }
