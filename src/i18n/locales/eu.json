@@ -222,6 +222,7 @@
   "uv_level": "Maila",
   "uv_night_title": "Eguzki-informazioa",
   "uv_night_message": "Gauean ez dago UV erradiaziorik.",
+  "uv_night_info": "Gaua da. Ez dago UV erradiazio arriskurik.",
 
   "activity": {
   "inactive": "Mugimendua detektatzea aktibatu",
@@ -241,6 +242,9 @@
   "moderate": "Arrisku ertaina",
   "high": "Arrisku handia",
   "extreme": "Arrisku muturrekoa"
+},
+"skin": {
+  "toggle": "Erakutsi/Ezkutatu fototipoaren informazioa"
 },
 
 "share": "Partekatu",

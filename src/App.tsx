@@ -34,6 +34,12 @@ import { getUVFromOpenUV } from "./services/openUV";
    import UVScale             from './components/UVScale';
    import LocationCard from "./components/LocationCard";
    import SafetyActions from "./components/SafetyActions";
+   import UVSafeTime from "./components/UVSafeTime";
+   import UVDetailPanel from "./components/UVDetailPanel";
+   //import SkinTypeSelect, { type SkinType } from "./components/SkinTypeSelect";
+   import SkinTypeInfo, { type SkinType } from "./components/SkinTypeInfo";
+   
+
 
    
    /* —— analítica (opcional) ———————————— */
@@ -182,9 +188,9 @@ async function safeUVFetch(
 ): Promise<number | null> {
 
   if (!isDay) {
-    console.log("[UV] Nit a la ubicació consultada → no es consulta OpenUV");
-    return null;
-  }
+  console.log("[UV] Nit a la ubicació consultada → no es consulta OpenUV");
+  return 0; // UV nocturn = 0
+}
 
   try {
     console.log("[UV] És de dia a la ubicació → consultant OpenUV…");
@@ -256,32 +262,40 @@ const isAlertActiveNow = (start: number, end: number) => {
 
 /* ──────── component ──────── */
 export default function App() {
-  /* i18next */
+  /* i18next */
   const [loading, setLoading] = useState(false);
-  const { t, i18n } = useTranslation();
+  const { t, i18n } = useTranslation();
+
+  // 🧴 Fototip (1–6)
+  type SkinType = 1 | 2 | 3 | 4 | 5 | 6;
+  const [skinType, setSkinType] = useState<SkinType>(3);
+  const [showSkinInfo, setShowSkinInfo] = useState(false);
+  
+
   // ✅ Traducció segura: si falta la clau, torna un fallback llegible
   const tr = (key: string, fallback: string) => {
-  const out = t(key);
-  return out && out !== key ? out : fallback;
-};
+    const out = t(key);
+    return out && out !== key ? out : fallback;
+  };
+
   const langUI = i18n.language; // ex: "en", "en-US", "ca"
+
   const getRemainingTime = (endUnix: number, lang: string) => {
-  const now = Date.now() / 1000;
-  const diff = Math.floor(endUnix - now);
+    const now = Date.now() / 1000;
+    const diff = Math.floor(endUnix - now);
 
-  if (diff <= 0) {
-    return t("alert_time.ended");
-  }
+    if (diff <= 0) return t("alert_time.ended");
 
-  const hours = Math.floor(diff / 3600);
-  const minutes = Math.floor((diff % 3600) / 60);
+    const hours = Math.floor(diff / 3600);
+    const minutes = Math.floor((diff % 3600) / 60);
 
-  if (hours > 0) {
-    return t("alert_time.remaining_hours", { hours, minutes });
-  }
+    if (hours > 0) return t("alert_time.remaining_hours", { hours, minutes });
 
-  return t("alert_time.remaining_minutes", { minutes });
-};
+    return t("alert_time.remaining_minutes", { minutes });
+  
+
+  
+}
 
 /* 🔔 Estat global per activar/desactivar alertes meteorològiques */
 const [notificationsEnabled, setNotificationsEnabled] = useState<boolean>(() => {
@@ -939,9 +953,13 @@ const locate = async (silent = false) => {
     });
 
     const lat = position.coords.latitude;
-    const lon = position.coords.longitude;
+const lon = position.coords.longitude;
 
-    console.log(`[DEBUG] Coordenades GPS obtingudes: ${lat}, ${lon}`);
+// ✅ PUNT 4: desa coordenades a l’estat global (per components com UVSafeTime)
+setLat(lat);
+setLon(lon);
+
+console.log(`[DEBUG] Coordenades GPS obtingudes: ${lat}, ${lon}`);
 
 // 🌦️ // 2. Obté dades del temps per coordenades
 const d = await getWeatherByCoords(lat, lon, lang, API_KEY);
@@ -958,8 +976,8 @@ setDay(isDayAtLocation(nowUtc, tz, sunrise, sunset));
 // 🌞 Obté UVI d’OpenWeather
 const uv = await safeUVFetch(lat, lon, day);
 setUvi(uv);
-console.log("[DEBUG] UVI actual:", uvi);
-console.log("[TEST] Tipus UVI:", typeof uvi, "Valor:", uvi);
+console.log("[DEBUG] UVI actual (nou):", uv);
+console.log("[TEST] Tipus UV (nou):", typeof uv, "Valor:", uv);
 
 // Meteo bàsica
 setTemp(d.main?.temp ?? null);
@@ -981,11 +999,7 @@ if (lat != null && lon != null) {
     nm = (await getLocationNameFromCoords(lat, lon)) || "";
 
     // Retry només si realment ha tornat buit
-    if (!nm) {
-      console.warn("[WARN] Nom buit, reintentant en 800ms...");
-      await new Promise(res => setTimeout(res, 800));
-      nm = (await getLocationNameFromCoords(lat, lon)) || "";
-    }
+   nm = nm?.trim() || d.name || "Ubicació desconeguda";
 
     console.log(`[DEBUG] Ciutat trobada per coordenades: ${nm}`);
   } catch (e) {
@@ -1836,35 +1850,40 @@ return (
     )}
   </div>
 )}
+{/* 🌞 INFORMACIÓ SOLAR */}
+<div className={`uv-block ${day ? "" : "uv-night"}`}>
+  <h3 className="uv-title">{t("solar_info")}</h3>
 
-{/* 🌞 INFORMACIÓ SOLAR (ocultació segons dia/nit) */}
-{day ? (
-
-  <div className="uv-block">
-
-    <h3 className="uv-title">{t("solar_info")}</h3>
-
-    <p className="data-label">
-      <strong>{t("uv_index_current")}:</strong>
-      <span className="uv-current-value">
-        {uvi === null ? "—" : uvi.toFixed(1)}
-      </span>
-    </p>
-
+  {day && (
     <UVAdvice
       uvi={uvi}
       lang={i18n.resolvedLanguage || i18n.language || "ca"}
     />
+  )}
 
-  </div>
-) : (
-  <div className="uv-block uv-night">
-    <h3 className="uv-title">{t("solar_info")}</h3>
-    <p style={{ opacity: 0.8 }}>
-      {t("uv_night_message") || "A la nit no hi ha radiació UV."}
+  {day && (
+    <UVSafeTime
+      lat={lat}
+      lon={lon}
+      lang={normalizeLang(i18n.resolvedLanguage || i18n.language || "ca") as any}
+    />
+  )}
+
+  {/* ✅ AFEGIT */}
+  {day && lat != null && lon != null && (
+    <UVDetailPanel
+      lat={lat}
+      lon={lon}
+      lang={normalizeLang(i18n.resolvedLanguage || i18n.language || "ca") as any}
+    />
+  )}
+
+  {!day && (
+    <p className="data-label" style={{ opacity: 0.85 }}>
+      🌙 {t("uv_night_info") ?? "És de nit. No hi ha risc per radiació UV."}
     </p>
-  </div>
-)}
+  )}
+</div>
 
 {/* 🔔 AVISOS AEMET (Targetes noves) */}
 {alerts.length > 0 && (
@@ -2026,7 +2045,29 @@ if (uvi != null && uvi >= 3) {
 ) : (
   !err && <p>{t('loading')}</p>
 )}
+{/* 🧴 FOTOTIP INFO (separat, estil UVScale) */}
+<div style={{ marginTop: "1rem" }}>
+  <button
+    onClick={() => setShowSkinInfo(v => !v)}
+    style={{ marginBottom: "0.75rem" }}
+  >
+    🧴 {t("skin.toggle")}
+  </button>
 
+  {showSkinInfo && (
+    <SkinTypeInfo
+      lang={
+        (["ca", "es", "eu", "gl", "en"].includes(
+          (i18n.resolvedLanguage || i18n.language || "ca").split("-")[0]
+        )
+          ? (i18n.resolvedLanguage || i18n.language || "ca").split("-")[0]
+          : "ca") as "ca" | "es" | "eu" | "gl" | "en"
+      }
+      value={skinType}
+      onChange={setSkinType}
+    />
+  )}
+</div>
 {err && <p style={{ color: 'red' }}>{err}</p>}
 </div>
 );

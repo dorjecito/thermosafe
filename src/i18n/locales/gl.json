@@ -213,6 +213,7 @@
   "uv_level": "Nivel",
   "uv_night_title": "Información solar",
   "uv_night_message": "Pola noite non hai radiación UV.",
+  "uv_night_info": "É de noite. Non hai risco por radiación UV.",
 
   "activity": {
     "label": "Actividade",
@@ -281,6 +282,9 @@
   "high": "Risco alto",
   "extreme": "Risco extremo"
 },
+"skin": {
+  "toggle": "Amosar/Ocultar información do fototipo"
+}, 
 
 "share": "Compartir",
 "show_advice": "Mostrar recomendacións",

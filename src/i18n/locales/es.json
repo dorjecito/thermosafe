@@ -167,6 +167,9 @@
   "extreme": "extremo",
   "very_high": "muy alto"
 },
+  "skin": {
+  "toggle": "Mostrar/Ocultar información del fototipo"
+},
 
   "weather_alerts": {
     "storm": "Aviso por tormenta",
@@ -215,6 +218,7 @@
   "uv_level": "Nivel",
   "uv_night_title": "Información solar",
   "uv_night_message": "Por la noche no hay radiación UV.",
+  "uv_night_info": "Es de noche. No hay riesgo por radiación UV.",
 
   "recommendations_full": {
     "heat": {

@@ -55,6 +55,10 @@
     "extreme": "Risc extrem"
   },
 
+  "skin": {
+  "toggle": "Mostra/Oculta informació del fototip"
+},
+
   "high": "Alt",
   "moderate": "Moderat",
   "extreme": "Extrem",
@@ -192,6 +196,7 @@
   "uv_level": "Nivell",
   "uv_night_title": "Informació solar",
   "uv_night_message": "A la nit no hi ha radiació UV.",
+  "uv_night_info": "És de nit. No hi ha risc per radiació UV.",
 
   "recommendations_full": {
     "heat": {
@@ -225,6 +230,7 @@
       "extreme": "Onatge molt fort: risc extrem. Evita totalment passejos prop del mar."
     }
   },
+  
 
   "activity": {
     "inactive": "Activar detecció de moviment",

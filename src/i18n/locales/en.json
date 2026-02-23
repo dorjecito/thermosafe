@@ -176,6 +176,7 @@
   "uv_level": "Level",
   "uv_night_title": "Solar information",
   "uv_night_message": "There is no UV radiation at night.",
+  "uv_night_info": "It is nighttime. There is no UV radiation risk.",
   "recommendations_full": {
     "heat": {
       "low": "Safe conditions. Stay hydrated and avoid direct sun during peak hours.",
@@ -225,6 +226,9 @@
     "moderate": "Moderate risk",
     "high": "High risk",
     "extreme": "Extreme risk"
+  },
+    "skin": {
+  "toggle": "Show/Hide phototype information"
   },
   "share": "Share",
   "show_advice": "Show recommendations",

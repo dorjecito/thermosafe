@@ -6,7 +6,7 @@ type Lang = 'ca' | 'es' | 'eu' | 'gl';
 
 interface UVScaleProps {
   lang: Lang;
-  uvi: number;   // <— afegit
+  uvi: number;   
   lat?: number;
   lon?: number;
 }
