@@ -2041,7 +2041,7 @@ if (uvi != null && uvi >= 3) {
 />
 
  {/* 🟩 ESCALA-UV */}
-{['ca', 'es', 'eu', 'gl', 'gl'].includes(i18n.language) ? (
+{['ca', 'es', 'eu', 'gl' , 'en', ].includes(i18n.language) ? (
   <UVScale 
     lang={i18n.language as any} 
     uvi={uvi ?? 0}
