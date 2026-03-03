@@ -1,5 +1,5 @@
 import * as React from "react";
-import { getUVDetailFromOpenUV } from "../services/openUV"; 
+import { getUVDetailFromOpenUV } from "../services/openUV";
 
 type Lang = "ca" | "es" | "eu" | "gl" | "en";
 
@@ -18,6 +18,10 @@ const TXT: Record<
     details: string;
     updated: string;
     ozone: string;
+    ozoneInfo: string;
+    ozoneLow: string;
+    ozoneNormal: string;
+    ozoneHigh: string;
     na: string;
   }
 > = {
@@ -28,6 +32,10 @@ const TXT: Record<
     details: "Detalls",
     updated: "Actualitzat",
     ozone: "Ozò",
+    ozoneInfo: "Valors habituals: 250–400 DU.",
+    ozoneLow: "Capa d’ozó baixa (pot augmentar el risc UV).",
+    ozoneNormal: "Capa d’ozó dins rang habitual.",
+    ozoneHigh: "Capa d’ozó molt alta.",
     na: "—",
   },
   es: {
@@ -37,6 +45,10 @@ const TXT: Record<
     details: "Detalles",
     updated: "Actualizado",
     ozone: "Ozono",
+    ozoneInfo: "Valores habituales: 250–400 DU.",
+    ozoneLow: "Capa de ozono baja (puede aumentar el riesgo UV).",
+    ozoneNormal: "Capa de ozono dentro de rangos habituales.",
+    ozoneHigh: "Capa de ozono muy alta.",
     na: "—",
   },
   eu: {
@@ -46,6 +58,10 @@ const TXT: Record<
     details: "Xehetasunak",
     updated: "Eguneratua",
     ozone: "Ozonoa",
+    ozoneInfo: "Balio arruntak: 250–400 DU.",
+    ozoneLow: "Ozono-geruza baxua (UV arriskua handitu daiteke).",
+    ozoneNormal: "Ozono-geruza ohiko tartean.",
+    ozoneHigh: "Ozono-geruza oso altua.",
     na: "—",
   },
   gl: {
@@ -55,6 +71,10 @@ const TXT: Record<
     details: "Detalles",
     updated: "Actualizado",
     ozone: "Ozono",
+    ozoneInfo: "Valores habituais: 250–400 DU.",
+    ozoneLow: "Capa de ozono baixa (pode aumentar o risco UV).",
+    ozoneNormal: "Capa de ozono en rango habitual.",
+    ozoneHigh: "Capa de ozono moi alta.",
     na: "—",
   },
   en: {
@@ -64,6 +84,10 @@ const TXT: Record<
     details: "Details",
     updated: "Updated",
     ozone: "Ozone",
+    ozoneInfo: "Typical values: 250–400 DU.",
+    ozoneLow: "Low ozone layer (UV risk may increase).",
+    ozoneNormal: "Ozone layer within typical range.",
+    ozoneHigh: "Very high ozone layer.",
     na: "—",
   },
 };
@@ -82,7 +106,7 @@ type UVDetailShape = {
     } | null;
   } | null;
 
-  // ✅ tolerància camelCase (per si el servei/mapper t’ho retorna així)
+  // tolerància camelCase
   uvMax?: number | string | null;
   uvMaxTime?: string | null;
   uvTime?: string | null;
@@ -108,6 +132,13 @@ function toNum(x: unknown): number | null {
   return null;
 }
 
+// ✅ etiqueta curta segons DU
+function ozoneLabel(du: number, t: (typeof TXT)[Lang]) {
+  if (du < 220) return t.ozoneLow;
+  if (du > 450) return t.ozoneHigh;
+  return t.ozoneNormal;
+}
+
 export default function UVDetailPanel({ lat, lon, lang }: Props) {
   const t = TXT[lang] ?? TXT.ca;
 
@@ -115,7 +146,6 @@ export default function UVDetailPanel({ lat, lon, lang }: Props) {
   const [loading, setLoading] = React.useState(false);
 
   React.useEffect(() => {
-    // Si encara no hi ha coordenades, neteja i no facis fetch
     if (lat == null || lon == null) {
       setDetail(null);
       setLoading(false);
@@ -144,11 +174,9 @@ export default function UVDetailPanel({ lat, lon, lang }: Props) {
     };
   }, [lat, lon]);
 
-  // ✅ UV màxim tolerant (underscore o camelCase)
   const uvMax = toNum(detail?.uv_max ?? detail?.uvMax);
   const uvMaxTime = fmtTime((detail?.uv_max_time ?? detail?.uvMaxTime) ?? null) ?? t.na;
 
-  // ✅ sunrise/sunset tolerant (sun_info o sunInfo / sun_times o sunTimes)
   const sunrise =
     fmtTime(
       (detail?.sun_info?.sun_times?.sunrise ??
@@ -169,7 +197,6 @@ export default function UVDetailPanel({ lat, lon, lang }: Props) {
 
   return (
     <div style={{ marginTop: 8 }}>
-      {/* Línies bàsiques sempre visibles */}
       <div className="muted" style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
         <span>
           <strong>{t.maxToday}:</strong>{" "}
@@ -182,13 +209,12 @@ export default function UVDetailPanel({ lat, lon, lang }: Props) {
         </span>
       </div>
 
-      {/* Detalls plegables */}
       <details style={{ marginTop: 6 }}>
         <summary className="muted" style={{ cursor: "pointer" }}>
           {t.details}
         </summary>
 
-        <div className="muted" style={{ marginTop: 6, display: "grid", gap: 4 }}>
+        <div className="muted" style={{ marginTop: 6, display: "grid", gap: 6 }}>
           <div>
             <strong>{t.updated}:</strong> {loading ? "…" : updated ?? t.na}
           </div>
@@ -201,6 +227,13 @@ export default function UVDetailPanel({ lat, lon, lang }: Props) {
               ? `${ozone} DU${ozoneTime ? ` (${ozoneTime})` : ""}`
               : t.na}
           </div>
+
+          {/* ✅ línia curta d’interpretació + rang */}
+          {!loading && ozone != null && (
+            <div style={{ fontSize: "0.9em", opacity: 0.9 }}>
+              {ozoneLabel(ozone, t)} {t.ozoneInfo}
+            </div>
+          )}
         </div>
       </details>
     </div>

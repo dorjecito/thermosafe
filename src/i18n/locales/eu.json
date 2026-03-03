@@ -221,8 +221,8 @@
   "uv_index_current": "Uneko UV indizea",
   "uv_level": "Maila",
   "uv_night_title": "Eguzki-informazioa",
-  "uv_night_message": "Gauean ez dago UV erradiaziorik.",
-  "uv_night_info": "Gaua da. Ez dago UV erradiazio arriskurik.",
+  "uv_night_message": "Gauez ez dago UV arriskurik.",
+  "uv_night_info": "Gaua da. UV arriskurik ez.",
 
   "activity": {
   "inactive": "Mugimendua detektatzea aktibatu",

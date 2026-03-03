@@ -8,10 +8,10 @@ export type WindRisk =
   | 'very_strong';
 
 export const WIND_THRESHOLDS_KMH = {
-  breezy: 20,
-  moderate: 35,
-  strong: 50,
-  very_strong: 70,
+  breezy: 15,       // abans 20
+  moderate: 30,     // abans 35
+  strong: 45,       // abans 50
+  very_strong: 65,  // abans 70
 } as const;
 
 export function getWindRisk(kmh: number): WindRisk {
@@ -23,9 +23,9 @@ export function getWindRisk(kmh: number): WindRisk {
 }
 
 export const WIND_COLORS = {
-  none: "#4CAF50",
-  breezy: "#8BC34A",
-  moderate: "#FFC107",
-  strong: "#FF9800",
-  very_strong: "#F44336",
+  none: "#4CAF50",        // Verd
+  breezy: "#8BC34A",      // Verd clar
+  moderate: "#FFC107",    // Groc (alerta lleu laboral)
+  strong: "#FF9800",      // Taronja
+  very_strong: "#d32f2f" // vermell intens
 } as const;
