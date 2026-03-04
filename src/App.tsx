@@ -587,18 +587,6 @@ console.log(`[DEBUG] Notificació fred enviada (${coldRiskValue})`);
   }
 }
 
-// 💨 Text de recomanació segons velocitat del vent (més “realista”)
-type WindAdviceBand = "calm" | "light" | "moderate" | "strong" | "very_strong";
-
-function getWindAdviceBand(kmh: number): WindAdviceBand {
-  if (!Number.isFinite(kmh)) return "calm";
-  if (kmh >= 65) return "very_strong";
-  if (kmh >= 45) return "strong";
-  if (kmh >= 30) return "moderate";
-  if (kmh >= 15) return "light";
-  return "calm";
-}
-
  /* === [WIND] notifier amb cooldown (versió definitiva) === */
 const WIND_ALERT_MIN_INTERVAL_MIN = 60; // 1 hora
 
@@ -1063,7 +1051,7 @@ console.log(`[SKY – locate] Actualitzat a: ${translatedDesc}`);
 // --- RESET COMPLET ABANS DE LA CONSULTA ---
 setTemp(null);
 setWc(null);
-setColdRisk("cap" as any);
+setColdRisk(null as any);
 
 // 🌡️ Temperatura real i sensació tèrmica (GPS)
 setTemp(d.main.temp);
@@ -1453,7 +1441,7 @@ const primaryAdvice = getPrimaryAdviceText();
 const riskKey = riskKeyMap[riskKeyRaw] || "cap";
 
 // Traducció a l’idioma actiu
-const coldRiskLabel = t(`coldRisk.${coldRisk}`); // cap/lleu/moderat/alt/molt alt/extrem
+const coldRiskLabel = t(`coldRisk.${riskKey}`);
 
 // 🔥 Calcular risc de calor ajustat per activitat (rest, walk, moderate, intense)
 const heatRisk = hi !== null ? getHeatRisk(hi, activityLevel) : null;
@@ -1781,7 +1769,7 @@ return (
   </div>
 )}
 
-{coldRisk !== "cap" && (
+{risk.startsWith("cold_") && (
   <div
     className="cold-card"
     style={{
@@ -1824,7 +1812,9 @@ return (
       </span>
 
       {/* ✔️ Traduït */}
-     <span>{t("cold_risk_title")}: {coldRiskLabel}</span>
+      <span>
+  {t("cold_risk_title")}: {coldRiskLabel}
+</span>
     </div>
 
     {/* Temperatura efectiva (✔️ també traduïda) */}
@@ -1952,12 +1942,10 @@ if (risk.startsWith("cold")) {
   if (text !== key) dynamicAdvice.push(text);
 }
 
-/* 3) RISC PER VENT (basat en km/h real) */
-if (windKmh != null && Number.isFinite(windKmh)) {
-  const band = getWindAdviceBand(windKmh);
-
-  const key = `advice.wind.${band}`;
-  const text = t(key, { speed: windKmh.toFixed(1) });
+/* 3) RISC PER VENT (windRisk = breezy, moderate, strong, very_strong) */
+if (windRisk && windRisk !== "none") {
+  const key = `officialAdviceDynamic.wind.${windRisk}`;
+  const text = t(key);
 
   if (text !== key) dynamicAdvice.push(text);
 }
@@ -2053,7 +2041,7 @@ if (uvi != null && uvi >= 3) {
 />
 
  {/* 🟩 ESCALA-UV */}
-{['ca', 'es', 'eu', 'gl' , 'en', ].includes(i18n.language) ? (
+{['ca', 'es', 'eu', 'gl', 'gl'].includes(i18n.language) ? (
   <UVScale 
     lang={i18n.language as any} 
     uvi={uvi ?? 0}
