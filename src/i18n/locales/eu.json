@@ -217,7 +217,7 @@
   "off": "DESAKTIBATUTA"
 },
 
-  "solar_info": "Eguzki-informazioa",
+  "solar_info": "Eguzki-erradiazioa eta UV indizea",
   "uv_index_current": "Uneko UV indizea",
   "uv_level": "Maila",
   "uv_night_title": "Eguzki-informazioa",
@@ -311,5 +311,6 @@
   "uvModerate": "UV indize moderatua. Babesa gomendatua.",
   "uvHigh": "UV indize altua. Babes handia.",
   "uvVeryHigh": "UV indize oso altua. Eguzki-babesa ezinbestekoa!",
-  "uvExtreme": "🚨 UV MUTURREKOA (11+) — Saihestu esposizio zuzena"
+  "uvExtreme": "🚨 UV MUTURREKOA (11+) — Saihestu esposizio zuzena",
+  "uv_source_note": "UV erreferentzia-datuak (OpenUV/NASA). Orduaren eta iturriaren arabera alda daitezke."
 }

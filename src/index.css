@@ -330,6 +330,11 @@ button:focus-visible {
   line-height: 1.45;
   opacity: 0.9;
 }
+.uv-source-note {
+  font-size: 0.85rem;
+  opacity: 0.75;
+  margin-top: 6px;
+}
 
 /* =======================================================
    🌙 MODE FOSC — Targetes i blocs

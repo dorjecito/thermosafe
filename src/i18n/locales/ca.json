@@ -191,7 +191,7 @@
   "off": "DESACTIVATS"
 },
 
-  "solar_info": "Informació solar",
+  "solar_info": "Radiació solar i índex UV",
   "uv_index_current": "Índex UV actual",
   "uv_level": "Nivell",
   "uv_night_title": "Informació solar",
@@ -324,5 +324,6 @@
 "uvModerate": "Índex UV moderat. Protecció recomanada.",
 "uvHigh": "Índex UV alt. Protecció elevada.",
 "uvVeryHigh": "Índex UV molt alt. Protecció solar imprescindible!",
-"uvExtreme": "🚨 UV EXTREM (11+) — Evita exposició directa"
+"uvExtreme": "🚨 UV EXTREM (11+) — Evita exposició directa",
+"uv_source_note": "Dades UV de referència (OpenUV/NASA). Poden variar segons l’hora i la font."
 }

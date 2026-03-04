@@ -213,7 +213,7 @@
   "off": "DESACTIVADOS"
 }, 
 
-  "solar_info": "Información solar",
+  "solar_info": "Radiación solar e índice UV",
   "uv_index_current": "Índice UV actual",
   "uv_level": "Nivel",
   "uv_night_title": "Información solar",
@@ -328,5 +328,6 @@
   "uvModerate": "Índice UV moderado. Protección recomendada.",
   "uvHigh": "Índice UV alto. Protección elevada.",
   "uvVeryHigh": "Índice UV muy alto. ¡Protección solar imprescindible!",
-  "uvExtreme": "🚨 UV EXTREMO (11+) — Evita exposición directa"
+  "uvExtreme": "🚨 UV EXTREMO (11+) — Evita exposición directa",
+  "uv_source_note": "Datos UV de referencia (OpenUV/NASA). Pueden variar según la hora y la fuente."
 }

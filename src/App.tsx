@@ -1868,35 +1868,49 @@ return (
 <div className={`uv-block ${day ? "" : "uv-night"}`}>
   <h3 className="uv-title">{t("solar_info")}</h3>
 
-  {day && (
-    <UVAdvice
-      uvi={uvi}
-      lang={i18n.resolvedLanguage || i18n.language || "ca"}
-    />
-  )}
+  {(() => {
+    const lang = normalizeLang(i18n.resolvedLanguage || i18n.language || "ca") as any;
 
-  {day && (
-    <UVSafeTime
-      lat={lat}
-      lon={lon}
-      lang={normalizeLang(i18n.resolvedLanguage || i18n.language || "ca") as any}
-    />
-  )}
+    return (
+      <>
+        {day && (
+          <UVAdvice
+            uvi={uvi}
+            lang={lang}
+          />
+        )}
 
-  {/* ✅ AFEGIT */}
-  {day && lat != null && lon != null && (
-    <UVDetailPanel
-      lat={lat}
-      lon={lon}
-      lang={normalizeLang(i18n.resolvedLanguage || i18n.language || "ca") as any}
-    />
-  )}
+        {/* ℹ️ Nota informativa UV */}
+        {day && (
+          <p className="uv-source-note">
+            ℹ️ {t("uv_source_note") ?? "Els valors d’índex UV poden variar segons l’hora i la font meteorològica (OpenUV, NASA o OpenWeather)."}
+          </p>
+        )}
 
-  {!day && (
-    <p className="data-label" style={{ opacity: 0.85 }}>
-      🌙 {t("uv_night_info") ?? "És de nit. No hi ha risc per radiació UV."}
-    </p>
-  )}
+        {day && (
+          <UVSafeTime
+            lat={lat}
+            lon={lon}
+            lang={lang}
+          />
+        )}
+
+        {day && lat != null && lon != null && (
+          <UVDetailPanel
+            lat={lat}
+            lon={lon}
+            lang={lang}
+          />
+        )}
+
+        {!day && (
+          <p className="data-label" style={{ opacity: 0.85 }}>
+            🌙 {t("uv_night_info") ?? "És de nit. No hi ha risc per radiació UV."}
+          </p>
+        )}
+      </>
+    );
+  })()}
 </div>
 
 {/* 🔔 AVISOS AEMET (Targetes noves) */}

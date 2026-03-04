@@ -190,7 +190,7 @@
     "off": "OFF"
   },
 
-  "solar_info": "Solar information",
+  "solar_info": "Solar radiation and UV index",
   "uv_index_current": "Current UV index",
   "uv_level": "Level",
   "uv_night_title": "Solar information",
@@ -343,5 +343,6 @@
   "uvModerate": "Moderate UV index. Protection recommended.",
   "uvHigh": "High UV index. Strong protection advised.",
   "uvVeryHigh": "Very high UV index. Sun protection is essential!",
-  "uvExtreme": "🚨 EXTREME UV (11+) — Avoid direct exposure"
+  "uvExtreme": "🚨 EXTREME UV (11+) — Avoid direct exposure",
+  "uv_source_note": "Reference UV data (OpenUV/NASA). Values may vary by time and source."
 }
