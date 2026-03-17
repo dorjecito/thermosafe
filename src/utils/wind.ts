@@ -14,10 +14,10 @@ export type WindRisk =
 // Llindars oficials (km/h)
 // ─────────────────────────────
 const WIND_THRESHOLDS = {
-  breezy: 20,
-  moderate: 35,
-  strong: 50,
-  very_strong: 70,
+  breezy: 15,
+  moderate: 30,
+  strong: 45,
+  very_strong: 65,
 } as const;
 
 // ─────────────────────────────
