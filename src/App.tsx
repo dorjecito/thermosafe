@@ -1799,6 +1799,8 @@ return (
     </div>
   </div>
 
+<div style={{ height: "230px" }} />
+
 {/* 🔔 Interruptor per activar/desactivar avisos meteorològics */}
 <div
   style={{

@@ -1216,16 +1216,20 @@ text-align: left;
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
 }
-/* 📌 Capçalera sticky superior */
+/* 📌 Capçalera fixa real */
 .top-sticky-ui {
-  position: sticky;
+  position: fixed;
   top: 0;
-  z-index: 50;
-  margin: 0 auto 1.2rem auto;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 1000;
+
+  width: 100%;
+  max-width: 680px;
   box-sizing: border-box;
 
   background: #1f2937;
-  border-radius: 14px;
+  border-radius: 0 0 14px 14px;
   padding: 1rem;
   box-shadow: 0 6px 16px rgba(0,0,0,0.25);
 }
@@ -1237,6 +1241,7 @@ text-align: left;
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
   }
 }
+
 /* ✅ Accions r� pides compactes */
 .safety-actions {
   display: flex;
