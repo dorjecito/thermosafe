@@ -40,6 +40,13 @@
   "solarProtection": "🔆 Sun protection",
   "irradianceLegend": "☀️ Irradiance levels: <8 moderate · ≥8 high",
   "toggleLegend": "ℹ️ Show/Hide UV scale",
+  
+  "safe_conditions": "Safe conditions",
+  "safe_conditions_text_day": "Conditions within normal parameters.",
+  "safe_conditions_text_night": "Night-time conditions within normal parameters.",
+  "official_alert": "Official alert active",
+  "follow_official_alerts": "Follow official guidance and exercise caution.",
+  "safe_conditions_text_night_warm": "Elevated night-time temperatures. Ensure cross ventilation and wear light clothing.",
 
   "push": {
     "label": "Receive alerts when heat risk ≥ moderate",

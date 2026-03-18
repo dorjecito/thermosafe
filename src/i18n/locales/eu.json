@@ -50,6 +50,13 @@
   "irradianceLegend": "☀️ Erradiazio mailak: <8 moderatua · ≥8 altua",
   "toggleLegend": "ℹ️ Erakutsi/Ezkutatu UV eskala",
 
+  "safe_conditions": "Baldintza seguruak",
+  "safe_conditions_text_day": "Baldintzak parametro normalen barruan.",
+  "safe_conditions_text_night": "Gaueko baldintzak parametro normalen barruan.",
+  "official_alert": "Abisu ofiziala aktibo",
+  "follow_official_alerts": "Jarraitu jarraibide ofizialak eta hartu neurri handiagoak.",
+  "safe_conditions_text_night_warm": "Gaueko tenperatura altuak. Ziurtatu aireztapen gurutzatua eta erabili arropa arina.",
+
   "push": {
     "label": "Jaso abisuak bero arriskua ≥ moderatua denean",
     "enabled": "Abisuak aktibatuta. Jakinarazpenak jasoko dituzu arriskua moderatua edo handiagoa denean.",

@@ -83,7 +83,7 @@ button:focus-visible {
   box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
 }
 
-/* � ️ BANNER ALERTA */
+/* � ️ BANNER ALERTA */
 .alert-banner {
   width: 100%;
   box-sizing: border-box;
@@ -162,6 +162,8 @@ button:focus-visible {
     --background-color: #1e1e1e;
     --text-color: #f5f5f5;
     --card-bg: #2a2a2a;
+    --card-text: #f5f5f5;
+    --card-title: #ffffff;
     --alert-bg: #ff453a;
     --alert-text: #ffffff;
   }
@@ -189,6 +191,30 @@ button:focus-visible {
   .recommendation-box {
     background-color: #333;
     border-left: 4px solid var(--primary-color);
+  }
+}
+
+/* 🌙 Recomanacions en mode fosc — versió forta */
+@media (prefers-color-scheme: dark) {
+  .recommendation-box,
+  .recommendations-block,
+  .recommendation-card,
+  .recomanacions-box {
+    background: #1f2430 !important;
+    color: #f5f5f5 !important;
+    border-left: 4px solid #3b82f6 !important;
+  }
+
+  .recommendation-title,
+  .recommendations-title {
+    color: #fbbf24 !important;
+  }
+
+  .recommendation-box *,
+  .recommendations-block *,
+  .recommendation-card *,
+  .recomanacions-box * {
+    color: #f5f5f5 !important;
   }
 }
 
@@ -340,24 +366,6 @@ button:focus-visible {
   opacity: 0.9;
 }
 
-/* =======================================================
-   🌙 MODE FOSC — Targetes i blocs
-   ======================================================= */
-
-/* Targeta condicions actuals */
-@media (prefers-color-scheme: dark) {
-  .block-temp {
-    background-color: rgba(255, 255, 255, 0.06) !important;
-    color: #fff !important;
-    border: 1px solid rgba(255, 255, 255, 0.15);
-  }
-
-  /* Textos de dades */
-  .block-temp strong,
-  .block-temp p {
-    color: #fff !important;
-  }
-}
 
 /* Bloc UV */
 @media (prefers-color-scheme: dark) {
@@ -468,14 +476,6 @@ button:focus-visible {
   text-align: left !important;
 }
 
-/* Mode fosc */
-@media (prefers-color-scheme: dark) {
-  .sky-card {
-    background: #1e293b !important;
-    border-color: rgba(255,255,255,0.1) !important;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.4) !important;
-  }
-}
 
 .sky-row {
   display: flex !important;
@@ -671,26 +671,7 @@ button:focus-visible {
   background: #ffd6d6;        /* vermell suau */
 }
 
-/* Mode fosc: una mica més fosquet però manté el color */
-@media (prefers-color-scheme: dark) {
-  .official-advanced-low {
-    background: #1b2b1b;
-  }
-  .official-advanced-moderate {
-    background: #2e2a12;
-  }
-  .official-advanced-high {
-    background: #3a1f1f;
-  }
-  .official-advanced-extreme {
-    background: #4a0f0f;
-  }
 
-  .official-advanced-card {
-    border-color: rgba(255,255,255,0.18);
-    color: #fff;
-  }
-}
 
 /* Botó compartir */
 .official-share-btn {
@@ -763,7 +744,7 @@ button:focus-visible {
   }
 }
 
-/* ✅ Accions r� pides compactes */
+/* ✅ Accions r� pides compactes */
 .safety-actions {
   display: inline-flex;      /* 👈 clau: no ocupar 100% */
   align-items: center;
@@ -928,43 +909,7 @@ button:focus-visible {
   background: #fa5252;
 }
 
-/* Mode fosc */
-@media (prefers-color-scheme: dark) {
-  .status-card {
-    background: rgba(255,255,255,0.06);
-    border: 1px solid rgba(255,255,255,0.15);
-  }
-
-  .status-safe::before {
-    background: #22c55e;
-  }
-
-  .status-warning::before {
-    background: #f59e0b;
-  }
-
-  .status-danger::before {
-    background: #ef4444;
-  }
-
-  .status-cold::before {
-    background: #60a5fa;
-  }
-
-  .status-wind::before {
-    background: #facc15;
-  }
-
-  .status-uv::before {
-    background: #fb923c;
-  }
-
-  .status-alert::before {
-    background: #fa5252;
-  }
-}
-
-/* 🌡️ Resum r� pid principal */
+/* 🌡️ Resum r� pid principal */
 /* 🌡️ HERO CARD — resum principal */
 .quick-summary-card {
 position: relative;
@@ -1292,7 +1237,7 @@ text-align: left;
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
   }
 }
-/* ✅ Accions r� pides compactes */
+/* ✅ Accions r� pides compactes */
 .safety-actions {
   display: flex;
   align-items: center;
@@ -1432,7 +1377,7 @@ text-align: left;
     color: #fff;
   }
 }
-/* 🔧 Correcció mínima: contorn resum r� pid */
+/* 🔧 Correcció mínima: contorn resum r� pid */
 .quick-summary-card {
   background-color: #f1f5f9;
   border: 1px solid rgba(0, 0, 0, 0.12) !important;
@@ -1687,5 +1632,6 @@ body,
     color: #fff;
   }
 }
+
 
 

@@ -49,6 +49,13 @@
   "irradianceLegend": "☀️ Niveis de irradiancia: <8 moderado · ≥8 alto",
   "toggleLegend": "ℹ️ Mostrar/agochar escala UV",
 
+  "safe_conditions": "Condicións seguras",
+  "safe_conditions_text_day": "Condicións dentro de parámetros normais.",
+  "safe_conditions_text_night": "Condicións nocturnas dentro de parámetros normais.",
+  "official_alert": "Aviso oficial activo",
+  "follow_official_alerts": "Segue as indicacións oficiais e extrema a precaución.",
+  "safe_conditions_text_night_warm": "Temperaturas nocturnas elevadas. Asegura ventilación cruzada e utiliza roupa lixeira.",
+
   "push": {
     "label": "Recibir avisos cando o risco por calor ≥ moderado",
     "enabled": "Avisos activados. Recibirás notificacións cando o risco sexa moderado ou superior.",

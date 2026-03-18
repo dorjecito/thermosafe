@@ -1718,6 +1718,21 @@ const appTitleClass =
     ? "app-risk-uv"
     : "app-risk-safe";
 
+  function getAlertIcon(event: string): string {
+  const e = event.toLowerCase();
+
+  if (e.includes("vent") || e.includes("wind")) return "💨";
+  if (e.includes("tempest") || e.includes("storm") || e.includes("thunder")) return "⛈️";
+  if (e.includes("pluja") || e.includes("rain")) return "🌧️";
+  if (e.includes("neu") || e.includes("snow")) return "❄️";
+  if (e.includes("calor") || e.includes("heat")) return "🔥";
+  if (e.includes("fred") || e.includes("cold")) return "🥶";
+  if (e.includes("boira") || e.includes("fog")) return "🌫️";
+  if (e.includes("mar") || e.includes("wave")) return "🌊";
+
+  return "⚠️";
+}
+
   //Return ok
 
 return (
@@ -2298,7 +2313,9 @@ if (uvi != null && uvi >= 3) {
     className="aemet-alert-card alert-ext"
   >
     {/* Títol */}
-    <div className="aemet-alert-title">{ai.title}</div>
+    <div className="aemet-alert-title">
+  {getAlertIcon(alert.event)} {ai.title}
+  </div>
 
     {/* 🕒 Línia temporal + temps restant */}
     {typeof alert?.start === "number" && typeof alert?.end === "number" && (
