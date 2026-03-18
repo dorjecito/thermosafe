@@ -289,6 +289,8 @@
 "share": "Compartir",
 "show_advice": "Mostrar recomendacións",
 "hide_advice": "Agochar recomendacións",
+"show_details": "Ver detalle",
+"hide_details": "Ocultar detalle",
 
 "official_advice_share": "Sigue as recomendacións de seguridade segundo o teu risco actual.",
 

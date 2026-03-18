@@ -271,6 +271,8 @@
   "show_advice": "Show recommendations",
   "hide_advice": "Hide recommendations",
   "official_advice_share": "Follow safety recommendations based on your current risk.",
+  "show_details": "Show details",
+  "hide_details": "Hide details",
 
   "officialAdviceDynamic": {
     "heat": {

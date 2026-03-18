@@ -294,6 +294,8 @@
   "aemet_health": "AEMET: salud y meteorología",
   "show_advice": "Mostrar recomendaciones",
   "hide_advice": "Ocultar recomendaciones",
+  "show_details": "Ver detalle",
+  "hide_details": "Ocultar detalle",
 
   "official_advice": {
     "hydration": "Hidrátate con regularidad, aunque no tengas sed.",

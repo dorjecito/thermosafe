@@ -26,6 +26,14 @@
   "solarProtection": "🔆 Protecció solar",
   "irradianceLegend": "☀️ Nivells d'irradiància: <8 moderat · ≥8 alt",
   "toggleLegend": "ℹ️ Mostra/Amaga escala UV",
+  
+  "safe_conditions": "Condicions segures",
+  "safe_conditions_text_day": "Condicions dins paràmetres normals.",
+  "safe_conditions_text_night": "Condicions nocturnes dins paràmetres normals.",
+  "official_alert": "Avís oficial actiu",
+  "follow_official_alerts": "Segueix les indicacions oficials i extrema la precaució.",
+  "safe_conditions_text_night_warm": "Temperatures nocturnes elevades. Assegura ventilació creuada i utilitza roba lleugera.",
+
 
   "highIrradianceWarning": "⚠️ Irradiància solar molt alta. Evita l'exposició directa al sol.",
   "highUVIWarning": "⚠️ Índex UV molt alt. Protecció solar imprescindible!",
@@ -197,6 +205,7 @@
   "uv_night_title": "Informació solar",
   "uv_night_message": "A la nit no hi ha radiació UV.",
   "uv_night_info": "És de nit. No hi ha risc per radiació UV.",
+  "uv_source_note": "Dades UV de referència (OpenUV/NASA). Poden variar segons l’hora i la font.",
 
   "recommendations_full": {
     "heat": {
@@ -245,6 +254,8 @@
   "official_links": "Enllaços oficials",
   "insst_heat": "INSST: estrès tèrmic i calor",
   "aemet_health": "AEMET: salut i meteorologia",
+  "show_details": "Veure detall",
+  "hide_details": "Amagar detall",
 
   "share": "Compartir",
   "show_advice": "Mostrar recomanacions",
@@ -324,6 +335,5 @@
 "uvModerate": "Índex UV moderat. Protecció recomanada.",
 "uvHigh": "Índex UV alt. Protecció elevada.",
 "uvVeryHigh": "Índex UV molt alt. Protecció solar imprescindible!",
-"uvExtreme": "🚨 UV EXTREM (11+) — Evita exposició directa",
-"uv_source_note": "Dades UV de referència (OpenUV/NASA). Poden variar segons l’hora i la font."
+"uvExtreme": "🚨 UV EXTREM (11+) — Evita exposició directa"
 }
