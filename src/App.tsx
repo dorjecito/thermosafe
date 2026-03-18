@@ -1736,70 +1736,71 @@ const appTitleClass =
   //Return ok
 
 return (
-    <div className="container">
-  <div className="top-sticky-ui">
-    {/* 🔄 Selector d’idioma */}
-    <div style={{ display: "flex", justifyContent: "flex-end", marginBottom: "0.6rem" }}>
-      <LanguageSwitcher />
-    </div>
+  <div className="container">
+    <div className="top-sticky-ui">
+      {/* 🔄 Selector d’idioma */}
+      <div style={{ display: "flex", justifyContent: "flex-end", marginBottom: "0.6rem" }}>
+        <LanguageSwitcher />
+      </div>
 
-    <div className="app-header">
-      <h1 className={appTitleClass}>{t("title")}</h1>
-    </div>
+      <div className="app-header">
+        <h1 className={appTitleClass}>{t("title")}</h1>
+      </div>
 
-    <form
-      onSubmit={(e) => {
-        e.preventDefault();
-        const q = input.trim();
-        if (!q) return;
+      <form
+        onSubmit={(e) => {
+          e.preventDefault();
+          const q = input.trim();
+          if (!q) return;
 
-        setErr("");
-        setRealCity(q);
-        setCity(q);
+          setErr("");
+          setRealCity(q);
+          setCity(q);
 
-        fetchWeather(q);
-      }}
-      style={{ display: "flex", alignItems: "center", gap: "0.5rem", marginBottom: "0.8rem" }}
-    >
-      <input
-        type="text"
-        value={input}
-        onChange={(e) => setInput(e.target.value)}
-        placeholder={t("search_placeholder")}
-        style={{
-          flex: 1,
-          padding: "0.5rem",
-          borderRadius: "8px",
-          border: "1px solid #ccc",
+          fetchWeather(q);
         }}
-      />
-
-      <button
-        type="submit"
-        disabled={!input.trim()}
-        style={{
-          padding: "0.5rem 1rem",
-          borderRadius: "8px",
-          border: "none",
-          backgroundColor: input.trim() ? "#1e90ff" : "#999",
-          color: "white",
-          cursor: input.trim() ? "pointer" : "not-allowed",
-          opacity: input.trim() ? 1 : 0.6,
-          transition: "all 0.2s ease",
-        }}
+        style={{ display: "flex", alignItems: "center", gap: "0.5rem", marginBottom: "0.8rem" }}
       >
-        {t("search_button")}
-      </button>
-    </form>
+        <input
+          type="text"
+          value={input}
+          onChange={(e) => setInput(e.target.value)}
+          placeholder={t("search_placeholder")}
+          style={{
+            flex: 1,
+            padding: "0.5rem",
+            borderRadius: "8px",
+            border: "1px solid #ccc",
+          }}
+        />
 
-    <div style={{ marginTop: "0.4rem", marginBottom: "0.8rem" }}>
-      <button className="gps-btn" onClick={() => locate(false)}>
-  {t("gps_button")}
-</button>
+        <button
+          type="submit"
+          disabled={!input.trim()}
+          style={{
+            padding: "0.5rem 1rem",
+            borderRadius: "8px",
+            border: "none",
+            backgroundColor: input.trim() ? "#1e90ff" : "#999",
+            color: "white",
+            cursor: input.trim() ? "pointer" : "not-allowed",
+            opacity: input.trim() ? 1 : 0.6,
+            transition: "all 0.2s ease",
+          }}
+        >
+          {t("search_button")}
+        </button>
+      </form>
+
+      <div style={{ marginTop: "0.4rem", marginBottom: "0.8rem" }}>
+        <button className="gps-btn" onClick={() => locate(false)}>
+          {t("gps_button")}
+        </button>
+      </div>
     </div>
-  </div>
 
-<div style={{ height: "230px" }} />
+    {/* Espai perquè la capçalera fixa no tapi el contingut */}
+    <div className="top-sticky-spacer" />
 
 {/* 🔔 Interruptor per activar/desactivar avisos meteorològics */}
 <div

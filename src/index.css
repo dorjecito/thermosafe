@@ -1234,6 +1234,17 @@ text-align: left;
   box-shadow: 0 6px 16px rgba(0,0,0,0.25);
 }
 
+.top-sticky-spacer {
+  height: 230px;
+}
+
+@media (max-width: 640px) {
+  .top-sticky-spacer {
+    height: 285px;
+  }
+}
+
+
 @media (prefers-color-scheme: light) {
   .top-sticky-ui {
     background: #f3f4f6;
@@ -1637,6 +1648,8 @@ body,
     color: #fff;
   }
 }
+
+
 
 
 
