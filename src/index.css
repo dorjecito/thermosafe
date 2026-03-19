@@ -1649,6 +1649,197 @@ body,
   }
 }
 
+/* =========================================================
+   🛠️ ESTAT OPERATIU EXTERIOR
+========================================================= */
+
+.work-window-card {
+  margin-top: 1rem;
+  padding: 1rem 1.1rem;
+  border-radius: 10px;
+  text-align: left;
+  border-left: 6px solid;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+}
+
+.work-window-title {
+  margin: 0 0 0.4rem 0;
+  font-size: 1.05rem;
+  font-weight: 700;
+}
+
+.work-window-text {
+  margin: 0;
+  line-height: 1.45;
+}
+
+/* Nivells */
+.work-window-optimal {
+  background: #e8f5e9;
+  border-left-color: #2e7d32;
+  color: #1b5e20;
+}
+
+.work-window-caution {
+  background: #fff8e1;
+  border-left-color: #f9a825;
+  color: #7a5d00;
+}
+
+.work-window-limited {
+  background: #fff3e0;
+  border-left-color: #ef6c00;
+  color: #8a3b00;
+}
+
+.work-window-avoid {
+  background: #ffebee;
+  border-left-color: #c62828;
+  color: #8e0000;
+}
+
+/* Mode fosc */
+@media (prefers-color-scheme: dark) {
+  .work-window-optimal {
+    background: #1f3b1f;
+    color: #d7ffd9;
+  }
+
+  .work-window-caution {
+    background: #3b3215;
+    color: #ffe9a8;
+  }
+
+  .work-window-limited {
+    background: #3b2618;
+    color: #ffd0a8;
+  }
+
+  .work-window-avoid {
+    background: #3a1618;
+    color: #ffc5c8;
+  }
+}
+
+/* =========================================================
+   🚦 ESTAT OPERATIU EXTERIOR — ThermoSafe
+   Semàfor visual per treball a l'exterior
+========================================================= */
+
+.work-window-card {
+  margin-top: 1rem;
+  padding: 1rem 1.1rem;
+  border-radius: 12px;
+  text-align: left;
+  border-left: 6px solid;
+  box-shadow: 0 3px 10px rgba(0,0,0,0.08);
+  transition: background 0.2s ease, border-color 0.2s ease;
+}
+
+/* capçalera amb indicador */
+
+.work-window-header {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  margin-bottom: 0.35rem;
+}
+
+.work-window-title {
+  margin: 0;
+  font-size: 1.05rem;
+  font-weight: 700;
+}
+
+.work-window-text {
+  margin: 0;
+  line-height: 1.45;
+  opacity: 0.95;
+}
+
+/* indicador tipus semàfor */
+
+.work-window-dot {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+/* nivell 1 — condicions bones */
+
+.work-window-optimal {
+  background: #e8f5e9;
+  border-left-color: #16a34a;
+  color: #1b5e20;
+}
+
+.work-window-dot-optimal {
+  background: #16a34a;
+}
+
+/* nivell 2 — precaució */
+
+.work-window-caution {
+  background: #fff8e1;
+  border-left-color: #facc15;
+  color: #7a5d00;
+}
+
+.work-window-dot-caution {
+  background: #facc15;
+}
+
+/* nivell 3 — limitació */
+
+.work-window-limited {
+  background: #fff3e0;
+  border-left-color: #f97316;
+  color: #8a3b00;
+}
+
+.work-window-dot-limited {
+  background: #f97316;
+}
+
+/* nivell 4 — evitar treball exterior */
+
+.work-window-avoid {
+  background: #ffebee;
+  border-left-color: #dc2626;
+  color: #8e0000;
+}
+
+.work-window-dot-avoid {
+  background: #dc2626;
+}
+
+/* mode fosc */
+
+@media (prefers-color-scheme: dark) {
+
+  .work-window-optimal {
+    background: #1f3b1f;
+    color: #d7ffd9;
+  }
+
+  .work-window-caution {
+    background: #3b3215;
+    color: #ffe9a8;
+  }
+
+  .work-window-limited {
+    background: #3b2618;
+    color: #ffd0a8;
+  }
+
+  .work-window-avoid {
+    background: #3a1618;
+    color: #ffc5c8;
+  }
+
+}
+
 
 
 

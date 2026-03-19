@@ -26,6 +26,8 @@ import { getUVFromOpenUV } from "./services/openUV";
    import { buildAemetAiAlert, translateAemetAuto, type LangKey } from "./utils/aemetAi";
    import { getCoords } from "./utils/geolocation";
    import { getContextualUVMessage } from "./utils/getContextualUVMessage";
+   import { getWorkWindow, getWorkWindowText, getWorkWindowTitle } from "./utils/workWindow";
+   
    
 
 
@@ -1440,6 +1442,17 @@ const riskKeyMap: Record<string, string> = {
 // 🔥 Calcular risc de calor ajustat per activitat (rest, walk, moderate, intense)
 const heatRisk = hi !== null ? getHeatRisk(hi, activityLevel) : null;
 
+const workWindow = getWorkWindow({
+  heatRisk,
+  coldRisk,
+  windRisk,
+  uvi,
+});
+
+const workWindowLang = normalizeLang(i18n.resolvedLanguage || i18n.language || "ca");
+const workWindowTitle = getWorkWindowTitle(workWindowLang);
+const workWindowText = getWorkWindowText(workWindow, workWindowLang);
+
 const primary = pickPrimaryRisk({
   hi,
   effForCold,
@@ -1777,6 +1790,7 @@ function getUVBrainMessage(uvi: number | null, lang: string = "ca") {
   if (uvi < 11) return "Risc molt alt. Evita el sol en hores centrals.";
   return "Risc extrem. Evita el sol i protegeix-te al màxim.";
 }
+
 
   //Return ok
 
@@ -2439,6 +2453,15 @@ if (uvi != null && uvi >= 3) {
     </p>
   </div>
 )}
+
+<div className={`work-window-card work-window-${workWindow}`}>
+  <div className="work-window-header">
+    <span className={`work-window-dot work-window-dot-${workWindow}`}></span>
+    <h3 className="work-window-title">{workWindowTitle}</h3>
+  </div>
+
+  <p className="work-window-text">{workWindowText}</p>
+</div>
 
 
 {/* ✅ ACCIONS RÀPIDES */}
