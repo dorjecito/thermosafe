@@ -282,7 +282,12 @@ function translateWithIA(text: string, lang: LangKey): string {
 // ---------------------------------------------------------
 // Builder principal AEMET (amb fallback anti-undefined)
 // ---------------------------------------------------------
-export function buildAemetAiAlert(rawEvent: string, rawDescription: string, langInput: LangKey): AemetAiAlert {
+export function buildAemetAiAlert(
+  rawEvent: string,
+  rawDescription: string,
+  langInput: LangKey,
+  senderName?: string
+): AemetAiAlert {
   const lang = normalizeLang(langInput);
 
   const ev = (rawEvent || "").toLowerCase();
@@ -317,7 +322,6 @@ export function buildAemetAiAlert(rawEvent: string, rawDescription: string, lang
   else if (ev.includes("severe") || ev.includes("high") || ev.includes("important") || ev.includes("orange")) level = "high";
   else if (ev.includes("moderate") || ev.includes("yellow")) level = "moderate";
 
-  // ✅ Fallback robust (mai “undefined undefined”)
   const levelText =
     LEVEL_LABELS[level]?.[lang] || LEVEL_LABELS[level]?.es || (lang === "en" ? "Warning:" : "Avís");
 
@@ -326,10 +330,22 @@ export function buildAemetAiAlert(rawEvent: string, rawDescription: string, lang
 
   const title = `${levelText} ${hazardText}`.trim();
 
+  const cleanSender = (senderName || "").trim();
+
+  const genericBodyBySource: Record<LangKey, string> = cleanSender
+    ? {
+        ca: `Avís meteorològic oficial de ${cleanSender}.`,
+        es: `Aviso meteorológico oficial de ${cleanSender}.`,
+        eu: `${cleanSender} erakundearen abisu meteorologiko ofiziala.`,
+        gl: `Aviso meteorolóxico oficial de ${cleanSender}.`,
+        en: `Official weather alert from ${cleanSender}.`,
+      }
+    : GENERIC_BODY;
+
   const body =
     (lang === "ca" ? translateWithIA(desc, lang) : desc) ||
-    GENERIC_BODY[lang] ||
-    GENERIC_BODY.es;
+    genericBodyBySource[lang] ||
+    genericBodyBySource.es;
 
   return { title, body };
 }

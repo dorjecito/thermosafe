@@ -42,230 +42,230 @@ interface Props {
 // 🗣️ Textos multillengua (calor, fred, nit)
 // ---------------------------------------------------------------
 const TXT: TxtDict = {
-  ca: {
-  title: "Recomanacions segons condicions actuals:",
+  ca: {
+    title: "Recomanacions segons condicions actuals:",
 
-  aemetActive:
-    "⚠️ Hi ha un avís oficial actiu (AEMET). Prioritza les indicacions oficials i evita zones de risc.",
+    aemetActive:
+      "⚠️ Hi ha un avís meteorològic oficial actiu. Prioritza les indicacions de l’organisme emissor i evita zones de risc.",
 
-  safe:
-    "Condicions tèrmiques dins paràmetres segurs. Mantén hidratació habitual i vigilància preventiva bàsica.",
+    safe:
+      "Condicions tèrmiques dins paràmetres segurs. Mantén hidratació habitual i vigilància preventiva bàsica.",
 
-  mild:
-    "Precaució per calor. Pot aparèixer fatiga tèrmica. Incrementa la ingesta d’aigua i programa pauses en zones ombrejades.",
+    mild:
+      "Precaució per calor. Pot aparèixer fatiga tèrmica. Incrementa la ingesta d’aigua i programa pauses en zones ombrejades.",
 
-  moderate:
-    "Precaució extrema per estrès tèrmic. Programa pauses freqüents, redueix la càrrega física i mantén hidratació constant.",
+    moderate:
+      "Precaució extrema per estrès tèrmic. Programa pauses freqüents, redueix la càrrega física i mantén hidratació constant.",
 
-  high:
-    "Perill per calor. Limita l’exposició prolongada i evita treballs físics intensos.",
+    high:
+      "Perill per calor. Limita l’exposició prolongada i evita treballs físics intensos.",
 
-  ext:
-    "Perill extrem per calor. Interromp immediatament l’activitat i aplica mesures actives de refredament corporal.",
+    ext:
+      "Perill extrem per calor. Interromp immediatament l’activitat i aplica mesures actives de refredament corporal.",
 
-  nightCool:
-    "Condicions nocturnes fresques. Utilitza roba adequada i mantén ventilació controlada.",
+    nightCool:
+      "Condicions nocturnes fresques. Utilitza roba adequada i mantén ventilació controlada.",
 
-  nightSafe:
-    "Condicions nocturnes estables. Mantén ventilació adequada de l’espai.",
+    nightSafe:
+      "Condicions nocturnes estables. Mantén ventilació adequada de l’espai.",
 
-  nightHeat:
-    "Temperatures nocturnes elevades. Assegura ventilació creuada i utilitza roba lleugera.",
+    nightHeat:
+      "Temperatures nocturnes elevades. Assegura ventilació creuada i utilitza roba lleugera.",
 
-  cold_low:
-    "Fred lleu. Utilitza sistema de capes i protegeix extremitats.",
+    cold_low:
+      "Fred lleu. Utilitza sistema de capes i protegeix extremitats.",
 
-  cold_mod:
-    "Fred moderat. Limita l’exposició exterior i protegeix mans, peus i vies respiratòries.",
+    cold_mod:
+      "Fred moderat. Limita l’exposició exterior i protegeix mans, peus i vies respiratòries.",
 
-  cold_high:
-    "Alt risc per fred. Evita permanències prolongades a l’exterior.",
+    cold_high:
+      "Alt risc per fred. Evita permanències prolongades a l’exterior.",
 
-  cold_ext:
-    "Risc extrem per fred. Possible hipotèrmia. Roman en interiors i conserva la calor corporal.",
+    cold_ext:
+      "Risc extrem per fred. Possible hipotèrmia. Roman en interiors i conserva la calor corporal.",
 
-  loading: "Carregant recomanacions…",
-},
+    loading: "Carregant recomanacions…",
+  },
 
-  es: {
-  title: "Recomendaciones según las condiciones actuales:",
+  es: {
+    title: "Recomendaciones según las condiciones actuales:",
 
-  aemetActive:
-    "⚠️ Existe un aviso oficial activo (AEMET). Prioriza las indicaciones oficiales y evita zonas de riesgo.",
+    aemetActive:
+      "⚠️ Hay un aviso meteorológico oficial activo. Prioriza las indicaciones del organismo emisor y evita zonas de riesgo.",
 
-  safe:
-    "Condiciones térmicas dentro de parámetros seguros. Mantén hidratación habitual y vigilancia preventiva básica.",
+    safe:
+      "Condiciones térmicas dentro de parámetros seguros. Mantén hidratación habitual y vigilancia preventiva básica.",
 
-  mild:
-    "Precaución por calor. Puede aparecer fatiga térmica. Incrementa la ingesta de agua y programa pausas en zonas sombreadas.",
+    mild:
+      "Precaución por calor. Puede aparecer fatiga térmica. Incrementa la ingesta de agua y programa pausas en zonas sombreadas.",
 
-  moderate:
-    "Precaución extrema por estrés térmico. Programa pausas frecuentes, reduce la carga física y mantén hidratación constante.",
+    moderate:
+      "Precaución extrema por estrés térmico. Programa pausas frecuentes, reduce la carga física y mantén hidratación constante.",
 
-  high:
-    "Peligro por calor. Limita la exposición prolongada, incrementa las pausas y evita trabajos físicos intensos.",
+    high:
+      "Peligro por calor. Limita la exposición prolongada, incrementa las pausas y evita trabajos físicos intensos.",
 
-  ext:
-    "Peligro extremo por calor. Interrumpe la actividad inmediatamente y aplica medidas activas de enfriamiento corporal.",
+    ext:
+      "Peligro extremo por calor. Interrumpe la actividad inmediatamente y aplica medidas activas de enfriamiento corporal.",
 
-  nightCool:
-    "Condiciones nocturnas frescas. Utiliza ropa adecuada y mantén ventilación controlada.",
+    nightCool:
+      "Condiciones nocturnas frescas. Utiliza ropa adecuada y mantén ventilación controlada.",
 
-  nightSafe:
-    "Condiciones nocturnas estables. Mantén ventilación adecuada del espacio.",
+    nightSafe:
+      "Condiciones nocturnas estables. Mantén ventilación adecuada del espacio.",
 
-  nightHeat:
-    "Temperaturas nocturnas elevadas. Garantiza ventilación cruzada y utiliza ropa ligera.",
+    nightHeat:
+      "Temperaturas nocturnas elevadas. Garantiza ventilación cruzada y utiliza ropa ligera.",
 
-  cold_low:
-    "Frío leve. Utiliza sistema de capas y protege extremidades.",
+    cold_low:
+      "Frío leve. Utiliza sistema de capas y protege extremidades.",
 
-  cold_mod:
-    "Frío moderado. Limita la exposición exterior y protege adecuadamente manos, pies y vías respiratorias.",
+    cold_mod:
+      "Frío moderado. Limita la exposición exterior y protege adecuadamente manos, pies y vías respiratorias.",
 
-  cold_high:
-    "Alto riesgo por frío. Evita permanencias prolongadas en exteriores.",
+    cold_high:
+      "Alto riesgo por frío. Evita permanencias prolongadas en exteriores.",
 
-  cold_ext:
-    "Riesgo extremo por frío. Posible hipotermia. Permanece en interiores y conserva el calor corporal.",
+    cold_ext:
+      "Riesgo extremo por frío. Posible hipotermia. Permanece en interiores y conserva el calor corporal.",
 
-  loading: "Cargando recomendaciones…",
-},
+    loading: "Cargando recomendaciones…",
+  },
 
-  eu: {
-  title: "Gomendioak uneko baldintzen arabera:",
+  eu: {
+    title: "Gomendioak uneko baldintzen arabera:",
 
-  aemetActive:
-    "⚠️ AEMETen abisu ofiziala aktibo dago. Jarraitu jarraibide ofizialak eta saihestu arrisku-eremuak.",
+    aemetActive:
+      "⚠️ Abisu meteorologiko ofizial bat aktibo dago. Jarraitu erakunde igorlearen jarraibideak eta saihestu arrisku-eremuak.",
 
-  safe:
-    "Tenperatura baldintza seguruak. Mantendu hidratazio arrunta eta prebentziozko zaintza.",
+    safe:
+      "Tenperatura baldintza seguruak. Mantendu hidratazio arrunta eta prebentziozko zaintza.",
 
-  mild:
-    "Beroagatiko kontuz. Nekea ager daiteke. Ura gehiago edan eta atsedenaldiak programatu itzaletan.",
+    mild:
+      "Beroagatiko kontuz. Nekea ager daiteke. Ura gehiago edan eta atsedenaldiak programatu itzaletan.",
 
-  moderate:
-    "Bero-estresagatik kontu handia. Atsedenaldi maizak egin, lan-karga murriztu eta hidratazio konstantea mantendu.",
+    moderate:
+      "Bero-estresagatik kontu handia. Atsedenaldi maizak egin, lan-karga murriztu eta hidratazio konstantea mantendu.",
 
-  high:
-    "Bero-arrisku handia. Mugatu esposizio luzea eta saihestu ahalegin fisiko handia.",
+    high:
+      "Bero-arrisku handia. Mugatu esposizio luzea eta saihestu ahalegin fisiko handia.",
 
-  ext:
-    "Bero-arrisku muturrekoa. Gelditu jarduera berehala eta aplikatu gorputz-hozte neurriak.",
+    ext:
+      "Bero-arrisku muturrekoa. Gelditu jarduera berehala eta aplikatu gorputz-hozte neurriak.",
 
-  nightCool:
-    "Gau freskoa. Erabili arropa egokia eta mantendu aireztapen kontrolatua.",
+    nightCool:
+      "Gau freskoa. Erabili arropa egokia eta mantendu aireztapen kontrolatua.",
 
-  nightSafe:
-    "Gau baldintza egonkorrak. Mantendu aireztapen egokia.",
+    nightSafe:
+      "Gau baldintza egonkorrak. Mantendu aireztapen egokia.",
 
-  nightHeat:
-    "Gaueko tenperatura altuak. Aireztapen gurutzatua bermatu eta arropa arina erabili.",
+    nightHeat:
+      "Gaueko tenperatura altuak. Aireztapen gurutzatua bermatu eta arropa arina erabili.",
 
-  cold_low:
-    "Hotz arina. Geruzak erabili eta muturrak babestu.",
+    cold_low:
+      "Hotz arina. Geruzak erabili eta muturrak babestu.",
 
-  cold_mod:
-    "Hotz ertaina. Mugatu kanpoko esposizioa eta babestu eskuak, oinak eta arnasketa-bideak.",
+    cold_mod:
+      "Hotz ertaina. Mugatu kanpoko esposizioa eta babestu eskuak, oinak eta arnasketa-bideak.",
 
-  cold_high:
-    "Hotz arrisku handia. Saihestu kanpoan denbora luzea ematea.",
+    cold_high:
+      "Hotz arrisku handia. Saihestu kanpoan denbora luzea ematea.",
 
-  cold_ext:
-    "Hotz arrisku muturrekoa. Hipotermia arriskua. Egon barruan eta mantendu gorputz-berotasuna.",
+    cold_ext:
+      "Hotz arrisku muturrekoa. Hipotermia arriskua. Egon barruan eta mantendu gorputz-berotasuna.",
 
-  loading: "Gomendioak kargatzen…",
-},
+    loading: "Gomendioak kargatzen…",
+  },
 
-  gl: {
-  title: "Recomendacións segundo as condicións actuais:",
+  gl: {
+    title: "Recomendacións segundo as condicións actuais:",
 
-  aemetActive:
-    "⚠️ Hai un aviso oficial activo (AEMET). Prioriza as indicacións oficiais e evita zonas de risco.",
+    aemetActive:
+      "⚠️ Hai un aviso meteorolóxico oficial activo. Prioriza as indicacións do organismo emisor e evita zonas de risco.",
 
-  safe:
-    "Condicións térmicas dentro de parámetros seguros. Mantén hidratación habitual e vixilancia preventiva básica.",
+    safe:
+      "Condicións térmicas dentro de parámetros seguros. Mantén hidratación habitual e vixilancia preventiva básica.",
 
-  mild:
-    "Precaución por calor. Pode aparecer fatiga térmica. Incrementa a inxesta de auga e programa pausas en zonas sombreadas.",
+    mild:
+      "Precaución por calor. Pode aparecer fatiga térmica. Incrementa a inxesta de auga e programa pausas en zonas sombreadas.",
 
-  moderate:
-    "Precaución extrema por estrés térmico. Programa pausas frecuentes, reduce a carga física e mantén hidratación constante.",
+    moderate:
+      "Precaución extrema por estrés térmico. Programa pausas frecuentes, reduce a carga física e mantén hidratación constante.",
 
-  high:
-    "Perigo por calor. Limita a exposición prolongada e evita traballos físicos intensos.",
+    high:
+      "Perigo por calor. Limita a exposición prolongada e evita traballos físicos intensos.",
 
-  ext:
-    "Perigo extremo por calor. Interrompe a actividade inmediatamente e aplica medidas activas de arrefriamento corporal.",
+    ext:
+      "Perigo extremo por calor. Interrompe a actividade inmediatamente e aplica medidas activas de arrefriamento corporal.",
 
-  nightCool:
-    "Noite fresca. Emprega roupa adecuada e mantén ventilación controlada.",
+    nightCool:
+      "Noite fresca. Emprega roupa adecuada e mantén ventilación controlada.",
 
-  nightSafe:
-    "Condicións nocturnas estables. Mantén ventilación adecuada do espazo.",
+    nightSafe:
+      "Condicións nocturnas estables. Mantén ventilación adecuada do espazo.",
 
-  nightHeat:
-    "Temperaturas nocturnas elevadas. Garante ventilación cruzada e emprega roupa lixeira.",
+    nightHeat:
+      "Temperaturas nocturnas elevadas. Garante ventilación cruzada e emprega roupa lixeira.",
 
-  cold_low:
-    "Frío leve. Emprega sistema de capas e protexe extremidades.",
+    cold_low:
+      "Frío leve. Emprega sistema de capas e protexe extremidades.",
 
-  cold_mod:
-    "Frío moderado. Limita a exposición exterior e protexe mans, pés e vías respiratorias.",
+    cold_mod:
+      "Frío moderado. Limita a exposición exterior e protexe mans, pés e vías respiratorias.",
 
-  cold_high:
-    "Alto risco por frío. Evita permanencias prolongadas no exterior.",
+    cold_high:
+      "Alto risco por frío. Evita permanencias prolongadas no exterior.",
 
-  cold_ext:
-    "Risco extremo por frío. Posible hipotermia. Permanece en interiores e conserva a calor corporal.",
+    cold_ext:
+      "Risco extremo por frío. Posible hipotermia. Permanece en interiores e conserva a calor corporal.",
 
-  loading: "Cargando recomendacións…",
-},
+    loading: "Cargando recomendacións…",
+  },
 
-  en: {
-  title: "Recommendations based on current conditions:",
+  en: {
+    title: "Recommendations based on current conditions:",
 
-  aemetActive:
-    "⚠️ An official alert is active (AEMET). Follow official instructions and avoid risk areas.",
+    aemetActive:
+      "⚠️ An official weather alert is active. Follow the issuing agency instructions and avoid risk areas.",
 
-  safe:
-    "Thermal conditions within safe parameters. Maintain normal hydration and basic preventive vigilance.",
+    safe:
+      "Thermal conditions within safe parameters. Maintain normal hydration and basic preventive vigilance.",
 
-  mild:
-    "Heat caution. Heat fatigue may occur. Increase water intake and schedule breaks in shaded areas.",
+    mild:
+      "Heat caution. Heat fatigue may occur. Increase water intake and schedule breaks in shaded areas.",
 
-  moderate:
-    "Extreme caution due to heat stress. Schedule frequent breaks, reduce physical workload and maintain constant hydration.",
+    moderate:
+      "Extreme caution due to heat stress. Schedule frequent breaks, reduce physical workload and maintain constant hydration.",
 
-  high:
-    "Heat danger. Limit prolonged exposure and avoid intense physical activity.",
+    high:
+      "Heat danger. Limit prolonged exposure and avoid intense physical activity.",
 
-  ext:
-    "Extreme heat danger. Stop activity immediately and apply active body cooling measures.",
+    ext:
+      "Extreme heat danger. Stop activity immediately and apply active body cooling measures.",
 
-  nightCool:
-    "Cool night conditions. Dress appropriately and maintain controlled ventilation.",
+    nightCool:
+      "Cool night conditions. Dress appropriately and maintain controlled ventilation.",
 
-  nightSafe:
-    "Stable night conditions. Maintain adequate space ventilation.",
+    nightSafe:
+      "Stable night conditions. Maintain adequate space ventilation.",
 
-  nightHeat:
-    "Elevated nighttime temperatures. Ensure cross-ventilation and wear light clothing.",
+    nightHeat:
+      "Elevated nighttime temperatures. Ensure cross-ventilation and wear light clothing.",
 
-  cold_low:
-    "Mild cold. Use layered clothing and protect extremities.",
+    cold_low:
+      "Mild cold. Use layered clothing and protect extremities.",
 
-  cold_mod:
-    "Moderate cold. Limit outdoor exposure and protect hands, feet and airways.",
+    cold_mod:
+      "Moderate cold. Limit outdoor exposure and protect hands, feet and airways.",
 
-  cold_high:
-    "High cold risk. Avoid prolonged outdoor stays.",
+    cold_high:
+      "High cold risk. Avoid prolonged outdoor stays.",
 
-  cold_ext:
-    "Extreme cold risk. Possible hypothermia. Stay indoors and preserve body heat.",
+    cold_ext:
+      "Extreme cold risk. Possible hypothermia. Stay indoors and preserve body heat.",
 
-  loading: "Loading recommendations…",
-},
+    loading: "Loading recommendations…",
+  },
 } as const;
 
 // ----------------------------------------------
