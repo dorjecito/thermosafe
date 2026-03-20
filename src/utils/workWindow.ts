@@ -1,119 +1,116 @@
 export type WorkWindow = "optimal" | "caution" | "limited" | "avoid";
 
-type Lang = "ca" | "es" | "eu" | "gl" | "en";
+type HeatRiskLike =
+  | {
+      isHigh?: boolean;
+      isExtreme?: boolean;
+    }
+  | null
+  | undefined;
+
+type ColdRiskLike = "cap" | "lleu" | "moderat" | "alt" | "molt alt" | "extrem";
+
+type WindRiskLike = "none" | "breezy" | "moderate" | "strong" | "very_strong";
 
 type Params = {
-  heatRisk?: any;
-  coldRisk?: string | null;
-  windRisk?: string | null;
-  uvi?: number | null;
+  heatRisk?: HeatRiskLike;
+  coldRisk?: ColdRiskLike;
+  windRisk?: WindRiskLike;
+  uvi?: number | null;
+  aemetActive?: boolean;
+  weatherMain?: string | null;
 };
 
-/* =========================================================
-   Determinar estat global d'activitat exterior
-========================================================= */
-
 export function getWorkWindow({
-  heatRisk,
-  coldRisk,
-  windRisk,
-  uvi,
+  heatRisk,
+  coldRisk = "cap",
+  windRisk = "none",
+  uvi = null,
+  aemetActive = false,
+  weatherMain = null,
 }: Params): WorkWindow {
-  const uv = typeof uvi === "number" && Number.isFinite(uvi) ? uvi : 0;
+  const uv = typeof uvi === "number" && Number.isFinite(uvi) ? uvi : 0;
+  const rainy =
+    weatherMain === "Rain" ||
+    weatherMain === "Drizzle" ||
+    weatherMain === "Thunderstorm";
 
-  /* Situacions extremes */
-  if (coldRisk === "extrem") return "avoid";
-  if (heatRisk?.isExtreme) return "avoid";
-  if (windRisk === "very_strong" || windRisk === "extreme") return "avoid";
-  if (uv >= 11) return "avoid";
+  /* 1) Situacions extremes */
+  if (aemetActive && (windRisk === "strong" || windRisk === "very_strong")) return "avoid";
+  if (coldRisk === "extrem") return "avoid";
+  if (heatRisk?.isExtreme) return "avoid";
+  if (windRisk === "very_strong") return "avoid";
+  if (uv >= 11) return "avoid";
 
-  /* 🔧 Ajust combinat: fred + vent */
-  if (
-    (coldRisk === "moderat" || coldRisk === "alt" || coldRisk === "molt alt") &&
-    (windRisk === "moderate" || windRisk === "strong" || windRisk === "very_strong")
-  ) {
-    return coldRisk === "moderat" ? "limited" : "avoid";
-  }
+  /* 2) Fred + vent combinats */
+  if (
+    (coldRisk === "moderat" || coldRisk === "alt" || coldRisk === "molt alt") &&
+    (windRisk === "moderate" || windRisk === "strong" || windRisk === "very_strong")
+  ) {
+    return coldRisk === "moderat" ? "limited" : "avoid";
+  }
 
-  /* Situacions elevades */
-  if (coldRisk === "alt" || coldRisk === "molt alt") return "limited";
-  if (heatRisk?.isHigh) return "limited";
-  if (windRisk === "strong") return "limited";
-  if (uv >= 8) return "limited";
+  /* 3) Situacions altes */
+  if (coldRisk === "alt" || coldRisk === "molt alt") return "limited";
+  if (heatRisk?.isHigh) return "limited";
+  if (windRisk === "strong") return "limited";
+  if (uv >= 8) return "limited";
 
-  /* Situacions moderades */
-  if (coldRisk === "moderat") return "caution";
-  if (windRisk === "moderate") return "caution";
-  if (uv >= 6) return "caution";
+  /* 4) Situacions de precaució */
+  if (aemetActive) return "caution";
+  if (coldRisk === "moderat") return "caution";
+  if (windRisk === "moderate") return "caution";
+  if (uv >= 6) return "caution";
+  if (rainy) return "caution";
 
-  return "optimal";
+  /* 5) Vent suau / situació segura */
+  return "optimal";
 }
 
-/* =========================================================
-   Títol del bloc
-========================================================= */
-
-export function getWorkWindowTitle(lang: string): string {
-
-  const l = (lang || "ca").slice(0, 2).toLowerCase();
-
-  if (l === "es") return "🌤️ Condiciones para la actividad exterior";
-  if (l === "eu") return "🌤️ Kanpoko jarduerarako baldintzak";
-  if (l === "gl") return "🌤️ Condicións para a actividade exterior";
-  if (l === "en") return "🌤️ Outdoor activity conditions";
-
-  return "🌤️ Condicions per a l’activitat exterior";
+export function getWorkWindowTitle(lang: "ca" | "es" | "eu" | "gl" | "en"): string {
+  const txt = {
+    ca: "Condicions per a l’activitat exterior",
+    es: "Condiciones para la actividad exterior",
+    eu: "Kanpoko jarduerarako baldintzak",
+    gl: "Condicións para a actividade exterior",
+    en: "Outdoor activity conditions",
+  };
+  return txt[lang] || txt.ca;
 }
 
-/* =========================================================
-   Text segons nivell de risc
-========================================================= */
+export function getWorkWindowText(level: WorkWindow, lang: "ca" | "es" | "eu" | "gl" | "en"): string {
+  const txt = {
+    ca: {
+      optimal: "Situació adequada per a activitats a l’aire lliure.",
+      caution: "Es poden realitzar activitats a l’aire lliure amb precaucions bàsiques.",
+      limited: "Convé limitar o adaptar les activitats a l’aire lliure en aquest moment.",
+      avoid: "No es recomana fer activitats exigents a l’aire lliure en aquests moments.",
+    },
+    es: {
+      optimal: "Situación adecuada para actividades al aire libre.",
+      caution: "Se pueden realizar actividades al aire libre con precauciones básicas.",
+      limited: "Conviene limitar o adaptar las actividades al aire libre en este momento.",
+      avoid: "No se recomienda realizar actividades exigentes al aire libre en estos momentos.",
+    },
+    eu: {
+      optimal: "Kanpoko jardueretarako egoera egokia.",
+      caution: "Kanpoko jarduerak egin daitezke oinarrizko neurriak hartuta.",
+      limited: "Komeni da kanpoko jarduerak mugatzea edo egokitzea une honetan.",
+      avoid: "Ez da gomendatzen une honetan kanpoko jarduera zorrotzak egitea.",
+    },
+    gl: {
+      optimal: "Situación axeitada para actividades ao aire libre.",
+      caution: "Pódense realizar actividades ao aire libre con precaucións básicas.",
+      limited: "Convén limitar ou adaptar as actividades ao aire libre neste momento.",
+      avoid: "Non se recomenda realizar actividades esixentes ao aire libre nestes momentos.",
+    },
+    en: {
+      optimal: "Suitable conditions for outdoor activities.",
+      caution: "Outdoor activities are possible with basic precautions.",
+      limited: "It is advisable to limit or adapt outdoor activities at this time.",
+      avoid: "Demanding outdoor activities are not recommended at this time.",
+    },
+  };
 
-export function getWorkWindowText(level: WorkWindow, lang: string): string {
-
-  const l = (lang || "ca").slice(0, 2).toLowerCase();
-
-  const TXT = {
-
-    ca: {
-      optimal: "Situació adequada per a activitats a l’aire lliure.",
-      caution: "Es poden realitzar activitats a l’aire lliure amb precaucions bàsiques.",
-      limited: "Millor limitar activitats exigents a l’aire lliure i prioritzar pauses.",
-      avoid: "No es recomana fer activitats exigents a l’aire lliure en aquests moments.",
-    },
-
-    es: {
-      optimal: "Situación adecuada para actividades al aire libre.",
-      caution: "Se pueden realizar actividades al aire libre con precauciones básicas.",
-      limited: "Mejor limitar actividades exigentes al aire libre y priorizar pausas.",
-      avoid: "No se recomienda realizar actividades exigentes al aire libre en este momento.",
-    },
-
-    eu: {
-      optimal: "Kanpoko jardueretarako egoera egokia.",
-      caution: "Kanpoko jarduera egin daiteke oinarrizko neurriak hartuta.",
-      limited: "Hobe kanpoko jarduera gogorrak mugatzea eta atsedenak lehenestea.",
-      avoid: "Ez da gomendagarria une honetan kanpoko jarduera intentsuak egitea.",
-    },
-
-    gl: {
-      optimal: "Situación axeitada para actividades ao aire libre.",
-      caution: "Pódense realizar actividades ao aire libre con precaucións básicas.",
-      limited: "Mellor limitar actividades esixentes ao aire libre e priorizar pausas.",
-      avoid: "Non se recomenda realizar actividades esixentes ao aire libre neste momento.",
-    },
-
-    en: {
-      optimal: "Suitable conditions for outdoor activities.",
-      caution: "Outdoor activities are possible with basic precautions.",
-      limited: "Better to limit demanding outdoor activities and prioritize breaks.",
-      avoid: "Intense outdoor activities are not recommended at this time.",
-    },
-
-  } as const;
-
-  const langKey =
-    ["ca", "es", "eu", "gl", "en"].includes(l) ? (l as Lang) : "ca";
-
-  return TXT[langKey][level];
+  return txt[lang]?.[level] || txt.ca[level];
 }

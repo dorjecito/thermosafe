@@ -1570,15 +1570,10 @@ const shouldHideUVBlock =
   (isVeryCloudy && isClearlyColdNow) ||
   isColdRisk;
 
-const contextualUVMessage = getContextualUVMessage({
-  uvi,
-  day,
-  weatherMain,
-  clouds,
-  feelsLike: hi,
-  temp,
-  lang: i18n.resolvedLanguage || i18n.language || "ca",
-});
+const contextualUVMessage =
+  typeof uvi === "number" && Number.isFinite(uvi)
+    ? getContextualUVMessage(uvi)
+    : "";
 
 function getPrimaryStatusBlock() {
   // 🔴 ALERTA oficial activa
@@ -1629,15 +1624,22 @@ function getPrimaryStatusBlock() {
     };
   }
 
-  // 💨 Vent
-  if (primary.kind === "wind" && windRisk !== "none") {
-    return {
-      icon: "💨",
-      title: t("wind_risk") || "Risc per vent",
-      text: primaryAdvice || t(`officialAdviceDynamic.wind.${windRisk}`) || "Precaució amb objectes lleugers i zones exposades.",
-      className: "status-card status-wind",
-    };
-  }
+  // 💨 Vent (només si hi ha risc real)
+if (
+  primary.kind === "wind" &&
+  windRisk &&
+  ["moderate", "strong", "very_strong"].includes(windRisk)
+) {
+  return {
+    icon: "💨",
+    title: t("wind_risk") || "Risc per vent",
+    text:
+      primaryAdvice ||
+      t(`officialAdviceDynamic.wind.${windRisk}`) ||
+      "Precaució amb objectes lleugers i zones exposades.",
+    className: "status-card status-wind",
+  };
+}
 
   // ☀️ UV
   if (primary.kind === "uv" && day) {
