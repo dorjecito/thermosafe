@@ -1587,32 +1587,38 @@ function getPrimaryStatusBlock() {
   }
 
   // 🔥 Calor
-  if (primary.kind === "heat") {
-    if (heatRisk?.isExtreme) {
-      return {
-        icon: "🔥",
-        title: t("heat_extreme") || "Risc extrem per calor",
-        text: t("officialAdviceDynamic.heat.extreme") || "Evita l’exposició i redueix l’activitat física.",
-        className: "status-card status-danger",
-      };
-    }
-
-    if (heatRisk?.isHigh) {
-      return {
-        icon: "🌡️",
-        title: t("heat_high") || "Risc alt per calor",
-        text: t("officialAdviceDynamic.heat.high") || "Hidrata’t sovint i limita l’esforç físic.",
-        className: "status-card status-warning",
-      };
-    }
-
+if (primary.kind === "heat") {
+  if (heatRisk?.isExtreme) {
     return {
-      icon: "☀️",
-      title: t("heat_moderate") || "Risc moderat per calor",
-      text: t("officialAdviceDynamic.heat.moderate") || "Evita exposicions llargues i fes pauses.",
+      icon: "🔥",
+      title: `${t("heatRiskLabel")} ${t("heatRisk.extrem")}`,
+      text:
+        t("officialAdviceDynamic.heat.extreme") ||
+        "Evita l’exposició i redueix l’activitat física.",
+      className: "status-card status-danger",
+    };
+  }
+
+  if (heatRisk?.isHigh) {
+    return {
+      icon: "🌡️",
+      title: `${t("heatRiskLabel")} ${t("heatRisk.alt")}`,
+      text:
+        t("officialAdviceDynamic.heat.high") ||
+        "Hidrata’t sovint i limita l’esforç físic.",
       className: "status-card status-warning",
     };
   }
+
+  return {
+    icon: "☀️",
+    title: `${t("heatRiskLabel")} ${t("heatRisk.moderat")}`,
+    text:
+      t("officialAdviceDynamic.heat.moderate") ||
+      "Evita exposicions llargues i fes pauses.",
+    className: "status-card status-warning",
+  };
+}
 
   // ❄️ Fred
   if (primary.kind === "cold") {
