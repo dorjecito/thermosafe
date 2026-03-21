@@ -1882,7 +1882,10 @@ return (
 
 <button
   type="button"
-  onClick={() => setShowSearchHelp((v) => !v)}
+  onClick={() => {
+    console.log("HELP CLICK");
+    setShowSearchHelp((v) => !v);
+  }}
   aria-label={t("search_help_title") || "Ajuda de cerca"}
   title={t("search_help_title") || "Ajuda de cerca"}
   style={{
@@ -1912,21 +1915,22 @@ return (
   </div>
 )}
 
-        {showSuggestions && suggestions.length > 0 && (
+        {!showSearchHelp && showSuggestions && suggestions.length > 0 && (
   <div
     style={{
-      position: "absolute",
-      top: "100%",
-      left: 0,
-      right: 0,
-      background: "white",
-      border: "1px solid #ccc",
-      borderRadius: "8px",
-      marginTop: "6px",
-      boxShadow: "0 2px 8px rgba(0,0,0,0.08)",
-      overflow: "hidden",
-      zIndex: 1000,
-    }}
+  position: "absolute",
+  top: "100%",
+  left: 0,
+  marginTop: "6px",
+  fontSize: "0.85rem",
+  color: "#ddd",
+  background: "#1e1e1e",
+  padding: "8px 10px",
+  borderRadius: "6px",
+  boxShadow: "0 4px 12px rgba(0,0,0,0.15)",
+  zIndex: 20,
+  maxWidth: "260px"
+}}
   >
     {suggestions.map((s, i) => {
       const label = [s.name, s.state, s.country].filter(Boolean).join(", ");
