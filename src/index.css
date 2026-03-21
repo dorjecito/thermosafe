@@ -1840,6 +1840,17 @@ body,
 
 }
 
+.error-message {
+  margin-top: 0.5rem;
+  margin-bottom: 0.5rem;
+  padding: 0.6rem 0.8rem;
+  border-radius: 8px;
+  background: #ffe5e5;
+  color: #b00020;
+  font-size: 0.95rem;
+  font-weight: 500;
+}
+
 
 
 

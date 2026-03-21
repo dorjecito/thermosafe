@@ -42,7 +42,7 @@
 
   "loading": "Datu meteorologikoak kargatzen...",
   "errorGPS": "Ezin izan da GPS bidez tenperatura eskuratu.",
-  "errorCity": "Ez da daturik aurkitu kokapen honetarako.",
+  "errorCity": "Ez da daturik aurkitu kokapen honetarako. Azken datu erabilgarriak erakusten dira.",
   "errorNoLocation": "Ezin izan da kokapena eskuratu.",
 
   "recommendations_title": "Uneko baldintzen araberako gomendioak:",
@@ -140,6 +140,8 @@
   "uvVeryHigh": "UV indize oso altua. Eguzki-babesa ezinbestekoa da.",
   "uvExtreme": "UV indize muturrekoa. Saihestu eguzki-esposizio zuzena."
 },
+"search_help_title": "Bilaketa laguntza",
+"search_help": "Idatzi gutxienez 4 letra. Iradokizunek ia hiriaren izen osoa behar dezakete.",
 
   "heatRiskLabel": "Bero arriskua",
   "effectiveTemp": "Benetako tenperatura",

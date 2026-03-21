@@ -32,8 +32,6 @@ import { getUVFromOpenUV } from "./services/openUV";
 
 
    /* —— components ————————————————————————— */
-   //import LocationDisplay     from './components/LocationDisplay';
-   //import RiskLevelDisplay    from './components/RiskLevelDisplay';
    import Recommendations     from './components/Recommendations';
    import UVAdvice            from './components/UVAdvice';
    import UVScale             from './components/UVScale';
@@ -41,11 +39,7 @@ import { getUVFromOpenUV } from "./services/openUV";
    import SafetyActions from "./components/SafetyActions";
    import UVSafeTime from "./components/UVSafeTime";
    import UVDetailPanel from "./components/UVDetailPanel";
-   //import SkinTypeSelect, { type SkinType } from "./components/SkinTypeSelect";
    import SkinTypeInfo, { type SkinType } from "./components/SkinTypeInfo";
-   
-
-
    
    /* —— analítica (opcional) ———————————— */
    import { inject } from '@vercel/analytics';
@@ -55,8 +49,6 @@ import { getUVFromOpenUV } from "./services/openUV";
    import { enableRiskAlerts, disableRiskAlerts } from "./push/subscribe";
    import { getThermalRisk } from "./utils/getThermalRisk";
    import { useSmartActivity } from "./hooks/useSmartActivity";
-   //import { getUvLevel, getUvText, getUvAdvice } from "./utils/uv";
-   
 
    /* ============================================================
    🔥 Risc de calor + activitat
@@ -135,30 +127,7 @@ const calcHI = (t: number, h: number) => {
   return Math.round(hi * 10) / 10;
 };
 
-// =========================
-// 🌞 Funció d'hores de dia segons estació
-// =========================
 
-export function isDaytime(): boolean {
-  const d = new Date();
-  const day = d.getDate();
-  const month = d.getMonth(); // gener=0, juny=5...
-
-  // Estiu real: 21/6 → 23/9
-  const isSummer =
-    (month === 5 && day >= 21) || // juny des del 21
-    month === 6 ||                // juliol
-    month === 7 ||                // agost
-    (month === 8 && day <= 23);   // setembre fins 23
-
-  const hour = d.getHours();
-
-  if (isSummer) {
-    return hour >= 7 && hour < 19;  // estiu
-  } else {
-    return hour >= 8 && hour < 18;  // hivern
-  }
-}
 
 // =========================
 // 🌍 Dia/nit REAL segons la ciutat consultada (timezone + sunrise/sunset)
@@ -401,13 +370,7 @@ useEffect(() => {
     localStorage.setItem("pushEnabled", JSON.stringify(pushEnabled));
 }, [pushEnabled]);
 
-// Tradueix etiqueta risc vent
-const windRiskLabel = (r: WindRisk) =>
-  r === 'none' ? t('no_risk_wind') : t('wind_' + r);
-
-
   /* state */
-  const [forecast, setForecast] = useState<any | null>(null);
   const [data, setData] = useState<any | null>(null);
   const [temp, setTemp] = useState<number | null>(null);
   const [hum, setHum] = useState<number | null>(null);
@@ -431,6 +394,30 @@ const windRiskLabel = (r: WindRisk) =>
   const [windKmh, setWindKmh] = useState<number | null>(null);
   const [lat, setLat] = useState<number | null>(null);
   const [lon, setLon] = useState<number | null>(null);
+  const [suggestions, setSuggestions] = useState<any[]>([]);
+  const [showSuggestions, setShowSuggestions] = useState(false);
+  const [suggestLoading, setSuggestLoading] = useState(false);
+  const [showSearchHelp, setShowSearchHelp] = useState(false);
+  const searchBoxRef = useRef<HTMLDivElement | null>(null);
+
+useEffect(() => {
+  const handleClickOutside = (event: MouseEvent) => {
+    if (
+      searchBoxRef.current &&
+      !searchBoxRef.current.contains(event.target as Node)
+    ) {
+      setShowSuggestions(false);
+      setShowSearchHelp(false);
+    }
+  };
+
+  document.addEventListener("click", handleClickOutside);
+
+  return () => {
+    document.removeEventListener("click", handleClickOutside);
+  };
+}, []);
+
 
 // ☁️ Estat del cel
 const [sky, setSky] = useState<string>('');
@@ -446,6 +433,19 @@ const [showSource, setShowSource] = useState(false);
 // Token per ignorar respostes antigues que arribin tard
 const latestRequestRef = useRef<{ source: 'gps' | 'search'; id: number }>({ source: 'gps', id: 0 });
 
+function startRequest(source: "gps" | "search") {
+  const id = Date.now();
+  latestRequestRef.current = { source, id };
+  return id;
+}
+
+function isStaleRequest(source: "gps" | "search", id: number) {
+  return (
+    latestRequestRef.current.source !== source ||
+    latestRequestRef.current.id !== id
+  );
+}
+
 const [windDirection, setWindDirection] = useState<string>('');
 
 const [alerts, setAlerts] = useState<any[]>([]);
@@ -453,15 +453,6 @@ const [alerts, setAlerts] = useState<any[]>([]);
 const [ready, setReady] = useState(false);
 
 //const [activityEnabled, setActivityEnabled] = useState(false);
-
-const COLD_COLORS = {
-  cap: "#d9d9d9",      // gris: cap risc
-  lleu: "#76b0ff",     // blau suau
-  moderat: "#4a90e2",  // blau mitjà
-  alt: "#1f5fbf",      // blau fosc
-  "molt alt": "#123c80",
-  extrem: "#0a2754",
-};
 
  const {
   level: activityLevel,
@@ -476,13 +467,6 @@ const COLD_COLORS = {
 const activityLevelStable = useStableValue(activityLevel, 800);
 const activityDeltaStable = useStableValue(activityDelta, 800);
 
-const ACTIVITY_LABELS: Record<string, string> = {
-  rest: "Repòs",
-  low: "Caminar",
-  moderate: "Esforç moderat",
-  high: "Còrrer",
-  unknown: "Detectant…"
-};
 
 const ACTIVITY_ICONS: Record<string, string> = {
   rest: "🧘",
@@ -715,13 +699,27 @@ const lang = i18n.resolvedLanguage?.slice(0,2) || "ca";
 
 /* === FETCH WEATHER (ciutat cercada) === */
 const fetchWeather = async (cityName: string) => {
+
+  const requestId = startRequest("search");
+
   try {
     setLoading(true);
     setCurrentSource("search");
     setDataSource("search");
 
     const data = await getWeatherByCity(cityName, lang, API_KEY);
-setData(data);
+
+    if (isStaleRequest("search", requestId)) return;
+
+    if (!data || !data.coord) {
+      setErr(t("errorCity"));
+      return;
+    }
+
+setRealCity(cityName);
+setCity(cityName);
+
+
 
 // 🌞 Dia/nit REAL per la ciutat (no per Mallorca)
 const newLat = data.coord?.lat ?? null;
@@ -847,8 +845,67 @@ if (newLat != null && newLon != null) {
     console.error("[DEBUG] Error obtenint dades:", err);
     setErr("Error obtenint dades de ciutat");
   } finally {
+  if (!isStaleRequest("search", requestId)) {
     setLoading(false);
   }
+}
+};
+
+const EU_COUNTRIES = new Set([
+  "ES", "PT", "FR", "IT", "DE", "AT", "BE", "NL", "LU", "IE",
+  "DK", "SE", "FI", "PL", "CZ", "SK", "HU", "RO", "BG", "HR",
+  "SI", "EE", "LV", "LT", "GR", "CY", "MT"
+]);
+ 
+const fetchCitySuggestions = async (query: string) => {
+  if (query.trim().length < 4) {
+    setSuggestions([]);
+    setShowSuggestions(false);
+    return;
+  }
+
+  try {
+    setSuggestLoading(true);
+
+    const res = await fetch(
+      `https://api.openweathermap.org/geo/1.0/direct?q=${query}&limit=10&appid=${API_KEY}`
+    );
+
+    const data = await res.json();
+    console.log("[SUGGESTIONS]", data);
+
+    const unique = (data || []).filter(
+  (item: any, index: number, arr: any[]) =>
+    index === arr.findIndex(
+      (x: any) =>
+        x.name === item.name &&
+        x.state === item.state &&
+        x.country === item.country
+    )
+);
+
+const ordered = [...unique].sort((a, b) => {
+  const aIsES = a.country === "ES";
+  const bIsES = b.country === "ES";
+  if (aIsES && !bIsES) return -1;
+  if (!aIsES && bIsES) return 1;
+
+  const aIsEU = EU_COUNTRIES.has(a.country);
+  const bIsEU = EU_COUNTRIES.has(b.country);
+  if (aIsEU && !bIsEU) return -1;
+  if (!aIsEU && bIsEU) return 1;
+
+  return 0;
+});
+
+setSuggestions(ordered.slice(0, 5));
+setShowSuggestions(ordered.length > 0);
+
+  } catch (e) {
+    console.error("Error suggestions:", e);
+  } finally {
+    setSuggestLoading(false);
+  }
 };
 
   /* 🌍 Auto-refresh i inicialització segura de localització */
@@ -980,6 +1037,9 @@ setIrr(ir ?? null);
 
 /* 📍 LOCALITZACIÓ ACTUAL */
 const locate = async (silent = false) => {
+
+  const requestId = startRequest("gps");
+
   try {
     if (!silent) setLoading(true);
     setCurrentSource("gps");
@@ -988,8 +1048,10 @@ const locate = async (silent = false) => {
 
     // 📍 1. Obté coordenades del dispositiu
     const position = await new Promise<GeolocationPosition>((resolve, reject) => {
-      navigator.geolocation.getCurrentPosition(resolve, reject);
+    navigator.geolocation.getCurrentPosition(resolve, reject);
     });
+
+    if (isStaleRequest("gps", requestId)) return;
 
     const lat = position.coords.latitude;
 const lon = position.coords.longitude;
@@ -1002,6 +1064,8 @@ console.log(`[DEBUG] Coordenades GPS obtingudes: ${lat}, ${lon}`);
 
 // 🌦️ // 2. Obté dades del temps per coordenades
 const d = await getWeatherByCoords(lat, lon, lang, API_KEY);
+
+if (isStaleRequest("gps", requestId)) return;
 setData(d);
 setDataSource("gps");
 
@@ -1016,6 +1080,9 @@ setDay(isDayHere);
 
 // 🌞 Obté UVI real per la ubicació GPS
 const uv = await safeUVFetch(lat, lon, isDayHere);
+
+if (isStaleRequest("gps", requestId)) return;
+
 setUvi(uv);
 console.log("[DEBUG] UVI actual (nou):", uv);
 console.log("[TEST] Tipus UV (nou):", typeof uv, "Valor:", uv);
@@ -1025,10 +1092,6 @@ setTemp(d.main?.temp ?? null);
 setHum(d.main?.humidity ?? null);
 setHi(d.main?.feels_like ?? null);
 
-// Opcional: si tens irradiació o altres camps
-// setIrr(d.main?.pressure ?? null);
-// setUvi(null);
-
 // 🔍 Mostra per consola per verificar
 console.log(`[DEBUG] Temperatura: ${d.main?.temp}°C, Humitat: ${d.main?.humidity}%, Sensació: ${d.main?.feels_like}°C`);
 
@@ -1037,7 +1100,9 @@ let nm = "";
 
 if (lat != null && lon != null) {
   try {
-    nm = (await getLocationNameFromCoords(lat, lon)) || "";
+    nm = (await getLocationNameFromCoords(lat, lon, lang)) || "";
+
+  if (isStaleRequest("gps", requestId)) return;
 
     // Retry només si realment ha tornat buit
    nm = nm?.trim() || d.name || "Ubicació desconeguda";
@@ -1128,27 +1193,35 @@ setColdRisk(coldRiskValue as ColdRisk);
 
 // ⚠️ 9. Avisos oficials
 const alerts = await getWeatherAlerts(lat, lon, lang, API_KEY);
+
+if (isStaleRequest("gps", requestId)) return;
+
 setAlerts(alerts);
 if (alerts.length > 0) {
   console.log("[DEBUG] Avisos meteorològics rebuts:", alerts);
 }
 
 // 🔥 10. Notificacions
+if (!isStaleRequest("gps", requestId)) {
 await maybeNotifyHeat(d.main.feels_like);
 await maybeNotifyCold(effForCold, wKmH);
 await maybeNotifyWind(wKmH);
 await maybeNotifyUV(uv);
+}
 
+if (isStaleRequest("gps", requestId)) return;
 setReady(true);
     // ✅ Tot correcte
     if (!silent) setErr("");
 
   } catch (error) {
-    console.error("[DEBUG] Error obtenint dades per GPS:", error);
-    if (!silent) setErr(t("errorGPS"));
-  } finally {
-    if (!silent) setLoading(false);
+  console.error("[DEBUG] Error obtenint dades per GPS:", error);
+  if (!silent) setErr(t("errorGPS"));
+} finally {
+  if (!silent && !isStaleRequest("gps", requestId)) {
+    setLoading(false);
   }
+}
 };
 
 /* 🔍 CERCA PER CIUTAT */
@@ -1726,19 +1799,6 @@ const appTitleClass =
     ? "app-title app-title-uv"
     : "app-title app-title-safe";
 
-  const appRiskClass =
-  primary.kind === "heat"
-    ? primary.severity >= 3
-      ? "app-risk-heat-high"
-      : "app-risk-heat"
-    : primary.kind === "cold"
-    ? "app-risk-cold"
-    : primary.kind === "wind"
-    ? "app-risk-wind"
-    : primary.kind === "uv"
-    ? "app-risk-uv"
-    : "app-risk-safe";
-
   function getAlertIcon(event: string): string {
   const e = event.toLowerCase();
 
@@ -1814,32 +1874,189 @@ return (
         <h1 className={appTitleClass}>{t("title")}</h1>
       </div>
 
+      <div ref={searchBoxRef}></div>
       <form
-        onSubmit={(e) => {
+                onSubmit={(e) => {
           e.preventDefault();
           const q = input.trim();
           if (!q) return;
 
           setErr("");
-          setRealCity(q);
-          setCity(q);
-
           fetchWeather(q);
         }}
         style={{ display: "flex", alignItems: "center", gap: "0.5rem", marginBottom: "0.8rem" }}
       >
-        <input
-          type="text"
-          value={input}
-          onChange={(e) => setInput(e.target.value)}
-          placeholder={t("search_placeholder")}
-          style={{
-            flex: 1,
-            padding: "0.5rem",
-            borderRadius: "8px",
-            border: "1px solid #ccc",
-          }}
-        />
+       <input
+  type="text"
+  value={input}
+  onChange={(e) => {
+    const value = e.target.value;
+    setInput(value);
+    setShowSearchHelp(false);
+    fetchCitySuggestions(value);
+  }}
+  placeholder={t("search_placeholder")}
+  style={{
+    flex: 1,
+    padding: "0.5rem",
+    borderRadius: "8px",
+    border: "1px solid #ccc",
+  }}
+/>
+
+<button
+  type="button"
+  onClick={() => setShowSearchHelp((v) => !v)}
+  aria-label={t("search_help_title") || "Ajuda de cerca"}
+  title={t("search_help_title") || "Ajuda de cerca"}
+  style={{
+    marginLeft: "6px",
+    border: "none",
+    background: "transparent",
+    cursor: "pointer",
+    fontSize: "1rem",
+    lineHeight: 1,
+    padding: "4px",
+  }}
+>
+  ℹ️
+</button>
+
+{showSearchHelp && (
+  <div
+    style={{
+      fontSize: "0.85rem",
+      color: "#666",
+      marginTop: "6px",
+      marginBottom: "6px",
+    }}
+  >
+    {t("search_help") ||
+      "Escriu almenys 4 lletres. Els suggeriments poden requerir gairebé el nom complet de la ciutat."}
+  </div>
+)}
+
+        {showSuggestions && suggestions.length > 0 && (
+  <div
+    style={{
+      position: "absolute",
+      top: "100%",
+      left: 0,
+      right: 0,
+      background: "white",
+      border: "1px solid #ccc",
+      borderRadius: "8px",
+      marginTop: "6px",
+      boxShadow: "0 2px 8px rgba(0,0,0,0.08)",
+      overflow: "hidden",
+      zIndex: 1000,
+    }}
+  >
+    {suggestions.map((s, i) => {
+      const label = [s.name, s.state, s.country].filter(Boolean).join(", ");
+
+      return (
+                  <button
+            key={i}
+            type="button"
+            onClick={async () => {
+  const label = [s.name, s.state, s.country].filter(Boolean).join(", ");
+
+  setInput(label);
+  setShowSuggestions(false);
+  setShowSearchHelp(false);
+  setErr("");
+
+  try {
+    setLoading(true);
+    setCurrentSource("search");
+    setDataSource("search");
+
+    const data = await getWeatherByCoords(s.lat, s.lon, lang, API_KEY);
+
+    setData(data);
+    setLat(s.lat);
+    setLon(s.lon);
+
+    const nowUtc = Math.floor(Date.now() / 1000);
+    const tz = data.timezone ?? 0;
+    const sunrise = data.sys?.sunrise;
+    const sunset = data.sys?.sunset;
+    setDay(isDayAtLocation(nowUtc, tz, sunrise, sunset));
+
+    setCity(label);
+    setRealCity(label);
+
+    const tempReal = data.main.temp;
+    setTemp(tempReal);
+    setHi(data.main.feels_like);
+    setHum(data.main.humidity);
+    setClouds(data.clouds?.all ?? 0);
+    setWeatherMain(data.weather?.[0]?.main ?? null);
+
+    const wKmH = data.wind.speed * 3.6;
+    setWind(wKmH);
+    setWindKmh(wKmH);
+
+    const deg = data.wind.deg ?? null;
+    setWindDeg(deg);
+    setWindDirection(windDegreesToCardinal16(deg, lang));
+
+    let effForCold = tempReal;
+    let wcVal: number | null = null;
+
+    if (tempReal <= 10 && wKmH >= 5) {
+      wcVal =
+        13.12 +
+        0.6215 * tempReal -
+        11.37 * Math.pow(wKmH, 0.16) +
+        0.3965 * tempReal * Math.pow(wKmH, 0.16);
+
+      wcVal = Math.round(wcVal * 10) / 10;
+      effForCold = wcVal;
+    }
+
+    setWc(wcVal);
+    setEffForCold(effForCold);
+
+    const coldRiskValue = getColdRisk(effForCold, wKmH);
+    setColdRisk(coldRiskValue as ColdRisk);
+
+    const rawDesc = (data.weather?.[0]?.description || "").trim();
+    setSky(rawDesc);
+    setIcon(data.weather?.[0]?.icon || "");
+
+    const uv = await getUVFromOpenUV(s.lat, s.lon);
+    setUvi(uv);
+
+    const alerts = await getWeatherAlerts(s.lat, s.lon, lang, API_KEY);
+    setAlerts(alerts || []);
+  } catch (err) {
+    console.error("[DEBUG] Error obtenint dades del suggeriment:", err);
+    setErr(t("errorCity"));
+  } finally {
+    setLoading(false);
+  }
+}}
+            style={{
+              display: "block",
+              width: "100%",
+              textAlign: "left",
+              padding: "12px 14px",
+              border: "none",
+              borderBottom: i < suggestions.length - 1 ? "1px solid #eee" : "none",
+              background: "white",
+              color: "#111",
+              cursor: "pointer",
+              fontSize: "0.95rem",
+            }}
+          >
+            {label}
+          </button>
+      );
+    })}
+  </div>
+)}
 
         <button
           type="submit"
@@ -1859,6 +2076,11 @@ return (
         </button>
       </form>
 
+        {err && (
+        <div className="error-message">
+          {err}
+        </div>
+      )}
       <div style={{ marginTop: "0.4rem", marginBottom: "0.8rem" }}>
         <button className="gps-btn" onClick={() => locate(false)}>
           {t("gps_button")}
@@ -2328,60 +2550,6 @@ if (
         desc,
         i18n.language as LangKey
       );
-
-      // DEBUG opcional
-      if (typeof window !== "undefined") {
-        (window as any).maybeNotifyHeat = maybeNotifyHeat;
-        (window as any).maybeNotifyCold = maybeNotifyCold;
-        (window as any).maybeNotifyWind = maybeNotifyWind;
-      }
-
-      /* ============================================================
-   📌 RECOMANACIONS DINÀMIQUES — DEPÈN DEL TIPUS DE RISC
-   ============================================================ */
-
-const dynamicAdvice: string[] = [];
-
-/* 1) RISC PER CALOR (heat_mild, heat_moderate, heat_high, heat_extreme…) */
-if (risk.startsWith("heat")) {
-  const level = risk.replace("heat_", ""); // mild / moderate / high / extreme
-  const key = `officialAdviceDynamic.heat.${level}`;
-  const text = t(key);
-
-  if (text !== key) dynamicAdvice.push(text);
-}
-
-/* 2) RISC PER FRED (cold_mild, cold_moderate…) */
-if (risk.startsWith("cold")) {
-  const level = risk.replace("cold_", "");
-  const key = `officialAdviceDynamic.cold.${level}`;
-  const text = t(key);
-
-  if (text !== key) dynamicAdvice.push(text);
-}
-
-/* 3) RISC PER VENT (windRisk = breezy, moderate, strong, very_strong) */
-if (windRisk && windRisk !== "none") {
-  const key = `officialAdviceDynamic.wind.${windRisk}`;
-  const text = t(key);
-
-  if (text !== key) dynamicAdvice.push(text);
-}
-
-/* 4) RISC PER UV */
-if (uvi != null && uvi >= 3) {
-  let uvLevel = "moderate";
-
-  if (uvi >= 6 && uvi < 8) uvLevel = "high";
-  else if (uvi >= 8 && uvi < 11) uvLevel = "very_high";
-  else if (uvi >= 11) uvLevel = "extreme";
-
-  const key = `officialAdviceDynamic.uv.${uvLevel}`;
-  const text = t(key);
-
-  if (text !== key) dynamicAdvice.push(text);
-}
-
 
       return (
   <div

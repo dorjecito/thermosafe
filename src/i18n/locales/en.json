@@ -34,7 +34,7 @@
   "alertRisk": "⚠️ High or extreme heat risk.",
   "loading": "Loading weather data...",
   "errorGPS": "Unable to obtain temperature via GPS.",
-  "errorCity": "No data found for this location.",
+  "errorCity": "No data found for this location. The latest available data is shown.",
   "errorNoLocation": "Unable to obtain location.",
   "recommendations_title": "Recommendations based on current conditions:",
   "solarProtection": "🔆 Sun protection",
@@ -120,6 +120,9 @@
     "uvVeryHigh": "Very high UV index. Sun protection is essential.",
     "uvExtreme": "Extreme UV index. Avoid direct sun exposure."
   },
+
+ "search_help_title": "Search help",
+"search_help": "Type at least 4 letters. Suggestions may require nearly the full city name.",
 
   "heatRiskLabel": "Heat risk",
   "effectiveTemp": "Effective temperature",

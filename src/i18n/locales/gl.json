@@ -41,7 +41,7 @@
 
   "loading": "Cargando datos meteorolóxicos...",
   "errorGPS": "Non se puido obter a temperatura por GPS.",
-  "errorCity": "Non se atoparon datos para esta ubicación.",
+  "errorCity": "Non se atoparon datos para esta localización. Amósanse os últimos datos dispoñibles.",
   "errorNoLocation": "Non se puido obter a ubicación.",
 
   "recommendations_title": "Recomendacións segundo as condicións actuais:",
@@ -138,6 +138,9 @@
   "uvVeryHigh": "Índice UV moi alto. Protección solar imprescindible.",
   "uvExtreme": "Índice UV extremo. Evite a exposición directa ao sol."
 },
+
+"search_help_title": "Axuda de busca",
+"search_help": "Escribe polo menos 4 letras. As suxestións poden requirir case o nome completo da cidade.",
 
   "heatRiskLabel": "Risco por calor",
   "effectiveTemp": "Temperatura efectiva",

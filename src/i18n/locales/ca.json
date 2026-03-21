@@ -19,7 +19,7 @@
 
   "loading": "Carregant dades meteorològiques...",
   "errorGPS": "No s'ha pogut obtenir la temperatura per GPS.",
-  "errorCity": "No s'han trobat dades per a aquesta ubicació.",
+  "errorCity": "No s'han trobat dades per a aquesta ubicació. Es mostren les darreres dades disponibles.",
   "errorNoLocation": "No s'ha pogut obtenir la ubicació.",
 
   "recommendations_title": "Recomanacions segons condicions actuals:",
@@ -86,6 +86,9 @@
   "uvHigh": "Índex UV alt. Usa crema solar i evita exposició prolongada.",
   "uvVeryHigh": "Índex UV molt alt. Protecció solar imprescindible."
 },
+
+"search_help_title": "Ajuda de cerca",
+"search_help": "Escriu almenys 4 lletres. Els suggeriments poden requerir gairebé el nom complet de la ciutat.",
 
   "heatRiskLabel": "Risc per calor",
   "effectiveTemp": "Temperatura efectiva",
