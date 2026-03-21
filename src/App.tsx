@@ -1872,11 +1872,12 @@ return (
   }}
   placeholder={t("search_placeholder")}
   style={{
-    flex: 1,
-    padding: "0.5rem",
-    borderRadius: "8px",
-    border: "1px solid #ccc",
-  }}
+  flex: 1,
+  minWidth: 0,
+  padding: "0.5rem",
+  borderRadius: "8px",
+  border: "1px solid #ccc",
+}}
 />
 
 <button
