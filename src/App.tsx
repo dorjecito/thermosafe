@@ -28,9 +28,6 @@ import { getUVFromOpenUV } from "./services/openUV";
    import { getContextualUVMessage } from "./utils/getContextualUVMessage";
    import { getWorkWindow, getWorkWindowText, getWorkWindowTitle } from "./utils/workWindow";
    
-   
-
-
    /* —— components ————————————————————————— */
    import Recommendations     from './components/Recommendations';
    import UVAdvice            from './components/UVAdvice';
@@ -127,8 +124,6 @@ const calcHI = (t: number, h: number) => {
   return Math.round(hi * 10) / 10;
 };
 
-
-
 // =========================
 // 🌍 Dia/nit REAL segons la ciutat consultada (timezone + sunrise/sunset)
 // =========================
@@ -176,7 +171,6 @@ async function safeUVFetch(
   }
 }
 
-
 // ── Llindars per INSST (adaptats)
 const TH = { MODERATE: 27, HIGH: 32, VERY_HIGH: 41 } as const;
 
@@ -197,7 +191,6 @@ async function sendIfAtLeastModerate(hi: number | null) {
     console.error("Error enviant notificació:", err);
   }
 }
-
 
 const fetchSolarIrr = async (lat: number, lon: number, d: string) => {
   try {
@@ -300,8 +293,6 @@ useEffect(() => {
   }
 }, []); 
 
-
-
 // --- Recupera l'estat del push i preferències al carregar la PWA ---
 useEffect(() => {
     const savedPush = localStorage.getItem("pushEnabled");
@@ -381,7 +372,6 @@ useEffect(() => {
   const [wc, setWc] = useState<number | null>(null); // wind-chill
   const [clouds, setClouds] = useState<number | null>(null);
   const [weatherMain, setWeatherMain] = useState<string | null>(null);
-
   const [city, setCity] = useState<string | null>(null);
   const [realCity, setRealCity] = useState('');
   const [err, setErr] = useState('');
@@ -452,8 +442,6 @@ const [alerts, setAlerts] = useState<any[]>([]);
 
 const [ready, setReady] = useState(false);
 
-//const [activityEnabled, setActivityEnabled] = useState(false);
-
  const {
   level: activityLevel,
   delta: activityDelta,
@@ -466,7 +454,6 @@ const [ready, setReady] = useState(false);
 
 const activityLevelStable = useStableValue(activityLevel, 800);
 const activityDeltaStable = useStableValue(activityDelta, 800);
-
 
 const ACTIVITY_ICONS: Record<string, string> = {
   rest: "🧘",
@@ -695,8 +682,6 @@ async function onTogglePush(next: boolean) {
 const API_KEY = "ebd4ce67a42857776f4463c756e18b45"; // 🔑 substitueix per la teva clau real
 const lang = i18n.resolvedLanguage?.slice(0,2) || "ca";
 
-
-
 /* === FETCH WEATHER (ciutat cercada) === */
 const fetchWeather = async (cityName: string) => {
 
@@ -718,8 +703,6 @@ const fetchWeather = async (cityName: string) => {
 
 setRealCity(cityName);
 setCity(cityName);
-
-
 
 // 🌞 Dia/nit REAL per la ciutat (no per Mallorca)
 const newLat = data.coord?.lat ?? null;
@@ -792,7 +775,6 @@ setRealCity(resolvedName);
     }
 
     setColdRisk(computedColdRisk as ColdRisk);
-
 
     // 🌤 Cel i icona
     const rawDesc = (data.weather?.[0]?.description || "").trim();
@@ -954,7 +936,6 @@ useEffect(() => {
   setDay(isDayAtLocation(nowUtc, tz, sunrise, sunset));
 }, 10 * 60 * 1000);
 
-
   return () => {
     clearInterval(id1);
     clearInterval(id2);
@@ -1002,8 +983,6 @@ const updateAll = async (
       2
     )}, ${lon?.toFixed(2)})${colorReset}`
   );
-
-
 
   setTemp(tp);
   setHum(hm);
@@ -1295,7 +1274,6 @@ const safeLangUV = i18n.language?.slice(0,2) || 'ca';
 // ✅ llengua robusta per components que usen TXT intern
 const lang2 = normalizeLang(i18n.resolvedLanguage || i18n.language || "ca");
 
-
 useEffect(() => {
   const tok = localStorage.getItem("fcmToken");
   if (tok) {
@@ -1474,7 +1452,6 @@ if (typeof uvi === "number" && Number.isFinite(uvi)) {
   if (!top || top.sev === 0) return { kind: "none", severity: 0, labelKey: "none" };
   return { kind: top.kind, severity: top.sev, labelKey: top.key };
 }
-
 
 // Text de la direcció del vent en 16 punts, localitzat
 const windText16 =
@@ -1858,8 +1835,6 @@ function getUVBrainMessage(uvi: number | null, lang: string = "ca") {
   if (uvi < 11) return "Risc molt alt. Evita el sol en hores centrals.";
   return "Risc extrem. Evita el sol i protegeix-te al màxim.";
 }
-
-
   //Return ok
 
 return (
@@ -2255,7 +2230,6 @@ if (
   realCity={realCity}
   label={t("location")}
 />
-
 )}
 
 {/* ⭐ ESTAT PRINCIPAL */}
@@ -2709,4 +2683,3 @@ function showBrowserNotification(title: string, body: string, tag?: string) {
     });
   }
 }
-//Thermosafe, un projecte de Esteve Montalvo i Camps 2026
