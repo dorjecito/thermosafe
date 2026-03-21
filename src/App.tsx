@@ -390,15 +390,15 @@ useEffect(() => {
   const [showSearchHelp, setShowSearchHelp] = useState(false);
   const searchBoxRef = useRef<HTMLDivElement | null>(null);
 
-useEffect(() => {
+ useEffect(() => {
   const handleClickOutside = (event: MouseEvent) => {
-    if (
-      searchBoxRef.current &&
-      !searchBoxRef.current.contains(event.target as Node)
-    ) {
-      setShowSuggestions(false);
-      setShowSearchHelp(false);
-    }
+    if (!searchBoxRef.current) return;
+
+    const target = event.target as Node | null;
+    if (target && searchBoxRef.current.contains(target)) return;
+
+    setShowSuggestions(false);
+    setShowSearchHelp(false);
   };
 
   document.addEventListener("click", handleClickOutside);
@@ -406,7 +406,7 @@ useEffect(() => {
   return () => {
     document.removeEventListener("click", handleClickOutside);
   };
-}, []);
+}, []); 
 
 
 // ☁️ Estat del cel
@@ -1849,175 +1849,216 @@ return (
         <h1 className={appTitleClass}>{t("title")}</h1>
       </div>
 
-      <div ref={searchBoxRef}></div>
-      <form
-                onSubmit={(e) => {
-          e.preventDefault();
-          const q = input.trim();
-          if (!q) return;
+      <div ref={searchBoxRef} style={{ position: "relative" }}>
+  <form
+    onSubmit={(e) => {
+      e.preventDefault();
+      const q = input.trim();
+      if (!q) return;
 
-          setErr("");
-          fetchWeather(q);
-        }}
-        style={{ display: "flex", alignItems: "center", gap: "0.5rem", marginBottom: "0.8rem" }}
-      >
-       <input
-  type="text"
-  value={input}
-  onChange={(e) => {
-    const value = e.target.value;
-    setInput(value);
-    setShowSearchHelp(false);
-    fetchCitySuggestions(value);
-  }}
-  placeholder={t("search_placeholder")}
-  style={{
-  flex: 1,
-  minWidth: 0,
-  padding: "0.5rem",
-  borderRadius: "8px",
-  border: "1px solid #ccc",
-}}
-/>
-
-<button
-  type="button"
-  onClick={() => {
-    console.log("HELP CLICK");
-    setShowSearchHelp((v) => !v);
-  }}
-  aria-label={t("search_help_title") || "Ajuda de cerca"}
-  title={t("search_help_title") || "Ajuda de cerca"}
-  style={{
-    marginLeft: "6px",
-    border: "none",
-    background: "transparent",
-    cursor: "pointer",
-    fontSize: "1rem",
-    lineHeight: 1,
-    padding: "4px",
-  }}
->
-  ℹ️
-</button>
-
-{showSearchHelp && (
-  <div
+      setErr("");
+      fetchWeather(q);
+    }}
     style={{
-      fontSize: "0.85rem",
-      color: "#666",
-      marginTop: "6px",
-      marginBottom: "6px",
+      display: "flex",
+      alignItems: "center",
+      gap: "0.5rem",
+      marginBottom: "0.8rem",
+      width: "100%",
     }}
   >
-    {t("search_help") ||
-      "Escriu almenys 4 lletres. Els suggeriments poden requerir gairebé el nom complet de la ciutat."}
-  </div>
-)}
+    <input
+      type="text"
+      value={input}
+      onChange={(e) => {
+        const value = e.target.value;
+        setInput(value);
+        setShowSearchHelp(false);
+        fetchCitySuggestions(value);
+      }}
+      placeholder={t("search_placeholder")}
+      style={{
+        flex: 1,
+        minWidth: 0,
+        padding: "0.5rem",
+        borderRadius: "8px",
+        border: "1px solid #ccc",
+      }}
+    />
 
-        {!showSearchHelp && showSuggestions && suggestions.length > 0 && (
-  <div
-    style={{
-  position: "absolute",
-  top: "100%",
-  left: 0,
-  marginTop: "6px",
-  fontSize: "0.85rem",
-  color: "#ddd",
-  background: "#1e1e1e",
-  padding: "8px 10px",
-  borderRadius: "6px",
-  boxShadow: "0 4px 12px rgba(0,0,0,0.15)",
-  zIndex: 20,
-  maxWidth: "260px"
-}}
-  >
-    {suggestions.map((s, i) => {
-      const label = [s.name, s.state, s.country].filter(Boolean).join(", ");
+    <button
+      type="button"
+      onClick={(e) => {
+        e.stopPropagation();
+        setShowSuggestions(false);
+        setShowSearchHelp((v) => !v);
+      }}
+      aria-label={t("search_help_title") || "Ajuda de cerca"}
+      title={t("search_help_title") || "Ajuda de cerca"}
+      style={{
+        marginLeft: "6px",
+        border: "none",
+        background: "transparent",
+        cursor: "pointer",
+        fontSize: "1rem",
+        lineHeight: 1,
+        padding: "4px",
+        flexShrink: 0,
+        width: "36px",
+        height: "36px",
+        position: "relative",
+        zIndex: 10,
+      }}
+    >
+      ℹ️
+    </button>
 
-      return (
-                  <button
+    <button
+      type="submit"
+      disabled={!input.trim()}
+      style={{
+        padding: "0.5rem 1rem",
+        borderRadius: "8px",
+        border: "none",
+        backgroundColor: input.trim() ? "#1e90ff" : "#999",
+        color: "white",
+        cursor: input.trim() ? "pointer" : "not-allowed",
+        opacity: input.trim() ? 1 : 0.6,
+        transition: "all 0.2s ease",
+        flexShrink: 0,
+        whiteSpace: "nowrap",
+      }}
+    >
+      {t("search_button")}
+    </button>
+  </form>
+
+  {showSearchHelp && (
+    <div
+      onClick={(e) => e.stopPropagation()}
+      style={{
+        marginTop: "-4px",
+        marginBottom: "8px",
+        fontSize: "0.85rem",
+        color: "#ddd",
+        background: "#1e1e1e",
+        padding: "10px 12px",
+        borderRadius: "8px",
+        border: "1px solid rgba(255,255,255,0.12)",
+        lineHeight: 1.4,
+        position: "relative",
+        zIndex: 30,
+        width: "100%",
+        boxSizing: "border-box",
+      }}
+    >
+      {t("search_help") ||
+        "Escriu almenys 4 lletres. Els suggeriments poden requerir gairebé el nom complet de la ciutat."}
+    </div>
+  )}
+
+  {!showSearchHelp && showSuggestions && suggestions.length > 0 && (
+    <div
+      style={{
+        position: "absolute",
+        top: "100%",
+        left: 0,
+        right: 0,
+        marginTop: "6px",
+        background: "white",
+        border: "1px solid #ccc",
+        borderRadius: "8px",
+        boxShadow: "0 4px 12px rgba(0,0,0,0.15)",
+        overflow: "hidden",
+        zIndex: 20,
+      }}
+    >
+      {suggestions.map((s, i) => {
+        const label = [s.name, s.state, s.country].filter(Boolean).join(", ");
+
+        return (
+          <button
             key={i}
             type="button"
             onClick={async () => {
-  const label = [s.name, s.state, s.country].filter(Boolean).join(", ");
+              const label = [s.name, s.state, s.country].filter(Boolean).join(", ");
 
-  setInput(label);
-  setShowSuggestions(false);
-  setShowSearchHelp(false);
-  setErr("");
+              setInput(label);
+              setShowSuggestions(false);
+              setShowSearchHelp(false);
+              setErr("");
 
-  try {
-    setLoading(true);
-    setCurrentSource("search");
-    setDataSource("search");
+              try {
+                setLoading(true);
+                setCurrentSource("search");
+                setDataSource("search");
 
-    const data = await getWeatherByCoords(s.lat, s.lon, lang, API_KEY);
+                const data = await getWeatherByCoords(s.lat, s.lon, lang, API_KEY);
 
-    setData(data);
-    setLat(s.lat);
-    setLon(s.lon);
+                setData(data);
+                setLat(s.lat);
+                setLon(s.lon);
 
-    const nowUtc = Math.floor(Date.now() / 1000);
-    const tz = data.timezone ?? 0;
-    const sunrise = data.sys?.sunrise;
-    const sunset = data.sys?.sunset;
-    setDay(isDayAtLocation(nowUtc, tz, sunrise, sunset));
+                const nowUtc = Math.floor(Date.now() / 1000);
+                const tz = data.timezone ?? 0;
+                const sunrise = data.sys?.sunrise;
+                const sunset = data.sys?.sunset;
+                setDay(isDayAtLocation(nowUtc, tz, sunrise, sunset));
 
-    setCity(label);
-    setRealCity(label);
+                setCity(label);
+                setRealCity(label);
 
-    const tempReal = data.main.temp;
-    setTemp(tempReal);
-    setHi(data.main.feels_like);
-    setHum(data.main.humidity);
-    setClouds(data.clouds?.all ?? 0);
-    setWeatherMain(data.weather?.[0]?.main ?? null);
+                const tempReal = data.main.temp;
+                setTemp(tempReal);
+                setHi(data.main.feels_like);
+                setHum(data.main.humidity);
+                setClouds(data.clouds?.all ?? 0);
+                setWeatherMain(data.weather?.[0]?.main ?? null);
 
-    const wKmH = data.wind.speed * 3.6;
-    setWind(wKmH);
-    setWindKmh(wKmH);
+                const wKmH = data.wind.speed * 3.6;
+                setWind(wKmH);
+                setWindKmh(wKmH);
 
-    const deg = data.wind.deg ?? null;
-    setWindDeg(deg);
-    setWindDirection(windDegreesToCardinal16(deg, lang));
+                const deg = data.wind.deg ?? null;
+                setWindDeg(deg);
+                setWindDirection(windDegreesToCardinal16(deg, lang));
 
-    let effForCold = tempReal;
-    let wcVal: number | null = null;
+                let effForCold = tempReal;
+                let wcVal: number | null = null;
 
-    if (tempReal <= 10 && wKmH >= 5) {
-      wcVal =
-        13.12 +
-        0.6215 * tempReal -
-        11.37 * Math.pow(wKmH, 0.16) +
-        0.3965 * tempReal * Math.pow(wKmH, 0.16);
+                if (tempReal <= 10 && wKmH >= 5) {
+                  wcVal =
+                    13.12 +
+                    0.6215 * tempReal -
+                    11.37 * Math.pow(wKmH, 0.16) +
+                    0.3965 * tempReal * Math.pow(wKmH, 0.16);
 
-      wcVal = Math.round(wcVal * 10) / 10;
-      effForCold = wcVal;
-    }
+                  wcVal = Math.round(wcVal * 10) / 10;
+                  effForCold = wcVal;
+                }
 
-    setWc(wcVal);
-    setEffForCold(effForCold);
+                setWc(wcVal);
+                setEffForCold(effForCold);
 
-    const coldRiskValue = getColdRisk(effForCold, wKmH);
-    setColdRisk(coldRiskValue as ColdRisk);
+                const coldRiskValue = getColdRisk(effForCold, wKmH);
+                setColdRisk(coldRiskValue as ColdRisk);
 
-    const rawDesc = (data.weather?.[0]?.description || "").trim();
-    setSky(rawDesc);
-    setIcon(data.weather?.[0]?.icon || "");
+                const rawDesc = (data.weather?.[0]?.description || "").trim();
+                setSky(rawDesc);
+                setIcon(data.weather?.[0]?.icon || "");
 
-    const uv = await getUVFromOpenUV(s.lat, s.lon);
-    setUvi(uv);
+                const uv = await getUVFromOpenUV(s.lat, s.lon);
+                setUvi(uv);
 
-    const alerts = await getWeatherAlerts(s.lat, s.lon, lang, API_KEY);
-    setAlerts(alerts || []);
-  } catch (err) {
-    console.error("[DEBUG] Error obtenint dades del suggeriment:", err);
-    setErr(t("errorCity"));
-  } finally {
-    setLoading(false);
-  }
-}}
+                const alerts = await getWeatherAlerts(s.lat, s.lon, lang, API_KEY);
+                setAlerts(alerts || []);
+              } catch (err) {
+                console.error("[DEBUG] Error obtenint dades del suggeriment:", err);
+                setErr(t("errorCity"));
+              } finally {
+                setLoading(false);
+              }
+            }}
             style={{
               display: "block",
               width: "100%",
@@ -2033,40 +2074,24 @@ return (
           >
             {label}
           </button>
-      );
-    })}
-  </div>
-)}
-
-        <button
-          type="submit"
-          disabled={!input.trim()}
-          style={{
-            padding: "0.5rem 1rem",
-            borderRadius: "8px",
-            border: "none",
-            backgroundColor: input.trim() ? "#1e90ff" : "#999",
-            color: "white",
-            cursor: input.trim() ? "pointer" : "not-allowed",
-            opacity: input.trim() ? 1 : 0.6,
-            transition: "all 0.2s ease",
-          }}
-        >
-          {t("search_button")}
-        </button>
-      </form>
-
-        {err && (
-        <div className="error-message">
-          {err}
-        </div>
-      )}
-      <div style={{ marginTop: "0.4rem", marginBottom: "0.8rem" }}>
-        <button className="gps-btn" onClick={() => locate(false)}>
-          {t("gps_button")}
-        </button>
-      </div>
+        );
+      })}
     </div>
+  )}
+
+  {err && (
+    <div className="error-message">
+      {err}
+    </div>
+  )}
+
+  <div style={{ marginTop: "0.4rem", marginBottom: "0.8rem" }}>
+    <button className="gps-btn" onClick={() => locate(false)}>
+      {t("gps_button")}
+    </button>
+  </div>
+</div>
+</div>
 
     {/* Espai perquè la capçalera fixa no tapi el contingut */}
     <div className="top-sticky-spacer" />

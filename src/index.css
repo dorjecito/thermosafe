@@ -1171,7 +1171,8 @@ text-align: left;
 /* 🔵 Header de l'app */
 .app-header {
   text-align: center;
-  margin-bottom: 0.9rem;
+  margin-top: 0.2rem;
+  margin-bottom: 1.2rem;
 }
 
 .app-title{
@@ -1232,15 +1233,16 @@ text-align: left;
   border-radius: 0 0 14px 14px;
   padding: 1rem;
   box-shadow: 0 6px 16px rgba(0,0,0,0.25);
+  overflow: visible;
 }
 
 .top-sticky-spacer {
-  height: 230px;
+  height: 290px;
 }
 
 @media (max-width: 640px) {
   .top-sticky-spacer {
-    height: 285px;
+    height: 360px;
   }
 }
 
