@@ -2185,6 +2185,7 @@ return (
       textAlign: "center",
       lineHeight: 1.25,
       minHeight: "52px",
+      width:"100%",
     }}
   >
     {activityEnabled ? (
