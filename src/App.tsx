@@ -2098,101 +2098,113 @@ return (
 
 {/* 🔔 Interruptor per activar/desactivar avisos meteorològics */}
 <div
-  style={{
-    display: 'flex',
-    alignItems: 'center',
-    gap: '12px',
-    marginTop: '10px',
-    marginBottom: '10px',
-    fontSize: '1.1rem',
-    fontWeight: '500'
-  }}
->
-
-{/* 🔔 Botó REAL: activar/desactivar PUSH (FCM + Firestore) */}
-<div
   style={{
     display: "flex",
-    alignItems: "center",
-    gap: "10px",
-    marginTop: "12px",
-    marginBottom: "12px",
+    alignItems: "stretch",
+    gap: "12px",
+    flexWrap: "wrap",
+    marginTop: "10px",
+    marginBottom: "10px",
+    fontSize: "1.1rem",
+    fontWeight: "500",
   }}
 >
-  <button
-    onClick={() => onTogglePush(!pushEnabled)}
+  {/* 🔔 Botó REAL: activar/desactivar PUSH (FCM + Firestore) */}
+  <div
     style={{
-      backgroundColor: pushEnabled ? "#2f9e44" : "#555",
+      display: "flex",
+      alignItems: "center",
+      gap: "10px",
+      marginTop: "12px",
+      marginBottom: "12px",
+      flex: "1 1 220px",
+      maxWidth: "100%",
+    }}
+  >
+    <button
+      onClick={() => onTogglePush(!pushEnabled)}
+      style={{
+        backgroundColor: pushEnabled ? "#2f9e44" : "#555",
+        color: "white",
+        padding: "8px 14px",
+        border: "none",
+        borderRadius: "8px",
+        cursor: "pointer",
+        fontSize: "0.9rem",
+        fontWeight: 600,
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        gap: "8px",
+        transition: "all 0.2s ease",
+        flex: 1,
+        width: "100%",
+        maxWidth: "100%",
+        whiteSpace: "normal",
+        textAlign: "center",
+      }}
+    >
+      <span>{pushEnabled ? "🔔" : "🔕"}</span>
+      {t("notifications.label")}:
+      <strong>
+        {pushEnabled ? t("notifications.on") : t("notifications.off")}
+      </strong>
+    </button>
+  </div>
+
+  {/* (opcional) Missatge d’estat/errada del push */}
+  {msgHeat && (
+    <p style={{ marginTop: "0.25rem", opacity: 0.9, width: "100%" }}>
+      {msgHeat}
+    </p>
+  )}
+
+  <button
+    onClick={() => {
+      if (activityEnabled) deactivate();
+      else activate();
+    }}
+    className="btn-activity"
+    style={{
+      backgroundColor: activityEnabled
+        ? ACTIVITY_COLORS[activityLevelStable]
+        : "#555",
       color: "white",
-      padding: "8px 14px",
+      padding: "0.75rem 0.9rem",
+      borderRadius: "6px",
       border: "none",
-      borderRadius: "8px",
       cursor: "pointer",
-      fontSize: "0.9rem",
       fontWeight: 600,
       display: "flex",
       alignItems: "center",
-      gap: "8px",
-      transition: "all 0.2s ease"
+      justifyContent: "center",
+      gap: "0.4rem",
+      flex: "1 1 220px",
+      maxWidth: "100%",
+      whiteSpace: "normal",
+      textAlign: "center",
+      lineHeight: 1.25,
+      minHeight: "52px",
     }}
   >
-    <span>{pushEnabled ? "🔔" : "🔕"}</span>
-    {t("notifications.label")}:
-    <strong>
-      {pushEnabled
-        ? t("notifications.on")
-        : t("notifications.off")}
-    </strong>
+    {activityEnabled ? (
+      <>
+        {ACTIVITY_ICONS[activityLevelStable]}
+        {t("activity.active_label")}: {t(`activity.${activityLevelStable}`)}
+        ({activityDeltaStable}°C {t("activity.extra")})
+      </>
+    ) : (
+      <>
+        💤 {t("activity.inactive")}
+      </>
+    )}
   </button>
-</div>
 
-{/* (opcional) Missatge d’estat/errada del push */}
-{msgHeat && (
-  <p style={{ marginTop: "0.25rem", opacity: 0.9 }}>
-    {msgHeat}
-  </p>
-)}
-
-<button
-  onClick={() => {
-    if (activityEnabled) deactivate();
-    else activate();
-  }}
-  className="btn-activity"
-  style={{
-    backgroundColor: activityEnabled
-      ? ACTIVITY_COLORS[activityLevelStable]
-      : "#555",
-    color: "white",
-    padding: "0.4rem 0.8rem",
-    borderRadius: "6px",
-    border: "none",
-    cursor: "pointer",
-    fontWeight: 600,
-    display: "flex",
-    alignItems: "center",
-    gap: "0.4rem"
-  }}
->
-  {activityEnabled ? (
-    <>
-      {ACTIVITY_ICONS[activityLevelStable]}
-      {t("activity.active_label")}: {t(`activity.${activityLevelStable}`)}
-      ({activityDeltaStable}°C {t("activity.extra")})
-    </>
-  ) : (
-    <>
-      💤 {t("activity.inactive")}
-    </>
+  {activityError && (
+    <p style={{ color: "salmon", marginTop: "0.25rem", width: "100%" }}>
+      ⚠ {activityError}
+    </p>
   )}
-</button>
-
-{activityError && (
-  <p style={{ color: "salmon", marginTop: "0.25rem" }}>
-    ⚠ {activityError}
-  </p>
-)}
-
 </div>
 
 {/* ⚠️ BANNER PRINCIPAL (només 1) */}

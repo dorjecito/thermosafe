@@ -1849,6 +1849,27 @@ body,
   font-weight: 500;
 }
 
+/* =========================
+   📱 Botons d'acció superiors
+   ========================= */
+
+.btn-activity {
+  max-width: 100%;
+  white-space: normal;
+  word-break: break-word;
+  justify-content: center;
+  text-align: center;
+}
+
+@media (max-width: 640px) {
+  .btn-activity {
+    width: 100% !important;
+    min-height: 52px !important;
+    padding: 0.75rem 0.9rem !important;
+    font-size: 0.95rem !important;
+    line-height: 1.25 !important;
+  }
+}
 
 
 
