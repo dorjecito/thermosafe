@@ -701,18 +701,20 @@ const fetchWeather = async (cityName: string) => {
       return;
     }
 
-setRealCity(cityName);
-setCity(cityName);
+    setRealCity(cityName);
+    setCity(cityName);
+    setInput(""); // ← aquí està la clau
 
-// 🌞 Dia/nit REAL per la ciutat (no per Mallorca)
-const newLat = data.coord?.lat ?? null;
-const newLon = data.coord?.lon ?? null;
+    // 🌞 Dia/nit REAL per la ciutat (no per Mallorca)
+    const newLat = data.coord?.lat ?? null;
+    const newLon = data.coord?.lon ?? null;
 
-const nowUtc = Math.floor(Date.now() / 1000);
-const tz = data.timezone ?? 0;
-const sunrise = data.sys?.sunrise;
-const sunset = data.sys?.sunset;
-setDay(isDayAtLocation(nowUtc, tz, sunrise, sunset));
+    const nowUtc = Math.floor(Date.now() / 1000);
+    const tz = data.timezone ?? 0;
+    const sunrise = data.sys?.sunrise;
+    const sunset = data.sys?.sunset;
+
+    setDay(isDayAtLocation(nowUtc, tz, sunrise, sunset));
 
 const resolvedName =
   (newLat != null && newLon != null
@@ -1626,96 +1628,136 @@ const contextualUVMessage =
     : "";
 
 function getPrimaryStatusBlock() {
-  // 🔴 ALERTA oficial activa
+  // 🔴 AVÍS OFICIAL ACTIU
   if (alerts.length > 0) {
     return {
       icon: "🚨",
-      title: t("official_alert") || "Avís oficial actiu",
-      text: t("follow_official_alerts") || "Segueix les indicacions oficials i extrema la precaució.",
+      title: t("official_alert") || "Avís meteorològic oficial actiu",
+      text:
+        t("follow_official_alerts") ||
+        "Segueix les indicacions oficials i extrema la precaució.",
       className: "status-card status-alert",
     };
   }
 
-  // 🔥 Calor
-if (primary.kind === "heat") {
-  if (heatRisk?.isExtreme) {
-    return {
-      icon: "🔥",
-      title: `${t("heatRiskLabel")} ${t("heatRisk.extrem")}`,
-      text:
-        t("officialAdviceDynamic.heat.extreme") ||
-        "Evita l’exposició i redueix l’activitat física.",
-      className: "status-card status-danger",
-    };
-  }
+  // 🔥 CALOR
+  if (primary.kind === "heat") {
+    if (heatRisk?.isExtreme) {
+      return {
+        icon: "⛔",
+        title: "Risc extrem per calor",
+        text:
+          t("officialAdviceDynamic.heat.extreme") ||
+          "Evita completament l’exposició i interromp l’activitat física.",
+        className: "status-card status-danger",
+      };
+    }
 
-  if (heatRisk?.isHigh) {
+    if (heatRisk?.isHigh) {
+      return {
+        icon: "🔴",
+        title: "Risc alt per calor",
+        text:
+          t("officialAdviceDynamic.heat.high") ||
+          "Limita l’activitat exterior, hidrata’t sovint i cerca ombra.",
+        className: "status-card status-danger",
+      };
+    }
+
     return {
-      icon: "🌡️",
-      title: `${t("heatRiskLabel")} ${t("heatRisk.alt")}`,
+      icon: "🟠",
+      title: "Risc moderat per calor",
       text:
-        t("officialAdviceDynamic.heat.high") ||
-        "Hidrata’t sovint i limita l’esforç físic.",
+        t("officialAdviceDynamic.heat.moderate") ||
+        "Evita esforços intensos i fes pauses en llocs frescos.",
       className: "status-card status-warning",
     };
   }
 
-  return {
-    icon: "☀️",
-    title: `${t("heatRiskLabel")} ${t("heatRisk.moderat")}`,
-    text:
-      t("officialAdviceDynamic.heat.moderate") ||
-      "Evita exposicions llargues i fes pauses.",
-    className: "status-card status-warning",
-  };
-}
-
-  // ❄️ Fred
+  // ❄️ FRED
   if (primary.kind === "cold") {
+    if (coldRisk === "extrem") {
+      return {
+        icon: "⛔",
+        title: "Risc extrem per fred",
+        text:
+          t("officialAdviceDynamic.cold.extreme") ||
+          "Evita l’exterior. Hi ha risc greu de pèrdua ràpida de calor corporal.",
+        className: "status-card status-cold",
+      };
+    }
+
+    if (coldRisk === "alt" || coldRisk === "molt alt") {
+      return {
+        icon: "🔵",
+        title: "Risc alt per fred",
+        text:
+          t("officialAdviceDynamic.cold.high") ||
+          "Protegeix extremitats i limita el temps d’exposició exterior.",
+        className: "status-card status-cold",
+      };
+    }
+
     return {
       icon: "❄️",
-      title: t("cold_risk_title") || "Risc per fred",
-      text: primaryAdvice || t("officialAdviceDynamic.cold.moderate") || "Abriga’t i protegeix extremitats.",
+      title: "Risc moderat per fred",
+      text:
+        t("officialAdviceDynamic.cold.moderate") ||
+        "Abriga’t per capes i evita exposicions prolongades.",
       className: "status-card status-cold",
     };
   }
 
-  // 💨 Vent (només si hi ha risc real)
-if (
-  primary.kind === "wind" &&
-  windRisk &&
-  ["moderate", "strong", "very_strong"].includes(windRisk)
-) {
-  return {
-    icon: "💨",
-    title: t("wind_risk") || "Risc per vent",
-    text:
-      primaryAdvice ||
-      t(`officialAdviceDynamic.wind.${windRisk}`) ||
-      "Precaució amb objectes lleugers i zones exposades.",
-    className: "status-card status-wind",
-  };
-}
+  // 💨 VENT
+  if (
+    primary.kind === "wind" &&
+    windRisk &&
+    ["moderate", "strong", "very_strong"].includes(windRisk)
+  ) {
+    const windTitles: Record<string, string> = {
+      moderate: "Risc moderat per vent",
+      strong: "Risc alt per vent",
+      very_strong: "Risc molt alt per vent",
+    };
+
+    return {
+      icon: "💨",
+      title: windTitles[windRisk] || "Risc per vent",
+      text:
+        primaryAdvice ||
+        t(`officialAdviceDynamic.wind.${windRisk}`) ||
+        "Assegura objectes lleugers i evita zones exposades.",
+      className: "status-card status-wind",
+    };
+  }
 
   // ☀️ UV
   if (primary.kind === "uv" && day) {
+    let uvTitle = "Radiació UV alta";
+    if (typeof uvi === "number") {
+      if (uvi >= 11) uvTitle = "Radiació UV extrema";
+      else if (uvi >= 8) uvTitle = "Radiació UV molt alta";
+      else if (uvi >= 6) uvTitle = "Radiació UV alta";
+      else uvTitle = "Radiació UV moderada";
+    }
+
     return {
       icon: "☀️",
-      title: t("solar_info") || "Radiació solar",
-      text: primaryAdvice || contextualUVMessage || t("highUVIWarning") || "Protecció solar recomanada.",
+      title: uvTitle,
+      text:
+        primaryAdvice ||
+        contextualUVMessage ||
+        t("highUVIWarning") ||
+        "Utilitza protecció solar i redueix l’exposició directa.",
       className: "status-card status-uv",
     };
   }
 
-  // 🟢 Estat segur
+  // 🟢 SITUACIÓ SEGURA
   return {
     icon: "🟢",
     title: t("safe_conditions") || "Condicions segures",
-    text:
-      primaryAdvice ||
-      (day
-        ? t("safe_conditions_text_day") || "Condicions dins paràmetres normals."
-        : t("safe_conditions_text_night") || "Condicions nocturnes dins paràmetres normals."),
+    text: "No es requereixen mesures especials en aquest moment.",
     className: "status-card status-safe",
   };
 }
@@ -1977,88 +2019,91 @@ return (
         const label = [s.name, s.state, s.country].filter(Boolean).join(", ");
 
         return (
-          <button
-            key={i}
-            type="button"
-            onClick={async () => {
-              const label = [s.name, s.state, s.country].filter(Boolean).join(", ");
+  <button
+    key={i}
+    type="button"
+    onClick={async () => {
+      const label = [s.name, s.state, s.country].filter(Boolean).join(", ");
 
-              setInput(label);
-              setShowSuggestions(false);
-              setShowSearchHelp(false);
-              setErr("");
+      setShowSuggestions(false);
+      setShowSearchHelp(false);
+      setErr("");
 
-              try {
-                setLoading(true);
-                setCurrentSource("search");
-                setDataSource("search");
+      try {
+        setLoading(true);
+        setCurrentSource("search");
+        setDataSource("search");
 
-                const data = await getWeatherByCoords(s.lat, s.lon, lang, API_KEY);
+        const data = await getWeatherByCoords(s.lat, s.lon, lang, API_KEY);
 
-                setData(data);
-                setLat(s.lat);
-                setLon(s.lon);
+        setData(data);
+        setLat(s.lat);
+        setLon(s.lon);
 
-                const nowUtc = Math.floor(Date.now() / 1000);
-                const tz = data.timezone ?? 0;
-                const sunrise = data.sys?.sunrise;
-                const sunset = data.sys?.sunset;
-                setDay(isDayAtLocation(nowUtc, tz, sunrise, sunset));
+        const nowUtc = Math.floor(Date.now() / 1000);
+        const tz = data.timezone ?? 0;
+        const sunrise = data.sys?.sunrise;
+        const sunset = data.sys?.sunset;
+        setDay(isDayAtLocation(nowUtc, tz, sunrise, sunset));
 
-                setCity(label);
-                setRealCity(label);
+        setCity(label);
+        setRealCity(label);
 
-                const tempReal = data.main.temp;
-                setTemp(tempReal);
-                setHi(data.main.feels_like);
-                setHum(data.main.humidity);
-                setClouds(data.clouds?.all ?? 0);
-                setWeatherMain(data.weather?.[0]?.main ?? null);
+        // 🧹 buida la caixa de cerca després de carregar la ciutat
+        setInput("");
+        setTimeout(() => searchInputRef.current?.focus(), 0);
 
-                const wKmH = data.wind.speed * 3.6;
-                setWind(wKmH);
-                setWindKmh(wKmH);
+        const tempReal = data.main.temp;
+        setTemp(tempReal);
+        setHi(data.main.feels_like);
+        setHum(data.main.humidity);
+        setClouds(data.clouds?.all ?? 0);
+        setWeatherMain(data.weather?.[0]?.main ?? null);
 
-                const deg = data.wind.deg ?? null;
-                setWindDeg(deg);
-                setWindDirection(windDegreesToCardinal16(deg, lang));
+        const wKmH = data.wind.speed * 3.6;
+        setWind(wKmH);
+        setWindKmh(wKmH);
 
-                let effForCold = tempReal;
-                let wcVal: number | null = null;
+        const deg = data.wind.deg ?? null;
+        setWindDeg(deg);
+        setWindDirection(windDegreesToCardinal16(deg, lang));
 
-                if (tempReal <= 10 && wKmH >= 5) {
-                  wcVal =
-                    13.12 +
-                    0.6215 * tempReal -
-                    11.37 * Math.pow(wKmH, 0.16) +
-                    0.3965 * tempReal * Math.pow(wKmH, 0.16);
+        let effForCold = tempReal;
+        let wcVal: number | null = null;
 
-                  wcVal = Math.round(wcVal * 10) / 10;
-                  effForCold = wcVal;
-                }
+        if (tempReal <= 10 && wKmH >= 5) {
+          wcVal =
+            13.12 +
+            0.6215 * tempReal -
+            11.37 * Math.pow(wKmH, 0.16) +
+            0.3965 * tempReal * Math.pow(wKmH, 0.16);
 
-                setWc(wcVal);
-                setEffForCold(effForCold);
+          wcVal = Math.round(wcVal * 10) / 10;
+          effForCold = wcVal;
+        }
 
-                const coldRiskValue = getColdRisk(effForCold, wKmH);
-                setColdRisk(coldRiskValue as ColdRisk);
+        setWc(wcVal);
+        setEffForCold(effForCold);
 
-                const rawDesc = (data.weather?.[0]?.description || "").trim();
-                setSky(rawDesc);
-                setIcon(data.weather?.[0]?.icon || "");
+        const coldRiskValue = getColdRisk(effForCold, wKmH);
+        setColdRisk(coldRiskValue as ColdRisk);
 
-                const uv = await getUVFromOpenUV(s.lat, s.lon);
-                setUvi(uv);
+        const rawDesc = (data.weather?.[0]?.description || "").trim();
+        setSky(rawDesc);
+        setIcon(data.weather?.[0]?.icon || "");
 
-                const alerts = await getWeatherAlerts(s.lat, s.lon, lang, API_KEY);
-                setAlerts(alerts || []);
-              } catch (err) {
-                console.error("[DEBUG] Error obtenint dades del suggeriment:", err);
-                setErr(t("errorCity"));
-              } finally {
-                setLoading(false);
-              }
-            }}
+        const uv = await getUVFromOpenUV(s.lat, s.lon);
+        setUvi(uv);
+
+        const alerts = await getWeatherAlerts(s.lat, s.lon, lang, API_KEY);
+        setAlerts(alerts || []);
+      } catch (err) {
+        console.error("[DEBUG] Error obtenint dades del suggeriment:", err);
+        setErr(t("errorCity"));
+      } finally {
+        setLoading(false);
+      }
+    }}
             style={{
               display: "block",
               width: "100%",

@@ -1,7 +1,7 @@
 import * as React from "react";
 import { getHeatRisk } from "../utils/heatRisk";
 
-type Lang = "ca" | "es" | "eu" | "gl";
+type Lang = "ca" | "es" | "eu" | "gl" | "en";
 
 interface Props {
   temp: number;
@@ -9,61 +9,126 @@ interface Props {
   className?: string;
 }
 
-const LABEL: Record<Lang, string> = {
-  ca: "Risc actual:",
-  es: "Riesgo actual:",
-  eu: "Uneko arriskua:",
-  gl: "Risco actual:",
+type RawLevel = "Cap risc" | "Baix" | "Moderat" | "Alt" | "Extrem";
+type UiLevel = "safe" | "mild" | "moderate" | "high" | "ext";
+
+const LEVEL_CLASS: Record<RawLevel, UiLevel> = {
+  "Cap risc": "safe",
+  Baix: "mild",
+  Moderat: "moderate",
+  Alt: "high",
+  Extrem: "ext",
 };
 
-const HEAT_LABEL: Record<Lang, string> = {
-  ca: "Risc per calor:",
-  es: "Riesgo por calor:",
-  eu: "Bero arriskua:",
-  gl: "Risco por calor:",
+const ICON_BY_LEVEL: Record<RawLevel, string> = {
+  "Cap risc": "🟢",
+  Baix: "🟡",
+  Moderat: "🟠",
+  Alt: "🔴",
+  Extrem: "⛔",
 };
 
-const COLD_LABEL: Record<Lang, string> = {
-  ca: "Risc per fred:",
-  es: "Riesgo por frío:",
-  eu: "Hotz arriskua:",
-  gl: "Risco por frío:",
+const HEAT_TEXT: Record<RawLevel, Record<Lang, string>> = {
+  "Cap risc": {
+    ca: "Condicions segures",
+    es: "Condiciones seguras",
+    eu: "Baldintza seguruak",
+    gl: "Condicións seguras",
+    en: "Safe conditions",
+  },
+  Baix: {
+    ca: "Precaució lleu per calor",
+    es: "Precaución leve por calor",
+    eu: "Beroagatik kontuz",
+    gl: "Precaución leve por calor",
+    en: "Mild heat caution",
+  },
+  Moderat: {
+    ca: "Risc moderat per calor",
+    es: "Riesgo moderado por calor",
+    eu: "Bero arrisku ertaina",
+    gl: "Risco moderado por calor",
+    en: "Moderate heat risk",
+  },
+  Alt: {
+    ca: "Risc alt per calor",
+    es: "Riesgo alto por calor",
+    eu: "Bero arrisku handia",
+    gl: "Risco alto por calor",
+    en: "High heat risk",
+  },
+  Extrem: {
+    ca: "Risc extrem per calor",
+    es: "Riesgo extremo por calor",
+    eu: "Bero arrisku muturrekoa",
+    gl: "Risco extremo por calor",
+    en: "Extreme heat risk",
+  },
 };
 
-const LEVEL: Record<
-  "Cap risc" | "Baix" | "Moderat" | "Alt" | "Extrem",
-  Record<Lang, string>
-> = {
-  "Cap risc": { ca: "Cap risc", es: "Sin riesgo", eu: "Arriskurik ez", gl: "Sen risco" },
-  Baix: { ca: "Baix", es: "Bajo", eu: "Baxua", gl: "Baixo" },
-  Moderat: { ca: "Moderat", es: "Moderado", eu: "Moderatua", gl: "Moderado" },
-  Alt: { ca: "Alt", es: "Alto", eu: "Handia", gl: "Alto" },
-  Extrem: { ca: "Extrem", es: "Extremo", eu: "Larri", gl: "Extremo" },
+const COLD_TEXT: Record<RawLevel, Record<Lang, string>> = {
+  "Cap risc": {
+    ca: "Condicions segures",
+    es: "Condiciones seguras",
+    eu: "Baldintza seguruak",
+    gl: "Condicións seguras",
+    en: "Safe conditions",
+  },
+  Baix: {
+    ca: "Fred lleu",
+    es: "Frío leve",
+    eu: "Hotz arina",
+    gl: "Frío leve",
+    en: "Mild cold",
+  },
+  Moderat: {
+    ca: "Risc moderat per fred",
+    es: "Riesgo moderado por frío",
+    eu: "Hotz arrisku ertaina",
+    gl: "Risco moderado por frío",
+    en: "Moderate cold risk",
+  },
+  Alt: {
+    ca: "Risc alt per fred",
+    es: "Riesgo alto por frío",
+    eu: "Hotz arrisku handia",
+    gl: "Risco alto por frío",
+    en: "High cold risk",
+  },
+  Extrem: {
+    ca: "Risc extrem per fred",
+    es: "Riesgo extremo por frío",
+    eu: "Hotz arrisku muturrekoa",
+    gl: "Risco extremo por frío",
+    en: "Extreme cold risk",
+  },
 };
+
+function normalizeLevel(level: unknown): RawLevel {
+  const value = String(level ?? "").trim();
+
+  if (value === "Baix") return "Baix";
+  if (value === "Moderat") return "Moderat";
+  if (value === "Alt") return "Alt";
+  if (value === "Extrem") return "Extrem";
+  return "Cap risc";
+}
 
 export default function RiskLevelDisplay({ temp, lang, className }: Props) {
   const { level } = getHeatRisk(temp, "rest");
+  const normalizedLevel = normalizeLevel(level);
 
-  const levelClass: Record<
-    "Cap risc" | "Baix" | "Moderat" | "Alt" | "Extrem",
-    string
-  > = {
-    "Cap risc": "safe",
-    Baix: "mild",
-    Moderat: "moderate",
-    Alt: "high",
-    Extrem: "ext",
-  };
+  const isCold = temp <= 10 && normalizedLevel !== "Cap risc";
+  const text = isCold
+    ? COLD_TEXT[normalizedLevel][lang]
+    : HEAT_TEXT[normalizedLevel][lang];
 
-  let labelText = LABEL[lang];
-  if (temp >= 27) labelText = HEAT_LABEL[lang];
-  else if (temp <= 10) labelText = COLD_LABEL[lang];
+  const icon = ICON_BY_LEVEL[normalizedLevel];
 
   return (
     <h2 className={className}>
-      {labelText}{" "}
-      <span className={`risk-level ${levelClass[level]}`}>
-        {LEVEL[level][lang]}
+      <span className={`risk-level ${LEVEL_CLASS[normalizedLevel]}`}>
+        {icon} {text}
       </span>
     </h2>
   );

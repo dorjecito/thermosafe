@@ -89,7 +89,7 @@ export default function SafetyActions({
     lines.push("ThermoSafe · INSST · AEMET");
     lines.push("");
     lines.push("🍎 iOS: https://thermosafe.app");
-    lines.push("🤖 Android: https://play.google.com/store/apps/details?id=app.thermosafe");
+    lines.push("🤖 Android: https://play.google.com/store/apps/details?id=app.vercel.thermosafe.twa");
 
     const text = lines.join("\n");
 
