@@ -42,7 +42,7 @@
   "toggleLegend": "ℹ️ Show/Hide UV scale",
   
   "safe_conditions": "Safe conditions",
-  "safe_conditions_text_day": "Conditions within normal parameters.",
+  "safe_conditions_text_day": "No special measures are required at the moment.",
   "safe_conditions_text_night": "Night-time conditions within normal parameters.",
   "official_alert": "Official alert active",
   "follow_official_alerts": "Follow official guidance and exercise caution.",
@@ -277,6 +277,10 @@
     "toggle": "Show/Hide phototype information"
   },
 
+  "risk": {
+  "current": "Current risk"
+},
+
   "share": "Share",
   "show_advice": "Show recommendations",
   "hide_advice": "Hide recommendations",
@@ -305,7 +309,7 @@
     },
     "uv": {
       "moderate": "Apply SPF 30+ sunscreen and wear sunglasses.",
-      "high": "Avoid sun from 12:00 to 16:00, hydrate, and use higher protection.",
+      "high": "Avoid direct sun exposure during the central hours of the day. Stay hydrated and use high sun protection.",
       "very_high": "Maximum protection: long-sleeved shirt, cap/hat, sunglasses, and SPF 50+.",
       "extreme": "Avoid sun exposure. Extreme risk of eye and skin damage."
     }
@@ -314,7 +318,7 @@
   "official_advice": {
     "hydration": "Hydrate regularly, even if you are not thirsty.",
     "rest": "Rest in the shade during prolonged activity.",
-    "sunAvoid": "Avoid intense sun between 12:00 and 16:00.",
+    "sunAvoid": "Avoid direct sun exposure during the middle of the day.",
     "coldClothes": "In cold weather, wear layers and windproof protection.",
     "limitExposure": "Limit time outdoors.",
     "protectExtremities": "Protect hands, ears, and extremities.",

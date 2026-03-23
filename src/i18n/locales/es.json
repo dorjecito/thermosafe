@@ -50,7 +50,7 @@
   "toggleLegend": "ℹ️ Mostrar/Ocultar escala UV",
 
   "safe_conditions": "Condiciones seguras",
-  "safe_conditions_text_day": "Condiciones dentro de parámetros normales.",
+  "safe_conditions_text_day": "No se requieren medidas especiales en este momento.",
   "safe_conditions_text_night": "Condiciones nocturnas dentro de parámetros normales.",
   "official_alert": "Aviso oficial activo",
   "follow_official_alerts": "Sigue las indicaciones oficiales y extrema la precaución.",
@@ -161,6 +161,9 @@
     "molt_alt": "muy alto",
     "extrem": "extremo"
   },
+  "risk": {
+  "current": "Riesgo actual"
+},
 
   "cold_risk_title": "Riesgo por frío",
   "wind_chill": "Temperatura efectiva",
@@ -294,7 +297,7 @@
     },
     "uv": {
       "moderate": "Aplica protección solar SPF 30+ y utiliza gafas de sol.",
-      "high": "Evita el sol de 12 h a 16 h, hidrátate y usa protección elevada.",
+      "high": "Evita el sol durante las horas centrales del día. Hidrátate y utiliza protección solar elevada.",
       "very_high": "Protección máxima: camisa, gorra, gafas de sol y SPF 50+.",
       "extreme": "Evita exponerte al sol. Riesgo extremo de daño cutáneo y ocular."
     }
@@ -310,7 +313,7 @@
   "official_advice": {
     "hydration": "Hidrátate con regularidad, aunque no tengas sed.",
     "rest": "Descansa en zonas de sombra durante actividades prolongadas.",
-    "sunAvoid": "Evita el sol intenso entre las 12 h y las 16 h.",
+    "sunAvoid": "Evita la exposición directa al sol durante las horas centrales del día.",
     "coldClothes": "Con frío, utiliza varias capas de ropa y cortavientos.",
     "limitExposure": "Limita el tiempo de exposición al exterior.",
     "protectExtremities": "Protege manos, orejas y extremidades.",

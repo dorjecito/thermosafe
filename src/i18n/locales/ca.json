@@ -16,6 +16,7 @@
   "uvi": "🔆 Índex UV",
   "wind": "💨 Velocitat del vent",
   "wind_risk": "Risc per vent",
+  
 
   "loading": "Carregant dades meteorològiques...",
   "errorGPS": "No s'ha pogut obtenir la temperatura per GPS.",
@@ -28,7 +29,7 @@
   "toggleLegend": "ℹ️ Mostra/Amaga escala UV",
   
   "safe_conditions": "Condicions segures",
-  "safe_conditions_text_day": "Condicions dins paràmetres normals.",
+  "safe_conditions_text_day": "No es requereixen mesures especials en aquest moment.",
   "safe_conditions_text_night": "Condicions nocturnes dins paràmetres normals.",
   "official_alert": "Avís oficial actiu",
   "follow_official_alerts": "Segueix les indicacions oficials i extrema la precaució.",
@@ -62,6 +63,9 @@
     "high": "Risc alt",
     "extreme": "Risc extrem"
   },
+  "risk": {
+  "current": "Risc actual"
+},
 
   "skin": {
   "toggle": "Mostra/Oculta informació del fototip"
@@ -286,7 +290,7 @@
     },
     "uv": {
       "moderate": "Aplica protecció solar SPF 30+ i utilitza ulleres de sol.",
-      "high": "Evita el sol de 12 h a 16 h, hidrata’t i utilitza protecció elevada.",
+      "high": "Evita el sol en les hores centrals del dia. Hidrata’t i utilitza protecció solar elevada.",
       "very_high": "Protecció màxima: camisa, gorra, ulleres i SPF 50+.",
       "extreme": "Evita exposar-te al sol. Risc extrem de dany ocular i cutani."
     }
@@ -295,7 +299,7 @@
   "official_advice": {
     "hydration": "Hidrata’t amb regularitat, encara que no tinguis set.",
     "rest": "Descansa en zones d’ombra durant activitats prolongades.",
-    "sunAvoid": "Evita el sol intens entre les 12 h i les 16 h.",
+    "sunAvoid": "Evita el sol intens durant les hores centrals del dia.",
     "coldClothes": "Amb fred, utilitza capes de roba i protecció tallavents.",
     "limitExposure": "Limita el temps d’exposició exterior.",
     "protectExtremities": "Protegeix mans, orelles i extremitats.",

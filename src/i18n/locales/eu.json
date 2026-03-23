@@ -51,7 +51,7 @@
   "toggleLegend": "ℹ️ Erakutsi/Ezkutatu UV eskala",
 
   "safe_conditions": "Baldintza seguruak",
-  "safe_conditions_text_day": "Baldintzak parametro normalen barruan.",
+  "safe_conditions_text_day": "Ez da neurri berezirik behar une honetan.",
   "safe_conditions_text_night": "Gaueko baldintzak parametro normalen barruan.",
   "official_alert": "Abisu ofiziala aktibo",
   "follow_official_alerts": "Jarraitu jarraibide ofizialak eta hartu neurri handiagoak.",
@@ -256,6 +256,10 @@
   "toggle": "Erakutsi/Ezkutatu fototipoaren informazioa"
 },
 
+"risk": {
+  "current": "Uneko arriskua"
+},
+
 "share": "Partekatu",
 "show_advice": "Gomendioak erakutsi",
 "hide_advice": "Gomendioak ezkutatu",
@@ -285,7 +289,7 @@
   },
   "uv": {
     "moderate": "Erabili SPF 30+ eguzki-babesa eta eguzkitako betaurrekoak.",
-    "high": "Saihestu eguzkia 12:00–16:00 artean, hidratatu eta babes handiagoa erabili.",
+    "high": "Saihestu eguzkia eguneko ordu zentraletan. Hidratatu zaitez eta erabili eguzki-babes handia.",
     "very_high": "Babes maximoa: alkandora, txanoa, betaurrekoak eta SPF 50+.",
     "extreme": "Saihestu eguzkitan egotea. Arrisku oso handia azal eta begietarako."
   }
@@ -294,7 +298,7 @@
 "official_advice": {
   "hydration": "Ura edan aldizka, egarri ez baduzu ere.",
   "rest": "Atseden hartu itzaletan jarduera luzeetan.",
-  "sunAvoid": "Saihestu eguzki intentsua 12:00etatik 16:00etara.",
+  "sunAvoid": "Saihestu eguzkiaren esposizio zuzena eguneko ordu zentraletan.",
   "coldClothes": "Hotzarekin, erabili arropa-geruzak eta haize-babesak.",
   "limitExposure": "Mugatu kanpoan emandako denbora.",
   "protectExtremities": "Babestu eskuak, belarriak eta gorputz-adarrak.",

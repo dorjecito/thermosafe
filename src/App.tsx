@@ -390,6 +390,50 @@ useEffect(() => {
   const [showSearchHelp, setShowSearchHelp] = useState(false);
   const searchBoxRef = useRef<HTMLDivElement | null>(null);
 
+  function getRiskIcons(
+  heatRisk: any,
+  coldRisk: string | null,
+  windRisk: string | null,
+  uvi: number | null
+) {
+  const icons: string[] = [];
+
+  // ☀️ calor / UV
+  if (
+    (typeof uvi === "number" && uvi >= 6) ||
+    heatRisk?.isHigh ||
+    heatRisk?.isExtreme
+  ) {
+    icons.push("☀️");
+  }
+
+  // ❄️ fred
+  if (
+    coldRisk === "moderat" ||
+    coldRisk === "alt" ||
+    coldRisk === "molt alt" ||
+    coldRisk === "extrem"
+  ) {
+    icons.push("❄️");
+  }
+
+  // 💨 vent
+  if (
+    windRisk === "moderate" ||
+    windRisk === "strong" ||
+    windRisk === "very_strong"
+  ) {
+    icons.push("💨");
+  }
+
+  // 🌤️ si no hi ha cap risc destacable
+  if (icons.length === 0) {
+    icons.push("🌤️");
+  }
+
+  return icons.join("");
+}
+
  useEffect(() => {
   const handleClickOutside = (event: MouseEvent) => {
     if (!searchBoxRef.current) return;
@@ -1755,11 +1799,11 @@ function getPrimaryStatusBlock() {
 
   // 🟢 SITUACIÓ SEGURA
   return {
-    icon: "🟢",
-    title: t("safe_conditions") || "Condicions segures",
-    text: "No es requereixen mesures especials en aquest moment.",
-    className: "status-card status-safe",
-  };
+  icon: "🟢",
+  title: t("safe_conditions"),
+  text: t("safe_conditions_text_day"),
+  className: "status-card status-safe",
+};
 }
 
 const primaryStatus = getPrimaryStatusBlock();
@@ -1877,6 +1921,14 @@ function getUVBrainMessage(uvi: number | null, lang: string = "ca") {
   if (uvi < 11) return "Risc molt alt. Evita el sol en hores centrals.";
   return "Risc extrem. Evita el sol i protegeix-te al màxim.";
 }
+
+const riskIcons = getRiskIcons(
+  heatRisk,
+  coldRisk,
+  windRisk,
+  uvi
+)
+
   //Return ok
 
 return (
@@ -1888,7 +1940,9 @@ return (
       </div>
 
       <div className="app-header">
-        <h1 className={appTitleClass}>{t("title")}</h1>
+        <h1 className={appTitleClass}>
+  ThermoSafe – {t("risk.current")} {riskIcons}
+</h1>
       </div>
 
       <div ref={searchBoxRef} style={{ position: "relative" }}>
