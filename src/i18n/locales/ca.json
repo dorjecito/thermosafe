@@ -17,6 +17,12 @@
   "wind": "💨 Velocitat del vent",
   "wind_risk": "Risc per vent",
   
+  "combinedRisk": {
+  "highTitle": "Combinació de riscos rellevant",
+  "highText": "Hi ha diversos factors de risc simultanis. Redueix l’exposició i extrema la precaució.",
+  "extremeTitle": "Combinació de risc molt elevada",
+  "extremeText": "La combinació actual de condicions meteorològiques exigeix màxima precaució i limitació de l’exposició exterior."
+},
 
   "loading": "Carregant dades meteorològiques...",
   "errorGPS": "No s'ha pogut obtenir la temperatura per GPS.",

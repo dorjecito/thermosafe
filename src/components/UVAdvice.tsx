@@ -5,6 +5,8 @@ type Lang = "ca" | "es" | "eu" | "gl" | "en";
 interface UVAdviceProps {
   uvi: number | null;
   lang: string; // pot venir com "ca-ES", etc.
+  weatherMain?: string | null;
+  cloudiness?: number | null;
 }
 
 const texts = {
@@ -18,6 +20,9 @@ const texts = {
       "Evita el sol en hores centrals i utilitza protecció màxima.",
       "Evita totalment l’exposició solar. Risc molt elevat.",
     ],
+    cloudyNote: "La nuvolositat pot reduir parcialment l’exposició, però la radiació UV continua present.",
+    rainyNote: "Tot i la pluja o els núvols, la radiació UV pot continuar afectant.",
+    noData: "Sense dades UV disponibles.",
   },
   es: {
     idx: "Índice UV",
@@ -29,6 +34,9 @@ const texts = {
       "Evita el sol en horas centrales y usa protección máxima.",
       "Evita totalmente la exposición solar. Riesgo muy elevado.",
     ],
+    cloudyNote: "La nubosidad puede reducir parcialmente la exposición, pero la radiación UV sigue presente.",
+    rainyNote: "Aunque haya lluvia o nubes, la radiación UV puede seguir afectando.",
+    noData: "Sin datos UV disponibles.",
   },
   eu: {
     idx: "UV indizea",
@@ -37,9 +45,12 @@ const texts = {
       "Babes minimoa behar da.",
       "12etatik 16etara eguzkia saihestu. Babes gehigarria.",
       "12etatik 16etara eguzkia saihestu. Babes gehigarria.",
-      "Eguneko ordu nagusietan saihestu eguzkia eta babes maximoa erabili.",
+      "Eguerdiko orduetan eguzkia saihestu eta babes handiena erabili.",
       "Saihestu guztiz eguzki-esposizioa. Arrisku oso handia.",
     ],
+    cloudyNote: "Hodeitasunak esposizioa neurri batean murriztu dezake, baina UV erradiazioak hor jarraitzen du.",
+    rainyNote: "Euria edo hodeiak egonda ere, UV erradiazioak eragina izan dezake.",
+    noData: "Ez dago UV daturik eskuragarri.",
   },
   gl: {
     idx: "Índice UV",
@@ -51,6 +62,9 @@ const texts = {
       "Evita o sol nas horas centrais e usa protección máxima.",
       "Evita totalmente a exposición solar. Risco moi elevado.",
     ],
+    cloudyNote: "A nubosidade pode reducir parcialmente a exposición, pero a radiación UV segue presente.",
+    rainyNote: "Mesmo con choiva ou nubes, a radiación UV pode seguir afectando.",
+    noData: "Non hai datos UV dispoñibles.",
   },
   en: {
     idx: "UV index",
@@ -62,6 +76,9 @@ const texts = {
       "Avoid peak hours and use maximum protection.",
       "Avoid sun exposure completely. Very high risk.",
     ],
+    cloudyNote: "Cloud cover may partly reduce exposure, but UV radiation is still present.",
+    rainyNote: "Even with rain or clouds, UV radiation may still affect you.",
+    noData: "No UV data available.",
   },
 } as const;
 
@@ -73,17 +90,35 @@ const normalizeLang = (lang: string): Lang => {
   return (["ca", "es", "eu", "gl", "en"] as const).includes(primary) ? primary : "ca";
 };
 
-// ✅ Clamp a 0
 const safeUvi = (uvi: number) => Math.max(0, uvi);
 
-// ✅ Bandes OMS/WHO (0–2, 3–5, 6–7, 8–10, 11+)
-// IMPORTANT: classificar amb el mateix valor que es mostra (1 decimal)
-const band = (uviRounded1: number) => {
+const band = (uviRounded1: number): 0 | 1 | 2 | 3 | 4 => {
   const u = safeUvi(uviRounded1);
-  return u < 3 ? 0 : u < 6 ? 1 : u < 8 ? 2 : u < 11 ? 3 : 4;
+  if (u < 3) return 0;
+  if (u < 6) return 1;
+  if (u < 8) return 2;
+  if (u < 11) return 3;
+  return 4;
 };
 
-const UVAdvice: React.FC<UVAdviceProps> = ({ uvi, lang }) => {
+const isRainyWeather = (weatherMain?: string | null): boolean => {
+  return (
+    weatherMain === "Rain" ||
+    weatherMain === "Drizzle" ||
+    weatherMain === "Thunderstorm"
+  );
+};
+
+const isVeryCloudy = (cloudiness?: number | null): boolean => {
+  return typeof cloudiness === "number" && cloudiness >= 85;
+};
+
+const UVAdvice: React.FC<UVAdviceProps> = ({
+  uvi,
+  lang,
+  weatherMain,
+  cloudiness,
+}) => {
   const lng = normalizeLang(lang);
   const L = texts[lng];
 
@@ -99,15 +134,24 @@ const UVAdvice: React.FC<UVAdviceProps> = ({ uvi, lang }) => {
         }}
       >
         <strong>🔆 {L.idx}: —</strong>
+        <p style={{ marginTop: ".5rem" }}>{L.noData}</p>
       </div>
     );
   }
 
-  // ✅ 1) Clamp + 2) arrodonim a 1 decimal (això és el que mostrarem)
   const u = Number(safeUvi(uvi).toFixed(1));
-
-  // ✅ classifiquem amb el mateix valor arrodonit que mostrem (evita 3.0 → "Baix (0–2)")
   const b = band(u);
+
+  const rainy = isRainyWeather(weatherMain);
+  const veryCloudy = isVeryCloudy(cloudiness);
+
+  let extraNote: string | null = null;
+
+  if (rainy) {
+    extraNote = L.rainyNote;
+  } else if (veryCloudy && u >= 3) {
+    extraNote = L.cloudyNote;
+  }
 
   return (
     <div
@@ -123,7 +167,15 @@ const UVAdvice: React.FC<UVAdviceProps> = ({ uvi, lang }) => {
         🔆 {L.idx}: {u.toFixed(1)} — {L.levels[b]}
       </strong>
 
-      {L.msgs[b] ? <p style={{ marginTop: ".5rem" }}>{L.msgs[b]}</p> : null}
+      <p style={{ marginTop: ".5rem", marginBottom: extraNote ? ".4rem" : 0 }}>
+        {L.msgs[b]}
+      </p>
+
+      {extraNote && (
+        <p style={{ marginTop: 0, fontSize: "0.95rem", opacity: 0.9 }}>
+          {extraNote}
+        </p>
+      )}
     </div>
   );
 };

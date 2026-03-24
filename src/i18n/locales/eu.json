@@ -26,6 +26,13 @@
   "strong_wind": "Indartsua",
   "very_strong_wind": "Oso indartsua",
 
+  "combinedRisk": {
+  "highTitle": "Arrisku-konbinazio nabarmena",
+  "highText": "Arrisku-faktore batzuk aldi berean daude. Murriztu esposizioa eta hartu neurri handiagoak.",
+  "extremeTitle": "Arrisku-konbinazio oso handia",
+  "extremeText": "Egungo baldintza meteorologikoen konbinazioak arreta handiena eta kanpoko esposizioa mugatzea eskatzen du."
+}, 
+
   "caution_outdoors": "Kontuz kanpoan",
   "take_extreme_caution": "Saihestu aire libreko jarduerak",
   "wind_alert_label": "Haize bortitzaren abisuak jaso",

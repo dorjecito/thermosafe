@@ -48,6 +48,13 @@
   "follow_official_alerts": "Follow official guidance and exercise caution.",
   "safe_conditions_text_night_warm": "Elevated night-time temperatures. Ensure cross ventilation and wear light clothing.",
 
+  "combinedRisk": {
+  "highTitle": "Relevant combination of risks",
+  "highText": "Several risk factors are present simultaneously. Reduce exposure and exercise extra caution.",
+  "extremeTitle": "Very high combined risk",
+  "extremeText": "The current combination of weather conditions requires maximum caution and limited outdoor exposure."
+},
+
   "push": {
     "label": "Receive alerts when heat risk ≥ moderate",
     "enabled": "Alerts enabled. You will receive notifications when risk is moderate or higher.",

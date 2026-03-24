@@ -27,6 +27,21 @@ import { getUVFromOpenUV } from "./services/openUV";
    import { getCoords } from "./utils/geolocation";
    import { getContextualUVMessage } from "./utils/getContextualUVMessage";
    import { getWorkWindow, getWorkWindowText, getWorkWindowTitle } from "./utils/workWindow";
+   import { getCombinedRiskLevel } from "./utils/combinedRisk";
+   import { getRiskIcons } from "./utils/getRiskIcons";
+   import { getColdRisk, type ColdRisk } from "./utils/getColdRisk";
+   import { getAlertIcon } from "./utils/getAlertIcon";
+   import { pickPrimaryRisk, type PrimaryKind, type Severity } from "./utils/PickPrimaryRisk";
+   import { calcHI } from "./utils/calcHI";
+   import { isDayAtLocation } from "./utils/isDayAtLocation";
+   import { getPrimaryStatusBlock } from "./utils/getPrimaryStatusBlock";
+   import { getPrimaryAdviceText } from "./utils/getPrimaryAdviceText";
+   import { formatLastUpdate } from "./utils/formatLastUpdate";
+   import { getRemainingTime } from "./utils/getRemainingTime";
+   import { normalizeLang } from "./utils/normalizeLang";
+   import { safeUVFetch } from "./utils/safeUVFetch";
+   import { fetchSolarIrr } from "./utils/fetchSolarIrr";
+   import UVContextCard from "./components/UVContextCard";
    
    /* —— components ————————————————————————— */
    import Recommendations     from './components/Recommendations';
@@ -102,75 +117,6 @@ function useStableValue<T>(value: T, delay = 800): T {
   return stable;
 }
 
-function normalizeLang(lng: string): "ca" | "es" | "eu" | "gl" | "en" {
-  const s = lng.slice(0, 2);
-  if (s === "ca" || s === "es" || s === "eu" || s === "gl" || s === "en" ) return s;
-  return "ca";
-}
-
-/* ──────── constants & helpers ──────── */
-const calcHI = (t: number, h: number) => {
-  /* Heat-Index – Rothfusz regression */
-  const hi =
-    -8.784695 +
-    1.61139411 * t +
-    2.338549 * h -
-    0.14611605 * t * h -
-    0.012308094 * t * t -
-    0.016424828 * h * h +
-    0.002211732 * t * t * h +
-    0.00072546 * t * h * h -
-    0.000003582 * t * t * h * h;
-  return Math.round(hi * 10) / 10;
-};
-
-// =========================
-// 🌍 Dia/nit REAL segons la ciutat consultada (timezone + sunrise/sunset)
-// =========================
-function isDayAtLocation(
-  nowUtcSec: number,
-  timezoneOffsetSec: number,
-  sunriseUtcSec?: number,
-  sunsetUtcSec?: number
-): boolean {
-  // fallback: si no tenim sunrise/sunset, assumim "dia" (o el que tu vulguis)
-  if (!sunriseUtcSec || !sunsetUtcSec) return true;
-
-  const localNow = nowUtcSec + timezoneOffsetSec;
-  const localSunrise = sunriseUtcSec + timezoneOffsetSec;
-  const localSunset = sunsetUtcSec + timezoneOffsetSec;
-
-  return localNow >= localSunrise && localNow < localSunset;
-}
-
-// =========================
-// 🌞 Funció central UV amb control estacional
-// =========================
-
-// =========================
-// 🌞 Funció central UV (bloqueja OpenUV si és nit A LA CIUTAT)
-// =========================
-async function safeUVFetch(
-  lat: number,
-  lon: number,
-  isDay: boolean
-): Promise<number | null> {
-
-  if (!isDay) {
-  console.log("[UV] Nit a la ubicació consultada → no es consulta OpenUV");
-  return 0; // UV nocturn = 0
-}
-
-  try {
-    console.log("[UV] És de dia a la ubicació → consultant OpenUV…");
-    const uv = await getUVFromOpenUV(lat, lon);
-    return typeof uv === "number" ? uv : null;
-  } catch (err) {
-    console.error("[UV] Error consultant OpenUV:", err);
-    return null;
-  }
-}
-
 // ── Llindars per INSST (adaptats)
 const TH = { MODERATE: 27, HIGH: 32, VERY_HIGH: 41 } as const;
 
@@ -191,20 +137,6 @@ async function sendIfAtLeastModerate(hi: number | null) {
     console.error("Error enviant notificació:", err);
   }
 }
-
-const fetchSolarIrr = async (lat: number, lon: number, d: string) => {
-  try {
-     const cleanDate = d.replaceAll("-", ""); // elimina els guions → "20250824"
-  const url = 
-    `https://power.larc.nasa.gov/api/temporal/daily/point?parameters=ALLSKY_SFC_SW_DWN&start=${cleanDate}` +
-    `&end=${cleanDate}&latitude=${lat}&longitude=${lon}&format=JSON&community=re`;
-    const r = await fetch(url);
-    const j = await r.json();
-    return j.properties.parameter.ALLSKY_SFC_SW_DWN[d] ?? null;
-  } catch {
-    return null;
-  }
-};
 
 async function askNotificationPermission(): Promise<boolean> {
   if (!("Notification" in window)) return false;
@@ -237,6 +169,7 @@ export default function App() {
   type SkinType = 1 | 2 | 3 | 4 | 5 | 6;
   const [skinType, setSkinType] = useState<SkinType>(3);
   const [showSkinInfo, setShowSkinInfo] = useState(false);
+   const searchInputRef = useRef<HTMLInputElement | null>(null);
   
 
   // ✅ Traducció segura: si falta la clau, torna un fallback llegible
@@ -246,20 +179,6 @@ export default function App() {
   };
 
   const langUI = i18n.language; // ex: "en", "en-US", "ca"
-
-  const getRemainingTime = (endUnix: number, lang: string) => {
-    const now = Date.now() / 1000;
-    const diff = Math.floor(endUnix - now);
-
-    if (diff <= 0) return t("alert_time.ended");
-
-    const hours = Math.floor(diff / 3600);
-    const minutes = Math.floor((diff % 3600) / 60);
-
-    if (hours > 0) return t("alert_time.remaining_hours", { hours, minutes });
-
-    return t("alert_time.remaining_minutes", { minutes });
-}
 
 /* 🔔 Estat global per activar/desactivar alertes meteorològiques */
 const [notificationsEnabled, setNotificationsEnabled] = useState<boolean>(() => {
@@ -390,51 +309,6 @@ useEffect(() => {
   const [showSearchHelp, setShowSearchHelp] = useState(false);
   const searchBoxRef = useRef<HTMLDivElement | null>(null);
 
-  function getRiskIcons(
-  heatRisk: { isHigh?: boolean; isExtreme?: boolean } | null,
-  coldRisk: string | null,
-  windRisk: string | null,
-  uvi: number | null
-): string[] {
-  const icons = new Set<string>();
-
-  // ☀️ calor / UV
-  if (
-    (typeof uvi === "number" && uvi >= 6) ||
-    heatRisk?.isHigh ||
-    heatRisk?.isExtreme
-  ) {
-    icons.add("☀️");
-  }
-
-  // ❄️ fred
-  if (
-    coldRisk === "lleu" ||
-    coldRisk === "moderat" ||
-    coldRisk === "alt" ||
-    coldRisk === "molt alt" ||
-    coldRisk === "extrem"
-  ) {
-    icons.add("❄️");
-  }
-
-  // 💨 vent
-  if (
-    windRisk === "moderate" ||
-    windRisk === "strong" ||
-    windRisk === "very_strong"
-  ) {
-    icons.add("💨");
-  }
-
-  // 🌤️ sense risc destacable
-  if (icons.size === 0) {
-    return ["🌤️"];
-  }
-
-  return Array.from(icons);
-}
-
  useEffect(() => {
   const handleClickOutside = (event: MouseEvent) => {
     if (!searchBoxRef.current) return;
@@ -452,7 +326,6 @@ useEffect(() => {
     document.removeEventListener("click", handleClickOutside);
   };
 }, []); 
-
 
 // ☁️ Estat del cel
 const [sky, setSky] = useState<string>('');
@@ -542,32 +415,6 @@ useEffect(() => {
 
   return () => clearTimeout(timer);
 }, [currentSource]);
-
-type ColdRisk =
-  | "cap"
-  | "lleu"
-  | "moderat"
-  | "alt"
-  | "molt alt"
-  | "extrem";
-
-/** === RISC PER FRED · VERSIÓ PRO === */
-function getColdRisk(tempEff: number | null, windKmh: number | null): ColdRisk {
-  // Validació mínima
-  if (tempEff === null || isNaN(tempEff)) return "cap";
-
-  // 🧊 PRIORITAT: només risc si fa fred de debò (≤ 0°C)
-  if (tempEff > 0) return "cap";
-
-  // Classificació científica segons temperatura efectiva (wind-chill real)
-  if (tempEff <= -40) return "extrem";     // Mort en minuts (Dudinka, Yakutia, Alaska)
-  if (tempEff <= -25) return "molt alt";   // Frostbite molt ràpid
-  if (tempEff <= -15) return "alt";        // Risc sever si s'està a l'exterior
-  if (tempEff <= -5)  return "moderat";    // Risc moderat segons exposició
-  if (tempEff <= 0)   return "lleu";       // Llegendament perillós
-
-  return "cap";
-} 
 
 /* === [COLD] notifier amb cooldown (multilingüe i sense error await) === */
 const COLD_ALERT_MIN_INTERVAL_MIN = 60; // 1 hora
@@ -1391,115 +1238,6 @@ async function maybeNotifyHeat(hi: number | null) {
   }
 }
 
-function formatLastUpdate(timestamp: number): string {
-  const now = Date.now() / 1000;
-  const diff = Math.floor(now - timestamp);
-
-  if (diff < 60) return `${diff} s`;
-  if (diff < 3600) return `${Math.floor(diff / 60)} min`;
-  const h = Math.floor(diff / 3600);
-  return `${h} h`;
-}
-
-// ============================================================
-// 🎯 PRIORITAT DE RISC (principal vs secundari)
-// Regla: Severitat primer, després: Calor > Fred > Vent > UV
-// ============================================================
-
-type PrimaryKind = "heat" | "cold" | "wind" | "uv" | "none";
-type Severity = 0 | 1 | 2 | 3 | 4; // 0 cap, 4 extrem
-
-function pickPrimaryRisk(args: {
-  hi: number | null;              // sensació/heat-index
-  effForCold: number | null;      // temperatura efectiva per fred (windchill)
-  windRisk: string;               // none|breezy|moderate|strong|very_strong
-  uvi: number | null;
-}): { kind: PrimaryKind; severity: Severity; labelKey: string } {
-  const { hi, effForCold, windRisk, uvi } = args;
-
-  // --- 1) CALOR (basat en llindars INSST que ja uses) ---
-  let heatSev: Severity = 0;
-  let heatKey = "heat_safe";
-  if (typeof hi === "number") {
-    if (hi >= 54) { heatSev = 4; heatKey = "heat_extreme"; }
-    else if (hi >= 41) { heatSev = 3; heatKey = "heat_high"; }
-    else if (hi >= 32) { heatSev = 2; heatKey = "heat_moderate"; }
-    else if (hi >= 27) { heatSev = 1; heatKey = "heat_mild"; }
-  }
-
-  // --- 2) FRED (segons la teva classificació cap/lleu/moderat/alt/molt alt/extrem) ---
-  let coldSev: Severity = 0;
-  let coldKey = "cold_safe";
-  if (typeof effForCold === "number") {
-    // Nota: el teu getColdRisk retorna strings. Aquí ho estimam directament pel valor.
-    // (Si vols, després ho connectam exactament amb getColdRisk.)
-    if (effForCold <= -40) { coldSev = 4; coldKey = "cold_extreme"; }
-    else if (effForCold <= -25) { coldSev = 3; coldKey = "cold_very_high"; }
-    else if (effForCold <= -15) { coldSev = 3; coldKey = "cold_high"; }     // mateix nivell de severitat "alta"
-    else if (effForCold <= -5)  { coldSev = 2; coldKey = "cold_moderate"; }
-    else if (effForCold <= 0)   { coldSev = 1; coldKey = "cold_mild"; }
-  }
-
-  // --- 3) VENT ---
-  const windMap: Record<string, Severity> = {
-    none: 0,
-    breezy: 1,
-    moderate: 2,
-    strong: 3,
-    very_strong: 4,
-    extreme: 4,
-  };
-  const windSev: Severity = windMap[windRisk] ?? 0;
-  const windKey = windSev === 0 ? "wind_none" : `wind_${windRisk}`;
-
-// --- 4) UV ---
-let uvSev: Severity = 0;
-let uvKey = "uv_low";
-
-if (typeof uvi === "number" && Number.isFinite(uvi)) {
-
-  // Protecció contra valors negatius (OpenUV pot retornar -1 en casos rars)
-  const uviSafe = Math.max(0, uvi);
-
-  // ⚠️ Classificació OMS amb valor REAL (NO arrodonit)
-  if (uviSafe >= 11) {
-    uvSev = 4;
-    uvKey = "uv_extreme";
-
-  } else if (uviSafe >= 8) {
-    uvSev = 3;
-    uvKey = "uv_very_high";
-
-  } else if (uviSafe >= 6) {
-    uvSev = 2;
-    uvKey = "uv_high";
-
-  } else if (uviSafe >= 3) {
-    uvSev = 1;
-    uvKey = "uv_moderate";
-
-  } else {
-    uvSev = 0;
-    uvKey = "uv_low";
-  }
-}
-
-  // Candidates (amb ordre de desempat: Calor > Fred > Vent > UV)
-  const candidates: Array<{ kind: PrimaryKind; sev: Severity; key: string; tie: number }> = [
-    { kind: "heat", sev: heatSev, key: heatKey, tie: 4 },
-    { kind: "cold", sev: coldSev, key: coldKey, tie: 3 },
-    { kind: "wind", sev: windSev, key: windKey, tie: 2 },
-    { kind: "uv",   sev: uvSev,   key: uvKey,   tie: 1 },
-  ];
-
-  // Tria per severitat, i a igual severitat tria el tie més alt
-  candidates.sort((a, b) => (b.sev - a.sev) || (b.tie - a.tie));
-  const top = candidates[0];
-
-  if (!top || top.sev === 0) return { kind: "none", severity: 0, labelKey: "none" };
-  return { kind: top.kind, severity: top.sev, labelKey: top.key };
-}
-
 // Text de la direcció del vent en 16 punts, localitzat
 const windText16 =
   windDeg !== null ? windDegreesToCardinal16(windDeg, i18n.language) : "";
@@ -1557,79 +1295,16 @@ const primary = pickPrimaryRisk({
   uvi,
 });
 
-// ============================================================
-// 🧠 Recomanació principal (UV / Vent) quan el risc principal NO és tèrmic
-// ============================================================
-function getPrimaryAdviceText(): string | null {
-  // ❄️ FRED
-  if (primary.kind === "cold") {
-    if (coldRisk === "lleu") {
-      const text = t("officialAdviceDynamic.cold.mild");
-      return text !== "officialAdviceDynamic.cold.mild" ? text : null;
-    }
-    if (coldRisk === "moderat") {
-      const text = t("officialAdviceDynamic.cold.moderate");
-      return text !== "officialAdviceDynamic.cold.moderate" ? text : null;
-    }
-    if (coldRisk === "alt" || coldRisk === "molt alt") {
-      const text = t("officialAdviceDynamic.cold.high");
-      return text !== "officialAdviceDynamic.cold.high" ? text : null;
-    }
-    if (coldRisk === "extrem") {
-      const text = t("officialAdviceDynamic.cold.extreme");
-      return text !== "officialAdviceDynamic.cold.extreme" ? text : null;
-    }
-  }
-
-  // 🔥 CALOR
-  if (primary.kind === "heat" && heatRisk) {
-    if (heatRisk.isExtreme) {
-      const text = t("officialAdviceDynamic.heat.extreme");
-      return text !== "officialAdviceDynamic.heat.extreme" ? text : null;
-    }
-
-    if (heatRisk.isHigh) {
-      const text = t("officialAdviceDynamic.heat.high");
-      return text !== "officialAdviceDynamic.heat.high" ? text : null;
-    }
-
-    const hiNow = hi ?? temp ?? null;
-    if (typeof hiNow === "number") {
-      if (hiNow >= 32) {
-        const text = t("officialAdviceDynamic.heat.moderate");
-        return text !== "officialAdviceDynamic.heat.moderate" ? text : null;
-      }
-      if (hiNow >= 27) {
-        const text = t("officialAdviceDynamic.heat.mild");
-        return text !== "officialAdviceDynamic.heat.mild" ? text : null;
-      }
-    }
-  }
-
-  // ☀️ UV
-  if (primary.kind === "uv" && typeof uvi === "number") {
-    let uvLevel: "moderate" | "high" | "very_high" | "extreme" = "moderate";
-
-    if (uvi >= 11) uvLevel = "extreme";
-    else if (uvi >= 8) uvLevel = "very_high";
-    else if (uvi >= 6) uvLevel = "high";
-
-    const key = `officialAdviceDynamic.uv.${uvLevel}`;
-    const text = t(key);
-    return text !== key ? text : null;
-  }
-
-  // 💨 VENT
-  if (primary.kind === "wind" && windRisk && windRisk !== "none") {
-    const key = `officialAdviceDynamic.wind.${windRisk}`;
-    const text = t(key);
-    return text !== key ? text : null;
-  }
-
-  return null;
-}
-
-const primaryAdvice = getPrimaryAdviceText();
+const primaryAdvice = getPrimaryAdviceText({
+  primary,
+  coldRisk,
+  heatRisk,
+  hi,
+  temp,
+  uvi,
+  windRisk,
+  t,
+});
 
 const riskKey = riskKeyMap[riskKeyRaw] || "cap";
 
@@ -1672,142 +1347,18 @@ const contextualUVMessage =
     ? getContextualUVMessage(uvi)
     : "";
 
-function getPrimaryStatusBlock() {
-  // 🔴 AVÍS OFICIAL ACTIU
-  if (alerts.length > 0) {
-    return {
-      icon: "🚨",
-      title: t("official_alert") || "Avís meteorològic oficial actiu",
-      text:
-        t("follow_official_alerts") ||
-        "Segueix les indicacions oficials i extrema la precaució.",
-      className: "status-card status-alert",
-    };
-  }
-
-  // 🔥 CALOR
-  if (primary.kind === "heat") {
-    if (heatRisk?.isExtreme) {
-      return {
-        icon: "⛔",
-        title: "Risc extrem per calor",
-        text:
-          t("officialAdviceDynamic.heat.extreme") ||
-          "Evita completament l’exposició i interromp l’activitat física.",
-        className: "status-card status-danger",
-      };
-    }
-
-    if (heatRisk?.isHigh) {
-      return {
-        icon: "🔴",
-        title: "Risc alt per calor",
-        text:
-          t("officialAdviceDynamic.heat.high") ||
-          "Limita l’activitat exterior, hidrata’t sovint i cerca ombra.",
-        className: "status-card status-danger",
-      };
-    }
-
-    return {
-      icon: "🟠",
-      title: "Risc moderat per calor",
-      text:
-        t("officialAdviceDynamic.heat.moderate") ||
-        "Evita esforços intensos i fes pauses en llocs frescos.",
-      className: "status-card status-warning",
-    };
-  }
-
-  // ❄️ FRED
-  if (primary.kind === "cold") {
-    if (coldRisk === "extrem") {
-      return {
-        icon: "⛔",
-        title: "Risc extrem per fred",
-        text:
-          t("officialAdviceDynamic.cold.extreme") ||
-          "Evita l’exterior. Hi ha risc greu de pèrdua ràpida de calor corporal.",
-        className: "status-card status-cold",
-      };
-    }
-
-    if (coldRisk === "alt" || coldRisk === "molt alt") {
-      return {
-        icon: "🔵",
-        title: "Risc alt per fred",
-        text:
-          t("officialAdviceDynamic.cold.high") ||
-          "Protegeix extremitats i limita el temps d’exposició exterior.",
-        className: "status-card status-cold",
-      };
-    }
-
-    return {
-      icon: "❄️",
-      title: "Risc moderat per fred",
-      text:
-        t("officialAdviceDynamic.cold.moderate") ||
-        "Abriga’t per capes i evita exposicions prolongades.",
-      className: "status-card status-cold",
-    };
-  }
-
-  // 💨 VENT
-  if (
-    primary.kind === "wind" &&
-    windRisk &&
-    ["moderate", "strong", "very_strong"].includes(windRisk)
-  ) {
-    const windTitles: Record<string, string> = {
-      moderate: "Risc moderat per vent",
-      strong: "Risc alt per vent",
-      very_strong: "Risc molt alt per vent",
-    };
-
-    return {
-      icon: "💨",
-      title: windTitles[windRisk] || "Risc per vent",
-      text:
-        primaryAdvice ||
-        t(`officialAdviceDynamic.wind.${windRisk}`) ||
-        "Assegura objectes lleugers i evita zones exposades.",
-      className: "status-card status-wind",
-    };
-  }
-
-  // ☀️ UV
-  if (primary.kind === "uv" && day) {
-    let uvTitle = "Radiació UV alta";
-    if (typeof uvi === "number") {
-      if (uvi >= 11) uvTitle = "Radiació UV extrema";
-      else if (uvi >= 8) uvTitle = "Radiació UV molt alta";
-      else if (uvi >= 6) uvTitle = "Radiació UV alta";
-      else uvTitle = "Radiació UV moderada";
-    }
-
-    return {
-      icon: "☀️",
-      title: uvTitle,
-      text:
-        primaryAdvice ||
-        contextualUVMessage ||
-        t("highUVIWarning") ||
-        "Utilitza protecció solar i redueix l’exposició directa.",
-      className: "status-card status-uv",
-    };
-  }
-
-  // 🟢 SITUACIÓ SEGURA
-  return {
-  icon: "🟢",
-  title: t("safe_conditions"),
-  text: t("safe_conditions_text_day"),
-  className: "status-card status-safe",
-};
-}
-
-const primaryStatus = getPrimaryStatusBlock();
+const primaryStatus = getPrimaryStatusBlock({
+  alerts,
+  primary,
+  heatRisk,
+  coldRisk,
+  windRisk,
+  uvi,
+  day,
+  primaryAdvice,
+  contextualUVMessage,
+  t,
+});
 
 const nowTs = Math.floor(Date.now() / 1000);
 
@@ -1863,72 +1414,19 @@ const appTitleClass =
     ? "app-title app-title-uv"
     : "app-title app-title-safe";
 
-  function getAlertIcon(event: string): string {
-  const e = event.toLowerCase();
-
-  if (e.includes("vent") || e.includes("wind")) return "💨";
-  if (e.includes("tempest") || e.includes("storm") || e.includes("thunder")) return "⛈️";
-  if (e.includes("pluja") || e.includes("rain")) return "🌧️";
-  if (e.includes("neu") || e.includes("snow")) return "❄️";
-  if (e.includes("calor") || e.includes("heat")) return "🔥";
-  if (e.includes("fred") || e.includes("cold")) return "🥶";
-  if (e.includes("boira") || e.includes("fog")) return "🌫️";
-  if (e.includes("mar") || e.includes("wave")) return "🌊";
-
-  return "⚠️";
-}
-
-function getUVBrainMessage(uvi: number | null, lang: string = "ca") {
-  if (uvi === null || Number.isNaN(uvi)) return "";
-
-  const l = (lang || "ca").slice(0, 2).toLowerCase();
-
-  if (l === "es") {
-    if (uvi < 3) return "Riesgo muy bajo. Protección mínima.";
-    if (uvi < 6) return "Riesgo moderado. Usa protección solar.";
-    if (uvi < 8) return "Riesgo alto. Reduce la exposición al sol.";
-    if (uvi < 11) return "Riesgo muy alto. Evita el sol en horas centrales.";
-    return "Riesgo extremo. Evita el sol y protégete al máximo.";
-  }
-
-  if (l === "en") {
-    if (uvi < 3) return "Very low risk. Minimal protection needed.";
-    if (uvi < 6) return "Moderate risk. Use sun protection.";
-    if (uvi < 8) return "High risk. Reduce sun exposure.";
-    if (uvi < 11) return "Very high risk. Avoid midday sun.";
-    return "Extreme risk. Avoid the sun and protect yourself as much as possible.";
-  }
-
-  if (l === "eu") {
-    if (uvi < 3) return "Arrisku oso txikia. Babes minimoa.";
-    if (uvi < 6) return "Arrisku moderatua. Erabili eguzki-babesa.";
-    if (uvi < 8) return "Arrisku handia. Murriztu eguzki-esposizioa.";
-    if (uvi < 11) return "Arrisku oso handia. Saihestu eguzkia erdiko orduetan.";
-    return "Muturreko arriskua. Saihestu eguzkia eta babestu zaitez gehienez.";
-  }
-
-  if (l === "gl") {
-    if (uvi < 3) return "Risco moi baixo. Protección mínima.";
-    if (uvi < 6) return "Risco moderado. Usa protección solar.";
-    if (uvi < 8) return "Risco alto. Reduce a exposición ao sol.";
-    if (uvi < 11) return "Risco moi alto. Evita o sol nas horas centrais.";
-    return "Risco extremo. Evita o sol e protéxete ao máximo.";
-  }
-
-  // Català per defecte
-  if (uvi < 3) return "Risc molt baix. Protecció mínima.";
-  if (uvi < 6) return "Risc moderat. Utilitza protecció solar.";
-  if (uvi < 8) return "Risc alt. Redueix l’exposició al sol.";
-  if (uvi < 11) return "Risc molt alt. Evita el sol en hores centrals.";
-  return "Risc extrem. Evita el sol i protegeix-te al màxim.";
-}
-
 const riskIcons = getRiskIcons(
   heatRisk,
   coldRisk,
   windRisk,
   uvi
-)
+);
+
+const combinedRisk = getCombinedRiskLevel(
+  heatRisk,
+  coldRisk,
+  windRisk,
+  uvi
+);
 
   //Return ok
 
@@ -1942,7 +1440,7 @@ return (
 
       <div className="app-header">
         <h1 className={appTitleClass}>
-  ThermoSafe – {t("risk.current")} {getRiskIcons(heatRisk, coldRisk, windRisk, uvi).join(" ")}
+  ThermoSafe – {t("risk.current")} {riskIcons}
 </h1>
       </div>
 
@@ -2586,28 +2084,14 @@ if (
               <UVAdvice
                 uvi={uvi}
                 lang={i18n.resolvedLanguage || i18n.language || "ca"}
-                weatherMain={data?.weather?.[0]?.main}
+                weatherMain={data?.weather?.[0]?.main ?? null}
                 cloudiness={data?.clouds?.all}
               />
 
-              {/* 🧠 Missatge contextual UV */}
-              {uvi !== null && (
-                <div
-                  className={`uv-context-card ${
-                    (uvi ?? 0) >= 11
-                      ? "uv-context-card--warning"
-                      : "uv-context-card--info"
-                  }`}
-                >
-                  <span className="uv-context-icon">🧠</span>
-                  <span className="uv-context-text">
-                    {getUVBrainMessage(
-                      uvi,
-                      i18n.resolvedLanguage || i18n.language || "ca"
-                    )}
-                  </span>
-                </div>
-              )}
+              <UVContextCard
+              uvi={uvi}
+              lang={i18n.resolvedLanguage || i18n.language || "ca"}
+              />
 
               {/* ℹ️ Nota informativa UV */}
               <p className="uv-source-note">
@@ -2686,7 +2170,7 @@ if (
           <span> · {t("alert_time.active")}</span>
         )}
         <br />
-        ⏳ {getRemainingTime(alert.end, lang)}
+        ⏳ {getRemainingTime(alert.end, lang, t)}
       </div>
     )}
 

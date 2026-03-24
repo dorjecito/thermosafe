@@ -26,6 +26,14 @@
   "strong_wind": "Forte",
   "very_strong_wind": "Moi forte",
 
+  "combinedRisk": {
+  "highTitle": "Combinación de riscos relevante",
+  "highText": "Hai varios factores de risco simultáneos. Reduce a exposición e extrema a precaución.",
+  "extremeTitle": "Combinación de risco moi elevada",
+  "extremeText": "A combinación actual de condicións meteorolóxicas esixe máxima precaución e limitación da exposición exterior."
+},
+
+
   "caution_outdoors": "Precaución no exterior",
   "take_extreme_caution": "Evita actividades ao aire libre",
   "wind_alert_label": "Recibir avisos por vento forte",
