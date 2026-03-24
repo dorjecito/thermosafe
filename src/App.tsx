@@ -391,12 +391,12 @@ useEffect(() => {
   const searchBoxRef = useRef<HTMLDivElement | null>(null);
 
   function getRiskIcons(
-  heatRisk: any,
+  heatRisk: { isHigh?: boolean; isExtreme?: boolean } | null,
   coldRisk: string | null,
   windRisk: string | null,
   uvi: number | null
-) {
-  const icons: string[] = [];
+): string[] {
+  const icons = new Set<string>();
 
   // ☀️ calor / UV
   if (
@@ -404,17 +404,18 @@ useEffect(() => {
     heatRisk?.isHigh ||
     heatRisk?.isExtreme
   ) {
-    icons.push("☀️");
+    icons.add("☀️");
   }
 
   // ❄️ fred
   if (
+    coldRisk === "lleu" ||
     coldRisk === "moderat" ||
     coldRisk === "alt" ||
     coldRisk === "molt alt" ||
     coldRisk === "extrem"
   ) {
-    icons.push("❄️");
+    icons.add("❄️");
   }
 
   // 💨 vent
@@ -423,15 +424,15 @@ useEffect(() => {
     windRisk === "strong" ||
     windRisk === "very_strong"
   ) {
-    icons.push("💨");
+    icons.add("💨");
   }
 
-  // 🌤️ si no hi ha cap risc destacable
-  if (icons.length === 0) {
-    icons.push("🌤️");
+  // 🌤️ sense risc destacable
+  if (icons.size === 0) {
+    return ["🌤️"];
   }
 
-  return icons.join("");
+  return Array.from(icons);
 }
 
  useEffect(() => {
@@ -1941,7 +1942,7 @@ return (
 
       <div className="app-header">
         <h1 className={appTitleClass}>
-  ThermoSafe – {t("risk.current")} {riskIcons}
+  ThermoSafe – {t("risk.current")} {getRiskIcons(heatRisk, coldRisk, windRisk, uvi).join(" ")}
 </h1>
       </div>
 
