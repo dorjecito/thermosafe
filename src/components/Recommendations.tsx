@@ -504,7 +504,17 @@ export default function Recommendations({
   const coldKey = getColdKey(effectiveTemp);
   const rainy = isRainyWeather(weatherMain);
   const stormy = isStormWeather(weatherMain);
-  const humid = typeof humidity === "number" && humidity >= 70 && effectiveTemp >= 24;
+  let humidLevel: "none" | "elevated" | "xafogor" | "intense" = "none";
+
+if (typeof humidity === "number" && effectiveTemp >= 24) {
+  if (humidity >= 85 || effectiveTemp >= 34) {
+    humidLevel = "intense";       // xafogor intensa
+  } else if (humidity >= 75) {
+    humidLevel = "xafogor";       // xafogor clara
+  } else if (humidity >= 70) {
+    humidLevel = "elevated";      // humitat elevada
+  }
+}
   const windyModerate = typeof windKmh === "number" && windKmh >= 25 && windKmh < 45;
   const windyStrong = typeof windKmh === "number" && windKmh >= 45;
   const veryCloudy = typeof cloudiness === "number" && cloudiness >= 85;
