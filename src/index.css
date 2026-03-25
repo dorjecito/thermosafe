@@ -1015,8 +1015,9 @@ text-align: left;
 
   .quick-subline,
   .quick-meta {
-    color: rgba(255,255,255,0.92);
-  }
+    font-size: 0.95rem;
+    opacity: 0.9;
+}
 }
 
 .quick-temp{
@@ -1174,11 +1175,10 @@ text-align: left;
   margin-bottom: 0.4rem;
 }
 
-.app-title{
-  font-size:1.9rem;
-  font-weight:800;
-  letter-spacing:-0.3px;
-  text-shadow:0 0 8px rgba(255,255,255,0.15);
+.app-title {
+  font-size: 1.7rem;
+  font-weight: 700;
+  letter-spacing: 0.3px;
 }
 
 .app-title-safe {
@@ -1552,13 +1552,13 @@ body,
   }
 
   .quick-temp {
-    font-size: 2.7rem !important;
-    line-height: 1 !important;
+  font-size: 2.4rem;
+  font-weight: 700;
   }
 
-  .quick-subline,
-  .quick-meta {
-    font-size: 0.98rem !important;
+  .quick-subline {
+  font-size: 1rem;
+  opacity: 0.8;
   }
 
   .block-temp p {
@@ -1869,6 +1869,45 @@ body,
     font-size: 0.95rem !important;
     line-height: 1.25 !important;
   }
+}
+
+/* ---------- ThermoSafe header style ---------- */
+
+.search-panel {
+  position: sticky;
+  top: 0;
+  z-index: 1000;
+
+  background: rgba(255,255,255,0.96);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+
+  padding: 12px 14px;
+  border-bottom: 1px solid rgba(0,0,0,0.08);
+
+  border-radius: 0;
+  box-shadow: none;
+}
+
+/* input ciutat */
+.search-panel input {
+  height: 38px;
+  border-radius: 10px;
+  border: 1px solid #d0d0d0;
+  padding: 6px 10px;
+}
+
+/* botó consulta */
+.search-panel button {
+  border-radius: 10px;
+  font-weight: 600;
+}
+
+/* botó ubicació actual */
+.location-button {
+  margin-top: 6px;
+  border-radius: 12px;
+  font-weight: 600;
 }
 
 

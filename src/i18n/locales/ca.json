@@ -14,8 +14,9 @@
   "real_temp": "Temperatura real",
   "irradiance": "☀️ Irradiància solar",
   "uvi": "🔆 Índex UV",
-  "wind": "💨 Velocitat del vent",
+  "wind_direction": "Direcció del vent",
   "wind_risk": "Risc per vent",
+  "cloudiness": "Nubolositat",
   
   "combinedRisk": {
   "highTitle": "Combinació de riscos rellevant",

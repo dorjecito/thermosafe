@@ -964,6 +964,8 @@ console.log("[TEST] Tipus UV (nou):", typeof uv, "Valor:", uv);
 setTemp(d.main?.temp ?? null);
 setHum(d.main?.humidity ?? null);
 setHi(d.main?.feels_like ?? null);
+setClouds(d.clouds?.all ?? 0);
+setWeatherMain(d.weather?.[0]?.main ?? null);
 
 // 🔍 Mostra per consola per verificar
 console.log(`[DEBUG] Temperatura: ${d.main?.temp}°C, Humitat: ${d.main?.humidity}%, Sensació: ${d.main?.feels_like}°C`);
@@ -1913,9 +1915,9 @@ if (
 
   {/* 🌡️ CONDICIONS ACTUALS */}
 <div
-  className="block-temp"
+  className="block-conditions"
   style={{
-    backgroundColor: "#eaf3ff",
+    backgroundColor: "#f3f4f6",
     borderRadius: "6px",
     padding: "0.9rem 1.1rem",
     marginTop: "1rem",
@@ -1927,19 +1929,24 @@ if (
   <h3 style={{ marginTop: 0, marginBottom: "0.6rem", fontWeight: 600 }}>
     {t("current_conditions")}
   </h3>
+
   <p>
     <strong>{t("humidity")}:</strong>{" "}
     {hum !== null ? `${hum}%` : "—"}
   </p>
 
-  {wind !== null && (
-    <p>
-      <strong>{t("wind")}:</strong>{" "}
-      {wind.toFixed(1)} km/h{" "}
-      {windDeg !== null ? `· ${windText16} (${windDeg.toFixed(0)}º)` : ""}
-    </p>
-  )}
+  <p>
+    <strong>{t("wind_direction")}:</strong>{" "}
+    {windDeg !== null
+      ? `${windText16} (${windDeg.toFixed(0)}°)`
+      : "—"}
+  </p>
 
+  <p>
+    <strong>{t("cloudiness")}:</strong>{" "}
+    {typeof clouds === "number" ? `${clouds}%` :
+    `${data?.clouds?.all ?? "—"}${typeof data?.clouds?.all === "number" ? "%" : ""}`}
+      </p>
 </div>
 
 {/* 🕒 Targeta d'actualització */}
@@ -1975,34 +1982,6 @@ if (
           : sky}
       </span>
     </div>
-  </div>
-)}
-
-{/* 💨 RISC PER VENT (només risc secundari) */}
-{windRisk && windRisk !== "none" && primary.kind !== "wind" && (
-  <div
-    style={{
-      backgroundColor: WIND_COLORS[windRisk as keyof typeof WIND_COLORS],
-      color: "#111827",
-      borderRadius: "6px",
-      padding: "0.55rem 0.85rem",
-      marginTop: "0.75rem",
-      textAlign: "left",
-      fontWeight: 600,
-      display: "flex",
-      alignItems: "center",
-      gap: "0.5rem",
-    }}
-  >
-    <span style={{ fontSize: "1.15rem" }}>💨</span>
-    <span>{t("wind_risk")}:</span>
-    <span>{t(`windRisk.${windRisk}`)}</span>
-
-    {wind !== null && (
-      <span style={{ marginLeft: "auto", opacity: 0.85, fontWeight: 500 }}>
-        {wind.toFixed(1)} km/h
-      </span>
-    )}
   </div>
 )}
 
