@@ -1978,66 +1978,6 @@ if (
   </div>
 )}
 
-{coldRisk !== "cap" && (
-  <div
-    className="cold-card"
-    style={{
-      backgroundColor:
-        coldRisk === "lleu"
-          ? "#cfe8ff"
-          : coldRisk === "moderat"
-          ? "#7fb4ff"
-          : coldRisk === "alt" || coldRisk === "molt alt"
-          ? "#4a7dff"
-          : "#2450b8",
-      borderLeft:
-        coldRisk === "lleu"
-          ? "6px solid #8ed0ff"
-          : coldRisk === "moderat"
-          ? "6px solid #4ea1ff"
-          : coldRisk === "alt" || coldRisk === "molt alt"
-          ? "6px solid #1e5fff"
-          : "6px solid #0d2f7a",
-      color: "#000",
-      padding: "0.9rem",
-      borderRadius: "8px",
-      marginTop: "1rem",
-      boxShadow: "0 0 6px rgba(0,0,0,0.25)",
-      fontWeight: 500,
-    }}
-  >
-    <div
-      style={{
-        display: "flex",
-        alignItems: "center",
-        gap: "0.55rem",
-        fontSize: "1.05rem",
-        marginBottom: "0.35rem",
-      }}
-    >
-      <span style={{ fontSize: "1.25rem" }}>
-        {coldRisk === "lleu"
-          ? "❄️"
-          : coldRisk === "moderat"
-          ? "❄️❄️"
-          : coldRisk === "alt" || coldRisk === "molt alt"
-          ? "❄️❄️❄️"
-          : "❄️❄️❄️❄️"}
-      </span>
-
-      <span>
-        {t("cold_risk_title")}: {coldRisk}
-      </span>
-    </div>
-
-    {effForCold !== null && (
-      <p style={{ marginTop: "0.3rem", opacity: 0.85 }}>
-        {t("effectiveTemp")}: <strong>{effForCold.toFixed(1)}°C</strong>
-      </p>
-    )}
-  </div>
-)}
-
 {/* 💨 RISC PER VENT (només risc secundari) */}
 {windRisk && windRisk !== "none" && primary.kind !== "wind" && (
   <div

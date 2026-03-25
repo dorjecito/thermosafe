@@ -52,16 +52,30 @@ export function getWorkWindow({
 
   /* 3) Situacions altes */
   if (coldRisk === "alt" || coldRisk === "molt alt") return "limited";
+  if (coldRisk === "moderat") return "limited"; // ← abans era "caution"
   if (heatRisk?.isHigh) return "limited";
   if (windRisk === "strong") return "limited";
   if (uv >= 8) return "limited";
 
+  /* 3b) Avís oficial + situació ja delicada */
+  if (
+    aemetActive &&
+    (
+      coldRisk === "lleu" ||
+      windRisk === "moderate" ||
+      uv >= 6 ||
+      rainy
+    )
+  ) {
+    return "limited";
+  }
+
   /* 4) Situacions de precaució */
   if (aemetActive) return "caution";
-  if (coldRisk === "moderat") return "caution";
   if (windRisk === "moderate") return "caution";
   if (uv >= 6) return "caution";
   if (rainy) return "caution";
+  if (coldRisk === "lleu") return "caution";
 
   /* 5) Vent suau / situació segura */
   return "optimal";
