@@ -504,7 +504,7 @@ export default function Recommendations({
   const coldKey = getColdKey(effectiveTemp);
   const rainy = isRainyWeather(weatherMain);
   const stormy = isStormWeather(weatherMain);
-  const humid = typeof humidity === "number" && humidity >= 80;
+  const humid = typeof humidity === "number" && humidity >= 70 && effectiveTemp >= 24;
   const windyModerate = typeof windKmh === "number" && windKmh >= 25 && windKmh < 45;
   const windyStrong = typeof windKmh === "number" && windKmh >= 45;
   const veryCloudy = typeof cloudiness === "number" && cloudiness >= 85;
