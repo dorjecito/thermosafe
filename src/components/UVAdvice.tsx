@@ -20,6 +20,13 @@ const texts = {
       "Evita el sol en hores centrals i utilitza protecció màxima.",
       "Evita totalment l’exposició solar. Risc molt elevat.",
     ],
+    cloudyMsgs: [
+      "Protecció mínima necessària.",
+      "Tot i la nuvolositat, la radiació UV continua present. Si l’exposició és prolongada, utilitza protecció solar.",
+      "Tot i la nuvolositat, la radiació UV continua present. Utilitza protecció solar i evita exposicions llargues.",
+      "Malgrat la nuvolositat, la radiació UV continua sent elevada. Reforça la protecció solar.",
+      "Fins i tot amb molta nuvolositat, la radiació UV és extrema. Evita l’exposició prolongada.",
+    ],
     cloudyNote: "La nuvolositat pot reduir parcialment l’exposició, però la radiació UV continua present.",
     rainyNote: "Tot i la pluja o els núvols, la radiació UV pot continuar afectant.",
     noData: "Sense dades UV disponibles.",
@@ -33,6 +40,13 @@ const texts = {
       "Evita el sol de 12 h a 16 h. Protección extra.",
       "Evita el sol en horas centrales y usa protección máxima.",
       "Evita totalmente la exposición solar. Riesgo muy elevado.",
+    ],
+    cloudyMsgs: [
+      "Protección mínima necesaria.",
+      "Aunque haya nubosidad, la radiación UV sigue presente. Si la exposición es prolongada, utiliza protección solar.",
+      "Aunque haya nubosidad, la radiación UV sigue presente. Usa protección solar y evita exposiciones largas.",
+      "A pesar de la nubosidad, la radiación UV sigue siendo elevada. Refuerza la protección solar.",
+      "Incluso con mucha nubosidad, la radiación UV es extrema. Evita la exposición prolongada.",
     ],
     cloudyNote: "La nubosidad puede reducir parcialmente la exposición, pero la radiación UV sigue presente.",
     rainyNote: "Aunque haya lluvia o nubes, la radiación UV puede seguir afectando.",
@@ -48,6 +62,13 @@ const texts = {
       "Eguerdiko orduetan eguzkia saihestu eta babes handiena erabili.",
       "Saihestu guztiz eguzki-esposizioa. Arrisku oso handia.",
     ],
+    cloudyMsgs: [
+      "Babes minimoa behar da.",
+      "Hodeiak egon arren, UV erradiazioa presente dago. Esposizioa luzea bada, erabili eguzki-babesa.",
+      "Hodeiak egon arren, UV erradiazioa presente dago. Erabili babesa eta saihestu esposizio luzeak.",
+      "Hodeitasun handiarekin ere, UV erradiazioa handia da. Indartu eguzki-babesa.",
+      "Hodei askorekin ere, UV erradiazioa muturrekoa da. Saihestu esposizio luzea.",
+    ],
     cloudyNote: "Hodeitasunak esposizioa neurri batean murriztu dezake, baina UV erradiazioak hor jarraitzen du.",
     rainyNote: "Euria edo hodeiak egonda ere, UV erradiazioak eragina izan dezake.",
     noData: "Ez dago UV daturik eskuragarri.",
@@ -62,6 +83,13 @@ const texts = {
       "Evita o sol nas horas centrais e usa protección máxima.",
       "Evita totalmente a exposición solar. Risco moi elevado.",
     ],
+    cloudyMsgs: [
+      "Precísase protección mínima.",
+      "Aínda con nubosidade, a radiación UV segue presente. Se a exposición é prolongada, usa protección solar.",
+      "Aínda con nubosidade, a radiación UV segue presente. Usa protección solar e evita exposicións longas.",
+      "Mesmo con moita nubosidade, a radiación UV segue sendo alta. Reforza a protección solar.",
+      "Mesmo con moita nubosidade, a radiación UV é extrema. Evita exposicións prolongadas.",
+    ],
     cloudyNote: "A nubosidade pode reducir parcialmente a exposición, pero a radiación UV segue presente.",
     rainyNote: "Mesmo con choiva ou nubes, a radiación UV pode seguir afectando.",
     noData: "Non hai datos UV dispoñibles.",
@@ -75,6 +103,13 @@ const texts = {
       "Avoid sun from 12:00 to 16:00. Extra protection.",
       "Avoid peak hours and use maximum protection.",
       "Avoid sun exposure completely. Very high risk.",
+    ],
+    cloudyMsgs: [
+      "Minimal protection required.",
+      "Even with heavy cloud cover, UV radiation is still present. Use sun protection if exposure is prolonged.",
+      "Even with heavy cloud cover, UV radiation is still present. Use protection and avoid long exposure.",
+      "Despite the cloud cover, UV radiation remains high. Reinforce sun protection.",
+      "Even with very cloudy skies, UV radiation is extreme. Avoid prolonged exposure.",
     ],
     cloudyNote: "Cloud cover may partly reduce exposure, but UV radiation is still present.",
     rainyNote: "Even with rain or clouds, UV radiation may still affect you.",
@@ -153,6 +188,11 @@ const UVAdvice: React.FC<UVAdviceProps> = ({
     extraNote = L.cloudyNote;
   }
 
+  const mainMsg =
+    veryCloudy && u >= 3 && !rainy
+      ? L.cloudyMsgs[b]
+      : L.msgs[b];
+
   return (
     <div
       style={{
@@ -168,7 +208,7 @@ const UVAdvice: React.FC<UVAdviceProps> = ({
       </strong>
 
       <p style={{ marginTop: ".5rem", marginBottom: extraNote ? ".4rem" : 0 }}>
-        {L.msgs[b]}
+        {mainMsg}
       </p>
 
       {extraNote && (
