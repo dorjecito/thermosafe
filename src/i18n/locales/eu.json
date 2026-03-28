@@ -61,8 +61,10 @@
   "safe_conditions": "Baldintza seguruak",
   "safe_conditions_text_day": "Ez da neurri berezirik behar une honetan.",
   "safe_conditions_text_night": "Gaueko baldintzak parametro normalen barruan.",
-  "official_alert": "Abisu ofiziala aktibo",
-  "follow_official_alerts": "Jarraitu jarraibide ofizialak eta hartu neurri handiagoak.",
+  "official_alert": "Abisu meteorologiko ofizial aktiboa dago",
+  "follow_official_alerts": "Jarraitu agintari ofizialen jarraibideak eta areagotu arreta.",
+  "official_alert_soon": "Laster abisu meteorologiko ofiziala",
+  "follow_official_alerts_soon": "Abisu meteorologiko bat aurreikusita dago. Komeni da aurrea hartzea eta aurreikusitako jarduera berrikustea.",
   "safe_conditions_text_night_warm": "Gaueko tenperatura altuak. Ziurtatu aireztapen gurutzatua eta erabili arropa arina.",
 
   "push": {

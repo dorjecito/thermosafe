@@ -2,9 +2,9 @@
 // 📘 Recommendations.tsx — Versió robusta (CA/ES/EU/GL/EN)
 // ✅ Fallback segur per evitar TXT undefined
 // ✅ Títol coherent: “segons les condicions actuals”
-// ✅ Missatge extra si hi ha alerta AEMET activa
 // ✅ Prioritza millor: fred > calor forta > UV > nit > segur
 // ✅ Compatible amb les props actuals que envies des d’App.tsx
+// ✅ Sense redundància amb el banner d’avís oficial
 // ===============================================================
 
 import * as React from "react";
@@ -14,8 +14,6 @@ type Lang = "ca" | "es" | "eu" | "gl" | "en";
 
 type TextKeys =
   | "title"
-  | "aemetActive"
-  | "aemetSoon"
   | "safe"
   | "safeUvModerate"
   | "safeWind"
@@ -42,14 +40,12 @@ type TextKeys =
   | "windStrong"
   | "loading";
 
-type TextPack = Record<Exclude<TextKeys, "aemetActive">, string> & {
-  aemetActive: string | ContextualAemetText;
-};
+type TextPack = Record<TextKeys, string>;
 type TxtDict = Record<Lang, TextPack>;
 
 interface Props {
-  temp: number;                 // temperatura efectiva o principal
-  lang: Lang | string;          // pot venir com "ca-ES", "en-GB"...
+  temp: number; // temperatura efectiva o principal
+  lang: Lang | string; // pot venir com "ca-ES", "en-GB"...
   isDay: boolean;
   humidity?: number;
   forceSafe?: boolean;
@@ -69,19 +65,15 @@ interface Props {
 // ---------------------------------------------------------------
 const TXT: TxtDict = {
   ca: {
-  title: "Recomanacions segons les condicions actuals:",
-  aemetActive:
-    "⚠️ Hi ha un avís meteorològic oficial actiu. Dona prioritat a les indicacions oficials.",
-  aemetSoon:
-    "⚠️ Hi ha un avís meteorològic proper. Conv&eacute; anticipar-se i revisar l’activitat prevista.",
-  safe:
-    "Condicions tèrmiques favorables. Mantén una hidratació adequada i segueix les mesures preventives habituals.",
-  safeUvModerate:
-    "Radiació UV moderada. Es recomana protecció solar si l’exposició és prolongada.",
-  safeWind:
-    "Vent present però dins marges assumibles. Mantén precaució bàsica amb objectes lleugers i eines.",
-  safeCloudy:
-    "Condicions generals favorables. Tot i els núvols, mantén vigilància bàsica si estàs molta estona a l’exterior.",
+    title: "Recomanacions segons les condicions actuals:",
+    safe:
+      "Condicions tèrmiques favorables. Mantén una hidratació adequada i segueix les mesures preventives habituals.",
+    safeUvModerate:
+      "Radiació UV moderada. Es recomana protecció solar si l’exposició és prolongada.",
+    safeWind:
+      "Vent present però dins marges assumibles. Mantén precaució bàsica amb objectes lleugers i eines.",
+    safeCloudy:
+      "Condicions generals favorables. Tot i els núvols, mantén vigilància bàsica si estàs molta estona a l’exterior.",
     mild:
       "Precaució per calor. Pot aparèixer fatiga tèrmica. Beu aigua amb freqüència i fes pauses en zones ombrejades.",
     moderate:
@@ -127,10 +119,6 @@ const TXT: TxtDict = {
 
   es: {
     title: "Recomendaciones según las condiciones actuales:",
-    aemetActive:
-      "⚠️ Hay un aviso meteorológico oficial activo. Da prioridad a las indicaciones del organismo emisor y evita las zonas de riesgo.",
-    aemetSoon:
-      "⚠️ Hay un aviso meteorológico próximo. Conviene anticiparse y revisar la actividad prevista.",
     safe:
       "Condiciones térmicas favorables. Mantén una hidratación adecuada y sigue las medidas preventivas habituales.",
     safeUvModerate:
@@ -184,10 +172,6 @@ const TXT: TxtDict = {
 
   eu: {
     title: "Gomendioak uneko baldintzen arabera:",
-    aemetActive:
-      "⚠️ Abisu meteorologiko ofizial bat aktibo dago. Lehenetsi erakunde igorlearen jarraibideak eta saihestu arrisku-eremuak.",
-    aemetSoon:
-      "⚠️ Laster abisu meteorologiko bat egongo da. Komeni da aurrea hartzea eta aurreikusitako jarduera berrikustea.",
     safe:
       "Baldintza termiko onak. Mantendu hidratazio egokia eta ohiko prebentzio-neurriak.",
     safeUvModerate:
@@ -241,10 +225,6 @@ const TXT: TxtDict = {
 
   gl: {
     title: "Recomendacións segundo as condicións actuais:",
-    aemetActive:
-      "⚠️ Hai un aviso meteorolóxico oficial activo. Dá prioridade ás indicacións do organismo emisor e evita as zonas de risco.",
-    aemetSoon:
-      "⚠️ Hai un aviso meteorolóxico próximo. Convén anticiparse e revisar a actividade prevista.",
     safe:
       "Condicións térmicas favorables. Mantén unha hidratación adecuada e segue as medidas preventivas habituais.",
     safeUvModerate:
@@ -298,10 +278,6 @@ const TXT: TxtDict = {
 
   en: {
     title: "Recommendations based on current conditions:",
-    aemetActive:
-      "⚠️ An official weather alert is active. Follow the issuing agency guidance and avoid risk areas.",
-    aemetSoon:
-      "⚠️ A weather alert is expected soon. It is advisable to anticipate it and review planned activity.",
     safe:
       "Favourable thermal conditions. Maintain adequate hydration and follow standard preventive measures.",
     safeUvModerate:
@@ -454,6 +430,15 @@ const joinExtras = (...parts: Array<string | undefined | null | false>): string 
   return clean.length ? clean.join(" ") : undefined;
 };
 
+const joinLines = (...parts: Array<string | undefined | null | false>): string => {
+  const clean = parts
+    .filter(Boolean)
+    .map((x) => String(x).trim())
+    .filter((x) => x.length > 0);
+
+  return clean.join("\n\n");
+};
+
 // ---------------------------------------------------------------
 // ✅ Caixa de recomanació reutilitzable
 // ---------------------------------------------------------------
@@ -471,8 +456,12 @@ function RecommendationBox({
   return (
     <div className={className}>
       <p className="recommendation-title">{title}</p>
-      <p>{body}</p>
-      {extra ? <p style={{ marginTop: "0.6rem", opacity: 0.95 }}>{extra}</p> : null}
+      <p style={{ whiteSpace: "pre-line" }}>{body}</p>
+      {extra ? (
+        <p style={{ marginTop: "0.6rem", opacity: 0.95, whiteSpace: "pre-line" }}>
+          {extra}
+        </p>
+      ) : null}
     </div>
   );
 }
@@ -511,16 +500,12 @@ export default function Recommendations({
   const windyStrong = typeof windKmh === "number" && windKmh >= 45;
   const veryCloudy = typeof cloudiness === "number" && cloudiness >= 85;
 
-  const extraAemetActive = aemetActive ? t.aemetActive : undefined;
-  const extraAemetSoon = !aemetActive && aemetSoon ? t.aemetSoon : undefined;
-
   if (!Number.isFinite(effectiveTemp)) {
     return (
       <RecommendationBox
         className="recommendation-box safe"
         title={`${getIcon("safe")} ${t.title}`}
         body={t.loading}
-        extra={joinExtras(extraAemetActive, extraAemetSoon)}
       />
     );
   }
@@ -531,7 +516,6 @@ export default function Recommendations({
         className="recommendation-box safe"
         title={`${getIcon("safe")} ${t.title}`}
         body={t.safe}
-        extra={joinExtras(extraAemetActive, extraAemetSoon)}
       />
     );
   }
@@ -549,9 +533,7 @@ export default function Recommendations({
           windyModerate && t.windModerate,
           windyStrong && t.windStrong,
           stormy && t.storm,
-          rainy && !stormy && t.rain,
-          extraAemetActive,
-          extraAemetSoon
+          rainy && !stormy && t.rain
         )}
       />
     );
@@ -574,9 +556,7 @@ export default function Recommendations({
           uvKey === "uvVeryHigh" && t.uvVeryHigh,
           uvKey === "uvExtreme" && t.uvExtreme,
           windyModerate && t.windModerate,
-          windyStrong && t.windStrong,
-          extraAemetActive,
-          extraAemetSoon
+          windyStrong && t.windStrong
         )}
       />
     );
@@ -596,9 +576,7 @@ export default function Recommendations({
           windyModerate && t.windModerate,
           windyStrong && t.windStrong,
           rainy && !stormy && t.rain,
-          stormy && t.storm,
-          extraAemetActive,
-          extraAemetSoon
+          stormy && t.storm
         )}
       />
     );
@@ -620,9 +598,7 @@ export default function Recommendations({
           windyModerate && t.windModerate,
           windyStrong && t.windStrong,
           rainy && !stormy && t.rain,
-          stormy && t.storm,
-          extraAemetActive,
-          extraAemetSoon
+          stormy && t.storm
         )}
       />
     );
@@ -643,9 +619,7 @@ export default function Recommendations({
         extra={joinExtras(
           humid && t.humid,
           windyModerate && t.windModerate,
-          windyStrong && t.windStrong,
-          extraAemetActive,
-          extraAemetSoon
+          windyStrong && t.windStrong
         )}
       />
     );
@@ -659,12 +633,10 @@ export default function Recommendations({
       <RecommendationBox
         className="recommendation-box safe"
         title={`${getIcon("safe")} ${t.title}`}
-        body={t.safeUvModerate}
-        extra={joinExtras(
+        body={joinLines(
+          t.safeUvModerate,
           humid && t.humid,
-          windyModerate && t.windModerate,
-          extraAemetActive,
-          extraAemetSoon
+          windyModerate && t.windModerate
         )}
       />
     );
@@ -675,11 +647,9 @@ export default function Recommendations({
       <RecommendationBox
         className="recommendation-box safe"
         title={`${getIcon("safe")} ${t.title}`}
-        body={t.safeWind}
-        extra={joinExtras(
-          humid && t.humid,
-          extraAemetActive,
-          extraAemetSoon
+        body={joinLines(
+          t.safeWind,
+          humid && t.humid
         )}
       />
     );
@@ -690,11 +660,9 @@ export default function Recommendations({
       <RecommendationBox
         className="recommendation-box safe"
         title={`${getIcon("safe")} ${t.title}`}
-        body={t.safe}
-        extra={joinExtras(
-          stormy ? t.storm : t.rain,
-          extraAemetActive,
-          extraAemetSoon
+        body={joinLines(
+          t.safe,
+          stormy ? t.storm : t.rain
         )}
       />
     );
@@ -705,11 +673,9 @@ export default function Recommendations({
       <RecommendationBox
         className="recommendation-box safe"
         title={`${getIcon("safe")} ${t.title}`}
-        body={t.safeCloudy}
-        extra={joinExtras(
-          humid && t.humid,
-          extraAemetActive,
-          extraAemetSoon
+        body={joinLines(
+          t.safeCloudy,
+          humid && t.humid
         )}
       />
     );
@@ -722,11 +688,9 @@ export default function Recommendations({
     <RecommendationBox
       className="recommendation-box safe"
       title={`${getIcon("safe")} ${t.title}`}
-      body={t.safe}
-      extra={joinExtras(
-        humid && t.humid,
-        extraAemetActive,
-        extraAemetSoon
+      body={joinLines(
+        t.safe,
+        humid && t.humid
       )}
     />
   );

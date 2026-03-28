@@ -960,8 +960,7 @@ const aemetSoon =
   alerts.some(
     (alert) =>
       typeof alert?.start === "number" &&
-      alert.start > nowTs &&
-      alert.start - nowTs <= 7200
+      alert.start > nowTs
   );
 
 const activeAlert =

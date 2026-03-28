@@ -38,8 +38,10 @@
   "safe_conditions": "Condicions segures",
   "safe_conditions_text_day": "No es requereixen mesures especials en aquest moment.",
   "safe_conditions_text_night": "Condicions nocturnes dins paràmetres normals.",
-  "official_alert": "Avís oficial actiu",
+  "official_alert": "Avís meteorològic oficial actiu",
   "follow_official_alerts": "Segueix les indicacions oficials i extrema la precaució.",
+  "official_alert_soon": "Avís meteorològic oficial proper",
+  "follow_official_alerts_soon": "Hi ha un avís meteorològic previst. Convé anticipar-se i revisar l’activitat prevista.",
   "safe_conditions_text_night_warm": "Temperatures nocturnes elevades. Assegura ventilació creuada i utilitza roba lleugera.",
 
 
@@ -351,3 +353,4 @@
 "uvVeryHigh": "Índex UV molt alt. Protecció solar imprescindible!",
 "uvExtreme": "🚨 UV EXTREM (11+) — Evita exposició directa"
 }
+

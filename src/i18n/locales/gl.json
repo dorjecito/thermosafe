@@ -61,8 +61,10 @@
   "safe_conditions": "Condicións seguras",
   "safe_conditions_text_day": "Non se requiren medidas especiais neste momento.",
   "safe_conditions_text_night": "Condicións nocturnas dentro de parámetros normais.",
-  "official_alert": "Aviso oficial activo",
+  "official_alert": "Aviso meteorolóxico oficial activo",
   "follow_official_alerts": "Segue as indicacións oficiais e extrema a precaución.",
+  "official_alert_soon": "Aviso meteorolóxico oficial próximo",
+  "follow_official_alerts_soon": "Hai un aviso meteorolóxico previsto. Convén anticiparse e revisar a actividade prevista.",
   "safe_conditions_text_night_warm": "Temperaturas nocturnas elevadas. Asegura ventilación cruzada e utiliza roupa lixeira.",
 
   "push": {

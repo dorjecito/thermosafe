@@ -45,8 +45,10 @@
   "safe_conditions": "Safe conditions",
   "safe_conditions_text_day": "No special measures are required at the moment.",
   "safe_conditions_text_night": "Night-time conditions within normal parameters.",
-  "official_alert": "Official alert active",
-  "follow_official_alerts": "Follow official guidance and exercise caution.",
+  "official_alert": "Official weather alert active",
+  "follow_official_alerts": "Follow official guidance and take extra precautions.",
+  "official_alert_soon": "Upcoming official weather alert",
+  "follow_official_alerts_soon": "A weather alert is expected. It is advisable to anticipate it and review planned activities.",
   "safe_conditions_text_night_warm": "Elevated night-time temperatures. Ensure cross ventilation and wear light clothing.",
 
   "combinedRisk": {

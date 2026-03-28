@@ -46,8 +46,28 @@ export function getPrimaryStatusBlock({
   contextualUVMessage,
   t,
 }: PrimaryStatusBlockArgs): PrimaryStatusBlockResult {
+  const nowTs = Math.floor(Date.now() / 1000);
+
+  const activeAlert =
+    Array.isArray(alerts) &&
+    alerts.find(
+      (alert) =>
+        typeof alert?.start === "number" &&
+        typeof alert?.end === "number" &&
+        nowTs >= alert.start &&
+        nowTs <= alert.end
+    );
+
+  const soonAlert =
+    Array.isArray(alerts) &&
+    alerts.find(
+      (alert) =>
+        typeof alert?.start === "number" &&
+        alert.start > nowTs
+    );
+
   // 🔴 AVÍS OFICIAL ACTIU
-  if (alerts.length > 0) {
+  if (activeAlert) {
     return {
       icon: "🚨",
       title: t("official_alert") || "Avís meteorològic oficial actiu",
@@ -55,6 +75,18 @@ export function getPrimaryStatusBlock({
         t("follow_official_alerts") ||
         "Segueix les indicacions oficials i extrema la precaució.",
       className: "status-card status-alert",
+    };
+  }
+
+  // 🟠 AVÍS OFICIAL PROPER
+  if (soonAlert) {
+    return {
+      icon: "⚠️",
+      title: t("official_alert_soon") || "Avís meteorològic oficial proper",
+      text:
+        t("follow_official_alerts_soon") ||
+        "Hi ha un avís meteorològic previst. Revisa el detall i anticipa les mesures de precaució.",
+      className: "status-card status-warning",
     };
   }
 
@@ -175,8 +207,10 @@ export function getPrimaryStatusBlock({
   // 🟢 SITUACIÓ SEGURA
   return {
     icon: "🟢",
-    title: t("safe_conditions"),
-    text: t("safe_conditions_text_day"),
+    title: t("safe_conditions") || "Condicions segures",
+    text:
+      t("safe_conditions_text_day") ||
+      "No es detecta cap risc meteorològic destacable en aquest moment.",
     className: "status-card status-safe",
   };
 }
