@@ -943,70 +943,6 @@ const risk = temp != null ? getThermalRisk(temp) : "cap";
 // 🔥 Calcular risc de calor ajustat per activitat (rest, walk, moderate, intense)
 const heatRisk = hi !== null ? getHeatRisk(hi, activityLevel) : null;
 
-const workWindow = getWorkWindow({
-  heatRisk,
-  coldRisk,
-  windRisk,
-  uvi,
-});
-
-const workWindowLang = normalizeLang(i18n.resolvedLanguage || i18n.language || "ca");
-const workWindowTitle = getWorkWindowTitle(workWindowLang);
-const workWindowText = getWorkWindowText(workWindow, workWindowLang);
-
-const primary = pickPrimaryRisk({
-  hi,
-  effForCold: wc ?? temp,
-  windRisk,
-  uvi,
-});
-
-const primaryAdvice = getPrimaryAdviceText({
-  primary,
-  coldRisk,
-  heatRisk,
-  hi,
-  temp,
-  uvi,
-  windRisk,
-  t,
-});
-
-  const isRainy =
-  weatherMain === "Rain" ||
-  weatherMain === "Drizzle" ||
-  weatherMain === "Thunderstorm";
-
-const isVeryCloudy = (clouds ?? 0) >= 85;
-
-const currentFeelTemp = hi ?? temp ?? 99;
-const isClearlyColdNow = currentFeelTemp < 8;
-
-const isColdRisk = risk?.startsWith("cold_");
-
-const shouldHideUVBlock =
-  isRainy ||
-  (isVeryCloudy && isClearlyColdNow) ||
-  isColdRisk;
-
-const contextualUVMessage =
-  typeof uvi === "number" && Number.isFinite(uvi)
-    ? getContextualUVMessage(uvi)
-    : "";
-
-const primaryStatus = getPrimaryStatusBlock({
-  alerts,
-  primary,
-  heatRisk,
-  coldRisk,
-  windRisk,
-  uvi,
-  day,
-  primaryAdvice,
-  contextualUVMessage,
-  t,
-});
-
 const nowTs = Math.floor(Date.now() / 1000);
 
 const aemetActive =
@@ -1038,16 +974,85 @@ const activeAlert =
       nowTs <= alert.end
   );
 
+const currentLang = normalizeLang(i18n.resolvedLanguage || i18n.language || "ca");
+
 const activeAlertDescription =
   typeof activeAlert?.description === "string"
     ? activeAlert.description
-    : activeAlert?.description?.[i18n.language] ||
+    : activeAlert?.description?.[currentLang] ||
       activeAlert?.description?.es ||
       Object.values(activeAlert?.description || {})
         .filter((v) => typeof v === "string" && v.trim().length > 0)
         .join(". ");
 
 const activeAlertEvent = `${activeAlert?.event || ""} ${activeAlertDescription || ""}`.trim();
+
+const workWindow = getWorkWindow({
+  heatRisk,
+  coldRisk,
+  windRisk,
+  uvi,
+  aemetActive,
+  weatherMain,
+});
+
+const workWindowLang = currentLang;
+const workWindowTitle = getWorkWindowTitle(workWindowLang);
+const workWindowText = getWorkWindowText(workWindow, workWindowLang, aemetActive);
+
+const primary = pickPrimaryRisk({
+  hi,
+  effForCold: wc ?? temp,
+  windRisk,
+  uvi,
+});
+
+const primaryAdvice = getPrimaryAdviceText({
+  primary,
+  coldRisk,
+  heatRisk,
+  hi,
+  temp,
+  uvi,
+  windRisk,
+  t,
+});
+
+const isRainy =
+  weatherMain === "Rain" ||
+  weatherMain === "Drizzle" ||
+  weatherMain === "Thunderstorm";
+
+const isVeryCloudy = (clouds ?? 0) >= 85;
+
+const currentFeelTemp = hi ?? temp ?? 99;
+const isClearlyColdNow = currentFeelTemp < 8;
+
+const isColdRisk = typeof risk === "string" && risk.startsWith("cold_");
+
+const shouldHideUVBlock =
+  isRainy ||
+  (isVeryCloudy && isClearlyColdNow) ||
+  isColdRisk;
+
+const contextualUVMessage =
+  typeof uvi === "number" && Number.isFinite(uvi)
+    ? getContextualUVMessage(uvi)
+    : "";
+
+const primaryStatus = getPrimaryStatusBlock({
+  alerts,
+  primary,
+  heatRisk,
+  coldRisk,
+  windRisk,
+  uvi,
+  day,
+  primaryAdvice,
+  contextualUVMessage,
+  t,
+});
+
 const appTitleClass =
   primary.kind === "heat"
     ? primary.severity >= HEAT_HIGH
@@ -1068,7 +1073,7 @@ const riskIcons = getRiskIcons(
   uvi
 );
 
-  //Return ok
+//Return ok
 
 return (
   <div className="container">

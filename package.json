@@ -23,6 +23,7 @@
   },
   "devDependencies": {
     "@eslint/js": "^9.25.0",
+    "@playwright/test": "^1.58.2",
     "@types/react": "^19.1.2",
     "@types/react-dom": "^19.1.2",
     "@types/suncalc": "^1.9.2",

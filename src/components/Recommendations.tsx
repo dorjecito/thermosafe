@@ -42,7 +42,9 @@ type TextKeys =
   | "windStrong"
   | "loading";
 
-type TextPack = Record<TextKeys, string>;
+type TextPack = Record<Exclude<TextKeys, "aemetActive">, string> & {
+  aemetActive: string | ContextualAemetText;
+};
 type TxtDict = Record<Lang, TextPack>;
 
 interface Props {
@@ -67,19 +69,19 @@ interface Props {
 // ---------------------------------------------------------------
 const TXT: TxtDict = {
   ca: {
-    title: "Recomanacions segons les condicions actuals:",
-    aemetActive:
-      "⚠️ Hi ha un avís meteorològic oficial actiu. Dona prioritat a les indicacions de l’organisme emissor i evita les zones de risc.",
-    aemetSoon:
-      "⚠️ Hi ha un avís meteorològic proper. Convé anticipar-se i revisar l’activitat prevista.",
-    safe:
-      "Condicions tèrmiques favorables. Mantén una hidratació adequada i segueix les mesures preventives habituals.",
-    safeUvModerate:
-      "Radiació UV moderada. Es recomana protecció solar si l’exposició és prolongada.",
-    safeWind:
-      "Vent present però dins marges assumibles. Mantén precaució bàsica amb objectes lleugers i eines.",
-    safeCloudy:
-      "Condicions generals favorables. Tot i els núvols, mantén vigilància bàsica si estàs molta estona a l’exterior.",
+  title: "Recomanacions segons les condicions actuals:",
+  aemetActive:
+    "⚠️ Hi ha un avís meteorològic oficial actiu. Dona prioritat a les indicacions oficials.",
+  aemetSoon:
+    "⚠️ Hi ha un avís meteorològic proper. Conv&eacute; anticipar-se i revisar l’activitat prevista.",
+  safe:
+    "Condicions tèrmiques favorables. Mantén una hidratació adequada i segueix les mesures preventives habituals.",
+  safeUvModerate:
+    "Radiació UV moderada. Es recomana protecció solar si l’exposició és prolongada.",
+  safeWind:
+    "Vent present però dins marges assumibles. Mantén precaució bàsica amb objectes lleugers i eines.",
+  safeCloudy:
+    "Condicions generals favorables. Tot i els núvols, mantén vigilància bàsica si estàs molta estona a l’exterior.",
     mild:
       "Precaució per calor. Pot aparèixer fatiga tèrmica. Beu aigua amb freqüència i fes pauses en zones ombrejades.",
     moderate:
