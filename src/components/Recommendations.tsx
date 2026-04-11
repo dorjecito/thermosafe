@@ -562,6 +562,27 @@ export default function Recommendations({
     );
   }
 
+/* =========================================================
+   2.5️⃣ VENT FORT — prioritat sobre UV i casos suaus
+========================================================== */
+if (windyStrong) {
+  return (
+    <RecommendationBox
+      className="recommendation-box windStrong"
+      title={`${getIcon("windStrong")} ${t.title}`}
+      body={t.windStrong}
+      extra={joinExtras(
+        humid && t.humid,
+        uvKey === "uvHigh" && t.uvHigh,
+        uvKey === "uvVeryHigh" && t.uvVeryHigh,
+        uvKey === "uvExtreme" && t.uvExtreme,
+        rainy && !stormy && t.rain,
+        stormy && t.storm
+      )}
+    />
+  );
+}
+
   /* =========================================================
      3️⃣ UV — només si realment és rellevant de dia
   ========================================================== */
