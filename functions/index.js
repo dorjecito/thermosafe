@@ -158,14 +158,6 @@ function isQuietHours(nowUtcMs, tzOffsetSec) {
   return h >= 22 || h < 7;
 }
 
-function yyyyMMdd(nowUtcMs, tzOffsetSec) {
-  const d = new Date(nowUtcMs + tzOffsetSec * 1000);
-  const y = d.getFullYear();
-  const m = `${d.getMonth() + 1}`.padStart(2, '0');
-  const day = `${d.getDate()}`.padStart(2, '0');
-  return `${y}-${m}-${day}`;
-}
-
 async function getWeather(lat, lon) {
   const url =
     `https://api.openweathermap.org/data/2.5/weather?lat=${lat}&lon=${lon}` +
@@ -205,6 +197,12 @@ async function getUV(lat, lon) {
 function meetsUserThreshold(level, userThreshold) {
   const order = { moderate: 1, high: 2, very_high: 3 };
   return level >= (order[userThreshold] ?? 1);
+}
+
+function shouldNotifyLevelIncrease(prevLevel, nextLevel) {
+  const prev = Number.isFinite(Number(prevLevel)) ? Number(prevLevel) : 0;
+  const next = Number.isFinite(Number(nextLevel)) ? Number(nextLevel) : 0;
+  return next > prev;
 }
 
 // ─────────────────────────────────────────────
@@ -579,9 +577,82 @@ async function sendUvPush(token, lang, info, uvi, place) {
     data
   });
 }
-
 // ─────────────────────────────────────────────
-// 🌡️ CRON RISC PER CALOR
+// Textos i notificacions · AEMET / alertes oficials
+// ─────────────────────────────────────────────
+async function getWeatherAlerts(lat, lon) {
+  const url =
+    `https://api.openweathermap.org/data/3.0/onecall?lat=${lat}&lon=${lon}` +
+    `&appid=${OPENWEATHER_KEY.value()}&units=metric&exclude=minutely,hourly,daily`;
+
+  const r = await fetch(url);
+  if (!r.ok) throw new Error(`OpenWeather alerts ${r.status}`);
+  const j = await r.json();
+
+  return Array.isArray(j?.alerts) ? j.alerts : [];
+}
+
+function getAemetLevelFromAlerts(alerts) {
+  if (!Array.isArray(alerts) || alerts.length === 0) {
+    return {
+      level: 0,
+      event: '',
+      sender: '',
+      description: ''
+    };
+  }
+
+  const first = alerts[0] || {};
+
+  return {
+    level: 1,
+    event: String(first.event || ''),
+    sender: String(first.sender_name || ''),
+    description: String(first.description || '')
+  };
+}
+
+async function sendAemetPush(token, lang, info, place) {
+  if (!info || info.level === 0) return;
+
+  const title = '🚨 ThermoSafe – Avís oficial';
+  const body = `${info.event || 'Avís meteorològic actiu'}${place ? ' · ' + place : ''}`;
+
+  const data = {
+    url: 'https://thermosafe.app',
+    type: 'aemet',
+    level: String(info.level),
+    lang,
+    place: place || '',
+    event: info.event || ''
+  };
+
+  await admin.messaging().send({
+    token,
+    webpush: {
+      notification: {
+        title,
+        body,
+        icon: '/icons/icon-192.png',
+        badge: '/icons/badge-72.png',
+        tag: 'thermosafe-aemet',
+        renotify: true,
+        requireInteraction: true,
+        actions: [{ action: 'open', title: 'Obrir ThermoSafe' }],
+        data
+      },
+      fcmOptions: {
+        link: 'https://thermosafe.app'
+      },
+      headers: {
+        TTL: '3600'
+      }
+    },
+    data
+  });
+}
+// ─────────────────────────────────────────────
+// 🌡️ CRON RISC PER CALOR — només si puja de nivell
 // ─────────────────────────────────────────────
 exports.cronCheckHeatRisk = functions
   .region(REGION)
@@ -602,8 +673,11 @@ exports.cronCheckHeatRisk = functions
       tasks.push((async () => {
         try {
           const w = await getWeather(sub.lat, sub.lon);
+          if (isQuietHours(now, w.tzOffset)) return;
+
           const hi = w.temp < 18 ? w.temp : calcHI(w.temp, w.hum);
           const { level, ca, es, eu, gl } = levelFromINSST(hi);
+          const prevLevel = Number(sub.lastHeatLevel ?? 0);
 
           console.log('[HEAT]', {
             docId: doc.id,
@@ -611,19 +685,26 @@ exports.cronCheckHeatRisk = functions
             temp: w.temp,
             hum: w.hum,
             hi,
-            level,
-            threshold: sub.threshold,
-            quiet: isQuietHours(now, w.tzOffset),
-            lastNotifiedDay: sub.lastNotifiedDay || null
+            prevLevel,
+            nextLevel: level,
+            threshold: sub.threshold
           });
 
-          if (isQuietHours(now, w.tzOffset)) return;
-          const today = yyyyMMdd(now, w.tzOffset);
-          if (sub.lastNotifiedDay === today) return;
-          if (!meetsUserThreshold(level, sub.threshold)) return;
+          const updates = {
+            lastHeatLevel: level,
+          };
 
-          await sendPush(sub.token, lang, level, hi, { ca, es, eu, gl }, sub.place || w.place || '');
-          await doc.ref.set({ lastNotified: now, lastNotifiedDay: today }, { merge: true });
+          if (
+            shouldNotifyLevelIncrease(prevLevel, level) &&
+            meetsUserThreshold(level, sub.threshold)
+          ) {
+            await sendPush(sub.token, lang, level, hi, { ca, es, eu, gl }, sub.place || w.place || '');
+
+            updates.lastHeatAt = now;
+            updates.lastNotified = now;
+          }
+
+          await doc.ref.set(updates, { merge: true });
         } catch (e) {
           console.error('cron heat error', doc.id, e);
         }
@@ -635,7 +716,7 @@ exports.cronCheckHeatRisk = functions
   });
 
 // ─────────────────────────────────────────────
-// ❄️ CRON FRED
+// ❄️ CRON FRED — només si puja de nivell
 // ─────────────────────────────────────────────
 exports.cronCheckColdRisk = functions
   .region(REGION)
@@ -666,6 +747,7 @@ exports.cronCheckColdRisk = functions
             + 0.3965 * w.temp * Math.pow(windKmh, 0.16);
 
           const info = getColdInfo(windChill);
+          const prevLevel = Number(sub.lastColdLevel ?? 0);
 
           console.log('[COLD]', {
             docId: doc.id,
@@ -673,22 +755,27 @@ exports.cronCheckColdRisk = functions
             temp: w.temp,
             windKmh,
             windChill,
-            level: info.level,
-            threshold: sub.threshold,
-            quiet: isQuietHours(now, w.tzOffset),
-            lastNotifiedDay: sub.lastNotifiedDay || null
+            prevLevel,
+            nextLevel: info.level,
+            threshold: sub.threshold
           });
 
-          if (!info.riskLevel) return;
+          const updates = {
+            lastColdLevel: info.level,
+          };
 
-          const today = yyyyMMdd(now, w.tzOffset);
-          if (sub.lastNotifiedDay === today) return;
-          if (!meetsUserThreshold(info.level, sub.threshold)) return;
+          if (
+            info.level > 0 &&
+            shouldNotifyLevelIncrease(prevLevel, info.level) &&
+            meetsUserThreshold(info.level, sub.threshold)
+          ) {
+            await sendColdPush(sub.token, lang, info, windChill, sub.place || w.place || '');
 
-          await sendColdPush(sub.token, lang, info, windChill, sub.place || w.place || '');
-          await doc.ref.set({ lastNotified: now, lastNotifiedDay: today }, { merge: true });
+            updates.lastColdAt = now;
+            updates.lastNotified = now;
+          }
 
-          console.log(`[COLD] Notificació ${info.riskLevel} enviada a ${sub.place || w.place || ''}`);
+          await doc.ref.set(updates, { merge: true });
         } catch (e) {
           console.error('cron cold error', doc.id, e);
         }
@@ -700,7 +787,7 @@ exports.cronCheckColdRisk = functions
   });
 
 // ─────────────────────────────────────────────
-// 🌬️ CRON VENT
+// 🌬️ CRON VENT — només si puja de nivell
 // ─────────────────────────────────────────────
 exports.cronCheckWindRisk = functions
   .region(REGION)
@@ -725,27 +812,33 @@ exports.cronCheckWindRisk = functions
 
           const windKmh = Math.round((w.wind ?? 0) * 3.6);
           const info = getWindInfo(windKmh);
+          const prevLevel = Number(sub.lastWindLevel ?? 0);
 
           console.log('[WIND]', {
             docId: doc.id,
             place: sub.place || w.place || '',
             windKmh,
-            level: info.level,
-            threshold: sub.threshold,
-            quiet: isQuietHours(now, w.tzOffset),
-            lastNotifiedDay: sub.lastNotifiedDay || null
+            prevLevel,
+            nextLevel: info.level,
+            threshold: sub.threshold
           });
 
-          if (!info.risk) return;
+          const updates = {
+            lastWindLevel: info.level,
+          };
 
-          const today = yyyyMMdd(now, w.tzOffset);
-          if (sub.lastNotifiedDay === today) return;
-          if (!meetsUserThreshold(info.level, sub.threshold)) return;
+          if (
+            info.level > 0 &&
+            shouldNotifyLevelIncrease(prevLevel, info.level) &&
+            meetsUserThreshold(info.level, sub.threshold)
+          ) {
+            await sendWindPush(sub.token, lang, info, windKmh, sub.place || w.place || '');
 
-          await sendWindPush(sub.token, lang, info, windKmh, sub.place || w.place || '');
-          await doc.ref.set({ lastNotified: now, lastNotifiedDay: today }, { merge: true });
+            updates.lastWindAt = now;
+            updates.lastNotified = now;
+          }
 
-          console.log(`[WIND] Notificació ${info.risk} enviada a ${sub.place || w.place || ''}`, { windKmh });
+          await doc.ref.set(updates, { merge: true });
         } catch (e) {
           console.error('cron wind error', doc.id, e);
         }
@@ -757,11 +850,11 @@ exports.cronCheckWindRisk = functions
   });
 
 // ─────────────────────────────────────────────
-// ☀️ CRON UV (OpenUV)
+// ☀️ CRON UV (OpenUV) — només si puja de nivell
 // ─────────────────────────────────────────────
 exports.cronCheckUvRisk = functions
   .region(REGION)
-  .runWith({ secrets: [OPENUV_KEY] })
+  .runWith({ secrets: [OPENUV_KEY, OPENWEATHER_KEY] })
   .pubsub.schedule('every 60 minutes')
   .timeZone('Europe/Madrid')
   .onRun(async () => {
@@ -784,28 +877,100 @@ exports.cronCheckUvRisk = functions
           const w = await getWeather(sub.lat, sub.lon);
           if (isQuietHours(now, w.tzOffset)) return;
 
+          const prevLevel = Number(sub.lastUvLevel ?? 0);
+
           console.log('[UV]', {
             docId: doc.id,
             place: sub.place || w.place || '',
             uvi,
-            level: info.level,
-            threshold: sub.threshold,
-            quiet: isQuietHours(now, w.tzOffset),
-            lastNotifiedDay: sub.lastNotifiedDay || null
+            prevLevel,
+            nextLevel: info.level,
+            threshold: sub.threshold
           });
 
-          if (!info.risk) return;
+          const updates = {
+            lastUvLevel: info.level,
+          };
 
-          const today = yyyyMMdd(now, w.tzOffset);
-          if (sub.lastNotifiedDay === today) return;
-          if (!meetsUserThreshold(info.level, sub.threshold)) return;
+          if (
+            info.level > 0 &&
+            shouldNotifyLevelIncrease(prevLevel, info.level) &&
+            meetsUserThreshold(info.level, sub.threshold)
+          ) {
+            await sendUvPush(sub.token, lang, info, uvi, sub.place || w.place || '');
 
-          await sendUvPush(sub.token, lang, info, uvi, sub.place || w.place || '');
-          await doc.ref.set({ lastNotified: now, lastNotifiedDay: today }, { merge: true });
+            updates.lastUvAt = now;
+            updates.lastNotified = now;
+          }
 
-          console.log(`[UV] Notificació ${info.risk} enviada a ${sub.place || w.place || ''}`, { uvi });
+          await doc.ref.set(updates, { merge: true });
         } catch (e) {
           console.error('cron uv error', doc.id, e);
+        }
+      })());
+    }
+
+    await Promise.allSettled(tasks);
+    return null;
+  });
+
+  // ─────────────────────────────────────────────
+// 🚨 CRON AEMET / ALERTES OFICIALS
+// ─────────────────────────────────────────────
+exports.cronCheckAemetRisk = functions
+  .region(REGION)
+  .runWith({ secrets: [OPENWEATHER_KEY] })
+  .pubsub.schedule('every 30 minutes')
+  .timeZone('Europe/Madrid')
+  .onRun(async () => {
+    const now = Date.now();
+    const snap = await db.collection('subs').limit(1000).get();
+    if (snap.empty) return null;
+
+    const tasks = [];
+
+    for (const doc of snap.docs) {
+      const sub = doc.data();
+      const lang = LANGS.includes(sub.lang) ? sub.lang : 'ca';
+
+      tasks.push((async () => {
+        try {
+          const w = await getWeather(sub.lat, sub.lon);
+
+          if (isQuietHours(now, w.tzOffset)) return;
+
+          const alerts = await getWeatherAlerts(sub.lat, sub.lon);
+          const info = getAemetLevelFromAlerts(alerts);
+
+          const prevLevel = Number(sub.lastAemetLevel ?? 0);
+
+          console.log('[AEMET]', {
+            docId: doc.id,
+            prevLevel,
+            nextLevel: info.level,
+            event: info.event
+          });
+
+          const updates = {
+            lastAemetLevel: info.level
+          };
+
+          if (info.level > prevLevel) {
+            await sendAemetPush(
+              sub.token,
+              lang,
+              info,
+              sub.place || w.place || ''
+            );
+
+            updates.lastAemetAt = now;
+            updates.lastNotified = now;
+          }
+
+          await doc.ref.set(updates, { merge: true });
+
+        } catch (e) {
+          console.error('cron aemet error', doc.id, e);
         }
       })());
     }

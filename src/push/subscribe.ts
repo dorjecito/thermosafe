@@ -6,7 +6,7 @@ import { db, messagingPromise } from "../firebase";
 
 // 🔹 Tipus bàsics
 type Level = "moderate" | "high" | "very_high";
-type Lang  = "ca" | "es" | "eu" | "gl";
+type Lang = "ca" | "es" | "eu" | "gl";
 
 // --------------------------------------------------------
 // 🟢 Permís de notificacions
@@ -20,6 +20,7 @@ async function askNotifPerm(): Promise<boolean> {
 // 📍 Coordenades (GPS)
 async function getCoords(): Promise<{ lat: number; lon: number } | null> {
   if (!("geolocation" in navigator)) return null;
+
   return new Promise((resolve) => {
     navigator.geolocation.getCurrentPosition(
       (p) => resolve({ lat: p.coords.latitude, lon: p.coords.longitude }),
@@ -42,7 +43,6 @@ export async function enableRiskAlerts({
   threshold = "moderate" as Level,
   lang,
 }: { threshold?: Level; lang?: Lang } = {}) {
-
   console.log("🟢 Iniciant activació de notificacions push...");
 
   // 1️⃣ Permisos
@@ -53,7 +53,7 @@ export async function enableRiskAlerts({
   const loc = await getCoords();
   if (!loc) throw new Error("No s'ha pogut obtenir la ubicació (GPS)");
 
-  // 3️⃣ Service Worker actiu (espera que estigui llest)
+  // 3️⃣ Service Worker actiu
   const swReg = await navigator.serviceWorker.ready;
   if (!swReg) throw new Error("No s'ha pogut inicialitzar el Service Worker");
 
@@ -61,11 +61,18 @@ export async function enableRiskAlerts({
   const messaging = await messagingPromise;
   if (!messaging) throw new Error("El navegador no suporta Web Push");
 
-  // 5️⃣ Obté el token FCM (clau pública VAPID)
-  const vapidKey = "BNh8R1YOsrnV58xNBIOVi-aMIYCvTsPpdmn7hcKJ3lldQUZ8BF6qP_wEa84TnIwZ765YQxHGWc7fAdpegzgH184";
-  const token = await getToken(messaging, { vapidKey, serviceWorkerRegistration: swReg });
+  // 5️⃣ Obté el token FCM
+  const vapidKey =
+    "BNh8R1YOsrnV58xNBIOVi-aMIYCvTsPpdmn7hcKJ3lldQUZ8BF6qP_wEa84TnIwZ765YQxHGWc7fAdpegzgH184";
 
-  if (!token || token.length < 50) throw new Error("Token FCM invàlid o buit");
+  const token = await getToken(messaging, {
+    vapidKey,
+    serviceWorkerRegistration: swReg,
+  });
+
+  if (!token || token.length < 50) {
+    throw new Error("Token FCM invàlid o buit");
+  }
 
   console.log("🔑 Token FCM obtingut:", token);
 
@@ -84,18 +91,38 @@ export async function enableRiskAlerts({
         lon: loc.lon,
         threshold,
         lang: langNorm,
+
+        // historial general
         lastNotified: null,
         lastNotifiedDay: null,
         createdAt: Date.now(),
+
+        // nous camps per control de canvis de nivell
+        lastHeatLevel: 0,
+        lastHeatAt: 0,
+
+        lastColdLevel: 0,
+        lastColdAt: 0,
+
+        lastWindLevel: 0,
+        lastWindAt: 0,
+
+        lastUvLevel: 0,
+        lastUvAt: 0,
+
+        lastAemetLevel: 0,
+        lastAemetAt: 0,
       },
       { merge: true }
     );
+
     console.log("✅ Subscripció desada correctament a Firestore.");
   } catch (e) {
     console.error("⚠️ Error desant la subscripció a Firestore:", e);
+    throw e;
   }
 
-  // 8️⃣ Desa també localment (opcional)
+  // 8️⃣ Desa també localment
   localStorage.setItem("fcmToken", token);
 
   console.log("✅ Activació completada correctament.");
@@ -106,6 +133,7 @@ export async function enableRiskAlerts({
 // 🔴 Desactiva: elimina subs/{token} i neteja local
 export async function disableRiskAlerts(token: string | null) {
   if (!token) return;
+
   try {
     await deleteDoc(doc(db, "subs", token));
     localStorage.removeItem("fcmToken");
