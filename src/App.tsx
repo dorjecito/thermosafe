@@ -278,6 +278,70 @@ const [alerts, setAlerts] = useState<any[]>([]);
   deactivate,              
 } = useSmartActivity();
 
+const ALERTS_CACHE_KEY = "thermosafe_last_alerts_fetch";
+
+async function loadAlertsIfNeeded(
+  nextLat: number,
+  nextLon: number,
+  lang: string,
+  apiKey: string,
+  isDayValue: boolean = true
+) {
+  if (!isDayValue) {
+    setAlerts([]);
+    console.log("[ALERTS] Nit → no es consulta OpenWeather alerts");
+    return;
+  }
+
+  const now = Date.now();
+
+  let prevLat: number | null = null;
+  let prevLon: number | null = null;
+  let prevTs = 0;
+
+  try {
+    const raw = localStorage.getItem(ALERTS_CACHE_KEY);
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      prevLat = typeof parsed.lat === "number" ? parsed.lat : null;
+      prevLon = typeof parsed.lon === "number" ? parsed.lon : null;
+      prevTs = typeof parsed.ts === "number" ? parsed.ts : 0;
+    }
+  } catch (err) {
+    console.warn("[ALERTS] Error llegint caché local:", err);
+  }
+
+  const sameArea =
+    prevLat !== null &&
+    prevLon !== null &&
+    Math.abs(prevLat - nextLat) < 0.05 &&
+    Math.abs(prevLon - nextLon) < 0.05;
+
+  const tooSoon = now - prevTs < 30 * 60 * 1000; // 30 minuts
+
+  if (sameArea && tooSoon) {
+    console.log("[ALERTS] Omitida consulta: mateixa zona i dins finestra de 30 min");
+    return;
+  }
+
+  try {
+    const nextAlerts = await getWeatherAlerts(nextLat, nextLon, lang, apiKey);
+    setAlerts(nextAlerts || []);
+
+    localStorage.setItem(
+      ALERTS_CACHE_KEY,
+      JSON.stringify({
+        lat: nextLat,
+        lon: nextLon,
+        ts: now,
+      })
+    );
+  } catch (err) {
+    console.warn("[ALERTS] Error carregant avisos:", err);
+    setAlerts([]);
+  }
+}
+
 /* === CONFIGURACIÓ GENERAL === */
 const API_KEY = "ebd4ce67a42857776f4463c756e18b45"; // 🔑 substitueix per la teva clau real
 const lang = i18n.resolvedLanguage?.slice(0,2) || "ca";
@@ -394,7 +458,6 @@ async function onTogglePush(next: boolean) {
 
 /* === FETCH WEATHER (ciutat cercada) === */
 const fetchWeather = async (cityName: string) => {
-
   const requestId = startRequest("search");
 
   try {
@@ -413,9 +476,9 @@ const fetchWeather = async (cityName: string) => {
 
     setRealCity(cityName);
     setCity(cityName);
-    setInput(""); // ← aquí està la clau
+    setInput("");
 
-    // 🌞 Dia/nit REAL per la ciutat (no per Mallorca)
+    // 🌞 Dia/nit REAL per la ciutat
     const newLat = data.coord?.lat ?? null;
     const newLon = data.coord?.lon ?? null;
 
@@ -424,40 +487,49 @@ const fetchWeather = async (cityName: string) => {
     const sunrise = data.sys?.sunrise;
     const sunset = data.sys?.sunset;
 
-    setDay(isDayAtLocation(nowUtc, tz, sunrise, sunset));
+    const isDayHere = isDayAtLocation(nowUtc, tz, sunrise, sunset);
+    setDay(isDayHere);
 
-const resolvedName =
-  (newLat != null && newLon != null
-    ? await getLocationNameFromCoords(newLat, newLon, lang)
-    : null) ||
-  data.name ||
-  cityName ||
-  "Ubicació desconeguda";
+    const resolvedName =
+      (newLat != null && newLon != null
+        ? await getLocationNameFromCoords(newLat, newLon, lang)
+        : null) ||
+      data.name ||
+      cityName ||
+      "Ubicació desconeguda";
 
-setCity(resolvedName);
-setRealCity(resolvedName);
+    if (isStaleRequest("search", requestId)) return;
+
+    setCity(resolvedName);
+    setRealCity(resolvedName);
 
     // 🌡 Temperatures bàsiques
-    const tempReal = data.main.temp;
+    const tempReal = data.main?.temp ?? null;
+    const feelsLike = data.main?.feels_like ?? null;
+    const humidity = data.main?.humidity ?? null;
+
     setTemp(tempReal);
-    setHi(data.main.feels_like);
-    setHum(data.main.humidity);
+    setHi(feelsLike);
+    setHum(humidity);
     setClouds(data.clouds?.all ?? 0);
     setWeatherMain(data.weather?.[0]?.main ?? null);
 
-    // 💨 Vent: calcula un cop i reutilitza
-    const wKmH = data.wind.speed * 3.6;
+    // 💨 Vent
+    const wKmH = (data.wind?.speed ?? 0) * 3.6;
     setWindKmh(wKmH);
 
-    const deg = data.wind.deg ?? null;
+    const deg = data.wind?.deg ?? null;
     setWindDeg(deg);
 
-    // ❄️ WIND-CHILL per ciutat cercada
-    let effForCold = tempReal;          // per defecte, la real
+    // ❄️ Wind-chill
+    let effForCold = tempReal ?? 0;
     let wcVal: number | null = null;
 
-    // Càlcul oficial només si ≤10 ºC i vent ≥5 km/h
-    if (tempReal <= WINDCHILL_TEMP_MAX && wKmH >= WINDCHILL_WIND_MIN) {
+    if (
+      tempReal !== null &&
+      tempReal <= WINDCHILL_TEMP_MAX &&
+      wKmH >= WINDCHILL_WIND_MIN
+    ) {
       wcVal =
         13.12 +
         0.6215 * tempReal -
@@ -465,59 +537,56 @@ setRealCity(resolvedName);
         0.3965 * tempReal * Math.pow(wKmH, 0.16);
 
       wcVal = Math.round(wcVal * 10) / 10;
-      effForCold = wcVal;               // la “percebuda” passa a ser el wind-chill
+      effForCold = wcVal;
     }
 
-    // Guarda wind-chill + temperatura efectiva
     setWc(wcVal);
 
-    // ❄️ Calcula RISC PER FRED segons temperatura efectiva i vent
-    const effectiveTemp = wcVal ?? tempReal;
-    const coldRiskValue = getColdRisk(effectiveTemp, wKmH);
-    setColdRisk(coldRiskValue as ColdRisk);
-
-
-    // ❄️ 3) Calcula RISC PER FRED només si fa fred de veritat
     let computedColdRisk = "cap";
-
     if (effForCold <= COLD_THRESHOLD) {
       computedColdRisk = getColdRisk(effForCold, wKmH);
     }
-
     setColdRisk(computedColdRisk as ColdRisk);
 
- const rawDesc = data.weather?.[0]?.description || "";
-setSky(resolveSkyDescription(rawDesc, (key) => t(key)));
-setIcon(data.weather?.[0]?.icon || "");
+    const rawDesc = data.weather?.[0]?.description || "";
+    setSky(resolveSkyDescription(rawDesc, (key) => t(key)));
+    setIcon(data.weather?.[0]?.icon || "");
 
-// ✅ Coordenades reals de la ciutat cercada (OpenWeather)
-if (newLat != null && newLon != null) {
-  setLat(newLat);
-  setLon(newLon);
+    // ✅ Coordenades reals de la ciutat cercada
+    if (newLat != null && newLon != null) {
+      setLat(newLat);
+      setLon(newLon);
 
-  // 🟣 UVI (OpenUV) per la ciutat cercada
-  const uv = await getUVFromOpenUV(newLat, newLon);
-  console.log("[SEARCH] UV rebut:", uv);
-  setUvi(uv);
+      // 🟣 UVI (OpenUV)
+      const uv = await getUVFromOpenUV(newLat, newLon);
 
-  console.log("[DEBUG] Coordenades ciutat cercada:", newLat, newLon);
+      if (isStaleRequest("search", requestId)) return;
 
-  // ⚠️ Avisos oficials per la ciutat cercada
-  const alerts = await getWeatherAlerts(newLat, newLon, lang, API_KEY);
-  setAlerts(alerts || []);
-} else {
-  setUvi(null);
-  setAlerts([]);
-}
+      console.log("[SEARCH] UV rebut:", uv);
+      setUvi(uv);
 
+      console.log("[DEBUG] Coordenades ciutat cercada:", newLat, newLon);
+
+      // ⚠️ Avisos oficials
+      await loadAlertsIfNeeded(
+        newLat,
+        newLon,
+        lang,
+        API_KEY,
+        isDayHere
+      );
+    } else {
+      setUvi(null);
+      setAlerts([]);
+    }
   } catch (err) {
     console.error("[DEBUG] Error obtenint dades:", err);
     setErr("Error obtenint dades de ciutat");
   } finally {
-  if (!isStaleRequest("search", requestId)) {
-    setLoading(false);
+    if (!isStaleRequest("search", requestId)) {
+      setLoading(false);
+    }
   }
-}
 };
 
   /* 🌍 Auto-refresh i inicialització segura de localització */
@@ -799,14 +868,15 @@ const coldRiskValue = getColdRisk(effForCold, wKmH);
 setColdRisk(coldRiskValue as ColdRisk);
 
 // ⚠️ 9. Avisos oficials
-const alerts = await getWeatherAlerts(lat, lon, lang, API_KEY);
+await loadAlertsIfNeeded(
+  lat,
+  lon,
+  lang,
+  API_KEY,
+  isDayHere
+);
 
 if (isStaleRequest("gps", requestId)) return;
-
-setAlerts(alerts);
-if (alerts.length > 0) {
-  console.log("[DEBUG] Avisos meteorològics rebuts:", alerts);
-}
 
 // 🔥 10. Notificacions
 if (!isStaleRequest("gps", requestId)) {
@@ -864,7 +934,8 @@ const handleSuggestionSelect = async (s: any) => {
     const tz = data.timezone ?? 0;
     const sunrise = data.sys?.sunrise;
     const sunset = data.sys?.sunset;
-    setDay(isDayAtLocation(nowUtc, tz, sunrise, sunset));
+    const isDayHere = isDayAtLocation(nowUtc, tz, sunrise, sunset);
+    setDay(isDayHere);
 
     setCity(label);
     setRealCity(label);
@@ -910,8 +981,13 @@ const handleSuggestionSelect = async (s: any) => {
     const uv = await getUVFromOpenUV(s.lat, s.lon);
     setUvi(uv);
 
-    const alerts = await getWeatherAlerts(s.lat, s.lon, lang, API_KEY);
-    setAlerts(alerts || []);
+    await loadAlertsIfNeeded(
+      s.lat,
+      s.lon,
+      lang,
+      API_KEY,
+      isDayHere
+    );
   } catch (err) {
     console.error("[DEBUG] Error obtenint dades del suggeriment:", err);
     setErr(t("errorCity"));

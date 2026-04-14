@@ -1,178 +1,240 @@
 import * as React from "react";
-import type { SkinType } from "../utils/safeExposure";
-import { formatMinutes, getSafeMinutes } from "../utils/safeExposure";
 import { getUVDetailFromOpenUV } from "../services/openUV";
 
 type Lang = "ca" | "es" | "eu" | "gl" | "en";
 
 type Props = {
-  lat: number | null;
-  lon: number | null;
-  lang: Lang | string;
+  lat: number | null;
+  lon: number | null;
+  lang: Lang;
 };
-
-const MIN_UV_FOR_SAFE_TIME = 2;
-const MAX_MINUTES_TO_DISPLAY = 6 * 60; // 6 hores (enfoc laboral)
 
 const TXT: Record<
-  Lang,
-  {
-    title: string;
-    skin: string;
-    none: string;
-    approx: string;
-    tip: string;
-    lowUv: string;
-    atLeast: (h: number) => string;
-    s: (n: number) => string;
-  }
+  Lang,
+  {
+    maxToday: string;
+    sunrise: string;
+    sunset: string;
+    details: string;
+    updated: string;
+    ozone: string;
+    ozoneInfo: string;
+    ozoneLow: string;
+    ozoneNormal: string;
+    ozoneHigh: string;
+    na: string;
+  }
 > = {
-  ca: {
-    title: "Exposició acumulada estimada",
-    skin: "Fototip",
-    none: "No disponible",
-    approx: "Estimació orientativa basada en índex UV actual",
-    tip: "Aplica protecció solar i organitza pauses en hores centrals.",
-    lowUv: "UVI molt baix: risc mínim per a jornada laboral habitual.",
-    atLeast: (h) => `≥ ${h} h`,
-    s: (n) => `Tipus ${n}`,
-  },
-  es: {
-    title: "Exposición acumulada estimada",
-    skin: "Fototipo",
-    none: "No disponible",
-    approx: "Estimación orientativa basada en índice UV actual",
-    tip: "Usa protección solar y organiza pausas en horas centrales.",
-    lowUv: "UVI muy bajo: riesgo mínimo para jornada laboral habitual.",
-    atLeast: (h) => `≥ ${h} h`,
-    s: (n) => `Tipo ${n}`,
-  },
-  eu: {
-    title: "Metatutako esposizio estimatua",
-    skin: "Fototipoa",
-    none: "Ez dago eskuragarri",
-    approx: "Uneko UV indizean oinarritutako estimazioa",
-    tip: "Erabili eguzki-babesa eta antolatu atsedenaldiak erdiko orduetan.",
-    lowUv: "UVI oso baxua: arrisku txikia lan-jardunean.",
-    atLeast: (h) => `≥ ${h} h`,
-    s: (n) => `Mota ${n}`,
-  },
-  gl: {
-    title: "Exposición acumulada estimada",
-    skin: "Fototipo",
-    none: "Non dispoñible",
-    approx: "Estimación orientativa baseada no índice UV actual",
-    tip: "Usa protección solar e organiza pausas nas horas centrais.",
-    lowUv: "UVI moi baixo: risco mínimo na xornada laboral habitual.",
-    atLeast: (h) => `≥ ${h} h`,
-    s: (n) => `Tipo ${n}`,
-  },
-  en: {
-    title: "Estimated cumulative exposure",
-    skin: "Skin type",
-    none: "Not available",
-    approx: "Indicative estimate based on current UV index",
-    tip: "Use sun protection and schedule breaks during peak hours.",
-    lowUv: "Very low UV: minimal risk for a typical workday.",
-    atLeast: (h) => `≥ ${h} h`,
-    s: (n) => `Type ${n}`,
-  },
+  ca: {
+    maxToday: "UV màxim avui",
+    sunrise: "Sortida",
+    sunset: "Posta",
+    details: "Detalls",
+    updated: "Actualitzat",
+    ozone: "Ozò",
+    ozoneInfo: "Valors habituals: 250–400 DU.",
+    ozoneLow: "Capa d’ozó baixa (pot augmentar el risc UV).",
+    ozoneNormal: "Capa d’ozó dins rang habitual.",
+    ozoneHigh: "Capa d’ozó molt alta.",
+    na: "—",
+  },
+  es: {
+    maxToday: "UV máximo hoy",
+    sunrise: "Salida",
+    sunset: "Puesta",
+    details: "Detalles",
+    updated: "Actualizado",
+    ozone: "Ozono",
+    ozoneInfo: "Valores habituales: 250–400 DU.",
+    ozoneLow: "Capa de ozono baja (puede aumentar el riesgo UV).",
+    ozoneNormal: "Capa de ozono dentro de rangos habituales.",
+    ozoneHigh: "Capa de ozono muy alta.",
+    na: "—",
+  },
+  eu: {
+    maxToday: "Gaurko UV max",
+    sunrise: "Egunsentia",
+    sunset: "Ilunabarra",
+    details: "Xehetasunak",
+    updated: "Eguneratua",
+    ozone: "Ozonoa",
+    ozoneInfo: "Balio arruntak: 250–400 DU.",
+    ozoneLow: "Ozono-geruza baxua (UV arriskua handitu daiteke).",
+    ozoneNormal: "Ozono-geruza ohiko tartean.",
+    ozoneHigh: "Ozono-geruza oso altua.",
+    na: "—",
+  },
+  gl: {
+    maxToday: "UV máximo hoxe",
+    sunrise: "Amencer",
+    sunset: "Solpor",
+    details: "Detalles",
+    updated: "Actualizado",
+    ozone: "Ozono",
+    ozoneInfo: "Valores habituais: 250–400 DU.",
+    ozoneLow: "Capa de ozono baixa (pode aumentar o risco UV).",
+    ozoneNormal: "Capa de ozono en rango habitual.",
+    ozoneHigh: "Capa de ozono moi alta.",
+    na: "—",
+  },
+  en: {
+    maxToday: "Today's max UV",
+    sunrise: "Sunrise",
+    sunset: "Sunset",
+    details: "Details",
+    updated: "Updated",
+    ozone: "Ozone",
+    ozoneInfo: "Typical values: 250–400 DU.",
+    ozoneLow: "Low ozone layer (UV risk may increase).",
+    ozoneNormal: "Ozone layer within typical range.",
+    ozoneHigh: "Very high ozone layer.",
+    na: "—",
+  },
 };
 
-function safeLang(raw?: string | null): Lang {
-  const base = (raw || "ca").split("-")[0];
-  return (["ca", "es", "eu", "gl", "en"].includes(base) ? base : "ca") as Lang;
+type UVDetailShape = {
+  uv_max?: number | string | null;
+  uv_max_time?: string | null;
+  uv_time?: string | null;
+  ozone?: number | null;
+  ozone_time?: string | null;
+  sun_info?: {
+    sun_times?: {
+      sunrise?: string | null;
+      sunset?: string | null;
+    } | null;
+  } | null;
+
+  uvMax?: number | string | null;
+  uvMaxTime?: string | null;
+  uvTime?: string | null;
+  ozoneTime?: string | null;
+  sunInfo?: {
+    sunTimes?: {
+      sunrise?: string | null;
+      sunset?: string | null;
+    } | null;
+  } | null;
+};
+
+function fmtTime(iso?: string | null): string | null {
+  if (!iso) return null;
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return null;
+  return d.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
 }
 
-export default function UVSafeTime({ lat, lon, lang }: Props) {
-  const L = safeLang(lang);
-  const t = TXT[L];
+function toNum(x: unknown): number | null {
+  if (typeof x === "number" && Number.isFinite(x)) return x;
+  if (typeof x === "string" && x.trim() !== "" && Number.isFinite(Number(x))) {
+    return Number(x);
+  }
+  return null;
+}
 
-  const [skin, setSkin] = React.useState<SkinType>(3);
-  const [mins, setMins] = React.useState<number | null>(null);
-  const [uvNow, setUvNow] = React.useState<number | null>(null);
-  const [loading, setLoading] = React.useState(false);
+function ozoneLabel(du: number, t: (typeof TXT)[Lang]) {
+  if (du < 220) return t.ozoneLow;
+  if (du > 450) return t.ozoneHigh;
+  return t.ozoneNormal;
+}
 
-  const lowUv = uvNow != null && uvNow < MIN_UV_FOR_SAFE_TIME;
+export default function UVDetailPanel({ lat, lon, lang }: Props) {
+  const t = TXT[lang] ?? TXT.ca;
 
-  const displayTime = React.useMemo(() => {
-    if (mins == null) return null;
-    if (mins > MAX_MINUTES_TO_DISPLAY) return t.atLeast(MAX_MINUTES_TO_DISPLAY / 60);
-    return formatMinutes(mins);
-  }, [mins, t]);
+  const [detail, setDetail] = React.useState<UVDetailShape | null>(null);
+  const [loading, setLoading] = React.useState(false);
 
-  React.useEffect(() => {
-    if (lat == null || lon == null) return;
+  React.useEffect(() => {
+    if (lat == null || lon == null) {
+      setDetail(null);
+      setLoading(false);
+      return;
+    }
 
-    let alive = true;
-    setLoading(true);
+    let alive = true;
+    setLoading(true);
 
-    // reset mentre carrega (evita mostrar estat antic quan canvies ubicació)
-    setUvNow(null);
-    setMins(null);
+    getUVDetailFromOpenUV(lat, lon)
+      .then((d) => {
+        if (!alive) return;
+        setDetail((d as UVDetailShape) ?? null);
+      })
+      .catch((err) => {
+        if (!alive) return;
+        console.error("[UVDetailPanel] Error carregant detall UV:", err);
+        setDetail(null);
+      })
+      .finally(() => {
+        if (!alive) return;
+        setLoading(false);
+      });
 
-    getUVDetailFromOpenUV(lat, lon)
-      .then((detail) => {
-        if (!alive) return;
+    return () => {
+      alive = false;
+    };
+  }, [lat, lon]);
 
-        const uv = typeof (detail as any)?.uv === "number" ? (detail as any).uv : null;
-        setUvNow(uv);
+  const uvMax = toNum(detail?.uv_max ?? detail?.uvMax);
+  const uvMaxTime = fmtTime(detail?.uv_max_time ?? detail?.uvMaxTime ?? null) ?? t.na;
 
-        if (uv != null && uv < MIN_UV_FOR_SAFE_TIME) {
-          setMins(null);
-          return;
-        }
+  const sunrise =
+    fmtTime(
+      detail?.sun_info?.sun_times?.sunrise ??
+        detail?.sunInfo?.sunTimes?.sunrise ??
+        null
+    ) ?? t.na;
 
-        const m = getSafeMinutes((detail as any)?.safe_exposure_time, skin);
-        setMins(m);
-      })
-      .catch(() => {
-        if (!alive) return;
-        setUvNow(null);
-        setMins(null);
-      })
-      .finally(() => {
-        if (!alive) return;
-        setLoading(false);
-      });
+  const sunset =
+    fmtTime(
+      detail?.sun_info?.sun_times?.sunset ??
+        detail?.sunInfo?.sunTimes?.sunset ??
+        null
+    ) ?? t.na;
 
-    return () => {
-      alive = false;
-    };
-  }, [lat, lon, skin]);
+  const updated = fmtTime(detail?.uv_time ?? detail?.uvTime ?? null);
+  const ozone = typeof detail?.ozone === "number" ? Math.round(detail.ozone) : null;
+  const ozoneTime = fmtTime(detail?.ozone_time ?? detail?.ozoneTime ?? null);
 
-  return (
-    <div className="info-block uv-block">
-      <div className="block-title">{t.title}</div>
+  return (
+    <div style={{ marginTop: 8 }}>
+      <div className="muted" style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
+        <span>
+          <strong>{t.maxToday}:</strong>{" "}
+          {loading ? "…" : uvMax != null ? `${uvMax.toFixed(1)} (${uvMaxTime})` : t.na}
+        </span>
 
-      <div style={{ display: "flex", gap: 12, alignItems: "center", flexWrap: "wrap" }}>
-        <label className="muted">
-          {t.skin}:{" "}
-          <select value={skin} onChange={(e) => setSkin(Number(e.target.value) as SkinType)}>
-            {[1, 2, 3, 4, 5, 6].map((n) => (
-              <option key={n} value={n}>
-                {t.s(n)}
-              </option>
-            ))}
-          </select>
-        </label>
+        <span>
+          <strong>{t.sunrise}:</strong> {loading ? "…" : sunrise} ·{" "}
+          <strong>{t.sunset}:</strong> {loading ? "…" : sunset}
+        </span>
+      </div>
 
-        <div>
-          {loading ? (
-            <span className="muted">…</span>
-          ) : lowUv ? (
-            <span className="muted">{t.lowUv}</span>
-          ) : displayTime != null ? (
-            <strong>{displayTime}</strong>
-          ) : (
-            <span className="muted">{t.none}</span>
-          )}
-        </div>
-      </div>
+      <details style={{ marginTop: 6 }}>
+        <summary className="muted" style={{ cursor: "pointer" }}>
+          {t.details}
+        </summary>
 
-      <div className="muted" style={{ marginTop: 6 }}>
-        {t.approx}. {t.tip}
-      </div>
-    </div>
-  );
+        <div className="muted" style={{ marginTop: 6, display: "grid", gap: 6 }}>
+          <div>
+            <strong>{t.updated}:</strong> {loading ? "…" : updated ?? t.na}
+          </div>
+
+          <div>
+            <strong>{t.ozone}:</strong>{" "}
+            {loading
+              ? "…"
+              : ozone != null
+              ? `${ozone} DU${ozoneTime ? ` (${ozoneTime})` : ""}`
+              : t.na}
+          </div>
+
+          {!loading && ozone != null && (
+            <div style={{ fontSize: "0.9em", opacity: 0.9 }}>
+              {ozoneLabel(ozone, t)} {t.ozoneInfo}
+            </div>
+          )}
+        </div>
+      </details>
+    </div>
+  );
 }

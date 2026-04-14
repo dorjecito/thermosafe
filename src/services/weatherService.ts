@@ -6,6 +6,46 @@ const ONECALL_URL = "https://api.openweathermap.org/data/3.0/onecall";
 
 const normLang2 = (lang: string) => (lang || "en").slice(0, 2).toLowerCase();
 
+const CACHE_TTL = 10 * 60 * 1000; // 10 minuts
+
+type CacheEntry<T> = {
+  timestamp: number;
+  data: T;
+};
+
+const weatherCache = new Map<string, CacheEntry<any>>();
+
+function getCacheKey(prefix: string, ...parts: (string | number)[]) {
+  return `${prefix}:${parts.join(":")}`;
+}
+
+function getFromCache<T>(key: string): T | null {
+  const entry = weatherCache.get(key);
+
+  if (!entry) return null;
+
+  const isExpired = Date.now() - entry.timestamp > CACHE_TTL;
+
+  if (isExpired) {
+    weatherCache.delete(key);
+    return null;
+  }
+
+  return entry.data as T;
+}
+
+function saveToCache<T>(key: string, data: T) {
+  weatherCache.set(key, {
+    timestamp: Date.now(),
+    data,
+  });
+}
+
+function getApiKey(apiKey?: string): string | null {
+  const key = apiKey || import.meta.env.VITE_OPENWEATHER_API_KEY;
+  return typeof key === "string" && key.trim() ? key.trim() : null;
+}
+
 // 📡 Obté temps actual per coordenades
 export async function getWeatherByCoords(
   lat: number,
@@ -13,20 +53,36 @@ export async function getWeatherByCoords(
   lang: string = "en",
   apiKey?: string
 ) {
-  const API_KEY = apiKey || import.meta.env.VITE_OPENWEATHER_API_KEY;
+  const API_KEY = getApiKey(apiKey);
+  if (!API_KEY) {
+    console.error("[DEBUG] Falta VITE_OPENWEATHER_API_KEY a getWeatherByCoords");
+    return null;
+  }
+
   const lang2 = normLang2(lang);
+
+  const cacheKey = getCacheKey("coords", lat.toFixed(4), lon.toFixed(4), lang2);
+  const cached = getFromCache<any>(cacheKey);
+  if (cached) return cached;
 
   const url = `${BASE_URL}/weather?lat=${lat}&lon=${lon}&appid=${API_KEY}&units=metric&lang=${lang2}`;
 
   try {
     const response = await fetch(url);
-    if (!response.ok) return null;
+    if (!response.ok) {
+      console.error("[DEBUG] Error HTTP a getWeatherByCoords:", response.status);
+      return null;
+    }
 
     const data = await response.json();
 
-    // ❗ No posam country com a "name". Si falta name, millor deixar-ho buit i resoldre-ho fora (reverse geocoding).
-    if (typeof data?.name !== "string") data.name = "";
+    if (!data || typeof data !== "object") return null;
 
+    // ❗ No posam country com a "name". Si falta name, millor deixar-ho buit
+    // i resoldre-ho fora amb reverse geocoding.
+    if (typeof data.name !== "string") data.name = "";
+
+    saveToCache(cacheKey, data);
     return data;
   } catch (err) {
     console.error("[DEBUG] Error a getWeatherByCoords:", err);
@@ -40,43 +96,64 @@ export async function getWeatherByCity(
   lang: string = "en",
   apiKey?: string
 ) {
-  const API_KEY = apiKey || import.meta.env.VITE_OPENWEATHER_API_KEY;
+  const API_KEY = getApiKey(apiKey);
+  if (!API_KEY) {
+    console.error("[DEBUG] Falta VITE_OPENWEATHER_API_KEY a getWeatherByCity");
+    return null;
+  }
+
   const lang2 = normLang2(lang);
+
+  const cacheKey = getCacheKey("city", cityName.trim().toLowerCase(), lang2);
+  const cached = getFromCache<any>(cacheKey);
+  if (cached) return cached;
 
   const url = `${BASE_URL}/weather?q=${encodeURIComponent(cityName)}&appid=${API_KEY}&units=metric&lang=${lang2}`;
 
   try {
     const response = await fetch(url);
-    if (!response.ok) return null;
+    if (!response.ok) {
+      console.error("[DEBUG] Error HTTP a getWeatherByCity:", response.status);
+      return null;
+    }
 
     const data = await response.json();
+    if (!data || typeof data !== "object") return null;
 
-    // Si falten coordenades, recuperar-les via GeoAPI
+    // Si falten coordenades, recuperar-les via Geo API
     const missingCoords = data?.coord?.lat == null || data?.coord?.lon == null;
 
     if (missingCoords) {
       const geoUrl = `${GEO_URL}/direct?q=${encodeURIComponent(cityName)}&limit=1&appid=${API_KEY}`;
 
-      const geoResp = await fetch(geoUrl);
-      if (geoResp.ok) {
-        const geoData = await geoResp.json();
+      try {
+        const geoResp = await fetch(geoUrl);
 
-        if (Array.isArray(geoData) && geoData.length > 0) {
-          const g0 = geoData[0];
-          data.coord = { lat: g0.lat, lon: g0.lon };
+        if (geoResp.ok) {
+          const geoData = await geoResp.json();
 
-          // Nom preferit: local_names[lang2] → ca → name → cityName
-          data.name =
-            g0.local_names?.[lang2] ||
-            g0.local_names?.ca ||
-            g0.name ||
-            cityName;
+          if (Array.isArray(geoData) && geoData.length > 0) {
+            const g0 = geoData[0];
+            data.coord = { lat: g0.lat, lon: g0.lon };
+
+            // Nom preferit: local_names[lang2] → ca → name → cityName
+            data.name =
+              g0?.local_names?.[lang2] ||
+              g0?.local_names?.ca ||
+              g0?.name ||
+              cityName;
+          }
         }
+      } catch (geoErr) {
+        console.error("[DEBUG] Error a Geo API dins getWeatherByCity:", geoErr);
       }
     }
 
-    if (typeof data?.name !== "string" || !data.name.trim()) data.name = cityName;
+    if (typeof data.name !== "string" || !data.name.trim()) {
+      data.name = cityName;
+    }
 
+    saveToCache(cacheKey, data);
     return data;
   } catch (err) {
     console.error("[DEBUG] Error a getWeatherByCity:", err);
@@ -86,27 +163,46 @@ export async function getWeatherByCity(
 
 // ⚠️ Avisos meteorològics One Call 3.0 (alerts)
 export async function getWeatherAlerts(
-  lat: number,
-  lon: number,
-  lang: string = "en",
-  apiKey?: string
-) {
-  const API_KEY = apiKey || import.meta.env.VITE_OPENWEATHER_API_KEY;
-  const lang2 = normLang2(lang);
+  lat: number,
+  lon: number,
+  lang: string = "en",
+  apiKey?: string
+): Promise<any[]> {
+  const API_KEY = getApiKey(apiKey);
+  if (!API_KEY) {
+    console.error("[DEBUG] Falta VITE_OPENWEATHER_API_KEY a getWeatherAlerts");
+    return [];
+  }
 
-  // Volem essencialment alerts
-  const url = `${ONECALL_URL}?lat=${lat}&lon=${lon}&appid=${API_KEY}&units=metric&lang=${lang2}&exclude=current,minutely,hourly,daily`;
+  const lang2 = normLang2(lang);
+  const cacheKey = getCacheKey("alerts", lat.toFixed(3), lon.toFixed(3), lang2);
+  const cached = getFromCache<any[]>(cacheKey);
 
-  try {
-    const response = await fetch(url);
-    if (!response.ok) return [];
+  if (cached) return cached;
 
-    const data = await response.json();
-    return Array.isArray(data?.alerts) ? data.alerts : [];
-  } catch (err) {
-    console.error("[DEBUG] Error obtenint avisos meteorològics:", err);
-    return [];
-  }
+  // Demanam essencialment alerts
+  const url =
+    `${ONECALL_URL}?lat=${lat}&lon=${lon}` +
+    `&appid=${API_KEY}&units=metric&lang=${lang2}` +
+    `&exclude=current,minutely,hourly,daily`;
+
+  try {
+    const response = await fetch(url);
+
+    if (!response.ok) {
+      console.error("[DEBUG] Error HTTP a getWeatherAlerts:", response.status);
+      return [];
+    }
+
+    const data = await response.json();
+    const alerts = Array.isArray(data?.alerts) ? data.alerts : [];
+
+    saveToCache(cacheKey, alerts);
+    return alerts;
+  } catch (err) {
+    console.error("[DEBUG] Error obtenint avisos meteorològics:", err);
+    return [];
+  }
 }
 
 // ☀️ Índex UV oficial One Call API 3.0
@@ -115,23 +211,41 @@ export async function getUVFromOW(
   lon: number,
   apiKey?: string
 ): Promise<number | null> {
-  try {
-    const API_KEY = apiKey || import.meta.env.VITE_OPENWEATHER_API_KEY;
+  const API_KEY = getApiKey(apiKey);
+  if (!API_KEY) {
+    console.error("[DEBUG] Falta VITE_OPENWEATHER_API_KEY a getUVFromOW");
+    return null;
+  }
 
+  const cacheKey = getCacheKey("uv", lat.toFixed(2), lon.toFixed(2));
+  const cached = getFromCache<number | null>(cacheKey);
+  if (cached !== null) return cached;
+
+  try {
     // Deixam només current
-    const url = `${ONECALL_URL}?lat=${lat}&lon=${lon}&appid=${API_KEY}&units=metric&exclude=minutely,hourly,daily,alerts`;
+    const url =
+      `${ONECALL_URL}?lat=${lat}&lon=${lon}` +
+      `&appid=${API_KEY}&units=metric&exclude=minutely,hourly,daily,alerts`;
 
     const response = await fetch(url);
-    if (!response.ok) return null;
+
+    if (!response.ok) {
+      console.error("[DEBUG] Error HTTP a getUVFromOW:", response.status);
+      return null;
+    }
 
     const data = await response.json();
 
     const uvi =
       data?.current?.uvi ?? // oficial
-      data?.current?.uv ??  // fallback rar
+      data?.current?.uv ?? // fallback rar
       null;
 
-    return typeof uvi === "number" && Number.isFinite(uvi) ? uvi : null;
+    const validUvi =
+      typeof uvi === "number" && Number.isFinite(uvi) ? uvi : null;
+
+    saveToCache(cacheKey, validUvi);
+    return validUvi;
   } catch (err) {
     console.error("[DEBUG] Error obtenint UVI OW:", err);
     return null;
