@@ -1656,10 +1656,11 @@ if (
               </p>
 
               {/* ⏱ Temps segur d’exposició */}
-              <UVSafeTime
+             <UVSafeTime
                 lat={lat}
                 lon={lon}
                 lang={lang}
+                uvi={uvi}
               />
 
               {/* 📊 Detall UV (OpenUV) */}
