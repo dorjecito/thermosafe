@@ -11,6 +11,9 @@ type Props = {
 
 type SkinType = "1" | "2" | "3" | "4" | "5" | "6";
 
+const MAX_MINUTES = 480;
+const MIN_UV_TO_SHOW_TIME = 3;
+
 const TXT: Record<
   Lang,
   {
@@ -23,6 +26,7 @@ const TXT: Record<
     noteLow: string;
     noteModerate: string;
     noteHigh: string;
+    moreThanMax: string;
     phototypes: Record<SkinType, string>;
   }
 > = {
@@ -30,14 +34,15 @@ const TXT: Record<
     title: "Exposició acumulada estimada",
     skinType: "Fototip",
     estimated: "Temps orientatiu",
-    noRisk: "UVI molt baix: risc mínim per a jornada laboral habitual.",
+    noRisk: "UVI baix o molt baix: el risc és mínim en condicions habituals.",
     night: "És de nit o no hi ha risc UV rellevant.",
     unknown: "No es pot estimar amb les dades actuals.",
-    noteLow: "Estimació orientativa basada en índex UV actual. Aplica protecció solar bàsica.",
+    noteLow: "Protecció solar bàsica recomanable si l’exposició és prolongada.",
     noteModerate:
       "Estimació orientativa basada en índex UV actual. Aplica protecció solar i organitza pauses en hores centrals.",
     noteHigh:
       "Estimació orientativa basada en índex UV actual. Redueix exposició, reforça protecció i prioritza ombra.",
+    moreThanMax: "> 8 h",
     phototypes: {
       "1": "Tipus 1",
       "2": "Tipus 2",
@@ -51,14 +56,15 @@ const TXT: Record<
     title: "Exposición acumulada estimada",
     skinType: "Fototipo",
     estimated: "Tiempo orientativo",
-    noRisk: "UVI muy bajo: riesgo mínimo para una jornada laboral habitual.",
+    noRisk: "UVI bajo o muy bajo: el riesgo es mínimo en condiciones habituales.",
     night: "Es de noche o no hay riesgo UV relevante.",
     unknown: "No se puede estimar con los datos actuales.",
-    noteLow: "Estimación orientativa basada en el índice UV actual. Aplica protección solar básica.",
+    noteLow: "Protección solar básica recomendable si la exposición es prolongada.",
     noteModerate:
       "Estimación orientativa basada en el índice UV actual. Aplica protección solar y organiza pausas en horas centrales.",
     noteHigh:
       "Estimación orientativa basada en el índice UV actual. Reduce la exposición, refuerza la protección y prioriza la sombra.",
+    moreThanMax: "> 8 h",
     phototypes: {
       "1": "Tipo 1",
       "2": "Tipo 2",
@@ -72,14 +78,15 @@ const TXT: Record<
     title: "Metatutako esposizio estimatua",
     skinType: "Fototipoa",
     estimated: "Gutxi gorabeherako denbora",
-    noRisk: "UVI oso baxua: ohiko lanaldi baterako arrisku minimoa.",
+    noRisk: "UVI baxua edo oso baxua: arriskua minimoa da ohiko baldintzetan.",
     night: "Gaua da edo ez dago UV arrisku nabarmenik.",
     unknown: "Ezin da kalkulatu uneko datuekin.",
-    noteLow: "UV indize aktualean oinarritutako gutxi gorabeherako estimazioa. Aplikatu oinarrizko eguzki-babesa.",
+    noteLow: "Eguzki-babes oinarrizkoa gomendagarria da esposizioa luzea bada.",
     noteModerate:
       "UV indize aktualean oinarritutako gutxi gorabeherako estimazioa. Aplikatu eguzki-babesa eta antolatu atsedenak erdiko orduetan.",
     noteHigh:
       "UV indize aktualean oinarritutako gutxi gorabeherako estimazioa. Murriztu esposizioa, indartu babesa eta lehenetsi itzala.",
+    moreThanMax: "> 8 h",
     phototypes: {
       "1": "1 mota",
       "2": "2 mota",
@@ -93,14 +100,15 @@ const TXT: Record<
     title: "Exposición acumulada estimada",
     skinType: "Fototipo",
     estimated: "Tempo orientativo",
-    noRisk: "UVI moi baixo: risco mínimo para unha xornada laboral habitual.",
+    noRisk: "UVI baixo ou moi baixo: o risco é mínimo en condicións habituais.",
     night: "É de noite ou non hai risco UV relevante.",
     unknown: "Non se pode estimar cos datos actuais.",
-    noteLow: "Estimación orientativa baseada no índice UV actual. Aplica protección solar básica.",
+    noteLow: "Protección solar básica recomendable se a exposición é prolongada.",
     noteModerate:
       "Estimación orientativa baseada no índice UV actual. Aplica protección solar e organiza pausas nas horas centrais.",
     noteHigh:
       "Estimación orientativa baseada no índice UV actual. Reduce a exposición, reforza a protección e prioriza a sombra.",
+    moreThanMax: "> 8 h",
     phototypes: {
       "1": "Tipo 1",
       "2": "Tipo 2",
@@ -114,14 +122,15 @@ const TXT: Record<
     title: "Estimated cumulative exposure",
     skinType: "Skin type",
     estimated: "Estimated time",
-    noRisk: "Very low UVI: minimal risk for a typical workday.",
+    noRisk: "Low or very low UVI: risk is minimal under normal conditions.",
     night: "It is night-time or there is no relevant UV risk.",
     unknown: "Cannot estimate with current data.",
-    noteLow: "Approximate estimate based on current UV index. Apply basic sun protection.",
+    noteLow: "Basic sun protection is recommended if exposure is prolonged.",
     noteModerate:
       "Approximate estimate based on current UV index. Apply sun protection and organise breaks around midday.",
     noteHigh:
       "Approximate estimate based on current UV index. Reduce exposure, reinforce protection and prioritise shade.",
+    moreThanMax: "> 8 h",
     phototypes: {
       "1": "Type 1",
       "2": "Type 2",
@@ -142,7 +151,9 @@ const UV_MULTIPLIER: Record<SkinType, number> = {
   "6": 2,
 };
 
-function fmtMinutes(totalMinutes: number, lang: Lang): string {
+function fmtMinutes(totalMinutes: number, lang: Lang, moreThanMax: string): string {
+  if (totalMinutes > MAX_MINUTES) return moreThanMax;
+
   const mins = Math.max(1, Math.round(totalMinutes));
   const h = Math.floor(mins / 60);
   const m = mins % 60;
@@ -160,27 +171,32 @@ function fmtMinutes(totalMinutes: number, lang: Lang): string {
 
 function estimateSafeMinutes(uvi: number, skinType: SkinType): number | null {
   if (!Number.isFinite(uvi) || uvi <= 0) return null;
-  if (uvi < 2) return 480;
+  if (uvi < MIN_UV_TO_SHOW_TIME) return null;
 
   const basePhototype3 = 200 / uvi;
   const adjusted = basePhototype3 * UV_MULTIPLIER[skinType];
-  return Math.max(5, Math.min(480, adjusted));
+
+  return Math.max(5, adjusted);
 }
 
 export default function UVSafeTime({ lang, uvi }: Props) {
   const t = TXT[lang] ?? TXT.ca;
   const [skinType, setSkinType] = React.useState<SkinType>("3");
 
-  const safeMinutes =
-    typeof uvi === "number" && Number.isFinite(uvi)
-      ? estimateSafeMinutes(uvi, skinType)
-      : null;
+  const hasValidUvi = typeof uvi === "number" && Number.isFinite(uvi);
+  const isNight = hasValidUvi && (uvi as number) <= 0;
+  const shouldShowTime = hasValidUvi && (uvi as number) >= MIN_UV_TO_SHOW_TIME;
+
+  const safeMinutes = shouldShowTime
+    ? estimateSafeMinutes(uvi as number, skinType)
+    : null;
 
   let note = t.unknown;
-  if (typeof uvi === "number" && Number.isFinite(uvi)) {
-    if (uvi < 2) note = t.noRisk;
-    else if (uvi < 6) note = t.noteLow;
-    else if (uvi < 8) note = t.noteModerate;
+  if (hasValidUvi) {
+    if ((uvi as number) <= 0) note = t.night;
+    else if ((uvi as number) < MIN_UV_TO_SHOW_TIME) note = t.noRisk;
+    else if ((uvi as number) < 6) note = t.noteLow;
+    else if ((uvi as number) < 8) note = t.noteModerate;
     else note = t.noteHigh;
   }
 
@@ -213,17 +229,17 @@ export default function UVSafeTime({ lang, uvi }: Props) {
           id="uv-skin-type"
           value={skinType}
           onChange={(e) => setSkinType(e.target.value as SkinType)}
+          disabled={!shouldShowTime}
           style={{
             padding: "0.45rem 0.7rem",
             borderRadius: 8,
             border: "1px solid rgba(255,255,255,0.18)",
             background: "rgba(255,255,255,0.08)",
             color: "inherit",
+            opacity: shouldShowTime ? 1 : 0.65,
           }}
         >
-          {(
-            Object.keys(t.phototypes) as SkinType[]
-          ).map((key) => (
+          {(Object.keys(t.phototypes) as SkinType[]).map((key) => (
             <option key={key} value={key}>
               {t.phototypes[key]}
             </option>
@@ -232,12 +248,14 @@ export default function UVSafeTime({ lang, uvi }: Props) {
 
         <div style={{ fontWeight: 600 }}>
           {t.estimated}:{" "}
-          {typeof uvi !== "number" || !Number.isFinite(uvi)
+          {!hasValidUvi
             ? t.unknown
-            : uvi <= 0
+            : isNight
             ? t.night
+            : !shouldShowTime
+            ? "—"
             : safeMinutes != null
-            ? fmtMinutes(safeMinutes, lang)
+            ? fmtMinutes(safeMinutes, lang, t.moreThanMax)
             : t.unknown}
         </div>
       </div>
