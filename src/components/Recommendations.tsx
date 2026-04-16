@@ -1,8 +1,9 @@
 // ===============================================================
-// 📘 Recommendations.tsx — Versió robusta (CA/ES/EU/GL/EN)
+// 📘 Recommendations.tsx — Versió robusta millorada (CA/ES/EU/GL/EN)
 // ✅ Fallback segur per evitar TXT undefined
 // ✅ Títol coherent: “segons les condicions actuals”
-// ✅ Prioritza millor: fred > calor forta > UV > nit > segur
+// ✅ Prioritza millor: fred > calor forta > vent fort > UV > nit > segur
+// ✅ Recomanacions nocturnes més naturals i menys alarmistes
 // ✅ Compatible amb les props actuals que envies des d’App.tsx
 // ✅ Sense redundància amb el banner d’avís oficial
 // ===============================================================
@@ -44,8 +45,8 @@ type TextPack = Record<TextKeys, string>;
 type TxtDict = Record<Lang, TextPack>;
 
 interface Props {
-  temp: number; // temperatura efectiva o principal
-  lang: Lang | string; // pot venir com "ca-ES", "en-GB"...
+  temp: number;
+  lang: Lang | string;
   isDay: boolean;
   humidity?: number;
   forceSafe?: boolean;
@@ -91,13 +92,13 @@ const TXT: TxtDict = {
     uvExtreme:
       "Radiació UV extrema. Evita l’exposició directa al sol i prioritza ombra, roba protectora i protecció ocular.",
     nightCool:
-      "Ambient nocturn fresc. Utilitza roba adequada i evita una exposició prolongada si la sensació tèrmica és baixa.",
+      "Ambient nocturn fresc. Es recomana roba còmoda i una capa lleugera si passes temps a l’exterior.",
     nightSafe:
-      "Condicions nocturnes estables. Mantén una ventilació adequada i una situació de confort tèrmic.",
+      "Condicions nocturnes agradables i estables. Mantén el confort tèrmic habitual.",
     nightHeat:
-      "Temperatura nocturna elevada. Afavoreix la ventilació creuada i utilitza roba lleugera i transpirable.",
+      "Temperatura nocturna elevada. Afavoreix la ventilació creuada, hidrata’t i utilitza roba lleugera i transpirable.",
     cold_low:
-      "Fred lleu. Vesteix per capes i protegeix especialment les extremitats.",
+      "Frescor o fred lleu. És recomanable vestir per capes lleugeres, sobretot si estàs quiet o fa vent.",
     cold_mod:
       "Fred moderat. Limita l’exposició a l’exterior i protegeix mans, peus i vies respiratòries.",
     cold_high:
@@ -144,13 +145,13 @@ const TXT: TxtDict = {
     uvExtreme:
       "Radiación UV extrema. Evita la exposición directa al sol y prioriza sombra, ropa protectora y protección ocular.",
     nightCool:
-      "Ambiente nocturno fresco. Utiliza ropa adecuada y evita exposiciones prolongadas si la sensación térmica es baja.",
+      "Ambiente nocturno fresco. Se recomienda ropa cómoda y una capa ligera si pasas tiempo al aire libre.",
     nightSafe:
-      "Condiciones nocturnas estables. Mantén una ventilación adecuada y una situación de confort térmico.",
+      "Condiciones nocturnas agradables y estables. Mantén un confort térmico habitual.",
     nightHeat:
-      "Temperatura nocturna elevada. Favorece la ventilación cruzada y utiliza ropa ligera y transpirable.",
+      "Temperatura nocturna elevada. Favorece la ventilación cruzada, hidrátate y utiliza ropa ligera y transpirable.",
     cold_low:
-      "Frío leve. Usa ropa por capas y protege especialmente las extremidades.",
+      "Frescor o frío leve. Se recomienda vestir por capas ligeras, sobre todo si permaneces quieto o hace viento.",
     cold_mod:
       "Frío moderado. Limita la exposición al exterior y protege manos, pies y vías respiratorias.",
     cold_high:
@@ -197,13 +198,13 @@ const TXT: TxtDict = {
     uvExtreme:
       "UV erradiazio muturrekoa. Saihestu eguzki zuzena eta lehenetsi itzala, arropa babeslea eta begi-babesa.",
     nightCool:
-      "Gaueko giro freskoa. Erabili arropa egokia eta saihestu esposizio luzea sentipen termikoa baxua bada.",
+      "Gaueko giro freskoa. Erabili arropa erosoa eta geruza arin bat kanpoan denbora pasatuko baduzu.",
     nightSafe:
-      "Gaueko baldintza egonkorrak. Mantendu aireztapen egokia eta erosotasun termikoa.",
+      "Gaueko baldintza atsegin eta egonkorrak. Mantendu ohiko erosotasun termikoa.",
     nightHeat:
-      "Gaueko tenperatura altua. Bultzatu aireztapen gurutzatua eta erabili arropa arina eta transpiragarria.",
+      "Gaueko tenperatura altua. Bultzatu aireztapen gurutzatua, hidratatu eta erabili arropa arina eta transpiragarria.",
     cold_low:
-      "Hotz arina. Erabili geruzaz janzteko sistema eta babestu bereziki muturrak.",
+      "Freskura edo hotz arina. Geruza arinez janztea gomendatzen da, batez ere geldirik bazaude edo haizea badabil.",
     cold_mod:
       "Hotz ertaina. Mugatu kanpoko esposizioa eta babestu eskuak, oinak eta arnasbideak.",
     cold_high:
@@ -250,13 +251,13 @@ const TXT: TxtDict = {
     uvExtreme:
       "Radiación UV extrema. Evita a exposición directa ao sol e prioriza sombra, roupa protectora e protección ocular.",
     nightCool:
-      "Ambiente nocturno fresco. Emprega roupa adecuada e evita exposicións prolongadas se a sensación térmica é baixa.",
+      "Ambiente nocturno fresco. Recoméndase roupa cómoda e unha capa lixeira se pasas tempo ao aire libre.",
     nightSafe:
-      "Condicións nocturnas estables. Mantén unha ventilación adecuada e unha situación de confort térmico.",
+      "Condicións nocturnas agradables e estables. Mantén un confort térmico habitual.",
     nightHeat:
-      "Temperatura nocturna elevada. Favorece a ventilación cruzada e emprega roupa lixeira e transpirable.",
+      "Temperatura nocturna elevada. Favorece a ventilación cruzada, hidrátate e emprega roupa lixeira e transpirable.",
     cold_low:
-      "Frío leve. Usa roupa por capas e protexe especialmente as extremidades.",
+      "Frescura ou frío leve. Recoméndase vestir por capas lixeiras, sobre todo se permaneces quieto ou hai vento.",
     cold_mod:
       "Frío moderado. Limita a exposición ao exterior e protexe mans, pés e vías respiratorias.",
     cold_high:
@@ -303,13 +304,13 @@ const TXT: TxtDict = {
     uvExtreme:
       "Extreme UV radiation. Avoid direct sun exposure and prioritise shade, protective clothing and eye protection.",
     nightCool:
-      "Cool nighttime conditions. Dress appropriately and avoid prolonged exposure if thermal sensation is low.",
+      "Cool nighttime conditions. Comfortable clothing and a light extra layer are recommended if you stay outdoors for a while.",
     nightSafe:
-      "Stable nighttime conditions. Maintain adequate ventilation and thermal comfort.",
+      "Pleasant and stable nighttime conditions. Maintain your usual thermal comfort.",
     nightHeat:
-      "Elevated nighttime temperatures. Ensure cross-ventilation and wear light, breathable clothing.",
+      "Elevated nighttime temperatures. Ensure cross-ventilation, stay hydrated and wear light, breathable clothing.",
     cold_low:
-      "Mild cold. Use layered clothing and protect your extremities.",
+      "Cool or mildly cold conditions. Light layers are recommended, especially if you remain still or it is windy.",
     cold_mod:
       "Moderate cold. Limit outdoor exposure and protect hands, feet and airways.",
     cold_high:
@@ -410,7 +411,7 @@ const getUvKey = (uvi: number | null | undefined): UvKey | null => {
 
 const getNightKey = (effectiveTemp: number): NightKey => {
   if (effectiveTemp < 18) return "nightCool";
-  if (effectiveTemp < 24) return "nightSafe";
+  if (effectiveTemp < 25) return "nightSafe";
   return "nightHeat";
 };
 
@@ -487,7 +488,6 @@ export default function Recommendations({
 }: Props) {
   const lng = normalizeLang(lang);
 
-  // ✅ Blindatge: mai permetre TXT undefined
   const t = (TXT as Record<string, (typeof TXT)["ca"]>)[lng] ?? TXT.ca;
 
   const effectiveTemp = Number(temp);
@@ -562,26 +562,26 @@ export default function Recommendations({
     );
   }
 
-/* =========================================================
-   2.5️⃣ VENT FORT — prioritat sobre UV i casos suaus
-========================================================== */
-if (windyStrong) {
-  return (
-    <RecommendationBox
-      className="recommendation-box windStrong"
-      title={`${getIcon("windStrong")} ${t.title}`}
-      body={t.windStrong}
-      extra={joinExtras(
-        humid && t.humid,
-        uvKey === "uvHigh" && t.uvHigh,
-        uvKey === "uvVeryHigh" && t.uvVeryHigh,
-        uvKey === "uvExtreme" && t.uvExtreme,
-        rainy && !stormy && t.rain,
-        stormy && t.storm
-      )}
-    />
-  );
-}
+  /* =========================================================
+     2.5️⃣ VENT FORT — prioritat sobre UV i casos suaus
+  ========================================================== */
+  if (windyStrong) {
+    return (
+      <RecommendationBox
+        className="recommendation-box windStrong"
+        title={`${getIcon("windStrong")} ${t.title}`}
+        body={t.windStrong}
+        extra={joinExtras(
+          humid && t.humid,
+          uvKey === "uvHigh" && t.uvHigh,
+          uvKey === "uvVeryHigh" && t.uvVeryHigh,
+          uvKey === "uvExtreme" && t.uvExtreme,
+          rainy && !stormy && t.rain,
+          stormy && t.storm
+        )}
+      />
+    );
+  }
 
   /* =========================================================
      3️⃣ UV — només si realment és rellevant de dia
