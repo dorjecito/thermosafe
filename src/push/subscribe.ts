@@ -8,6 +8,12 @@ import { db, messagingPromise } from "../firebase";
 type Level = "moderate" | "high" | "very_high";
 type Lang = "ca" | "es" | "eu" | "gl";
 
+type SavedLocation = {
+  lat: number;
+  lon: number;
+  place?: string;
+};
+
 // --------------------------------------------------------
 // 🟢 Permís de notificacions
 async function askNotifPerm(): Promise<boolean> {
@@ -35,6 +41,87 @@ async function getCoords(): Promise<{ lat: number; lon: number } | null> {
 function normalizeLang(fallback: Lang = "ca"): Lang {
   const raw = (navigator.language || fallback).slice(0, 2) as Lang;
   return (["ca", "es", "eu", "gl"] as Lang[]).includes(raw) ? raw : fallback;
+}
+
+// --------------------------------------------------------
+// 🔑 Recupera el token FCM actual
+export async function getCurrentFcmToken(): Promise<string | null> {
+  const swReg = await navigator.serviceWorker.ready;
+  if (!swReg) throw new Error("No s'ha pogut inicialitzar el Service Worker");
+
+  const messaging = await messagingPromise;
+  if (!messaging) throw new Error("El navegador no suporta Web Push");
+
+  const vapidKey =
+    "BNh8R1YOsrnV58xNBIOVi-aMIYCvTsPpdmn7hcKJ3lldQUZ8BF6qP_wEa84TnIwZ765YQxHGWc7fAdpegzgH184";
+
+  const token = await getToken(messaging, {
+    vapidKey,
+    serviceWorkerRegistration: swReg,
+  });
+
+  if (!token || token.length < 50) return null;
+  return token;
+}
+
+// --------------------------------------------------------
+// 📍 Actualitza ubicació guardada de la subscripció actual
+export async function updateRiskAlertLocation({
+  lat,
+  lon,
+  place,
+}: SavedLocation): Promise<boolean> {
+  const token =
+    localStorage.getItem("fcmToken") || (await getCurrentFcmToken());
+
+  if (!token) {
+    console.warn("⚠️ No hi ha token FCM disponible per actualitzar ubicació.");
+    return false;
+  }
+
+  try {
+    await setDoc(
+      doc(db, "subs", token),
+      {
+        token,
+        lat,
+        lon,
+        ...(place ? { place } : {}),
+        updatedAt: Date.now(),
+      },
+      { merge: true }
+    );
+
+    console.log("📍 Ubicació de notificacions actualitzada:", {
+      tokenPreview: token.slice(0, 20),
+      lat,
+      lon,
+      place: place || "",
+    });
+
+    return true;
+  } catch (e) {
+    console.error("⚠️ Error actualitzant ubicació de notificacions:", e);
+    return false;
+  }
+}
+
+// --------------------------------------------------------
+// 📍 Actualitza ubicació de notificacions amb GPS actual
+export async function updateRiskAlertLocationFromGps(
+  place?: string
+): Promise<boolean> {
+  const loc = await getCoords();
+  if (!loc) {
+    console.warn("⚠️ No s'ha pogut obtenir GPS per actualitzar ubicació.");
+    return false;
+  }
+
+  return updateRiskAlertLocation({
+    lat: loc.lat,
+    lon: loc.lon,
+    place,
+  });
 }
 
 // --------------------------------------------------------
@@ -96,6 +183,7 @@ export async function enableRiskAlerts({
         lastNotified: null,
         lastNotifiedDay: null,
         createdAt: Date.now(),
+        updatedAt: Date.now(),
 
         // nous camps per control de canvis de nivell
         lastHeatLevel: 0,

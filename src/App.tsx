@@ -48,6 +48,12 @@ import { getUVFromOpenUV } from "./services/openUV";
    import { fetchSolarIrr } from "./utils/fetchSolarIrr";
    import UVContextCard from "./components/UVContextCard";
    import { resolveSkyDescription } from "./utils/resolveSkyDescription";
+   import {
+  enableRiskAlerts,
+  disableRiskAlerts,
+  updateRiskAlertLocation,
+  updateRiskAlertLocationFromGps,
+} from "./push/subscribe";
    
    /* —— components ————————————————————————— */
    import Recommendations     from './components/Recommendations';
@@ -64,7 +70,6 @@ import { getUVFromOpenUV } from "./services/openUV";
    inject()
 
    import LanguageSwitcher from './components/LanguageSwitcher';
-   import { enableRiskAlerts, disableRiskAlerts } from "./push/subscribe";
    import { getThermalRisk } from "./utils/getThermalRisk";
 
    /* —— hooks ———————————— */

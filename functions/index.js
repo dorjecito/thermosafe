@@ -632,21 +632,21 @@ function getUvInfo(uvi) {
     };
   }
 
-  if (uvi >= 6) {
+  if (uvi >= 3) {
     return {
       level: 1,
-      risk: "high",
+      risk: "moderate",
       title: {
-        ca: "☀️ ThermoSafe – UV alt",
-        es: "☀️ ThermoSafe – UV alto",
-        eu: "☀️ ThermoSafe – UV altua",
-        gl: "☀️ ThermoSafe – UV alto",
+        ca: "☀️ ThermoSafe – UV moderat",
+        es: "☀️ ThermoSafe – UV moderado",
+        eu: "☀️ ThermoSafe – UV moderatua",
+        gl: "☀️ ThermoSafe – UV moderado",
       },
       body: {
-        ca: `Índex UV alt (${uvi.toFixed(1)}). Usa crema, gorra i ombra.`,
-        es: `Índice UV alto (${uvi.toFixed(1)}). Usa crema, gorra y sombra.`,
-        eu: `UV indize altua (${uvi.toFixed(1)}). Erabili krema, txapela eta itzala.`,
-        gl: `Índice UV alto (${uvi.toFixed(1)}). Usa crema, gorra e sombra.`,
+        ca: `Índex UV moderat (${uvi.toFixed(1)}). Recomanable crema solar, gorra i ombra.`,
+        es: `Índice UV moderado (${uvi.toFixed(1)}). Recomendable crema solar, gorra y sombra.`,
+        eu: `UV indize moderatua (${uvi.toFixed(1)}). Gomendagarria krema, txapela eta itzala.`,
+        gl: `Índice UV moderado (${uvi.toFixed(1)}). Recomendable crema solar, gorra e sombra.`,
       },
     };
   }
@@ -655,43 +655,93 @@ function getUvInfo(uvi) {
 }
 
 async function sendUvPush(token, lang, info, uvi, place) {
-  if (!info || info.level === 0) return;
+  if (!info || info.level === 0) {
+    console.log("[SEND][UV] skip level 0", {
+      lang,
+      uvi,
+      place: place || "",
+    });
+    return;
+  }
 
-  const title = info.title?.[lang] ?? info.title?.ca ?? "☀️ ThermoSafe";
-  const body =
-    info.body?.[lang] ??
-    info.body?.ca ??
-    `Índex UV (${uvi?.toFixed?.(1) ?? uvi})`;
+  if (!token) {
+    console.warn("[SEND][UV] missing token", {
+      lang,
+      level: info?.level,
+      uvi,
+      place: place || "",
+    });
+    return;
+  }
 
-  const data = {
-    url: "https://thermosafe.app",
-    type: "uv",
-    level: String(info.level),
-    lang,
-    place: place || "",
-    uvi: String(Math.round(uvi)),
-    risk: info.risk || "",
-  };
+  const title = info.title?.[lang] ?? info.title?.ca ?? "☀️ ThermoSafe";
+  const body =
+    info.body?.[lang] ??
+    info.body?.ca ??
+    `Índex UV (${uvi?.toFixed?.(1) ?? uvi})`;
 
-  await admin.messaging().send({
-    token,
-    webpush: {
-      notification: {
-        title,
-        body,
-        icon: "/icons/icon-192.png",
-        badge: "/icons/badge-72.png",
-        tag: "thermosafe-uv",
-        renotify: true,
-        requireInteraction: true,
-        actions: [{ action: "open", title: "Obrir ThermoSafe" }],
-        data,
-      },
-      fcmOptions: { link: "https://thermosafe.app" },
-      headers: { TTL: "3600" },
-    },
-    data,
-  });
+  const data = {
+    url: "https://thermosafe.app",
+    type: "uv",
+    level: String(info.level),
+    lang,
+    place: place || "",
+    uvi: String(Math.round(Number(uvi) || 0)),
+    risk: info.risk || "",
+  };
+
+  try {
+    console.log("[SEND][UV] start", {
+      lang,
+      level: info.level,
+      uvi,
+      place: place || "",
+      risk: info.risk || "",
+      tokenPreview: String(token).slice(0, 20),
+    });
+
+    const messageId = await admin.messaging().send({
+      token,
+      webpush: {
+        notification: {
+          title,
+          body,
+          icon: "/icons/icon-192.png",
+          badge: "/icons/badge-72.png",
+          tag: "thermosafe-uv",
+          renotify: true,
+          requireInteraction: true,
+          actions: [{ action: "open", title: "Obrir ThermoSafe" }],
+          data,
+        },
+        fcmOptions: { link: "https://thermosafe.app" },
+        headers: { TTL: "3600" },
+      },
+      data,
+    });
+
+    console.log("[SEND][UV] ok", {
+      messageId,
+      lang,
+      level: info.level,
+      uvi,
+      place: place || "",
+      risk: info.risk || "",
+    });
+
+    return messageId;
+  } catch (e) {
+    console.error("[SEND][UV] error", {
+      message: e?.message || String(e),
+      code: e?.errorInfo?.code || e?.code || "",
+      lang,
+      level: info?.level,
+      uvi,
+      place: place || "",
+      risk: info?.risk || "",
+    });
+    throw e;
+  }
 }
 
 // ─────────────────────────────────────────────
@@ -778,7 +828,7 @@ async function sendAemetPush(token, lang, info, place) {
 exports.cronCheckWeatherRisk = functions
   .region(REGION)
   .runWith({ secrets: [OPENWEATHER_KEY] })
-  .pubsub.schedule("every 30 minutes")
+  .pubsub.schedule("every 60 minutes")
   .timeZone("Europe/Madrid")
   .onRun(async () => {
     const now = Date.now();
@@ -951,125 +1001,158 @@ exports.cronCheckWeatherRisk = functions
 // ☀️ CRON UV (OpenUV) — només si puja de nivell
 // ─────────────────────────────────────────────
 exports.cronCheckUvRisk = functions
-  .region(REGION)
-  .runWith({ secrets: [OPENUV_KEY, OPENWEATHER_KEY] })
-  .pubsub.schedule("every 30 minutes")
-  .timeZone("Europe/Madrid")
-  .onRun(async () => {
-    const now = Date.now();
-    const snap = await db.collection("subs").limit(1000).get();
-    if (snap.empty) return null;
+  .region(REGION)
+  .runWith({ secrets: [OPENUV_KEY, OPENWEATHER_KEY] })
+  .pubsub.schedule("every 60 minutes")
+  .timeZone("Europe/Madrid")
+  .onRun(async () => {
+    const now = Date.now();
+    const snap = await db.collection("subs").limit(1000).get();
+    if (snap.empty) return null;
 
-    const tasks = [];
+    const tasks = [];
+    const uvCache = new Map();
+    const weatherCache = new Map();
 
-    for (const doc of snap.docs) {
-      const sub = doc.data();
-      const lang = LANGS.includes(sub.lang) ? sub.lang : "ca";
+    for (const doc of snap.docs) {
+      const sub = doc.data();
+      const lang = LANGS.includes(sub.lang) ? sub.lang : "ca";
 
-      tasks.push(
-        (async () => {
-          try {
-            const w = await getWeather(sub.lat, sub.lon);
+      tasks.push(
+        (async () => {
+          try {
+            // 🔑 agrupació per zona
+            const zoneKey = `${Number(sub.lat).toFixed(2)},${Number(
+              sub.lon
+            ).toFixed(2)}`;
 
-            const localHour = new Date(now + w.tzOffset * 1000).getHours();
-            const isNight = localHour < 7 || localHour >= 20;
+            let w = weatherCache.get(zoneKey);
 
-            console.log("[UV DAYCHECK]", {
-              docId: doc.id,
-              place: sub.place || w.place || "",
-              localHour,
-              isNight,
-            });
+            if (!w) {
+              w = await getWeather(sub.lat, sub.lon);
+              weatherCache.set(zoneKey, w);
+            }
 
-            // 🌙 de nit no consultam OpenUV
-            if (isNight) {
-              console.log("[UV SKIP NIGHT]", {
-                docId: doc.id,
-                place: sub.place || w.place || "",
-                localHour,
-              });
-              return;
-            }
+            const place = sub.place || w.place || "";
+            const localHour = new Date(
+              now + w.tzOffset * 1000
+            ).getHours();
 
-            // ☀️ només de dia consultam UV
-            const uvi = await getUV(sub.lat, sub.lon);
-            const info = getUvInfo(uvi);
-            const quiet = isQuietHours(now, w.tzOffset);
+            const isNight = localHour < 7 || localHour >= 20;
 
-            console.log("[UV DEBUG TIME]", {
-              docId: doc.id,
-              place: sub.place || w.place || "",
-              nowUtc: new Date(now).toISOString(),
-              tzOffset: w.tzOffset,
-              localHour,
-              quiet,
-              uvi,
-            });
+            console.log("[UV DAYCHECK]", {
+              docId: doc.id,
+              place,
+              zoneKey,
+              localHour,
+              isNight,
+            });
 
-            if (quiet) {
-              console.log("[UV SKIP QUIET HOURS]", {
-                docId: doc.id,
-                place: sub.place || w.place || "",
-                localHour,
-                tzOffset: w.tzOffset,
-              });
-              return;
-            }
+            if (isNight) {
+              console.log("[UV SKIP NIGHT]", {
+                docId: doc.id,
+                place,
+                zoneKey,
+                localHour,
+              });
+              return;
+            }
 
-            const prevLevel = Number(sub.lastUvLevel ?? 0);
+            // ☀️ reutilitza UV per zona
+            let uvi = uvCache.get(zoneKey);
 
-            console.log("[UV]", {
-              docId: doc.id,
-              place: sub.place || w.place || "",
-              uvi,
-              prevLevel,
-              nextLevel: info.level,
-              threshold: sub.threshold,
-            });
+            if (uvi === undefined) {
+              uvi = await getUV(sub.lat, sub.lon);
+              uvCache.set(zoneKey, uvi);
+            }
 
-            const updates = {
-              lastUvLevel: info.level,
-            };
+            const info = getUvInfo(uvi);
+            const quiet = isQuietHours(now, w.tzOffset);
 
-            if (
-              info.level > 0 &&
-              shouldNotifyLevelIncrease(prevLevel, info.level) &&
-              meetsUserThreshold(info.level, sub.threshold)
-            ) {
-              try {
-                await sendUvPush(
-                  sub.token,
-                  lang,
-                  info,
-                  uvi,
-                  sub.place || w.place || ""
-                );
+            console.log("[UV DEBUG TIME]", {
+              docId: doc.id,
+              place,
+              zoneKey,
+              localHour,
+              quiet,
+              uvi,
+            });
 
-                updates.lastUvAt = now;
-                updates.lastNotified = now;
-              } catch (sendErr) {
-                const removed = await removeInvalidSub(
-                  doc.ref,
-                  doc.id,
-                  sendErr,
-                  "UV"
-                );
-                if (!removed) throw sendErr;
-                return;
-              }
-            }
+            if (quiet) {
+              console.log("[UV SKIP QUIET HOURS]", {
+                docId: doc.id,
+                place,
+                zoneKey,
+                localHour,
+              });
+              return;
+            }
 
-            await doc.ref.set(updates, { merge: true });
-          } catch (e) {
-            console.error("cron uv error", doc.id, e);
-          }
-        })()
-      );
-    }
+            const prevLevel = Number(sub.lastUvLevel ?? 0);
 
-    await Promise.allSettled(tasks);
-    return null;
-  });
+            console.log("[UV]", {
+              docId: doc.id,
+              place,
+              zoneKey,
+              uvi,
+              prevLevel,
+              nextLevel: info.level,
+              threshold: sub.threshold,
+            });
+
+            const updates = {
+              lastUvLevel: info.level,
+            };
+
+            if (
+              info.level > 0 &&
+              shouldNotifyLevelIncrease(prevLevel, info.level) &&
+              meetsUserThreshold(info.level, sub.threshold)
+            ) {
+              try {
+                await sendUvPush(
+                  sub.token,
+                  lang,
+                  info,
+                  uvi,
+                  place
+                );
+
+                updates.lastUvAt = now;
+                updates.lastNotified = now;
+
+                console.log("[UV SENT]", {
+                  docId: doc.id,
+                  place,
+                  zoneKey,
+                  uvi,
+                  prevLevel,
+                  nextLevel: info.level,
+                });
+              } catch (sendErr) {
+                const removed = await removeInvalidSub(
+                  doc.ref,
+                  doc.id,
+                  sendErr,
+                  "UV"
+                );
+
+                if (!removed) throw sendErr;
+                return;
+              }
+            }
+
+            await doc.ref.set(updates, { merge: true });
+          } catch (e) {
+            console.error("cron uv error", doc.id, e);
+          }
+        })()
+      );
+    }
+
+    await Promise.allSettled(tasks);
+    return null;
+  });
 
 // ─────────────────────────────────────────────
 // 🚨 CRON AEMET / ALERTES OFICIALS
