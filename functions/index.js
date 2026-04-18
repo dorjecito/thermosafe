@@ -271,6 +271,23 @@ async function getUV(lat, lon) {
   }
 }
 
+async function getUVfromOpenWeather(lat, lon) {
+  try {
+    const url =
+      `https://api.openweathermap.org/data/3.0/onecall?lat=${lat}&lon=${lon}` +
+      `&appid=${OPENWEATHER_KEY.value()}&exclude=minutely,hourly,daily,alerts&units=metric`;
+
+    const r = await fetch(url);
+    if (!r.ok) throw new Error(`OpenWeather UV ${r.status}`);
+
+    const j = await r.json();
+    return typeof j?.current?.uvi === "number" ? j.current.uvi : null;
+  } catch (e) {
+    console.warn("[uv][fallback-openweather] error", e?.message || e);
+    return null;
+  }
+}
+
 // ─────────────────────────────────────────────
 // Textos i notificacions · calor
 // ─────────────────────────────────────────────
@@ -596,7 +613,7 @@ function getUvInfo(uvi) {
 
   if (uvi >= 11) {
     return {
-      level: 3,
+      level: 4,
       risk: "extreme",
       title: {
         ca: "☀️ ThermoSafe – UV extrem",
@@ -615,7 +632,7 @@ function getUvInfo(uvi) {
 
   if (uvi >= 8) {
     return {
-      level: 2,
+      level: 3,
       risk: "very_high",
       title: {
         ca: "☀️ ThermoSafe – UV molt alt",
@@ -628,6 +645,25 @@ function getUvInfo(uvi) {
         es: `Índice UV muy alto (${uvi.toFixed(1)}). Protección solar imprescindible.`,
         eu: `UV indize oso altua (${uvi.toFixed(1)}). Eguzki-babesa ezinbestekoa.`,
         gl: `Índice UV moi alto (${uvi.toFixed(1)}). Protección solar imprescindible.`,
+      },
+    };
+  }
+
+  if (uvi >= 6) {
+    return {
+      level: 2,
+      risk: "high",
+      title: {
+        ca: "☀️ ThermoSafe – UV alt",
+        es: "☀️ ThermoSafe – UV alto",
+        eu: "☀️ ThermoSafe – UV altua",
+        gl: "☀️ ThermoSafe – UV alto",
+      },
+      body: {
+        ca: `Índex UV alt (${uvi.toFixed(1)}). Usa crema solar, gorra i ombra.`,
+        es: `Índice UV alto (${uvi.toFixed(1)}). Usa crema solar, gorra y sombra.`,
+        eu: `UV indize altua (${uvi.toFixed(1)}). Erabili krema, txapela eta itzala.`,
+        gl: `Índice UV alto (${uvi.toFixed(1)}). Usa crema solar, gorra e sombra.`,
       },
     };
   }
@@ -688,6 +724,7 @@ async function sendUvPush(token, lang, info, uvi, place) {
     place: place || "",
     uvi: String(Math.round(Number(uvi) || 0)),
     risk: info.risk || "",
+    click_action: "https://thermosafe.app",
   };
 
   try {
@@ -700,25 +737,69 @@ async function sendUvPush(token, lang, info, uvi, place) {
       tokenPreview: String(token).slice(0, 20),
     });
 
-    const messageId = await admin.messaging().send({
+    const message = {
       token,
+
+      // ✅ fallback universal
+      notification: {
+        title,
+        body,
+      },
+
+      // ✅ dades addicionals
+      data,
+
+      // ✅ web push
       webpush: {
         notification: {
           title,
           body,
-          icon: "/icons/icon-192.png",
-          badge: "/icons/badge-72.png",
+          icon: "https://thermosafe.app/icons/icon-192.png",
+          badge: "https://thermosafe.app/icons/badge-72.png",
           tag: "thermosafe-uv",
           renotify: true,
           requireInteraction: true,
-          actions: [{ action: "open", title: "Obrir ThermoSafe" }],
+          actions: [
+            {
+              action: "open",
+              title: "Obrir ThermoSafe",
+            },
+          ],
           data,
         },
-        fcmOptions: { link: "https://thermosafe.app" },
-        headers: { TTL: "3600" },
+        fcmOptions: {
+          link: "https://thermosafe.app",
+        },
+        headers: {
+          TTL: "3600",
+          Urgency: "high",
+        },
       },
-      data,
-    });
+
+      // ✅ Android fallback
+      android: {
+        priority: "high",
+        notification: {
+          icon: "ic_notification",
+          clickAction: "https://thermosafe.app",
+          channelId: "default",
+        },
+      },
+
+      // ✅ APNs / iOS fallback
+      apns: {
+        headers: {
+          "apns-priority": "10",
+        },
+        payload: {
+          aps: {
+            sound: "default",
+          },
+        },
+      },
+    };
+
+    const messageId = await admin.messaging().send(message);
 
     console.log("[SEND][UV] ok", {
       messageId,
@@ -998,7 +1079,10 @@ exports.cronCheckWeatherRisk = functions
   });
 
 // ─────────────────────────────────────────────
-// ☀️ CRON UV (OpenUV) — només si puja de nivell
+// ☀️ CRON UV ROBUST — OpenUV principal + fallback OpenWeather
+// - Agrupació per zones
+// - Reset nocturn
+// - Només notifica si puja de nivell
 // ─────────────────────────────────────────────
 exports.cronCheckUvRisk = functions
   .region(REGION)
@@ -1014,6 +1098,10 @@ exports.cronCheckUvRisk = functions
     const uvCache = new Map();
     const weatherCache = new Map();
 
+    function makeZoneKey(lat, lon) {
+      return `${Number(lat).toFixed(1)},${Number(lon).toFixed(1)}`;
+    }
+
     for (const doc of snap.docs) {
       const sub = doc.data();
       const lang = LANGS.includes(sub.lang) ? sub.lang : "ca";
@@ -1021,23 +1109,17 @@ exports.cronCheckUvRisk = functions
       tasks.push(
         (async () => {
           try {
-            // 🔑 agrupació per zona
-            const zoneKey = `${Number(sub.lat).toFixed(2)},${Number(
-              sub.lon
-            ).toFixed(2)}`;
+            const zoneKey = makeZoneKey(sub.lat, sub.lon);
 
+            // 1) Weather cache per zona
             let w = weatherCache.get(zoneKey);
-
             if (!w) {
               w = await getWeather(sub.lat, sub.lon);
               weatherCache.set(zoneKey, w);
             }
 
             const place = sub.place || w.place || "";
-            const localHour = new Date(
-              now + w.tzOffset * 1000
-            ).getHours();
-
+            const localHour = new Date(now + w.tzOffset * 1000).getHours();
             const isNight = localHour < 7 || localHour >= 20;
 
             console.log("[UV DAYCHECK]", {
@@ -1048,36 +1130,31 @@ exports.cronCheckUvRisk = functions
               isNight,
             });
 
+            // 2) Reset nocturn
             if (isNight) {
-              console.log("[UV SKIP NIGHT]", {
+              const prevLevel = Number(sub.lastUvLevel ?? 0);
+
+              console.log("[UV RESET NIGHT]", {
                 docId: doc.id,
                 place,
                 zoneKey,
                 localHour,
+                prevLevel,
               });
+
+              if (prevLevel !== 0) {
+                await doc.ref.set(
+                  {
+                    lastUvLevel: 0,
+                  },
+                  { merge: true }
+                );
+              }
+
               return;
             }
 
-            // ☀️ reutilitza UV per zona
-            let uvi = uvCache.get(zoneKey);
-
-            if (uvi === undefined) {
-              uvi = await getUV(sub.lat, sub.lon);
-              uvCache.set(zoneKey, uvi);
-            }
-
-            const info = getUvInfo(uvi);
             const quiet = isQuietHours(now, w.tzOffset);
-
-            console.log("[UV DEBUG TIME]", {
-              docId: doc.id,
-              place,
-              zoneKey,
-              localHour,
-              quiet,
-              uvi,
-            });
-
             if (quiet) {
               console.log("[UV SKIP QUIET HOURS]", {
                 docId: doc.id,
@@ -1088,6 +1165,63 @@ exports.cronCheckUvRisk = functions
               return;
             }
 
+            // 3) UV cache per zona
+            let uvi = uvCache.get(zoneKey);
+
+            if (uvi === undefined) {
+              // 3a) OpenUV principal
+              uvi = await getUV(sub.lat, sub.lon);
+
+              if (uvi != null) {
+                console.log("[UV FETCH ZONE][OpenUV]", {
+                  zoneKey,
+                  uvi,
+                  sampleLat: sub.lat,
+                  sampleLon: sub.lon,
+                });
+              }
+
+              // 3b) Fallback OpenWeather
+              if (uvi == null) {
+                console.log("[UV FALLBACK] trying OpenWeather", {
+                  zoneKey,
+                  sampleLat: sub.lat,
+                  sampleLon: sub.lon,
+                });
+
+                uvi = await getUVfromOpenWeather(sub.lat, sub.lon);
+
+                console.log("[UV FETCH ZONE][OpenWeather]", {
+                  zoneKey,
+                  uvi,
+                  sampleLat: sub.lat,
+                  sampleLon: sub.lon,
+                });
+              }
+
+              // 🔴 fallback final controlat (molt important)
+              if (uvi == null) {
+                console.warn("[UV NO DATA AFTER FALLBACK]", {
+                  zoneKey,
+                  sampleLat: sub.lat,
+                  sampleLon: sub.lon,
+                });
+                uvi = 0;
+              }
+
+              // guardar a cache
+              uvCache.set(zoneKey, uvi);
+
+              } else {
+                console.log("[UV CACHE HIT]", {
+                  docId: doc.id,
+                  place,
+                  zoneKey,
+                  uvi,
+                });
+              }
+
+            const info = getUvInfo(uvi);
             const prevLevel = Number(sub.lastUvLevel ?? 0);
 
             console.log("[UV]", {
@@ -1110,13 +1244,7 @@ exports.cronCheckUvRisk = functions
               meetsUserThreshold(info.level, sub.threshold)
             ) {
               try {
-                await sendUvPush(
-                  sub.token,
-                  lang,
-                  info,
-                  uvi,
-                  place
-                );
+                await sendUvPush(sub.token, lang, info, uvi, place);
 
                 updates.lastUvAt = now;
                 updates.lastNotified = now;
@@ -1203,59 +1331,122 @@ exports.cronCheckAemetRisk = functions
 // Endpoint de prova manual
 // ─────────────────────────────────────────────
 exports.sendTestNotification = functions
-  .region(REGION)
-  .https.onRequest(async (req, res) => {
-    res.set("Access-Control-Allow-Origin", "*");
-    res.set("Access-Control-Allow-Methods", "GET, OPTIONS");
+  .region(REGION)
+  .https.onRequest(async (req, res) => {
+    res.set("Access-Control-Allow-Origin", "*");
+    res.set("Access-Control-Allow-Methods", "GET, OPTIONS");
+    res.set("Access-Control-Allow-Headers", "Content-Type");
 
-    if (req.method === "OPTIONS") {
-      return res.status(204).end();
-    }
+    if (req.method === "OPTIONS") {
+      return res.status(204).end();
+    }
 
-    const token = String(req.query.token || "");
-    const type = String(req.query.type || "heat");
+    const token = String(req.query.token || "").trim();
+    const type = String(req.query.type || "test").trim().toLowerCase();
 
-    if (!token) {
-      return res.status(400).json({ ok: false, error: "missing token" });
-    }
+    if (!token) {
+      return res.status(400).json({ ok: false, error: "missing token" });
+    }
 
-    try {
-      let title = "ThermoSafe";
-      let body = "";
+    try {
+      let title = "ThermoSafe";
+      let body = "🔔 Notificació de prova";
+      let tag = "thermosafe-test";
 
-      if (type === "heat") body = "🔥 Risc per calor alt";
-      else if (type === "cold") body = "❄️ Fred extrem";
-      else if (type === "wind") body = "🌬️ Vent fort";
-      else if (type === "uv") body = "☀️ Índex UV alt";
-      else if (type === "aemet") body = "🚨 Avís oficial actiu";
-      else body = "🔔 Notificació de prova";
+      if (type === "heat") {
+        title = "🔥 ThermoSafe – Calor";
+        body = "Risc per calor alt. Prova manual.";
+        tag = "thermosafe-heat";
+      } else if (type === "cold") {
+        title = "❄️ ThermoSafe – Fred";
+        body = "Fred extrem. Prova manual.";
+        tag = "thermosafe-cold";
+      } else if (type === "wind") {
+        title = "🌬️ ThermoSafe – Vent";
+        body = "Vent fort. Prova manual.";
+        tag = "thermosafe-wind";
+      } else if (type === "uv") {
+        title = "☀️ ThermoSafe – UV";
+        body = "Índex UV alt. Prova manual.";
+        tag = "thermosafe-uv";
+      } else if (type === "aemet") {
+        title = "🚨 ThermoSafe – Avís oficial";
+        body = "Avís oficial actiu. Prova manual.";
+        tag = "thermosafe-aemet";
+      }
 
-      await admin.messaging().send({
-        token,
-        notification: { title, body },
-        webpush: {
-          notification: {
-            title,
-            body,
-            icon: "/icons/icon-192.png",
-            badge: "/icons/badge-72.png",
-          },
-          fcmOptions: { link: "https://thermosafe.app" },
-        },
-        data: {
-          type,
-          url: "https://thermosafe.app",
-        },
-      });
+      const payload = {
+        token,
+        webpush: {
+          headers: {
+            TTL: "3600",
+            Urgency: "high",
+          },
+          fcmOptions: {
+            link: "https://thermosafe.app",
+          },
+        },
+        android: {
+          priority: "high",
+        },
+        apns: {
+          headers: {
+            "apns-priority": "10",
+          },
+          payload: {
+            aps: {
+              sound: "default",
+              badge: 1,
+            },
+          },
+        },
+        data: {
+          title,
+          body,
+          tag,
+          type,
+          lang: "ca",
+          url: "https://thermosafe.app",
+          click_action: "https://thermosafe.app",
+          icon: "https://thermosafe.app/icons/icon-192.png",
+          badge: "https://thermosafe.app/icons/badge-72.png",
+        },
+      };
 
-      return res.json({ ok: true });
-    } catch (e) {
-      console.error(e);
-      return res
-        .status(500)
-        .json({ ok: false, error: e?.message || "send error" });
-    }
-  });
+      console.log("[TEST PUSH] sending", {
+        type,
+        tokenPreview: token.slice(0, 20),
+        title,
+        body,
+      });
+
+      const messageId = await admin.messaging().send(payload);
+
+      console.log("[TEST PUSH] sent OK", {
+        messageId,
+        type,
+        tokenPreview: token.slice(0, 20),
+      });
+
+      return res.status(200).json({
+        ok: true,
+        messageId,
+        type,
+      });
+    } catch (e) {
+      console.error("[TEST PUSH] send error", {
+        message: e?.message || String(e),
+        code: e?.errorInfo?.code || e?.code || "",
+        stack: e?.stack || "",
+      });
+
+      return res.status(500).json({
+        ok: false,
+        error: e?.message || "send error",
+        code: e?.errorInfo?.code || e?.code || "",
+      });
+    }
+  });
 
 // ─────────────────────────────────────────────
 // Endpoint manual per executar cleanup ara

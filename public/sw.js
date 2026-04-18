@@ -1,12 +1,12 @@
 // -- Service Worker únic per ThermoSafe (PWA + FCM) --
 
 // 🔹 Actualitza automàticament
-self.addEventListener('install', () => self.skipWaiting());
-self.addEventListener('activate', (e) => e.waitUntil(clients.claim()));
+self.addEventListener("install", () => self.skipWaiting());
+self.addEventListener("activate", (e) => e.waitUntil(clients.claim()));
 
 // -- Firebase Messaging (compat) --
-importScripts('https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js');
-importScripts('https://www.gstatic.com/firebasejs/9.23.0/firebase-messaging-compat.js');
+importScripts("https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js");
+importScripts("https://www.gstatic.com/firebasejs/9.23.0/firebase-messaging-compat.js");
 
 // 🔧 Config Firebase
 firebase.initializeApp({
@@ -25,24 +25,48 @@ const messaging = firebase.messaging();
 messaging.onBackgroundMessage((payload) => {
   const notification = payload.notification || {};
   const data = payload.data || {};
-  const title = notification.title || 'ThermoSafe – Avís';
-  const body = notification.body || '';
-  const lang = data.lang || 'ca';
+
+  const title = data.title || notification.title || "ThermoSafe – Avís";
+  const body = data.body || notification.body || "";
+  const lang = data.lang || "ca";
+  const icon = data.icon || "/icons/icon-192.png";
+  const badge = data.badge || "/icons/badge-72.png";
+  const tag = data.tag || "thermosafe-notification";
 
   self.registration.showNotification(title, {
     body,
-    icon: '/icons/icon-192.png',
-    badge: '/icons/icon-192.png',
+    icon,
+    badge,
+    tag,
+    renotify: true,
+    requireInteraction: true,
     data,
     actions: [
-      { action: 'open', title: lang === 'es' ? 'Abrir' : 'Obrir' },
-      { action: 'dismiss', title: lang === 'es' ? 'Descartar' : 'Tancar' }
-    ]
+      { action: "open", title: lang === "es" ? "Abrir" : "Obrir" },
+      { action: "dismiss", title: lang === "es" ? "Descartar" : "Tancar" },
+    ],
   });
 });
 
-self.addEventListener('notificationclick', (event) => {
+self.addEventListener("notificationclick", (event) => {
   event.notification.close();
-  if (event.action === 'dismiss') return;
-  event.waitUntil(clients.openWindow('https://thermosafe.app'));
+
+  if (event.action === "dismiss") return;
+
+  const targetUrl =
+    event.notification?.data?.url ||
+    event.notification?.data?.click_action ||
+    "https://thermosafe.app";
+
+  event.waitUntil(
+    clients.matchAll({ type: "window", includeUncontrolled: true }).then((clientList) => {
+      for (const client of clientList) {
+        if ("focus" in client) {
+          client.navigate?.(targetUrl);
+          return client.focus();
+        }
+      }
+      return clients.openWindow(targetUrl);
+    })
+  );
 });

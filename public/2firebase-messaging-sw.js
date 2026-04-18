@@ -820,33 +820,117 @@ exports.cronCheckUvRisk = functions
 exports.sendTestNotification = functions
   .region(REGION)
   .https.onRequest(async (req, res) => {
-    res.set('Access-Control-Allow-Origin', '*');
-    res.set('Access-Control-Allow-Methods', 'GET, OPTIONS');
-    if (req.method === 'OPTIONS') return res.status(204).end();
+    res.set("Access-Control-Allow-Origin", "*");
+    res.set("Access-Control-Allow-Methods", "GET, OPTIONS");
+    res.set("Access-Control-Allow-Headers", "Content-Type");
 
-    const token = String(req.query.token || '');
-    const type = String(req.query.type || 'heat');
+    if (req.method === "OPTIONS") {
+      return res.status(204).end();
+    }
 
-    if (!token) return res.status(400).json({ ok: false, error: 'missing token' });
+    const token = String(req.query.token || "").trim();
+    const type = String(req.query.type || "test").trim().toLowerCase();
+
+    if (!token) {
+      return res.status(400).json({ ok: false, error: "missing token" });
+    }
 
     try {
-      let title = 'ThermoSafe';
-      let body = '';
+      let title = "ThermoSafe";
+      let body = "🔔 Notificació de prova";
+      let tag = "thermosafe-test";
 
-      if (type === 'heat') body = '🔥 Risc per calor alt';
-      else if (type === 'cold') body = '❄️ Fred extrem';
-      else if (type === 'wind') body = '🌬️ Vent fort';
-      else if (type === 'uv') body = '☀️ Índex UV alt';
+      if (type === "heat") {
+        title = "🔥 ThermoSafe – Calor";
+        body = "Risc per calor alt. Prova manual.";
+        tag = "thermosafe-heat";
+      } else if (type === "cold") {
+        title = "❄️ ThermoSafe – Fred";
+        body = "Fred extrem. Prova manual.";
+        tag = "thermosafe-cold";
+      } else if (type === "wind") {
+        title = "🌬️ ThermoSafe – Vent";
+        body = "Vent fort. Prova manual.";
+        tag = "thermosafe-wind";
+      } else if (type === "uv") {
+        title = "☀️ ThermoSafe – UV";
+        body = "Índex UV alt. Prova manual.";
+        tag = "thermosafe-uv";
+      } else if (type === "aemet") {
+        title = "🚨 ThermoSafe – Avís oficial";
+        body = "Avís oficial actiu. Prova manual.";
+        tag = "thermosafe-aemet";
+      }
 
-      await admin.messaging().send({
+      const payload = {
         token,
-        notification: { title, body },
-        webpush: { fcmOptions: { link: 'https://thermosafe.app' } }
+        webpush: {
+          headers: {
+            TTL: "3600",
+            Urgency: "high",
+          },
+          fcmOptions: {
+            link: "https://thermosafe.app",
+          },
+        },
+        android: {
+          priority: "high",
+        },
+        apns: {
+          headers: {
+            "apns-priority": "10",
+          },
+          payload: {
+            aps: {
+              sound: "default",
+              badge: 1,
+            },
+          },
+        },
+        data: {
+          title,
+          body,
+          tag,
+          type,
+          lang: "ca",
+          url: "https://thermosafe.app",
+          click_action: "https://thermosafe.app",
+          icon: "https://thermosafe.app/icons/icon-192.png",
+          badge: "https://thermosafe.app/icons/badge-72.png",
+        },
+      };
+
+      console.log("[TEST PUSH] sending", {
+        type,
+        tokenPreview: token.slice(0, 20),
+        title,
+        body,
       });
 
-      res.json({ ok: true });
+      const messageId = await admin.messaging().send(payload);
+
+      console.log("[TEST PUSH] sent OK", {
+        messageId,
+        type,
+        tokenPreview: token.slice(0, 20),
+      });
+
+      return res.status(200).json({
+        ok: true,
+        messageId,
+        type,
+      });
     } catch (e) {
-      console.error(e);
-      res.status(500).json({ ok: false, error: e?.message || 'send error' });
+      console.error("[TEST PUSH] send error", {
+        message: e?.message || String(e),
+        code: e?.errorInfo?.code || e?.code || "",
+        stack: e?.stack || "",
+      });
+
+      return res.status(500).json({
+        ok: false,
+        error: e?.message || "send error",
+        code: e?.errorInfo?.code || e?.code || "",
+      });
     }
   });
