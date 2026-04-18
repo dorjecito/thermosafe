@@ -43,25 +43,42 @@ function normalizeLang(fallback: Lang = "ca"): Lang {
   return (["ca", "es", "eu", "gl"] as Lang[]).includes(raw) ? raw : fallback;
 }
 
+async function getThermoSafeSwRegistration(): Promise<ServiceWorkerRegistration> {
+  if (!("serviceWorker" in navigator)) {
+    throw new Error("Aquest navegador no suporta Service Worker");
+  }
+
+  const reg = await navigator.serviceWorker.register("/sw.js", {
+    scope: "/",
+    updateViaCache: "none",
+  });
+
+  await navigator.serviceWorker.ready;
+
+  console.log("✅ Service Worker registrat:", reg.scope);
+  return reg;
+}
+
 // --------------------------------------------------------
 // 🔑 Recupera el token FCM actual
 export async function getCurrentFcmToken(): Promise<string | null> {
-  const swReg = await navigator.serviceWorker.ready;
-  if (!swReg) throw new Error("No s'ha pogut inicialitzar el Service Worker");
+  const swReg = await getThermoSafeSwRegistration();
 
-  const messaging = await messagingPromise;
-  if (!messaging) throw new Error("El navegador no suporta Web Push");
+  const messaging = await messagingPromise;
+  if (!messaging) throw new Error("El navegador no suporta Web Push");
 
-  const vapidKey =
-    "BNh8R1YOsrnV58xNBIOVi-aMIYCvTsPpdmn7hcKJ3lldQUZ8BF6qP_wEa84TnIwZ765YQxHGWc7fAdpegzgH184";
+  const vapidKey =
+    "BNh8R1YOsrnV58xNBIOVi-aMIYCvTsPpdmn7hcKJ3lldQUZ8BF6qP_wEa84TnIwZ765YQxHGWc7fAdpegzgH184";
 
-  const token = await getToken(messaging, {
-    vapidKey,
-    serviceWorkerRegistration: swReg,
-  });
+  const token = await getToken(messaging, {
+    vapidKey,
+    serviceWorkerRegistration: swReg,
+  });
 
-  if (!token || token.length < 50) return null;
-  return token;
+  if (!token || token.length < 50) return null;
+
+  console.log("🔑 Token FCM actual:", token);
+  return token;
 }
 
 // --------------------------------------------------------
@@ -141,9 +158,7 @@ export async function enableRiskAlerts({
   if (!loc) throw new Error("No s'ha pogut obtenir la ubicació (GPS)");
 
   // 3️⃣ Service Worker actiu
-  const swReg = await navigator.serviceWorker.ready;
-  if (!swReg) throw new Error("No s'ha pogut inicialitzar el Service Worker");
-
+  const swReg = await getThermoSafeSwRegistration();
   // 4️⃣ Inicialitza Firebase Messaging
   const messaging = await messagingPromise;
   if (!messaging) throw new Error("El navegador no suporta Web Push");
