@@ -64,6 +64,7 @@ import { getUVFromOpenUV } from "./services/openUV";
    import UVSafeTime from "./components/UVSafeTime";
    import UVDetailPanel from "./components/UVDetailPanel";
    import SkinTypeInfo, { type SkinType } from "./components/SkinTypeInfo";
+   import TopAlertBanner from "./components/TopAlertBanner";
    
    /* —— analítica (opcional) ———————————— */
    import { inject } from '@vercel/analytics';
@@ -1450,63 +1451,18 @@ return (
   )}
 </div>
 
-{/* ⚠️ BANNER PRINCIPAL (només 1) */}
-{(() => {
-  // 1) CALOR (prioritat màxima)
-  if (primary.kind === "heat" && heatRisk && heatRisk.isHigh) {
-    return (
-      <div className="alert-banner">
-        {heatRisk.isExtreme ? t("alert_extreme") : t("alertRisk")}
-      </div>
-    );
-  }
-
-  // UVI arrodonit + clamp 0
-  const hasUvi = typeof uvi === "number" && Number.isFinite(uvi);
-  const uviRounded = hasUvi ? Math.max(0, Math.round(uvi)) : null;
-
-  // 2) UV EXTREM (11+) — es mostra encara que UV no sigui primary
-  if (uviRounded !== null && uviRounded >= UV_EXTREME) {
-    const key = "extremeUVIWarning";
-    const raw = t(key);
-    const safeText = raw === key ? t("highUVIWarning") : raw;
-
-    return (
-      <div className="alert-banner">
-        <p>{safeText}</p>
-      </div>
-    );
-  }
-
-  // 3) UV MOLT ALT (8–10) -- només si UV és primary i condicions reals d'exposició
-if (
-  uviRounded !== null &&
-  uviRounded >= UV_HIGH &&
-  uviRounded < UV_EXTREME &&
-  primary.kind === "uv" &&
-  day &&
-  !["Rain", "Drizzle", "Thunderstorm"].includes(weatherMain ?? "") &&
-  (clouds ?? 0) < 85
-) {
-  return (
-    <div className="alert-banner">
-      <p>{t("highUVIWarning")}</p>
-    </div>
-  );
-}
-
-  // 4) IRRADIÀNCIA — només si no hi ha cap risc principal
-  if (primary.kind === "none" && irr !== null && irr >= 8) {
-    return (
-      <div className="alert-banner">
-        <p>{t("highIrradianceWarning")}</p>
-        <p>{t("irradianceTips")}</p>
-      </div>
-    );
-  }
-
-  return null;
-})()}
+<TopAlertBanner
+  primary={primary}
+  heatRisk={heatRisk}
+  uvi={uvi}
+  day={day}
+  weatherMain={weatherMain}
+  clouds={clouds}
+  irr={irr}
+  t={t}
+  UV_HIGH={UV_HIGH}
+  UV_EXTREME={UV_EXTREME}
+/>
 
      {/* 📊 DADES */}
 {city && (

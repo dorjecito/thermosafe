@@ -691,7 +691,7 @@ function getUvInfo(uvi) {
 }
 
 async function sendUvPush(token, lang, info, uvi, place) {
-  if (!info) return;
+  if (!info || info.level === 0) return;
 
   const title = info.title?.[lang] ?? info.title?.ca ?? "☀️ ThermoSafe";
   const body =
@@ -735,21 +735,6 @@ async function sendUvPush(token, lang, info, uvi, place) {
       notification: {
         title,
         body,
-      },
-    },
-    apns: {
-      headers: {
-        "apns-priority": "10",
-      },
-      payload: {
-        aps: {
-          alert: {
-            title,
-            body,
-          },
-          sound: "default",
-          badge: 1,
-        },
       },
     },
   });
@@ -837,176 +822,202 @@ async function sendAemetPush(token, lang, info, place) {
 // 🌦️ CRON METEO UNIFICAT — calor + fred + vent
 // ─────────────────────────────────────────────
 exports.cronCheckWeatherRisk = functions
-  .region(REGION)
-  .runWith({ secrets: [OPENWEATHER_KEY] })
-  .pubsub.schedule("every 60 minutes")
-  .timeZone("Europe/Madrid")
-  .onRun(async () => {
-    const now = Date.now();
-    const snap = await db.collection("subs").limit(1000).get();
-    if (snap.empty) return null;
+  .region(REGION)
+  .runWith({ secrets: [OPENWEATHER_KEY] })
+  .pubsub.schedule("every 60 minutes")
+  .timeZone("Europe/Madrid")
+  .onRun(async () => {
+    const now = Date.now();
+    const snap = await db.collection("subs").limit(1000).get();
+    if (snap.empty) return null;
 
-    const tasks = [];
+    const tasks = [];
 
-    for (const doc of snap.docs) {
-      const sub = doc.data();
-      const lang = LANGS.includes(sub.lang) ? sub.lang : "ca";
+    for (const doc of snap.docs) {
+      const sub = doc.data();
+      const lang = LANGS.includes(sub.lang) ? sub.lang : "ca";
 
-      tasks.push(
-        (async () => {
-          try {
-            const w = await getWeather(sub.lat, sub.lon);
-            if (isQuietHours(now, w.tzOffset)) return;
+      tasks.push(
+        (async () => {
+          try {
+            const w = await getWeather(sub.lat, sub.lon);
+            if (isQuietHours(now, w.tzOffset)) return;
 
-            const place = sub.place || w.place || "";
-            const updates = {};
+            const place = sub.place || w.place || "";
+            const updates = {};
 
-            // ───────── CALOR ─────────
-            const hi = w.temp < 18 ? w.temp : calcHI(w.temp, w.hum);
-            const heatInfo = levelFromINSST(hi);
-            const prevHeatLevel = Number(sub.lastHeatLevel ?? 0);
+            // ───────── CALOR ─────────
+            const hi = w.temp < 18 ? w.temp : calcHI(w.temp, w.hum);
+            const heatInfo = levelFromINSST(hi);
+            const prevHeatLevel = Number(sub.lastHeatLevel ?? 0);
 
-            updates.lastHeatLevel = heatInfo.level;
+            updates.lastHeatLevel = heatInfo.level;
 
-            console.log("[WEATHER][HEAT]", {
-              docId: doc.id,
-              place,
-              temp: w.temp,
-              hum: w.hum,
-              hi,
-              prevLevel: prevHeatLevel,
-              nextLevel: heatInfo.level,
-              threshold: sub.threshold,
-            });
+            console.log("[WEATHER][HEAT]", {
+              docId: doc.id,
+              place,
+              temp: w.temp,
+              hum: w.hum,
+              hi,
+              prevLevel: prevHeatLevel,
+              nextLevel: heatInfo.level,
+              threshold: sub.threshold,
+            });
 
-            if (
-              shouldNotifyLevelIncrease(prevHeatLevel, heatInfo.level) &&
-              meetsUserThreshold(heatInfo.level, sub.threshold)
-            ) {
-              try {
-                await sendPush(
-                  sub.token,
-                  lang,
-                  heatInfo.level,
-                  hi,
-                  {
-                    ca: heatInfo.ca,
-                    es: heatInfo.es,
-                    eu: heatInfo.eu,
-                    gl: heatInfo.gl,
-                  },
-                  place
-                );
+            if (
+              shouldNotifyLevelIncrease(prevHeatLevel, heatInfo.level) &&
+              meetsUserThreshold(heatInfo.level, sub.threshold)
+            ) {
+              try {
+                await sendPush(
+                  sub.token,
+                  lang,
+                  heatInfo.level,
+                  hi,
+                  {
+                    ca: heatInfo.ca,
+                    es: heatInfo.es,
+                    eu: heatInfo.eu,
+                    gl: heatInfo.gl,
+                  },
+                  place
+                );
 
-                updates.lastHeatAt = now;
-                updates.lastNotified = now;
-              } catch (sendErr) {
-                const removed = await removeInvalidSub(
-                  doc.ref,
-                  doc.id,
-                  sendErr,
-                  "WEATHER-HEAT"
-                );
-                if (removed) return;
-                throw sendErr;
-              }
-            }
+                updates.lastHeatAt = now;
+                updates.lastNotified = now;
 
-            // ───────── FRED ─────────
-            const windKmhExact = (w.wind ?? 0) * 3.6;
-            const windChill =
-              13.12 +
-              0.6215 * w.temp -
-              11.37 * Math.pow(windKmhExact, 0.16) +
-              0.3965 * w.temp * Math.pow(windKmhExact, 0.16);
+                console.log("[WEATHER][HEAT][SENT]", {
+                  docId: doc.id,
+                  place,
+                  hi,
+                  prevLevel: prevHeatLevel,
+                  nextLevel: heatInfo.level,
+                });
+              } catch (sendErr) {
+                const removed = await removeInvalidSub(
+                  doc.ref,
+                  doc.id,
+                  sendErr,
+                  "WEATHER-HEAT"
+                );
+                if (removed) return;
+                throw sendErr;
+              }
+            }
 
-            const coldInfo = getColdInfo(windChill);
-            const prevColdLevel = Number(sub.lastColdLevel ?? 0);
+            // ───────── FRED ─────────
+            const windKmhExact = (w.wind ?? 0) * 3.6;
+            const windChill =
+              w.temp <= 10 && windKmhExact > 4.8
+                ? 13.12 +
+                  0.6215 * w.temp -
+                  11.37 * Math.pow(windKmhExact, 0.16) +
+                  0.3965 * w.temp * Math.pow(windKmhExact, 0.16)
+                : w.temp;
 
-            updates.lastColdLevel = coldInfo.level;
+            const coldInfo = getColdInfo(windChill);
+            const prevColdLevel = Number(sub.lastColdLevel ?? 0);
 
-            console.log("[WEATHER][COLD]", {
-              docId: doc.id,
-              place,
-              temp: w.temp,
-              windKmh: windKmhExact,
-              windChill,
-              prevLevel: prevColdLevel,
-              nextLevel: coldInfo.level,
-              threshold: sub.threshold,
-            });
+            updates.lastColdLevel = coldInfo.level;
 
-            if (
-              coldInfo.level > 0 &&
-              shouldNotifyLevelIncrease(prevColdLevel, coldInfo.level) &&
-              meetsUserThreshold(coldInfo.level, sub.threshold)
-            ) {
-              try {
-                await sendColdPush(sub.token, lang, coldInfo, windChill, place);
+            console.log("[WEATHER][COLD]", {
+              docId: doc.id,
+              place,
+              temp: w.temp,
+              windKmh: windKmhExact,
+              windChill,
+              prevLevel: prevColdLevel,
+              nextLevel: coldInfo.level,
+              threshold: sub.threshold,
+            });
 
-                updates.lastColdAt = now;
-                updates.lastNotified = now;
-              } catch (sendErr) {
-                const removed = await removeInvalidSub(
-                  doc.ref,
-                  doc.id,
-                  sendErr,
-                  "WEATHER-COLD"
-                );
-                if (removed) return;
-                throw sendErr;
-              }
-            }
+            if (
+              coldInfo.level > 0 &&
+              shouldNotifyLevelIncrease(prevColdLevel, coldInfo.level) &&
+              meetsUserThreshold(coldInfo.level, sub.threshold)
+            ) {
+              try {
+                await sendColdPush(sub.token, lang, coldInfo, windChill, place);
 
-            // ───────── VENT ─────────
-            const windKmh = Math.round((w.wind ?? 0) * 3.6);
-            const windInfo = getWindInfo(windKmh);
-            const prevWindLevel = Number(sub.lastWindLevel ?? 0);
+                updates.lastColdAt = now;
+                updates.lastNotified = now;
 
-            updates.lastWindLevel = windInfo.level;
+                console.log("[WEATHER][COLD][SENT]", {
+                  docId: doc.id,
+                  place,
+                  windChill,
+                  prevLevel: prevColdLevel,
+                  nextLevel: coldInfo.level,
+                });
+              } catch (sendErr) {
+                const removed = await removeInvalidSub(
+                  doc.ref,
+                  doc.id,
+                  sendErr,
+                  "WEATHER-COLD"
+                );
+                if (removed) return;
+                throw sendErr;
+              }
+            }
 
-            console.log("[WEATHER][WIND]", {
-              docId: doc.id,
-              place,
-              windKmh,
-              prevLevel: prevWindLevel,
-              nextLevel: windInfo.level,
-              threshold: sub.threshold,
-            });
+            // ───────── VENT ─────────
+            const windKmh = Math.round((w.wind ?? 0) * 3.6);
+            const windInfo = getWindInfo(windKmh);
+            const prevWindLevel = Number(sub.lastWindLevel ?? 0);
 
-            if (
-              windInfo.level > 0 &&
-              shouldNotifyLevelIncrease(prevWindLevel, windInfo.level) &&
-              meetsUserThreshold(windInfo.level, sub.threshold)
-            ) {
-              try {
-                await sendWindPush(sub.token, lang, windInfo, windKmh, place);
+            updates.lastWindLevel = windInfo.level;
 
-                updates.lastWindAt = now;
-                updates.lastNotified = now;
-              } catch (sendErr) {
-                const removed = await removeInvalidSub(
-                  doc.ref,
-                  doc.id,
-                  sendErr,
-                  "WEATHER-WIND"
-                );
-                if (removed) return;
-                throw sendErr;
-              }
-            }
+            console.log("[WEATHER][WIND]", {
+              docId: doc.id,
+              place,
+              windKmh,
+              prevLevel: prevWindLevel,
+              nextLevel: windInfo.level,
+              threshold: sub.threshold,
+            });
 
-            await doc.ref.set(updates, { merge: true });
-          } catch (e) {
-            console.error("cron weather error", doc.id, e);
-          }
-        })()
-      );
-    }
+            if (
+              windInfo.level > 0 &&
+              shouldNotifyLevelIncrease(prevWindLevel, windInfo.level) &&
+              meetsUserThreshold(windInfo.level, sub.threshold)
+            ) {
+              try {
+                await sendWindPush(sub.token, lang, windInfo, windKmh, place);
 
-    await Promise.allSettled(tasks);
-    return null;
-  });
+                updates.lastWindAt = now;
+                updates.lastNotified = now;
+
+                console.log("[WEATHER][WIND][SENT]", {
+                  docId: doc.id,
+                  place,
+                  windKmh,
+                  prevLevel: prevWindLevel,
+                  nextLevel: windInfo.level,
+                });
+              } catch (sendErr) {
+                const removed = await removeInvalidSub(
+                  doc.ref,
+                  doc.id,
+                  sendErr,
+                  "WEATHER-WIND"
+                );
+                if (removed) return;
+                throw sendErr;
+              }
+            }
+
+            await doc.ref.set(updates, { merge: true });
+          } catch (e) {
+            console.error("cron weather error", doc.id, e);
+          }
+        })()
+      );
+    }
+
+    await Promise.allSettled(tasks);
+    return null;
+  });
 
 // ─────────────────────────────────────────────
 // ☀️ CRON UV ROBUST — OpenUV principal + fallback OpenWeather
@@ -1444,63 +1455,87 @@ exports.runCleanupNow = functions
     }
   });
 
-  // ─────────────────────────────────────────────
-// 🧪 TEST MANUAL UV
+// ─────────────────────────────────────────────
+// ☀️ TEST MANUAL UV
+// - Llegeix subs
+// - Calcula UV actual
+// - Envia només si hi ha nivell > 0
+// - Respecta threshold usuari
+// - Neteja subs invàlides si fallen
 // ─────────────────────────────────────────────
 exports.runUvNow = functions
-  .region(REGION)
-  .runWith({ secrets: [OPENUV_KEY] })  
-  .https.onRequest(async (req, res) => {
-    console.log('[MANUAL UV] start');
+  .region(REGION)
+  .runWith({ secrets: [OPENUV_KEY] })
+  .https.onRequest(async (req, res) => {
+    console.log("[MANUAL UV] start");
 
-    const snap = await db.collection('subs').limit(10).get();
+    try {
+      const snap = await db.collection("subs").limit(50).get();
 
-    for (const doc of snap.docs) {
-      const sub = doc.data();
+      if (snap.empty) {
+        console.log("[MANUAL UV] no subs");
+        return res.json({ ok: true, subs: 0 });
+      }
 
-      const uvi = await getUV(sub.lat, sub.lon);
-      const info = getUvInfo(uvi);
+      const tasks = [];
 
-      console.log('[MANUAL UV]', {
-        place: sub.place,
-        uvi,
-        level: info.level
-      });
+      for (const doc of snap.docs) {
+        const sub = doc.data();
 
-console.log("[MANUAL UV] enviant forçat", {
-  place: sub.place || "",
-  uvi,
-  level: info.level,
-  tokenPreview: String(sub.token || "").slice(0, 20),
-});
+        tasks.push(
+          (async () => {
+            try {
+              const lang = LANGS.includes(sub.lang) ? sub.lang : "ca";
+              const place = sub.place || "";
 
-await sendUvPush(
-  sub.token,
-  sub.lang || "ca",
-  info || {
-    level: 1,
-    risk: "test",
-    title: {
-      ca: "☀️ ThermoSafe – Prova UV",
-      es: "☀️ ThermoSafe – Prueba UV",
-      eu: "☀️ ThermoSafe – UV proba",
-      gl: "☀️ ThermoSafe – Proba UV",
-    },
-    body: {
-      ca: `Prova manual UV (${Number(uvi || 0).toFixed(1)})`,
-      es: `Prueba manual UV (${Number(uvi || 0).toFixed(1)})`,
-      eu: `Eskuzko UV proba (${Number(uvi || 0).toFixed(1)})`,
-      gl: `Proba manual UV (${Number(uvi || 0).toFixed(1)})`,
-    },
-  },
-  uvi,
-  sub.place || ""
-);
+              const uvi = await getUV(sub.lat, sub.lon);
+              const info = getUvInfo(uvi);
 
-console.log("[MANUAL UV] SENT");
-    }
+              console.log("[MANUAL UV]", {
+                docId: doc.id,
+                place,
+                uvi,
+                level: info.level,
+                tokenPreview: String(sub.token || "").slice(0, 20),
+              });
 
-    res.json({ ok: true });
-  });
+              if (!info || info.level === 0) return;
+              if (!meetsUserThreshold(info.level, sub.threshold)) return;
 
-  //emontalvo
+              await sendUvPush(sub.token, lang, info, uvi, place);
+
+              console.log("[MANUAL UV][SENT]", {
+                docId: doc.id,
+                place,
+                uvi,
+                level: info.level,
+                tokenPreview: String(sub.token || "").slice(0, 20),
+              });
+            } catch (err) {
+              const removed = await removeInvalidSub(
+                doc.ref,
+                doc.id,
+                err,
+                "UV-MANUAL"
+              );
+
+              if (removed) return;
+
+              console.error("[MANUAL UV][ERROR]", doc.id, err);
+            }
+          })()
+        );
+      }
+
+      await Promise.allSettled(tasks);
+
+      console.log("[MANUAL UV] done");
+      return res.json({ ok: true });
+    } catch (e) {
+      console.error("[MANUAL UV][FATAL]", e);
+      return res.status(500).json({
+        ok: false,
+        error: e?.message || "manual uv error",
+      });
+    }
+  });

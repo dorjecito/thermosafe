@@ -1878,6 +1878,31 @@ body,
 .recommendation-box.nightHeat .recommendation-title {
   color: #f59e0b;
 }
+@keyframes alertEnter {
+  0% { transform: translateY(-20px); opacity: 0; }
+  100% { transform: translateY(0); opacity: 1; }
+}
+
+.alert-banner-enter {
+  animation: alertEnter 0.4s ease-out;
+}
+
+@keyframes alertPulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.02); }
+}
+
+.alert-banner-pulse {
+  animation: alertPulse 1.5s ease-in-out infinite;
+}
+
+.top-alert-banner-wrap {
+  will-change: transform, opacity;
+}
+
+.alert-banner {
+  will-change: transform;
+}
 
 
 
