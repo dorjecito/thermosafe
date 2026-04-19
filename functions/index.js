@@ -691,24 +691,7 @@ function getUvInfo(uvi) {
 }
 
 async function sendUvPush(token, lang, info, uvi, place) {
-  if (!info || info.level === 0) {
-    console.log("[SEND][UV] skip level 0", {
-      lang,
-      uvi,
-      place: place || "",
-    });
-    return;
-  }
-
-  if (!token) {
-    console.warn("[SEND][UV] missing token", {
-      lang,
-      level: info?.level,
-      uvi,
-      place: place || "",
-    });
-    return;
-  }
+  if (!info) return;
 
   const title = info.title?.[lang] ?? info.title?.ca ?? "☀️ ThermoSafe";
   const body =
@@ -724,105 +707,52 @@ async function sendUvPush(token, lang, info, uvi, place) {
     place: place || "",
     uvi: String(Math.round(Number(uvi) || 0)),
     risk: info.risk || "",
-    click_action: "https://thermosafe.app",
+    icon: "/icons/icon-192.png",
+    badge: "/icons/badge-72.png",
+    tag: "thermosafe-uv",
+    title,
+    body,
   };
 
-  try {
-    console.log("[SEND][UV] start", {
-      lang,
-      level: info.level,
-      uvi,
-      place: place || "",
-      risk: info.risk || "",
-      tokenPreview: String(token).slice(0, 20),
-    });
-
-    const message = {
-      token,
-
-      // ✅ fallback universal
+  await admin.messaging().send({
+    token,
+    notification: {
+      title,
+      body,
+    },
+    data,
+    webpush: {
+      headers: {
+        TTL: "3600",
+        Urgency: "high",
+      },
+      fcmOptions: {
+        link: "https://thermosafe.app",
+      },
+    },
+    android: {
+      priority: "high",
       notification: {
         title,
         body,
       },
-
-      // ✅ dades addicionals
-      data,
-
-      // ✅ web push
-      webpush: {
-        notification: {
-          title,
-          body,
-          icon: "https://thermosafe.app/icons/icon-192.png",
-          badge: "https://thermosafe.app/icons/badge-72.png",
-          tag: "thermosafe-uv",
-          renotify: true,
-          requireInteraction: true,
-          actions: [
-            {
-              action: "open",
-              title: "Obrir ThermoSafe",
-            },
-          ],
-          data,
-        },
-        fcmOptions: {
-          link: "https://thermosafe.app",
-        },
-        headers: {
-          TTL: "3600",
-          Urgency: "high",
-        },
+    },
+    apns: {
+      headers: {
+        "apns-priority": "10",
       },
-
-      // ✅ Android fallback
-      android: {
-        priority: "high",
-        notification: {
-          icon: "ic_notification",
-          clickAction: "https://thermosafe.app",
-          channelId: "default",
-        },
-      },
-
-      // ✅ APNs / iOS fallback
-      apns: {
-        headers: {
-          "apns-priority": "10",
-        },
-        payload: {
-          aps: {
-            sound: "default",
+      payload: {
+        aps: {
+          alert: {
+            title,
+            body,
           },
+          sound: "default",
+          badge: 1,
         },
       },
-    };
-
-    const messageId = await admin.messaging().send(message);
-
-    console.log("[SEND][UV] ok", {
-      messageId,
-      lang,
-      level: info.level,
-      uvi,
-      place: place || "",
-      risk: info.risk || "",
-    });
-
-    return messageId;
-  } catch (e) {
-    console.error("[SEND][UV] error", {
-      message: e?.message || String(e),
-      code: e?.errorInfo?.code || e?.code || "",
-      lang,
-      level: info?.level,
-      uvi,
-      place: place || "",
-      risk: info?.risk || "",
-    });
-    throw e;
-  }
+    },
+  });
 }
 
 // ─────────────────────────────────────────────
@@ -1512,4 +1442,63 @@ exports.runCleanupNow = functions
         .status(500)
         .json({ ok: false, error: e?.message || "cleanup error" });
     }
+  });
+
+  // ─────────────────────────────────────────────
+// 🧪 TEST MANUAL UV
+// ─────────────────────────────────────────────
+exports.runUvNow = functions
+  .region(REGION)
+  .runWith({ secrets: [OPENUV_KEY] })  
+  .https.onRequest(async (req, res) => {
+    console.log('[MANUAL UV] start');
+
+    const snap = await db.collection('subs').limit(10).get();
+
+    for (const doc of snap.docs) {
+      const sub = doc.data();
+
+      const uvi = await getUV(sub.lat, sub.lon);
+      const info = getUvInfo(uvi);
+
+      console.log('[MANUAL UV]', {
+        place: sub.place,
+        uvi,
+        level: info.level
+      });
+
+console.log("[MANUAL UV] enviant forçat", {
+  place: sub.place || "",
+  uvi,
+  level: info.level,
+  tokenPreview: String(sub.token || "").slice(0, 20),
+});
+
+await sendUvPush(
+  sub.token,
+  sub.lang || "ca",
+  info || {
+    level: 1,
+    risk: "test",
+    title: {
+      ca: "☀️ ThermoSafe – Prova UV",
+      es: "☀️ ThermoSafe – Prueba UV",
+      eu: "☀️ ThermoSafe – UV proba",
+      gl: "☀️ ThermoSafe – Proba UV",
+    },
+    body: {
+      ca: `Prova manual UV (${Number(uvi || 0).toFixed(1)})`,
+      es: `Prueba manual UV (${Number(uvi || 0).toFixed(1)})`,
+      eu: `Eskuzko UV proba (${Number(uvi || 0).toFixed(1)})`,
+      gl: `Proba manual UV (${Number(uvi || 0).toFixed(1)})`,
+    },
+  },
+  uvi,
+  sub.place || ""
+);
+
+console.log("[MANUAL UV] SENT");
+    }
+
+    res.json({ ok: true });
   });

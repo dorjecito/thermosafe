@@ -21,10 +21,9 @@ firebase.initializeApp({
 
 const messaging = firebase.messaging();
 
-// ✅ Rebre missatges FCM en segon pla
-messaging.onBackgroundMessage((payload) => {
-  const notification = payload.notification || {};
-  const data = payload.data || {};
+function buildNotificationFromPayload(payload) {
+  const notification = payload?.notification || {};
+  const data = payload?.data || {};
 
   const title = data.title || notification.title || "ThermoSafe – Avís";
   const body = data.body || notification.body || "";
@@ -33,19 +32,56 @@ messaging.onBackgroundMessage((payload) => {
   const badge = data.badge || "/icons/badge-72.png";
   const tag = data.tag || "thermosafe-notification";
 
-  self.registration.showNotification(title, {
-    body,
-    icon,
-    badge,
-    tag,
-    renotify: true,
-    requireInteraction: true,
-    data,
-    actions: [
-      { action: "open", title: lang === "es" ? "Abrir" : "Obrir" },
-      { action: "dismiss", title: lang === "es" ? "Descartar" : "Tancar" },
-    ],
-  });
+  return {
+    title,
+    options: {
+      body,
+      icon,
+      badge,
+      tag,
+      renotify: true,
+      requireInteraction: true,
+      data,
+      actions: [
+        { action: "open", title: lang === "es" ? "Abrir" : "Obrir" },
+        { action: "dismiss", title: lang === "es" ? "Descartar" : "Tancar" },
+      ],
+    },
+  };
+}
+
+// ✅ Firebase background handler
+messaging.onBackgroundMessage((payload) => {
+  console.log("[SW] onBackgroundMessage", payload);
+
+  const { title, options } = buildNotificationFromPayload(payload);
+  self.registration.showNotification(title, options);
+});
+
+// ✅ Fallback estàndard per Safari/iPhone
+self.addEventListener("push", (event) => {
+  if (!event.data) return;
+
+  let payload = {};
+  try {
+    payload = event.data.json();
+  } catch (e) {
+    payload = {
+      notification: {
+        title: "ThermoSafe – Avís",
+        body: event.data.text(),
+      },
+      data: {
+        url: "https://thermosafe.app",
+      },
+    };
+  }
+
+  console.log("[SW] push event", payload);
+
+  const { title, options } = buildNotificationFromPayload(payload);
+
+  event.waitUntil(self.registration.showNotification(title, options));
 });
 
 self.addEventListener("notificationclick", (event) => {
@@ -62,7 +98,7 @@ self.addEventListener("notificationclick", (event) => {
     clients.matchAll({ type: "window", includeUncontrolled: true }).then((clientList) => {
       for (const client of clientList) {
         if ("focus" in client) {
-          client.navigate?.(targetUrl);
+          if ("navigate" in client) client.navigate(targetUrl);
           return client.focus();
         }
       }
