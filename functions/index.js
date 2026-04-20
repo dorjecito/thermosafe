@@ -1390,70 +1390,158 @@ exports.sendTestNotification = functions
   });
 
 // ─────────────────────────────────────────────
-// Endpoint manual per executar cleanup ara
+// Endpoint de prova manual
 // ─────────────────────────────────────────────
-exports.runCleanupNow = functions
-  .region(REGION)
-  .https.onRequest(async (req, res) => {
-    try {
-      console.log("[cleanup-manual] start");
+exports.sendTestNotification = functions
+  .region(REGION)
+  .https.onRequest(async (req, res) => {
+    res.set("Access-Control-Allow-Origin", "*");
+    res.set("Access-Control-Allow-Methods", "GET, OPTIONS");
+    res.set("Access-Control-Allow-Headers", "Content-Type");
 
-      let lastDoc = null;
-      let totalChecked = 0;
-      let totalDeleted = 0;
-      let totalInvalid = 0;
-      let totalStale = 0;
+    if (req.method === "OPTIONS") {
+      return res.status(204).end();
+    }
 
-      while (true) {
-        let q = db.collection("subs").orderBy("__name__").limit(PAGE_SIZE);
-        if (lastDoc) q = q.startAfter(lastDoc);
+    const token = String(req.query.token || "").trim();
+    const type = String(req.query.type || "test").trim().toLowerCase();
 
-        const snap = await q.get();
-        if (snap.empty) break;
+    if (!token) {
+      return res.status(400).json({ ok: false, error: "missing token" });
+    }
 
-        const docs = snap.docs;
-        lastDoc = docs[docs.length - 1];
+    try {
+      let title = "ThermoSafe";
+      let body = "🔔 Notificació de prova";
+      let tag = "thermosafe-test";
 
-        for (const batch of chunk(docs, VALIDATION_CONC)) {
-          const validations = batch.map(async (doc) => {
-            const d = doc.data() || {};
-            const token = d.token;
-            totalChecked++;
+      if (type === "heat") {
+        title = "🔥 ThermoSafe – Calor";
+        body = "Risc per calor alt. Prova manual.";
+        tag = "thermosafe-heat";
+      } else if (type === "cold") {
+        title = "❄️ ThermoSafe – Fred";
+        body = "Fred extrem. Prova manual.";
+        tag = "thermosafe-cold";
+      } else if (type === "wind") {
+        title = "🌬️ ThermoSafe – Vent";
+        body = "Vent fort. Prova manual.";
+        tag = "thermosafe-wind";
+      } else if (type === "uv") {
+        title = "☀️ ThermoSafe – UV";
+        body = "Índex UV alt. Prova manual.";
+        tag = "thermosafe-uv";
+      } else if (type === "aemet") {
+        title = "🚨 ThermoSafe – Avís oficial";
+        body = "Avís oficial actiu. Prova manual.";
+        tag = "thermosafe-aemet";
+      }
 
-            const lastActivity = getLastActivityMs(d);
-            const stale = daysBetweenNow(lastActivity) > INACTIVITY_DAYS;
-            const valid = await isTokenValid(token);
+      const payload = {
+        token,
 
-            if (!token || !valid || stale) {
-              const why = !token
-                ? "missing token"
-                : !valid
-                ? "invalid token"
-                : `stale > ${INACTIVITY_DAYS}d`;
+        // ✅ notificació estàndard
+        notification: {
+          title,
+          body,
+        },
 
-              if (!valid) totalInvalid++;
-              if (stale) totalStale++;
+        // ✅ Web push
+        webpush: {
+          headers: {
+            TTL: "3600",
+            Urgency: "high",
+          },
+          notification: {
+            title,
+            body,
+            icon: "https://thermosafe.app/icons/icon-192.png",
+            badge: "https://thermosafe.app/icons/badge-72.png",
+            tag,
+            renotify: true,
+            requireInteraction: true,
+          },
+          fcmOptions: {
+            link: "https://thermosafe.app",
+          },
+        },
 
-              console.log("[cleanup-manual] delete", doc.id, why, { lastActivity });
-              await doc.ref.delete();
-              totalDeleted++;
-            }
-          });
+        // ✅ Android
+        android: {
+          priority: "high",
+          notification: {
+            title,
+            body,
+            sound: "default",
+            channelId: "default",
+          },
+        },
 
-          await Promise.allSettled(validations);
-        }
-      }
+        // ✅ Apple / Safari push
+        apns: {
+          headers: {
+            "apns-priority": "10",
+          },
+          payload: {
+            aps: {
+              alert: {
+                title,
+                body,
+              },
+              sound: "default",
+              badge: 1,
+            },
+          },
+        },
 
-      const result = { totalChecked, totalDeleted, totalInvalid, totalStale };
-      console.log("[cleanup-manual] done", result);
-      return res.json({ ok: true, ...result });
-    } catch (e) {
-      console.error("[cleanup-manual] error", e);
-      return res
-        .status(500)
-        .json({ ok: false, error: e?.message || "cleanup error" });
-    }
-  });
+        // ✅ dades extra per al service worker
+        data: {
+          title,
+          body,
+          tag,
+          type,
+          lang: "ca",
+          url: "https://thermosafe.app",
+          click_action: "https://thermosafe.app",
+          icon: "https://thermosafe.app/icons/icon-192.png",
+          badge: "https://thermosafe.app/icons/badge-72.png",
+        },
+      };
+
+      console.log("[TEST PUSH] sending", {
+        type,
+        tokenPreview: token.slice(0, 20),
+        title,
+        body,
+      });
+
+      const messageId = await admin.messaging().send(payload);
+
+      console.log("[TEST PUSH] sent OK", {
+        messageId,
+        type,
+        tokenPreview: token.slice(0, 20),
+      });
+
+      return res.status(200).json({
+        ok: true,
+        messageId,
+        type,
+      });
+    } catch (e) {
+      console.error("[TEST PUSH] send error", {
+        message: e?.message || String(e),
+        code: e?.errorInfo?.code || e?.code || "",
+        stack: e?.stack || "",
+      });
+
+      return res.status(500).json({
+        ok: false,
+        error: e?.message || "send error",
+        code: e?.errorInfo?.code || e?.code || "",
+      });
+    }
+  });
 
 // ─────────────────────────────────────────────
 // ☀️ TEST MANUAL UV
