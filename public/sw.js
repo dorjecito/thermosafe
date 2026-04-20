@@ -55,7 +55,7 @@ messaging.onBackgroundMessage((payload) => {
   console.log("[SW] onBackgroundMessage", payload);
 
   const { title, options } = buildNotificationFromPayload(payload);
-  self.registration.showNotification(title, options);
+  return self.registration.showNotification(title, options);
 });
 
 // ✅ Fallback estàndard per Safari/iPhone
@@ -98,7 +98,6 @@ self.addEventListener("notificationclick", (event) => {
     clients.matchAll({ type: "window", includeUncontrolled: true }).then((clientList) => {
       for (const client of clientList) {
         if ("focus" in client) {
-          if ("navigate" in client) client.navigate(targetUrl);
           return client.focus();
         }
       }
