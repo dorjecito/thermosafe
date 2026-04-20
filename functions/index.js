@@ -1317,42 +1317,28 @@ exports.sendTestNotification = functions
       }
 
       const payload = {
-        token,
-        webpush: {
-          headers: {
-            TTL: "3600",
-            Urgency: "high",
-          },
-          fcmOptions: {
-            link: "https://thermosafe.app",
-          },
-        },
-        android: {
-          priority: "high",
-        },
-        apns: {
-          headers: {
-            "apns-priority": "10",
-          },
-          payload: {
-            aps: {
-              sound: "default",
-              badge: 1,
-            },
-          },
-        },
-        data: {
-          title,
-          body,
-          tag,
-          type,
-          lang: "ca",
-          url: "https://thermosafe.app",
-          click_action: "https://thermosafe.app",
-          icon: "https://thermosafe.app/icons/icon-192.png",
-          badge: "https://thermosafe.app/icons/badge-72.png",
-        },
-      };
+  token,
+  webpush: {
+    headers: {
+      TTL: "3600",
+      Urgency: "high",
+    },
+    fcmOptions: {
+      link: "https://thermosafe.app",
+    },
+  },
+  data: {
+    title,
+    body,
+    tag,
+    type,
+    lang: "ca",
+    url: "https://thermosafe.app",
+    click_action: "https://thermosafe.app",
+    icon: "https://thermosafe.app/icons/icon-192.png",
+    badge: "https://thermosafe.app/icons/badge-72.png",
+  },
+};
 
       console.log("[TEST PUSH] sending", {
         type,
