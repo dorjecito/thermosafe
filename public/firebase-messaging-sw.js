@@ -1,14 +1,6 @@
-// -- Service Worker únic per ThermoSafe (PWA + FCM) --
-
-// 🔹 Activació immediata
-self.addEventListener("install", () => self.skipWaiting());
-self.addEventListener("activate", (e) => e.waitUntil(clients.claim()));
-
-// -- Firebase Messaging (compat) --
 importScripts("https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js");
 importScripts("https://www.gstatic.com/firebasejs/9.23.0/firebase-messaging-compat.js");
 
-// 🔧 Config Firebase
 firebase.initializeApp({
   apiKey: "AIzaSyBHCzruP7U2NsHGt6t0LhvRavlHknrIox8U8",
   authDomain: "thermosafe-58f46.firebaseapp.com",
@@ -21,9 +13,6 @@ firebase.initializeApp({
 
 const messaging = firebase.messaging();
 
-// ─────────────────────────────────────────────
-// 🔔 Construcció notificació
-// ─────────────────────────────────────────────
 function buildNotificationFromPayload(payload) {
   const notification = payload?.notification || {};
   const data = payload?.data || {};
@@ -53,25 +42,15 @@ function buildNotificationFromPayload(payload) {
   };
 }
 
-// ─────────────────────────────────────────────
-// ✅ Firebase background handler (Android/Chrome)
-// ─────────────────────────────────────────────
 messaging.onBackgroundMessage((payload) => {
-  console.log("[SW] onBackgroundMessage", payload);
-
   const { title, options } = buildNotificationFromPayload(payload);
-
   return self.registration.showNotification(title, options);
 });
 
-// ─────────────────────────────────────────────
-// ✅ Fallback universal (inclou Safari / casos edge)
-// ─────────────────────────────────────────────
 self.addEventListener("push", (event) => {
   if (!event.data) return;
 
   let payload = {};
-
   try {
     payload = event.data.json();
   } catch (e) {
@@ -86,18 +65,10 @@ self.addEventListener("push", (event) => {
     };
   }
 
-  console.log("[SW] push event", payload);
-
   const { title, options } = buildNotificationFromPayload(payload);
-
-  event.waitUntil(
-    self.registration.showNotification(title, options)
-  );
+  event.waitUntil(self.registration.showNotification(title, options));
 });
 
-// ─────────────────────────────────────────────
-// 🖱️ Click notificació
-// ─────────────────────────────────────────────
 self.addEventListener("notificationclick", (event) => {
   event.notification.close();
 
@@ -111,9 +82,7 @@ self.addEventListener("notificationclick", (event) => {
   event.waitUntil(
     clients.matchAll({ type: "window", includeUncontrolled: true }).then((clientList) => {
       for (const client of clientList) {
-        if (client.url.includes("thermosafe.app") && "focus" in client) {
-          return client.focus();
-        }
+        if ("focus" in client) return client.focus();
       }
       return clients.openWindow(targetUrl);
     })

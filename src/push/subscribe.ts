@@ -43,42 +43,44 @@ function normalizeLang(fallback: Lang = "ca"): Lang {
   return (["ca", "es", "eu", "gl"] as Lang[]).includes(raw) ? raw : fallback;
 }
 
-async function getThermoSafeSwRegistration(): Promise<ServiceWorkerRegistration> {
-  if (!("serviceWorker" in navigator)) {
-    throw new Error("Aquest navegador no suporta Service Worker");
-  }
+// --------------------------------------------------------
+// 🛠️ Registra el Service Worker específic de Firebase Messaging
+async function getFirebaseMessagingSwRegistration(): Promise<ServiceWorkerRegistration> {
+  if (!("serviceWorker" in navigator)) {
+    throw new Error("Aquest navegador no suporta Service Worker");
+  }
 
-  const reg = await navigator.serviceWorker.register("/sw.js", {
-    scope: "/",
-    updateViaCache: "none",
-  });
+  const reg = await navigator.serviceWorker.register("/firebase-messaging-sw.js", {
+    scope: "/firebase-cloud-messaging-push-scope",
+    updateViaCache: "none",
+  });
 
-  await navigator.serviceWorker.ready;
+  await navigator.serviceWorker.ready;
 
-  console.log("✅ Service Worker registrat:", reg.scope);
-  return reg;
+  console.log("✅ Firebase Messaging SW registrat:", reg.scope);
+  return reg;
 }
 
 // --------------------------------------------------------
 // 🔑 Recupera el token FCM actual
 export async function getCurrentFcmToken(): Promise<string | null> {
-  const swReg = await getThermoSafeSwRegistration();
+  const swReg = await getFirebaseMessagingSwRegistration();
 
-  const messaging = await messagingPromise;
-  if (!messaging) throw new Error("El navegador no suporta Web Push");
+  const messaging = await messagingPromise;
+  if (!messaging) throw new Error("El navegador no suporta Web Push");
 
-  const vapidKey =
-    "BNh8R1YOsrnV58xNBIOVi-aMIYCvTsPpdmn7hcKJ3lldQUZ8BF6qP_wEa84TnIwZ765YQxHGWc7fAdpegzgH184";
+  const vapidKey =
+    "BNh8R1YOsrnV58xNBIOVi-aMIYCvTsPpdmn7hcKJ3lldQUZ8BF6qP_wEa84TnIwZ765YQxHGWc7fAdpegzgH184";
 
-  const token = await getToken(messaging, {
-    vapidKey,
-    serviceWorkerRegistration: swReg,
-  });
+  const token = await getToken(messaging, {
+    vapidKey,
+    serviceWorkerRegistration: swReg,
+  });
 
-  if (!token || token.length < 50) return null;
+  if (!token || token.length < 50) return null;
 
-  console.log("🔑 Token FCM actual:", token);
-  return token;
+  console.log("🔑 Token FCM actual:", token);
+  return token;
 }
 
 // --------------------------------------------------------
@@ -157,8 +159,9 @@ export async function enableRiskAlerts({
   const loc = await getCoords();
   if (!loc) throw new Error("No s'ha pogut obtenir la ubicació (GPS)");
 
-  // 3️⃣ Service Worker actiu
-  const swReg = await getThermoSafeSwRegistration();
+  // 3️⃣ Service Worker específic de Firebase Messaging
+  const swReg = await getFirebaseMessagingSwRegistration();
+
   // 4️⃣ Inicialitza Firebase Messaging
   const messaging = await messagingPromise;
   if (!messaging) throw new Error("El navegador no suporta Web Push");
@@ -200,7 +203,7 @@ export async function enableRiskAlerts({
         createdAt: Date.now(),
         updatedAt: Date.now(),
 
-        // nous camps per control de canvis de nivell
+        // camps per control de canvis de nivell
         lastHeatLevel: 0,
         lastHeatAt: 0,
 
