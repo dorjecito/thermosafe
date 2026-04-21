@@ -42,11 +42,6 @@ function buildNotificationFromPayload(payload) {
   };
 }
 
-messaging.onBackgroundMessage((payload) => {
-  const { title, options } = buildNotificationFromPayload(payload);
-  return self.registration.showNotification(title, options);
-});
-
 self.addEventListener("push", (event) => {
   if (!event.data) return;
 
