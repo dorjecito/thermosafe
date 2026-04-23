@@ -23,6 +23,7 @@ type SubDoc = {
   lang?: Lang;
   lastNotified?: number | null;
   lastNotifiedDay?: string | null;
+  lastDailyResetDay?: string | null;
   createdAt?: number;
   updatedAt?: number;
   lastHeatLevel?: number;
@@ -249,6 +250,7 @@ export async function enableRiskAlerts({
 
           lastNotified: null,
           lastNotifiedDay: null,
+          lastDailyResetDay: null,
           createdAt: now,
           updatedAt: now,
 
@@ -296,6 +298,7 @@ export async function enableRiskAlerts({
       if (mustResetLevels) {
         updatePayload.lastNotified = null;
         updatePayload.lastNotifiedDay = null;
+        updatePayload.lastDailyResetDay = null;
 
         updatePayload.lastHeatLevel = 0;
         updatePayload.lastHeatAt = 0;

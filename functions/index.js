@@ -16,6 +16,36 @@ const OPENUV_KEY = defineSecret("OPENUV_KEY");
 
 const REGION = "europe-west1";
 
+function getLocalDateParts(nowUtcMs, tzOffsetSec) {
+  const d = new Date(nowUtcMs + tzOffsetSec * 1000);
+
+  return {
+    year: d.getUTCFullYear(),
+    month: d.getUTCMonth() + 1,
+    day: d.getUTCDate(),
+    hour: d.getUTCHours(),
+  };
+}
+
+function makeLocalDayKey(nowUtcMs, tzOffsetSec) {
+  const { year, month, day } = getLocalDateParts(nowUtcMs, tzOffsetSec);
+  return `${year}-${String(month).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
+}
+
+function shouldRunDailyReset(nowUtcMs, tzOffsetSec, lastDailyResetDay, resetHour = 6) {
+  const { hour } = getLocalDateParts(nowUtcMs, tzOffsetSec);
+  const todayKey = makeLocalDayKey(nowUtcMs, tzOffsetSec);
+
+  if (hour < resetHour) {
+    return { shouldReset: false, todayKey };
+  }
+
+  return {
+    shouldReset: lastDailyResetDay !== todayKey,
+    todayKey,
+  };
+}
+
 // ─────────────────────────────────────────────
 // Neteja de subscripcions velles o invàlides
 // ─────────────────────────────────────────────
@@ -805,6 +835,8 @@ async function sendAemetPush(token, lang, info, place) {
 
 // ─────────────────────────────────────────────
 // 🌦️ CRON METEO UNIFICAT — calor + fred + vent
+// - Reset diari intel·ligent a les 06:00 (hora local)
+// - No sobreescriu nivells amb 0 a cada cron
 // ─────────────────────────────────────────────
 exports.cronCheckWeatherRisk = functions
   .region(REGION)
@@ -831,6 +863,39 @@ exports.cronCheckWeatherRisk = functions
             const place = sub.place || w.place || "";
             const updates = {};
 
+            // ───────── RESET DIARI INTEL·LIGENT (06:00 hora local) ─────────
+            const { shouldReset, todayKey } = shouldRunDailyReset(
+              now,
+              w.tzOffset,
+              sub.lastDailyResetDay,
+              6
+            );
+
+            if (shouldReset) {
+              await doc.ref.set(
+                {
+                  lastHeatLevel: 0,
+                  lastColdLevel: 0,
+                  lastWindLevel: 0,
+                  lastDailyResetDay: todayKey,
+                },
+                { merge: true }
+              );
+
+              // actualitzam també el "sub" en memòria perquè la resta del cron
+              // treballi amb els nivells resetats
+              sub.lastHeatLevel = 0;
+              sub.lastColdLevel = 0;
+              sub.lastWindLevel = 0;
+              sub.lastDailyResetDay = todayKey;
+
+              console.log("[WEATHER][DAILY RESET]", {
+                docId: doc.id,
+                place,
+                todayKey,
+              });
+            }
+
             // ───────── CALOR ─────────
             const hi = w.temp < 18 ? w.temp : calcHI(w.temp, w.hum);
             const heatInfo = levelFromINSST(hi);
@@ -839,6 +904,17 @@ exports.cronCheckWeatherRisk = functions
             if (heatInfo.level > 0) {
               updates.lastHeatLevel = heatInfo.level;
             }
+
+            console.log("[WEATHER][HEAT]", {
+              docId: doc.id,
+              place,
+              temp: w.temp,
+              hum: w.hum,
+              hi,
+              prevLevel: prevHeatLevel,
+              nextLevel: heatInfo.level,
+              threshold: sub.threshold,
+            });
 
             if (
               shouldNotifyLevelIncrease(prevHeatLevel, heatInfo.level) &&
@@ -861,6 +937,14 @@ exports.cronCheckWeatherRisk = functions
 
                 updates.lastHeatAt = now;
                 updates.lastNotified = now;
+
+                console.log("[WEATHER][HEAT][SENT]", {
+                  docId: doc.id,
+                  place,
+                  hi,
+                  prevLevel: prevHeatLevel,
+                  nextLevel: heatInfo.level,
+                });
               } catch (sendErr) {
                 const removed = await removeInvalidSub(
                   doc.ref,
@@ -890,6 +974,17 @@ exports.cronCheckWeatherRisk = functions
               updates.lastColdLevel = coldInfo.level;
             }
 
+            console.log("[WEATHER][COLD]", {
+              docId: doc.id,
+              place,
+              temp: w.temp,
+              windKmh: windKmhExact,
+              windChill,
+              prevLevel: prevColdLevel,
+              nextLevel: coldInfo.level,
+              threshold: sub.threshold,
+            });
+
             if (
               coldInfo.level > 0 &&
               shouldNotifyLevelIncrease(prevColdLevel, coldInfo.level) &&
@@ -900,6 +995,14 @@ exports.cronCheckWeatherRisk = functions
 
                 updates.lastColdAt = now;
                 updates.lastNotified = now;
+
+                console.log("[WEATHER][COLD][SENT]", {
+                  docId: doc.id,
+                  place,
+                  windChill,
+                  prevLevel: prevColdLevel,
+                  nextLevel: coldInfo.level,
+                });
               } catch (sendErr) {
                 const removed = await removeInvalidSub(
                   doc.ref,
@@ -921,6 +1024,15 @@ exports.cronCheckWeatherRisk = functions
               updates.lastWindLevel = windInfo.level;
             }
 
+            console.log("[WEATHER][WIND]", {
+              docId: doc.id,
+              place,
+              windKmh,
+              prevLevel: prevWindLevel,
+              nextLevel: windInfo.level,
+              threshold: sub.threshold,
+            });
+
             if (
               windInfo.level > 0 &&
               shouldNotifyLevelIncrease(prevWindLevel, windInfo.level) &&
@@ -931,6 +1043,14 @@ exports.cronCheckWeatherRisk = functions
 
                 updates.lastWindAt = now;
                 updates.lastNotified = now;
+
+                console.log("[WEATHER][WIND][SENT]", {
+                  docId: doc.id,
+                  place,
+                  windKmh,
+                  prevLevel: prevWindLevel,
+                  nextLevel: windInfo.level,
+                });
               } catch (sendErr) {
                 const removed = await removeInvalidSub(
                   doc.ref,
