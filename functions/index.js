@@ -324,77 +324,76 @@ function makeBody(lang, labelByLang, hi) {
 }
 
 async function sendPush(token, lang, level, hi, labelByLang, place) {
-  if (level === 0) {
-    console.log("[SEND][HEAT] skip level 0", { lang, hi, place: place || "" });
-    return;
-  }
+  if (level === 0) {
+    console.log("[SEND][HEAT] skip level 0", { lang, hi, place: place || "" });
+    return;
+  }
 
-  if (!token) {
-    console.warn("[SEND][HEAT] missing token", { lang, level, hi, place: place || "" });
-    return;
-  }
+  if (!token) {
+    console.warn("[SEND][HEAT] missing token", { lang, level, hi, place: place || "" });
+    return;
+  }
 
-  const title = makeTitle(lang);
-  const body = makeBody(lang, labelByLang, hi);
+  const title = makeTitle(lang);
+  const body = makeBody(lang, labelByLang, hi);
 
-  const data = {
-    url: "https://thermosafe.app",
-    type: "heat",
-    level: String(level),
-    hi: String(Math.round(hi)),
-    lang,
-    place: place || "",
-  };
+  const data = {
+    title,
+    body,
+    icon: "https://thermosafe.app/icons/icon-192.png",
+    badge: "https://thermosafe.app/icons/badge-72.png",
+    tag: "thermosafe-risk",
+    url: "https://thermosafe.app",
+    type: "heat",
+    level: String(level),
+    hi: String(Math.round(hi)),
+    lang,
+    place: place || "",
+  };
 
-  try {
-    console.log("[SEND][HEAT] start", {
-      lang,
-      level,
-      hi,
-      place: place || "",
-      tokenPreview: String(token).slice(0, 20),
-    });
+  try {
+    console.log("[SEND][HEAT] start", {
+      lang,
+      level,
+      hi,
+      place: place || "",
+      tokenPreview: String(token).slice(0, 20),
+    });
 
-    const messageId = await admin.messaging().send({
-      token,
-      webpush: {
-        notification: {
-          title,
-          body,
-          icon: "/icons/icon-192.png",
-          badge: "/icons/badge-72.png",
-          tag: "thermosafe-risk",
-          renotify: true,
-          requireInteraction: true,
-          actions: [{ action: "open", title: "Obrir ThermoSafe" }],
-          data,
-        },
-        fcmOptions: { link: "https://thermosafe.app" },
-        headers: { TTL: "3600" },
-      },
-      data,
-    });
+    const messageId = await admin.messaging().send({
+      token,
+      data,
+      webpush: {
+        headers: {
+          TTL: "3600",
+          Urgency: "high",
+        },
+        fcmOptions: {
+          link: "https://thermosafe.app",
+        },
+      },
+    });
 
-    console.log("[SEND][HEAT] ok", {
-      messageId,
-      lang,
-      level,
-      hi,
-      place: place || "",
-    });
+    console.log("[SEND][HEAT] ok", {
+      messageId,
+      lang,
+      level,
+      hi,
+      place: place || "",
+    });
 
-    return messageId;
-  } catch (e) {
-    console.error("[SEND][HEAT] error", {
-      message: e?.message || String(e),
-      code: e?.errorInfo?.code || "",
-      lang,
-      level,
-      hi,
-      place: place || "",
-    });
-    throw e;
-  }
+    return messageId;
+  } catch (e) {
+    console.error("[SEND][HEAT] error", {
+      message: e?.message || String(e),
+      code: e?.errorInfo?.code || "",
+      lang,
+      level,
+      hi,
+      place: place || "",
+    });
+    throw e;
+  }
 }
 
 // ─────────────────────────────────────────────
@@ -462,43 +461,42 @@ function getColdInfo(windChill) {
 }
 
 async function sendColdPush(token, lang, info, windChill, place) {
-  if (!info || info.level === 0) return;
+  if (!info || info.level === 0) return;
 
-  const title = info.title?.[lang] ?? info.title?.ca ?? "❄️ ThermoSafe";
-  const body =
-    info.body?.[lang] ??
-    info.body?.ca ??
-    `Fred (${windChill.toFixed(1)} °C)`;
+  const title = info.title?.[lang] ?? info.title?.ca ?? "❄️ ThermoSafe";
+  const body =
+    info.body?.[lang] ??
+    info.body?.ca ??
+    `Fred (${windChill.toFixed(1)} °C)`;
 
-  const data = {
-    url: "https://thermosafe.app",
-    type: "cold",
-    level: String(info.level),
-    lang,
-    place: place || "",
-    windChill: String(Math.round(windChill)),
-    riskLevel: info.riskLevel || "",
-  };
+  const data = {
+    title,
+    body,
+    icon: "https://thermosafe.app/icons/icon-192.png",
+    badge: "https://thermosafe.app/icons/badge-72.png",
+    tag: "thermosafe-cold",
+    url: "https://thermosafe.app",
+    type: "cold",
+    level: String(info.level),
+    lang,
+    place: place || "",
+    windChill: String(Math.round(windChill)),
+    riskLevel: info.riskLevel || "",
+  };
 
-  await admin.messaging().send({
-    token,
-    webpush: {
-      notification: {
-        title,
-        body,
-        icon: "/icons/icon-192.png",
-        badge: "/icons/badge-72.png",
-        tag: "thermosafe-cold",
-        renotify: true,
-        requireInteraction: true,
-        actions: [{ action: "open", title: "Obrir ThermoSafe" }],
-        data,
-      },
-      fcmOptions: { link: "https://thermosafe.app" },
-      headers: { TTL: "3600" },
-    },
-    data,
-  });
+  await admin.messaging().send({
+    token,
+    data,
+    webpush: {
+      headers: {
+        TTL: "3600",
+        Urgency: "high",
+      },
+      fcmOptions: {
+        link: "https://thermosafe.app",
+      },
+    },
+  });
 }
 
 // ─────────────────────────────────────────────
@@ -566,41 +564,40 @@ function getWindInfo(windKmh) {
 }
 
 async function sendWindPush(token, lang, info, windKmh, place) {
-  if (!info || info.level === 0) return;
+  if (!info || info.level === 0) return;
 
-  const title = info.title?.[lang] ?? info.title?.ca ?? "🌬️ ThermoSafe";
-  const body =
-    info.body?.[lang] ?? info.body?.ca ?? `Vent (${windKmh} km/h)`;
+  const title = info.title?.[lang] ?? info.title?.ca ?? "🌬️ ThermoSafe";
+  const body =
+    info.body?.[lang] ?? info.body?.ca ?? `Vent (${windKmh} km/h)`;
 
-  const data = {
-    url: "https://thermosafe.app",
-    type: "wind",
-    level: String(info.level),
-    lang,
-    place: place || "",
-    windKmh: String(windKmh),
-    risk: info.risk || "",
-  };
+  const data = {
+    title,
+    body,
+    icon: "https://thermosafe.app/icons/icon-192.png",
+    badge: "https://thermosafe.app/icons/badge-72.png",
+    tag: "thermosafe-wind",
+    url: "https://thermosafe.app",
+    type: "wind",
+    level: String(info.level),
+    lang,
+    place: place || "",
+    windKmh: String(windKmh),
+    risk: info.risk || "",
+  };
 
-  await admin.messaging().send({
-    token,
-    webpush: {
-      notification: {
-        title,
-        body,
-        icon: "/icons/icon-192.png",
-        badge: "/icons/badge-72.png",
-        tag: "thermosafe-wind",
-        renotify: true,
-        requireInteraction: true,
-        actions: [{ action: "open", title: "Obrir ThermoSafe" }],
-        data,
-      },
-      fcmOptions: { link: "https://thermosafe.app" },
-      headers: { TTL: "3600" },
-    },
-    data,
-  });
+  await admin.messaging().send({
+    token,
+    data,
+    webpush: {
+      headers: {
+        TTL: "3600",
+        Urgency: "high",
+      },
+      fcmOptions: {
+        link: "https://thermosafe.app",
+      },
+    },
+  });
 }
 
 // ─────────────────────────────────────────────
@@ -700,6 +697,11 @@ async function sendUvPush(token, lang, info, uvi, place) {
     `Índex UV (${uvi?.toFixed?.(1) ?? uvi})`;
 
   const data = {
+    title,
+    body,
+    icon: "https://thermosafe.app/icons/icon-192.png",
+    badge: "https://thermosafe.app/icons/badge-72.png",
+    tag: "thermosafe-uv",
     url: "https://thermosafe.app",
     type: "uv",
     level: String(info.level),
@@ -707,19 +709,10 @@ async function sendUvPush(token, lang, info, uvi, place) {
     place: place || "",
     uvi: String(Math.round(Number(uvi) || 0)),
     risk: info.risk || "",
-    icon: "/icons/icon-192.png",
-    badge: "/icons/badge-72.png",
-    tag: "thermosafe-uv",
-    title,
-    body,
   };
 
   await admin.messaging().send({
     token,
-    notification: {
-      title,
-      body,
-    },
     data,
     webpush: {
       headers: {
@@ -728,13 +721,6 @@ async function sendUvPush(token, lang, info, uvi, place) {
       },
       fcmOptions: {
         link: "https://thermosafe.app",
-      },
-    },
-    android: {
-      priority: "high",
-      notification: {
-        title,
-        body,
       },
     },
   });
@@ -776,46 +762,45 @@ function getAemetLevelFromAlerts(alerts) {
 }
 
 async function sendAemetPush(token, lang, info, place) {
-  if (!info || info.level === 0) return;
+  if (!info || info.level === 0) return;
 
-  const title =
-    {
-      ca: "🚨 ThermoSafe – Avís oficial",
-      es: "🚨 ThermoSafe – Aviso oficial",
-      eu: "🚨 ThermoSafe – Abisu ofiziala",
-      gl: "🚨 ThermoSafe – Aviso oficial",
-    }[lang] ?? "🚨 ThermoSafe – Avís oficial";
+  const title =
+    {
+      ca: "🚨 ThermoSafe – Avís oficial",
+      es: "🚨 ThermoSafe – Aviso oficial",
+      eu: "🚨 ThermoSafe – Abisu ofiziala",
+      gl: "🚨 ThermoSafe – Aviso oficial",
+    }[lang] ?? "🚨 ThermoSafe – Avís oficial";
 
-  const body = `${info.event || "Avís meteorològic actiu"}${place ? " · " + place : ""}`;
+  const body = `${info.event || "Avís meteorològic actiu"}${place ? " · " + place : ""}`;
 
-  const data = {
-    url: "https://thermosafe.app",
-    type: "aemet",
-    level: String(info.level),
-    lang,
-    place: place || "",
-    event: info.event || "",
-  };
+  const data = {
+    title,
+    body,
+    icon: "https://thermosafe.app/icons/icon-192.png",
+    badge: "https://thermosafe.app/icons/badge-72.png",
+    tag: "thermosafe-aemet",
+    url: "https://thermosafe.app",
+    type: "aemet",
+    level: String(info.level),
+    lang,
+    place: place || "",
+    event: info.event || "",
+  };
 
-  await admin.messaging().send({
-    token,
-    webpush: {
-      notification: {
-        title,
-        body,
-        icon: "/icons/icon-192.png",
-        badge: "/icons/badge-72.png",
-        tag: "thermosafe-aemet",
-        renotify: true,
-        requireInteraction: true,
-        actions: [{ action: "open", title: "Obrir ThermoSafe" }],
-        data,
-      },
-      fcmOptions: { link: "https://thermosafe.app" },
-      headers: { TTL: "3600" },
-    },
-    data,
-  });
+  await admin.messaging().send({
+    token,
+    data,
+    webpush: {
+      headers: {
+        TTL: "3600",
+        Urgency: "high",
+      },
+      fcmOptions: {
+        link: "https://thermosafe.app",
+      },
+    },
+  });
 }
 
 // ─────────────────────────────────────────────
@@ -851,18 +836,9 @@ exports.cronCheckWeatherRisk = functions
             const heatInfo = levelFromINSST(hi);
             const prevHeatLevel = Number(sub.lastHeatLevel ?? 0);
 
-            updates.lastHeatLevel = heatInfo.level;
-
-            console.log("[WEATHER][HEAT]", {
-              docId: doc.id,
-              place,
-              temp: w.temp,
-              hum: w.hum,
-              hi,
-              prevLevel: prevHeatLevel,
-              nextLevel: heatInfo.level,
-              threshold: sub.threshold,
-            });
+            if (heatInfo.level > 0) {
+              updates.lastHeatLevel = heatInfo.level;
+            }
 
             if (
               shouldNotifyLevelIncrease(prevHeatLevel, heatInfo.level) &&
@@ -885,14 +861,6 @@ exports.cronCheckWeatherRisk = functions
 
                 updates.lastHeatAt = now;
                 updates.lastNotified = now;
-
-                console.log("[WEATHER][HEAT][SENT]", {
-                  docId: doc.id,
-                  place,
-                  hi,
-                  prevLevel: prevHeatLevel,
-                  nextLevel: heatInfo.level,
-                });
               } catch (sendErr) {
                 const removed = await removeInvalidSub(
                   doc.ref,
@@ -918,18 +886,9 @@ exports.cronCheckWeatherRisk = functions
             const coldInfo = getColdInfo(windChill);
             const prevColdLevel = Number(sub.lastColdLevel ?? 0);
 
-            updates.lastColdLevel = coldInfo.level;
-
-            console.log("[WEATHER][COLD]", {
-              docId: doc.id,
-              place,
-              temp: w.temp,
-              windKmh: windKmhExact,
-              windChill,
-              prevLevel: prevColdLevel,
-              nextLevel: coldInfo.level,
-              threshold: sub.threshold,
-            });
+            if (coldInfo.level > 0) {
+              updates.lastColdLevel = coldInfo.level;
+            }
 
             if (
               coldInfo.level > 0 &&
@@ -941,14 +900,6 @@ exports.cronCheckWeatherRisk = functions
 
                 updates.lastColdAt = now;
                 updates.lastNotified = now;
-
-                console.log("[WEATHER][COLD][SENT]", {
-                  docId: doc.id,
-                  place,
-                  windChill,
-                  prevLevel: prevColdLevel,
-                  nextLevel: coldInfo.level,
-                });
               } catch (sendErr) {
                 const removed = await removeInvalidSub(
                   doc.ref,
@@ -966,16 +917,9 @@ exports.cronCheckWeatherRisk = functions
             const windInfo = getWindInfo(windKmh);
             const prevWindLevel = Number(sub.lastWindLevel ?? 0);
 
-            updates.lastWindLevel = windInfo.level;
-
-            console.log("[WEATHER][WIND]", {
-              docId: doc.id,
-              place,
-              windKmh,
-              prevLevel: prevWindLevel,
-              nextLevel: windInfo.level,
-              threshold: sub.threshold,
-            });
+            if (windInfo.level > 0) {
+              updates.lastWindLevel = windInfo.level;
+            }
 
             if (
               windInfo.level > 0 &&
@@ -987,14 +931,6 @@ exports.cronCheckWeatherRisk = functions
 
                 updates.lastWindAt = now;
                 updates.lastNotified = now;
-
-                console.log("[WEATHER][WIND][SENT]", {
-                  docId: doc.id,
-                  place,
-                  windKmh,
-                  prevLevel: prevWindLevel,
-                  nextLevel: windInfo.level,
-                });
               } catch (sendErr) {
                 const removed = await removeInvalidSub(
                   doc.ref,
@@ -1317,170 +1253,7 @@ exports.sendTestNotification = functions
       }
 
       const payload = {
-  token,
-  webpush: {
-    headers: {
-      TTL: "3600",
-      Urgency: "high",
-    },
-    fcmOptions: {
-      link: "https://thermosafe.app",
-    },
-  },
-  data: {
-    title,
-    body,
-    tag,
-    type,
-    lang: "ca",
-    url: "https://thermosafe.app",
-    click_action: "https://thermosafe.app",
-    icon: "https://thermosafe.app/icons/icon-192.png",
-    badge: "https://thermosafe.app/icons/badge-72.png",
-  },
-};
-
-      console.log("[TEST PUSH] sending", {
-        type,
-        tokenPreview: token.slice(0, 20),
-        title,
-        body,
-      });
-
-      const messageId = await admin.messaging().send(payload);
-
-      console.log("[TEST PUSH] sent OK", {
-        messageId,
-        type,
-        tokenPreview: token.slice(0, 20),
-      });
-
-      return res.status(200).json({
-        ok: true,
-        messageId,
-        type,
-      });
-    } catch (e) {
-      console.error("[TEST PUSH] send error", {
-        message: e?.message || String(e),
-        code: e?.errorInfo?.code || e?.code || "",
-        stack: e?.stack || "",
-      });
-
-      return res.status(500).json({
-        ok: false,
-        error: e?.message || "send error",
-        code: e?.errorInfo?.code || e?.code || "",
-      });
-    }
-  });
-
-// ─────────────────────────────────────────────
-// Endpoint de prova manual
-// ─────────────────────────────────────────────
-exports.sendTestNotification = functions
-  .region(REGION)
-  .https.onRequest(async (req, res) => {
-    res.set("Access-Control-Allow-Origin", "*");
-    res.set("Access-Control-Allow-Methods", "GET, OPTIONS");
-    res.set("Access-Control-Allow-Headers", "Content-Type");
-
-    if (req.method === "OPTIONS") {
-      return res.status(204).end();
-    }
-
-    const token = String(req.query.token || "").trim();
-    const type = String(req.query.type || "test").trim().toLowerCase();
-
-    if (!token) {
-      return res.status(400).json({ ok: false, error: "missing token" });
-    }
-
-    try {
-      let title = "ThermoSafe";
-      let body = "🔔 Notificació de prova";
-      let tag = "thermosafe-test";
-
-      if (type === "heat") {
-        title = "🔥 ThermoSafe – Calor";
-        body = "Risc per calor alt. Prova manual.";
-        tag = "thermosafe-heat";
-      } else if (type === "cold") {
-        title = "❄️ ThermoSafe – Fred";
-        body = "Fred extrem. Prova manual.";
-        tag = "thermosafe-cold";
-      } else if (type === "wind") {
-        title = "🌬️ ThermoSafe – Vent";
-        body = "Vent fort. Prova manual.";
-        tag = "thermosafe-wind";
-      } else if (type === "uv") {
-        title = "☀️ ThermoSafe – UV";
-        body = "Índex UV alt. Prova manual.";
-        tag = "thermosafe-uv";
-      } else if (type === "aemet") {
-        title = "🚨 ThermoSafe – Avís oficial";
-        body = "Avís oficial actiu. Prova manual.";
-        tag = "thermosafe-aemet";
-      }
-
-      const payload = {
         token,
-
-        // ✅ notificació estàndard
-        notification: {
-          title,
-          body,
-        },
-
-        // ✅ Web push
-        webpush: {
-          headers: {
-            TTL: "3600",
-            Urgency: "high",
-          },
-          notification: {
-            title,
-            body,
-            icon: "https://thermosafe.app/icons/icon-192.png",
-            badge: "https://thermosafe.app/icons/badge-72.png",
-            tag,
-            renotify: true,
-            requireInteraction: true,
-          },
-          fcmOptions: {
-            link: "https://thermosafe.app",
-          },
-        },
-
-        // ✅ Android
-        android: {
-          priority: "high",
-          notification: {
-            title,
-            body,
-            sound: "default",
-            channelId: "default",
-          },
-        },
-
-        // ✅ Apple / Safari push
-        apns: {
-          headers: {
-            "apns-priority": "10",
-          },
-          payload: {
-            aps: {
-              alert: {
-                title,
-                body,
-              },
-              sound: "default",
-              badge: 1,
-            },
-          },
-        },
-
-        // ✅ dades extra per al service worker
         data: {
           title,
           body,
@@ -1491,6 +1264,15 @@ exports.sendTestNotification = functions
           click_action: "https://thermosafe.app",
           icon: "https://thermosafe.app/icons/icon-192.png",
           badge: "https://thermosafe.app/icons/badge-72.png",
+        },
+        webpush: {
+          headers: {
+            TTL: "3600",
+            Urgency: "high",
+          },
+          fcmOptions: {
+            link: "https://thermosafe.app",
+          },
         },
       };
 
