@@ -18,7 +18,15 @@ function buildNotificationFromPayload(payload) {
   const data = payload?.data || {};
 
   const title = data.title || notification.title || "ThermoSafe – Avís";
-  const body = data.body || notification.body || "";
+
+  // 🔴 AFEGIT: incloure ubicació si existeix
+  const baseBody = data.body || notification.body || "";
+  const place = data.place || "";
+
+  const body = place
+    ? `${baseBody} · ${place}`
+    : baseBody;
+
   const lang = data.lang || "ca";
   const icon = data.icon || "/icons/icon-192.png";
   const badge = data.badge || "/icons/badge-72.png";

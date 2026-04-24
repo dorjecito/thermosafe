@@ -1314,7 +1314,10 @@ exports.cronCheckAemetRisk = functions
           const info = getAemetLevelFromAlerts(alerts);
           if (info.level === 0) return;
 
-          await sendAemetPush(sub.token, lang, info, sub.place || "");
+          const w = await getWeather(sub.lat, sub.lon);
+          const place = sub.place || w.place || "";
+
+          await sendAemetPush(sub.token, lang, info, place);
         } catch (err) {
           console.error("cron aemet error", sub.id, err);
         }
