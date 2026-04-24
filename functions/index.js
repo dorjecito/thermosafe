@@ -1343,6 +1343,7 @@ exports.sendTestNotification = functions
 
     const token = String(req.query.token || "").trim();
     const type = String(req.query.type || "test").trim().toLowerCase();
+    const place = String(req.query.place || "").trim();
 
     if (!token) {
       return res.status(400).json({ ok: false, error: "missing token" });
@@ -1377,17 +1378,18 @@ exports.sendTestNotification = functions
 
       const payload = {
         token,
-        data: {
-          title,
-          body,
-          tag,
-          type,
-          lang: "ca",
-          url: "https://thermosafe.app",
-          click_action: "https://thermosafe.app",
-          icon: "https://thermosafe.app/icons/icon-192.png",
-          badge: "https://thermosafe.app/icons/badge-72.png",
-        },
+        data: {
+          title,
+          body,
+          tag,
+          type,
+          lang: "ca",
+          place,
+          url: "https://thermosafe.app",
+          click_action: "https://thermosafe.app",
+          icon: "https://thermosafe.app/icons/icon-192.png",
+          badge: "https://thermosafe.app/icons/badge-72.png",
+        },
         webpush: {
           headers: {
             TTL: "3600",
