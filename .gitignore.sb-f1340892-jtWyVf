@@ -63,4 +63,3 @@ build/Release
 .yarn/install-state.gz
 .pnp.*
 .vercel
-vercel.json.sb-*
