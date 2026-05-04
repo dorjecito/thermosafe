@@ -1809,5 +1809,3 @@ return (
 </div>
 );
 }
-
-//Esteve Montalvo i Camps Desarrolador
