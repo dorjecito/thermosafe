@@ -742,6 +742,11 @@ const lon = position.coords.longitude;
 // ✅ PUNT 4: desa coordenades a l’estat global (per components com UVSafeTime)
 setLat(lat);
 setLon(lon);
+if (localStorage.getItem("fcmToken")) {
+  updateRiskAlertLocation({ lat, lon }).catch((e) =>
+    console.warn("[PUSH] No s'ha pogut actualitzar ubicació:", e)
+  );
+}
 
 console.log(`[DEBUG] Coordenades GPS obtingudes: ${lat}, ${lon}`);
 

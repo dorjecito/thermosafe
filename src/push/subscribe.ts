@@ -38,20 +38,14 @@ type SubDoc = {
   lastAemetAt?: number;
 };
 
-// --------------------------------------------------------
-// ⚙️ Config
 const RESET_DISTANCE_KM = 15;
 
-// --------------------------------------------------------
-// 🟢 Permís de notificacions
 async function askNotifPerm(): Promise<boolean> {
   if (!("Notification" in window)) return false;
   const res = await Notification.requestPermission();
   return res === "granted";
 }
 
-// --------------------------------------------------------
-// 📍 Coordenades (GPS)
 async function getCoords(): Promise<{ lat: number; lon: number } | null> {
   if (!("geolocation" in navigator)) return null;
 
@@ -64,15 +58,11 @@ async function getCoords(): Promise<{ lat: number; lon: number } | null> {
   });
 }
 
-// --------------------------------------------------------
-// 🌍 Idioma normalitzat segons navegador
 function normalizeLang(fallback: Lang = "ca"): Lang {
   const raw = (navigator.language || fallback).slice(0, 2) as Lang;
   return (["ca", "es", "eu", "gl"] as Lang[]).includes(raw) ? raw : fallback;
 }
 
-// --------------------------------------------------------
-// 📏 Distància entre dues coordenades (Haversine)
 function haversineKm(
   lat1: number,
   lon1: number,
@@ -86,18 +76,37 @@ function haversineKm(
   const dLon = toRad(lon2 - lon1);
 
   const a =
-    Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+    Math.sin(dLat / 2) ** 2 +
     Math.cos(toRad(lat1)) *
       Math.cos(toRad(lat2)) *
-      Math.sin(dLon / 2) *
-      Math.sin(dLon / 2);
+      Math.sin(dLon / 2) ** 2;
 
-  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-  return R * c;
+  return R * (2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a)));
 }
 
-// --------------------------------------------------------
-// 🛠️ Registra el Service Worker específic de Firebase Messaging
+function resetRiskLevelsPayload() {
+  return {
+    lastNotified: null,
+    lastNotifiedDay: null,
+    lastDailyResetDay: null,
+
+    lastHeatLevel: 0,
+    lastHeatAt: 0,
+
+    lastColdLevel: 0,
+    lastColdAt: 0,
+
+    lastWindLevel: 0,
+    lastWindAt: 0,
+
+    lastUvLevel: 0,
+    lastUvAt: 0,
+
+    lastAemetLevel: 0,
+    lastAemetAt: 0,
+  };
+}
+
 async function getFirebaseMessagingSwRegistration(): Promise<ServiceWorkerRegistration> {
   if (!("serviceWorker" in navigator)) {
     throw new Error("Aquest navegador no suporta Service Worker");
@@ -114,8 +123,6 @@ async function getFirebaseMessagingSwRegistration(): Promise<ServiceWorkerRegist
   return reg;
 }
 
-// --------------------------------------------------------
-// 🔑 Recupera el token FCM actual
 export async function getCurrentFcmToken(): Promise<string | null> {
   const swReg = await getFirebaseMessagingSwRegistration();
 
@@ -136,8 +143,7 @@ export async function getCurrentFcmToken(): Promise<string | null> {
   return token;
 }
 
-// --------------------------------------------------------
-// 📍 Actualitza ubicació guardada de la subscripció actual
+// 📍 Actualitza ubicació guardada i reinicia nivells si s’ha mogut >= 15 km
 export async function updateRiskAlertLocation({
   lat,
   lon,
@@ -152,23 +158,44 @@ export async function updateRiskAlertLocation({
   }
 
   try {
-    await setDoc(
-      doc(db, "subs", token),
-      {
-        token,
-        lat,
-        lon,
-        ...(place ? { place } : {}),
-        updatedAt: Date.now(),
-      },
-      { merge: true }
-    );
+    const ref = doc(db, "subs", token);
+    const snap = await getDoc(ref);
+    const now = Date.now();
+
+    let distanceKm = 0;
+    let mustResetLevels = false;
+
+    if (snap.exists()) {
+      const prev = snap.data() as SubDoc;
+      const prevLat = Number(prev.lat);
+      const prevLon = Number(prev.lon);
+
+      distanceKm =
+        Number.isFinite(prevLat) && Number.isFinite(prevLon)
+          ? haversineKm(prevLat, prevLon, lat, lon)
+          : Infinity;
+
+      mustResetLevels = distanceKm >= RESET_DISTANCE_KM;
+    }
+
+    const payload: Partial<SubDoc> = {
+      token,
+      lat,
+      lon,
+      ...(place ? { place } : {}),
+      updatedAt: now,
+      ...(mustResetLevels ? resetRiskLevelsPayload() : {}),
+    };
+
+    await setDoc(ref, payload, { merge: true });
 
     console.log("📍 Ubicació de notificacions actualitzada:", {
       tokenPreview: token.slice(0, 20),
       lat,
       lon,
       place: place || "",
+      distanceKm: Math.round(distanceKm * 100) / 100,
+      mustResetLevels,
     });
 
     return true;
@@ -178,12 +205,12 @@ export async function updateRiskAlertLocation({
   }
 }
 
-// --------------------------------------------------------
 // 📍 Actualitza ubicació de notificacions amb GPS actual
 export async function updateRiskAlertLocationFromGps(
   place?: string
 ): Promise<boolean> {
   const loc = await getCoords();
+
   if (!loc) {
     console.warn("⚠️ No s'ha pogut obtenir GPS per actualitzar ubicació.");
     return false;
@@ -196,7 +223,6 @@ export async function updateRiskAlertLocationFromGps(
   });
 }
 
-// --------------------------------------------------------
 // ✅ Activa push, obté token i desa doc a Firestore: subs/{token}
 export async function enableRiskAlerts({
   threshold = "moderate" as Level,
@@ -227,106 +253,60 @@ export async function enableRiskAlerts({
     throw new Error("Token FCM invàlid o buit");
   }
 
-  console.log("🔑 Token FCM obtingut:", token);
-
   const langNorm = lang ?? normalizeLang("ca");
-  console.log("🌍 Idioma:", langNorm);
-  console.log("📍 Coordenades:", loc);
-
   const ref = doc(db, "subs", token);
   const snap = await getDoc(ref);
   const now = Date.now();
 
-  try {
-    if (!snap.exists()) {
-      await setDoc(
-        ref,
-        {
-          token,
-          lat: loc.lat,
-          lon: loc.lon,
-          threshold,
-          lang: langNorm,
+  if (!snap.exists()) {
+    await setDoc(
+      ref,
+      {
+        token,
+        lat: loc.lat,
+        lon: loc.lon,
+        threshold,
+        lang: langNorm,
+        createdAt: now,
+        updatedAt: now,
+        ...resetRiskLevelsPayload(),
+      },
+      { merge: true }
+    );
 
-          lastNotified: null,
-          lastNotifiedDay: null,
-          lastDailyResetDay: null,
-          createdAt: now,
-          updatedAt: now,
+    console.log("✅ Subscripció nova creada a Firestore.");
+  } else {
+    const prev = snap.data() as SubDoc;
 
-          lastHeatLevel: 0,
-          lastHeatAt: 0,
+    const prevLat = Number(prev.lat);
+    const prevLon = Number(prev.lon);
 
-          lastColdLevel: 0,
-          lastColdAt: 0,
+    const distanceKm =
+      Number.isFinite(prevLat) && Number.isFinite(prevLon)
+        ? haversineKm(prevLat, prevLon, loc.lat, loc.lon)
+        : Infinity;
 
-          lastWindLevel: 0,
-          lastWindAt: 0,
+    const mustResetLevels = distanceKm >= RESET_DISTANCE_KM;
 
-          lastUvLevel: 0,
-          lastUvAt: 0,
-
-          lastAemetLevel: 0,
-          lastAemetAt: 0,
-        },
-        { merge: true }
-      );
-
-      console.log("✅ Subscripció nova creada a Firestore.");
-    } else {
-      const prev = snap.data() as SubDoc;
-
-      const prevLat = Number(prev.lat);
-      const prevLon = Number(prev.lon);
-
-      const distanceKm =
-        Number.isFinite(prevLat) && Number.isFinite(prevLon)
-          ? haversineKm(prevLat, prevLon, loc.lat, loc.lon)
-          : Infinity;
-
-      const mustResetLevels = distanceKm >= RESET_DISTANCE_KM;
-
-      const updatePayload: Partial<SubDoc> = {
+    await setDoc(
+      ref,
+      {
         token,
         lat: loc.lat,
         lon: loc.lon,
         threshold,
         lang: langNorm,
         updatedAt: now,
-      };
+        ...(mustResetLevels ? resetRiskLevelsPayload() : {}),
+      },
+      { merge: true }
+    );
 
-      if (mustResetLevels) {
-        updatePayload.lastNotified = null;
-        updatePayload.lastNotifiedDay = null;
-        updatePayload.lastDailyResetDay = null;
-
-        updatePayload.lastHeatLevel = 0;
-        updatePayload.lastHeatAt = 0;
-
-        updatePayload.lastColdLevel = 0;
-        updatePayload.lastColdAt = 0;
-
-        updatePayload.lastWindLevel = 0;
-        updatePayload.lastWindAt = 0;
-
-        updatePayload.lastUvLevel = 0;
-        updatePayload.lastUvAt = 0;
-
-        updatePayload.lastAemetLevel = 0;
-        updatePayload.lastAemetAt = 0;
-      }
-
-      await setDoc(ref, updatePayload, { merge: true });
-
-      console.log("✅ Subscripció existent actualitzada a Firestore.", {
-        tokenPreview: token.slice(0, 20),
-        distanceKm: Math.round(distanceKm * 100) / 100,
-        mustResetLevels,
-      });
-    }
-  } catch (e) {
-    console.error("⚠️ Error desant la subscripció a Firestore:", e);
-    throw e;
+    console.log("✅ Subscripció existent actualitzada a Firestore.", {
+      tokenPreview: token.slice(0, 20),
+      distanceKm: Math.round(distanceKm * 100) / 100,
+      mustResetLevels,
+    });
   }
 
   localStorage.setItem("fcmToken", token);
@@ -335,7 +315,6 @@ export async function enableRiskAlerts({
   return token;
 }
 
-// --------------------------------------------------------
 // 🔴 Desactiva: elimina subs/{token} i neteja local
 export async function disableRiskAlerts(token: string | null) {
   if (!token) return;
