@@ -4,7 +4,6 @@ import { doc, setDoc, deleteDoc, getDoc } from "firebase/firestore";
 import { getToken } from "firebase/messaging";
 import { db, messagingPromise } from "../firebase";
 
-// 🔹 Tipus bàsics
 type Level = "moderate" | "high" | "very_high";
 type Lang = "ca" | "es" | "eu" | "gl" | "en";
 
@@ -38,11 +37,9 @@ type SubDoc = {
   lastAemetAt?: number;
 };
 
-// --------------------------------------------------------
-// ⚙️ Config
 const RESET_DISTANCE_KM = 15;
+const MIN_UPDATE_DISTANCE_KM = 0.1; // 100 metres
 
-// --------------------------------------------------------
 async function askNotifPerm(): Promise<boolean> {
   if (!("Notification" in window)) return false;
   const res = await Notification.requestPermission();
@@ -112,7 +109,6 @@ function resetRiskLevelsPayload() {
   };
 }
 
-// --------------------------------------------------------
 async function getFirebaseMessagingSwRegistration(): Promise<ServiceWorkerRegistration> {
   if (!("serviceWorker" in navigator)) {
     throw new Error("Aquest navegador no suporta Service Worker");
@@ -129,7 +125,6 @@ async function getFirebaseMessagingSwRegistration(): Promise<ServiceWorkerRegist
   return reg;
 }
 
-// --------------------------------------------------------
 export async function getCurrentFcmToken(): Promise<string | null> {
   const swReg = await getFirebaseMessagingSwRegistration();
 
@@ -150,7 +145,6 @@ export async function getCurrentFcmToken(): Promise<string | null> {
   return token;
 }
 
-// --------------------------------------------------------
 export async function updateRiskAlertLocation({
   lat,
   lon,
@@ -185,6 +179,22 @@ export async function updateRiskAlertLocation({
       mustResetLevels = distanceKm >= RESET_DISTANCE_KM;
     }
 
+    const roundedDistanceKm = Math.round(distanceKm * 100) / 100;
+
+    if (snap.exists() && distanceKm < MIN_UPDATE_DISTANCE_KM) {
+      console.log("📍 Ubicació de notificacions sense canvis rellevants:", {
+        tokenPreview: token.slice(0, 20),
+        lat,
+        lon,
+        place: place || "",
+        distanceKm: roundedDistanceKm,
+        minUpdateKm: MIN_UPDATE_DISTANCE_KM,
+        mustResetLevels: false,
+      });
+
+      return true;
+    }
+
     const payload: Partial<SubDoc> = {
       token,
       lat,
@@ -201,7 +211,7 @@ export async function updateRiskAlertLocation({
       lat,
       lon,
       place: place || "",
-      distanceKm: Math.round(distanceKm * 100) / 100,
+      distanceKm: roundedDistanceKm,
       mustResetLevels,
     });
 
@@ -212,7 +222,6 @@ export async function updateRiskAlertLocation({
   }
 }
 
-// --------------------------------------------------------
 export async function updateRiskAlertLocationFromGps(
   place?: string
 ): Promise<boolean> {
@@ -230,7 +239,6 @@ export async function updateRiskAlertLocationFromGps(
   });
 }
 
-// --------------------------------------------------------
 export async function enableRiskAlerts({
   threshold = "moderate" as Level,
   lang,
@@ -322,7 +330,6 @@ export async function enableRiskAlerts({
   return token;
 }
 
-// --------------------------------------------------------
 export async function disableRiskAlerts(token: string | null) {
   if (!token) return;
 
