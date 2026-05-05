@@ -736,15 +736,18 @@ const locate = async (silent = false) => {
 
     if (isStaleRequest("gps", requestId)) return;
 
-    const lat = position.coords.latitude;
+const lat = position.coords.latitude;
 const lon = position.coords.longitude;
 
 // ✅ PUNT 4: desa coordenades a l’estat global (per components com UVSafeTime)
 setLat(lat);
 setLon(lon);
+
+// 🔔 Si les notificacions estan activades, actualitza la ubicació del token.
+// Si la nova ubicació és a 15 km o més de l'anterior, subscribe.ts reiniciarà els nivells a 0.
 if (localStorage.getItem("fcmToken")) {
   updateRiskAlertLocation({ lat, lon }).catch((e) =>
-    console.warn("[PUSH] No s'ha pogut actualitzar ubicació:", e)
+    console.warn("[PUSH] No s'ha pogut actualitzar la ubicació del token:", e)
   );
 }
 

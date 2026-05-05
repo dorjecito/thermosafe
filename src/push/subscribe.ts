@@ -6,7 +6,7 @@ import { db, messagingPromise } from "../firebase";
 
 // 🔹 Tipus bàsics
 type Level = "moderate" | "high" | "very_high";
-type Lang = "ca" | "es" | "eu" | "gl";
+type Lang = "ca" | "es" | "eu" | "gl" | "en";
 
 type SavedLocation = {
   lat: number;
@@ -38,8 +38,11 @@ type SubDoc = {
   lastAemetAt?: number;
 };
 
+// --------------------------------------------------------
+// ⚙️ Config
 const RESET_DISTANCE_KM = 15;
 
+// --------------------------------------------------------
 async function askNotifPerm(): Promise<boolean> {
   if (!("Notification" in window)) return false;
   const res = await Notification.requestPermission();
@@ -60,7 +63,9 @@ async function getCoords(): Promise<{ lat: number; lon: number } | null> {
 
 function normalizeLang(fallback: Lang = "ca"): Lang {
   const raw = (navigator.language || fallback).slice(0, 2) as Lang;
-  return (["ca", "es", "eu", "gl"] as Lang[]).includes(raw) ? raw : fallback;
+  return (["ca", "es", "eu", "gl", "en"] as Lang[]).includes(raw)
+    ? raw
+    : fallback;
 }
 
 function haversineKm(
@@ -81,7 +86,7 @@ function haversineKm(
       Math.cos(toRad(lat2)) *
       Math.sin(dLon / 2) ** 2;
 
-  return R * (2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a)));
+  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
 }
 
 function resetRiskLevelsPayload() {
@@ -107,6 +112,7 @@ function resetRiskLevelsPayload() {
   };
 }
 
+// --------------------------------------------------------
 async function getFirebaseMessagingSwRegistration(): Promise<ServiceWorkerRegistration> {
   if (!("serviceWorker" in navigator)) {
     throw new Error("Aquest navegador no suporta Service Worker");
@@ -123,6 +129,7 @@ async function getFirebaseMessagingSwRegistration(): Promise<ServiceWorkerRegist
   return reg;
 }
 
+// --------------------------------------------------------
 export async function getCurrentFcmToken(): Promise<string | null> {
   const swReg = await getFirebaseMessagingSwRegistration();
 
@@ -143,7 +150,7 @@ export async function getCurrentFcmToken(): Promise<string | null> {
   return token;
 }
 
-// 📍 Actualitza ubicació guardada i reinicia nivells si s’ha mogut >= 15 km
+// --------------------------------------------------------
 export async function updateRiskAlertLocation({
   lat,
   lon,
@@ -205,7 +212,7 @@ export async function updateRiskAlertLocation({
   }
 }
 
-// 📍 Actualitza ubicació de notificacions amb GPS actual
+// --------------------------------------------------------
 export async function updateRiskAlertLocationFromGps(
   place?: string
 ): Promise<boolean> {
@@ -223,7 +230,7 @@ export async function updateRiskAlertLocationFromGps(
   });
 }
 
-// ✅ Activa push, obté token i desa doc a Firestore: subs/{token}
+// --------------------------------------------------------
 export async function enableRiskAlerts({
   threshold = "moderate" as Level,
   lang,
@@ -315,7 +322,7 @@ export async function enableRiskAlerts({
   return token;
 }
 
-// 🔴 Desactiva: elimina subs/{token} i neteja local
+// --------------------------------------------------------
 export async function disableRiskAlerts(token: string | null) {
   if (!token) return;
 
