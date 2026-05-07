@@ -1,0 +1,41 @@
+.compact-header {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 2000;
+
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+
+  padding: 10px 16px;
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  background: rgba(255, 255, 255, 0.88);
+  border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+
+  font-weight: 700;
+  font-size: 15px;
+}
+
+.compact-header-right {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+
+  font-size: 14px;
+  font-weight: 600;
+}
+
+@keyframes compactSlideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-12px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}

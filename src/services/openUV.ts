@@ -5,70 +5,55 @@
 // ==============================
 
 export type OpenUVSunInfo = {
-  sun_times?: {
-    sunrise?: string;
-    sunset?: string;
-    solar_noon?: string;
-    golden_hour?: string;
-  };
-  sun_position?: {
-    azimuth?: number;
-    altitude?: number;
-  };
+  sun_times?: {
+    sunrise?: string; // ISO
+    sunset?: string; // ISO
+    solar_noon?: string;
+    golden_hour?: string;
+  };
+  sun_position?: {
+    azimuth?: number;
+    altitude?: number;
+  };
 };
 
 export type OpenUVCurrentResponse = {
-  result?: {
-    uv: number;
-    uv_time: string;
-    uv_max?: number;
-    uv_max_time?: string;
-    sun_info?: OpenUVSunInfo;
-    safe_exposure_time?: Record<string, number | null>;
-    ozone?: number;
-    ozone_time?: string;
-  };
+  result?: {
+    uv: number;
+    uv_time: string;
+
+    // ✅ AFEGITS (per "UV màxim avui")
+    uv_max?: number;
+    uv_max_time?: string;
+
+    // ✅ AFEGITS (per sortida i posta)
+    sun_info?: OpenUVSunInfo;
+
+    safe_exposure_time?: Record<string, number | null>;
+    ozone?: number;
+    ozone_time?: string;
+  };
 };
 
 export type OpenUVForecastPoint = {
-  uv: number;
-  uv_time: string;
+  uv: number;
+  uv_time: string; // ISO
 };
 
 export type OpenUVForecastResponse = {
-  result?: OpenUVForecastPoint[];
-};
-
-export type SafeExposureTime = {
-  st1?: number | null;
-  st2?: number | null;
-  st3?: number | null;
-  st4?: number | null;
-  st5?: number | null;
-  st6?: number | null;
-};
-
-export type OpenUVDetail = {
-  uv: number | null;
-  uv_time?: string;
-  uv_max?: number | null;
-  uv_max_time?: string;
-  sun_info?: OpenUVSunInfo;
-  safe_exposure_time?: SafeExposureTime;
-  ozone?: number | null;
-  ozone_time?: string;
+  result?: OpenUVForecastPoint[];
 };
 
 // ==============================
 // 🔹 Caché i deduplicació
 // ==============================
 
-const UV_NOW_TTL = 5 * 60 * 1000;
-const UV_DETAIL_TTL = 10 * 60 * 1000;
+const UV_NOW_TTL = 5 * 60 * 1000; // 5 minuts
+const UV_DETAIL_TTL = 10 * 60 * 1000; // 10 minuts
 
 type CacheEntry<T> = {
-  ts: number;
-  data: T;
+  ts: number;
+  data: T;
 };
 
 const uvNowCache = new Map<string, CacheEntry<number | null>>();
@@ -78,60 +63,67 @@ const uvNowPending = new Map<string, Promise<number | null>>();
 const uvDetailPending = new Map<string, Promise<OpenUVDetail | null>>();
 
 function roundCoord(value: number): string {
-  return Number(value).toFixed(3);
+  return Number(value).toFixed(3);
 }
 
 function makeKey(lat: number, lon: number): string {
-  return `${roundCoord(lat)}:${roundCoord(lon)}`;
+  return `${roundCoord(lat)}:${roundCoord(lon)}`;
 }
 
 function getCached<T>(
-  map: Map<string, CacheEntry<T>>,
-  key: string,
-  ttl: number
+  map: Map<string, CacheEntry<T>>,
+  key: string,
+  ttl: number
 ): T | null {
-  const entry = map.get(key);
-  if (!entry) return null;
+  const entry = map.get(key);
+  if (!entry) return null;
 
-  if (Date.now() - entry.ts > ttl) {
-    map.delete(key);
-    return null;
-  }
+  const expired = Date.now() - entry.ts > ttl;
+  if (expired) {
+    map.delete(key);
+    return null;
+  }
 
-  return entry.data;
+  return entry.data;
 }
 
 function setCached<T>(
-  map: Map<string, CacheEntry<T>>,
-  key: string,
-  data: T
+  map: Map<string, CacheEntry<T>>,
+  key: string,
+  data: T
 ) {
-  map.set(key, {
-    ts: Date.now(),
-    data,
-  });
+  map.set(key, {
+    ts: Date.now(),
+    data,
+  });
 }
 
 // ==============================
-// 🔹 Fetch segur via proxy Vercel
+// 🔹 Helpers interns
 // ==============================
 
-async function fetchOpenUVProxy(
-  lat: number,
-  lon: number
-): Promise<OpenUVCurrentResponse> {
-  const url = `/api/openuv?lat=${encodeURIComponent(lat)}&lon=${encodeURIComponent(lon)}`;
+function getApiKey(): string | null {
+  const key = import.meta.env.VITE_OPENUV_KEY;
+  if (!key) {
+    console.error("[OpenUV] Falta VITE_OPENUV_KEY a .env");
+    return null;
+  }
+  return key;
+}
 
-  console.log("[OpenUV] Fetch via proxy:", url);
+async function safeFetch(url: string, key: string) {
+  const response = await fetch(url, {
+    headers: {
+      "x-access-token": key,
+    },
+  });
 
-  const response = await fetch(url);
+  if (!response.ok) {
+    const txt = await response.text().catch(() => "");
+    throw new Error(`OpenUV error ${response.status}: ${txt}`);
+  }
 
-  if (!response.ok) {
-    const txt = await response.text().catch(() => "");
-    throw new Error(`OpenUV proxy error ${response.status}: ${txt}`);
-  }
-
-  return response.json();
+  return response.json();
 }
 
 // ==============================
@@ -139,143 +131,193 @@ async function fetchOpenUVProxy(
 // ==============================
 
 export async function getUVFromOpenUV(
-  lat: number,
-  lon: number
+  lat: number,
+  lon: number
 ): Promise<number | null> {
-  const key = makeKey(lat, lon);
+  const key = makeKey(lat, lon);
 
-  const cached = getCached(uvNowCache, key, UV_NOW_TTL);
-  if (cached !== null) {
-    console.log("[OpenUV] UV des de caché:", key, cached);
-    return cached;
-  }
+  const cached = getCached(uvNowCache, key, UV_NOW_TTL);
+  if (cached !== null) {
+    console.log("[OpenUV] UV des de caché:", key, cached);
+    return cached;
+  }
 
-  const pending = uvNowPending.get(key);
-  if (pending) {
-    console.log("[OpenUV] reutilitzant petició UV en curs:", key);
-    return pending;
-  }
+  const pending = uvNowPending.get(key);
+  if (pending) {
+    console.log("[OpenUV] reutilitzant petició UV en curs:", key);
+    return pending;
+  }
 
-  const request = (async () => {
-    try {
-      const data = await fetchOpenUVProxy(lat, lon);
+  const request = (async () => {
+    try {
+      const API_KEY = getApiKey();
+      if (!API_KEY) return null;
 
-      console.log("[OpenUV] UV Response:", data);
+      const url = `https://api.openuv.io/api/v1/uv?lat=${lat}&lng=${lon}`;
 
-      const uvi = data.result?.uv ?? null;
-      const safeUvi =
-        typeof uvi === "number" && Number.isFinite(uvi) ? uvi : null;
+      console.log("[OpenUV] Fetch UV:", url);
 
-      setCached(uvNowCache, key, safeUvi);
-      return safeUvi;
-    } catch (err) {
-      console.error("[OpenUV] Error obtenint UVI:", err);
-      return null;
-    } finally {
-      uvNowPending.delete(key);
-    }
-  })();
+      const data = (await safeFetch(url, API_KEY)) as OpenUVCurrentResponse;
 
-  uvNowPending.set(key, request);
-  return request;
+      console.log("[OpenUV] UV Response:", data);
+
+      const uvi = data.result?.uv ?? null;
+      const safeUvi = typeof uvi === "number" && Number.isFinite(uvi) ? uvi : null;
+
+      setCached(uvNowCache, key, safeUvi);
+      return safeUvi;
+    } catch (err) {
+      console.error("[OpenUV] Error obtenint UVI:", err);
+      return null;
+    } finally {
+      uvNowPending.delete(key);
+    }
+  })();
+
+  uvNowPending.set(key, request);
+  return request;
 }
 
 // ==============================
 // 🔹 Forecast horari
-// Ara mateix retorna [] perquè el proxy actual només cobreix /uv.
-// Si més endavant vols forecast, ampliam api/openuv.ts.
 // ==============================
 
 export async function getUVForecast(
-  lat: number,
-  lon: number
+  lat: number,
+  lon: number
 ): Promise<OpenUVForecastPoint[]> {
-  console.warn("[OpenUV] Forecast no implementat encara al proxy.", { lat, lon });
-  return [];
+  try {
+    const API_KEY = getApiKey();
+    if (!API_KEY) return [];
+
+    const url = `https://api.openuv.io/api/v1/forecast?lat=${lat}&lng=${lon}`;
+
+    console.log("[OpenUV] Fetch Forecast:", url);
+
+    const data = (await safeFetch(url, API_KEY)) as OpenUVForecastResponse;
+
+    console.log("[OpenUV] Forecast Response:", data);
+
+    return Array.isArray(data.result) ? data.result : [];
+  } catch (err) {
+    console.error("[OpenUV] Error obtenint forecast UV:", err);
+    return [];
+  }
 }
 
 // ==============================
-// 🔹 Detall UV
+// 🔹 Detall UV (inclou safe_exposure_time + UV màxim + sortida/posta)
 // ==============================
 
+export type SafeExposureTime = {
+  // OpenUV acostuma a retornar claus "st1"..."st6"
+  st1?: number | null;
+  st2?: number | null;
+  st3?: number | null;
+  st4?: number | null;
+  st5?: number | null;
+  st6?: number | null;
+};
+
+export type OpenUVDetail = {
+  uv: number | null;
+  uv_time?: string;
+
+  // ✅ AFEGITS
+  uv_max?: number | null;
+  uv_max_time?: string;
+
+  // ✅ AFEGITS
+  sun_info?: OpenUVSunInfo;
+
+  safe_exposure_time?: SafeExposureTime;
+
+  ozone?: number | null;
+  ozone_time?: string;
+};
+
 export async function getUVDetailFromOpenUV(
-  lat: number,
-  lon: number
+  lat: number,
+  lon: number
 ): Promise<OpenUVDetail | null> {
-  const key = makeKey(lat, lon);
+  const key = makeKey(lat, lon);
 
-  const cached = getCached(uvDetailCache, key, UV_DETAIL_TTL);
-  if (cached !== null) {
-    console.log("[OpenUV] UV detail des de caché:", key);
-    return cached;
-  }
+  const cached = getCached(uvDetailCache, key, UV_DETAIL_TTL);
+  if (cached !== null) {
+    console.log("[OpenUV] UV detail des de caché:", key);
+    return cached;
+  }
 
-  const pending = uvDetailPending.get(key);
-  if (pending) {
-    console.log("[OpenUV] reutilitzant petició UV detail en curs:", key);
-    return pending;
-  }
+  const pending = uvDetailPending.get(key);
+  if (pending) {
+    console.log("[OpenUV] reutilitzant petició UV detail en curs:", key);
+    return pending;
+  }
 
-  const request = (async () => {
-    try {
-      const data = await fetchOpenUVProxy(lat, lon);
+  const request = (async () => {
+    try {
+      const API_KEY = getApiKey();
+      if (!API_KEY) return null;
 
-      const r = data?.result;
+      const url = `https://api.openuv.io/api/v1/uv?lat=${lat}&lng=${lon}`;
+      console.log("[OpenUV] Fetch UV Detail:", url);
 
-      console.log("[OpenUV] UV detail result keys:", Object.keys(r || {}));
-      console.log("[OpenUV] safe_exposure_time:", r?.safe_exposure_time);
+      const data = (await safeFetch(url, API_KEY)) as OpenUVCurrentResponse;
 
-      const uv =
-        typeof r?.uv === "number" && Number.isFinite(r.uv) ? r.uv : null;
+      const r = data?.result;
+      console.log("[OpenUV] UV detail result keys:", Object.keys(r || {}));
+      console.log("[OpenUV] safe_exposure_time:", r?.safe_exposure_time);
 
-      const raw = r?.safe_exposure_time as
-        | Record<string, number | null>
-        | undefined;
+      const uv = typeof r?.uv === "number" && Number.isFinite(r.uv) ? r.uv : null;
 
-      const safe: SafeExposureTime | undefined = raw
-        ? {
-            st1: raw.st1 ?? raw["1"] ?? null,
-            st2: raw.st2 ?? raw["2"] ?? null,
-            st3: raw.st3 ?? raw["3"] ?? null,
-            st4: raw.st4 ?? raw["4"] ?? null,
-            st5: raw.st5 ?? raw["5"] ?? null,
-            st6: raw.st6 ?? raw["6"] ?? null,
-          }
-        : undefined;
+      const raw = r?.safe_exposure_time as Record<string, number | null> | undefined;
 
-      const ozone =
-        typeof r?.ozone === "number" && Number.isFinite(r.ozone)
-          ? r.ozone
-          : null;
+      const safe: SafeExposureTime | undefined = raw
+        ? {
+            st1: raw.st1 ?? raw["1"] ?? null,
+            st2: raw.st2 ?? raw["2"] ?? null,
+            st3: raw.st3 ?? raw["3"] ?? null,
+            st4: raw.st4 ?? raw["4"] ?? null,
+            st5: raw.st5 ?? raw["5"] ?? null,
+            st6: raw.st6 ?? raw["6"] ?? null,
+          }
+        : undefined;
 
-      const uv_max =
-        typeof r?.uv_max === "number" && Number.isFinite(r.uv_max)
-          ? r.uv_max
-          : null;
+      const ozone =
+        typeof r?.ozone === "number" && Number.isFinite(r.ozone) ? r.ozone : null;
 
-      const detail: OpenUVDetail = {
-        uv,
-        uv_time: r?.uv_time,
-        uv_max,
-        uv_max_time:
-          typeof r?.uv_max_time === "string" ? r.uv_max_time : undefined,
-        sun_info: r?.sun_info,
-        safe_exposure_time: safe,
-        ozone,
-        ozone_time:
-          typeof r?.ozone_time === "string" ? r.ozone_time : undefined,
-      };
+      const uv_max =
+        typeof r?.uv_max === "number" && Number.isFinite(r.uv_max) ? r.uv_max : null;
 
-      setCached(uvDetailCache, key, detail);
-      return detail;
-    } catch (err) {
-      console.error("[OpenUV] Error obtenint detall UV:", err);
-      return null;
-    } finally {
-      uvDetailPending.delete(key);
-    }
-  })();
+      const uv_max_time =
+        typeof r?.uv_max_time === "string" ? r.uv_max_time : undefined;
 
-  uvDetailPending.set(key, request);
-  return request;
+      const sun_info = r?.sun_info;
+
+      const ozone_time =
+        typeof r?.ozone_time === "string" ? r.ozone_time : undefined;
+
+      const detail: OpenUVDetail = {
+        uv,
+        uv_time: r?.uv_time,
+        uv_max,
+        uv_max_time,
+        sun_info,
+        safe_exposure_time: safe,
+        ozone,
+        ozone_time,
+      };
+
+      setCached(uvDetailCache, key, detail);
+      return detail;
+    } catch (err) {
+      console.error("[OpenUV] Error obtenint detall UV:", err);
+      return null;
+    } finally {
+      uvDetailPending.delete(key);
+    }
+  })();
+
+  uvDetailPending.set(key, request);
+  return request;
 }

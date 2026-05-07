@@ -13,4 +13,54 @@ body {
   color: #222;
 }
 
+/* Quan feim scroll, amagarem només el títol gran */
+.top-sticky-ui.compact-mode .app-header {
+  display: none;
+}
 
+/* Si vols amagar també les banderes en scroll, activa això */
+/*
+.top-sticky-ui.compact-mode .language-switcher,
+.top-sticky-ui.compact-mode > div:first-child {
+  display: none;
+}
+*/
+
+.top-sticky-ui.compact-mode {
+  padding: 0.55rem 0.75rem;
+  margin-bottom: 0.6rem;
+}
+
+.top-sticky-ui.compact-mode .app-header {
+  display: none;
+}
+
+.top-sticky-ui.compact-mode form {
+  margin-bottom: 0.4rem !important;
+}
+
+.top-sticky-ui.compact-mode input {
+  padding: 0.35rem 0.5rem !important;
+  font-size: 0.9rem !important;
+}
+
+.top-sticky-ui.compact-mode button {
+  padding: 0.35rem 0.6rem !important;
+  font-size: 0.85rem !important;
+}
+.top-sticky-ui.compact-mode > div:first-child {
+  display: none !important;
+}
+
+.top-sticky-ui.compact-mode {
+  padding-top: 0.45rem !important;
+}
+.top-sticky-ui.compact-mode .gps-button {
+  padding: 0.35rem 0.55rem !important;
+  font-size: 0.82rem !important;
+}
+.top-sticky-ui {
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  background: rgba(255,255,255,0.92);
+}

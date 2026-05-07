@@ -65,8 +65,6 @@ import { getUVFromOpenUV } from "./services/openUV";
    import UVDetailPanel from "./components/UVDetailPanel";
    import SkinTypeInfo, { type SkinType } from "./components/SkinTypeInfo";
    import TopAlertBanner from "./components/TopAlertBanner";
-   import CompactHeader from "./components/CompactHeader";
-   import { useScrollCompactHeader } from "./hooks/useScrollCompactHeader";
    
    /* —— analítica (opcional) ———————————— */
    import { inject } from '@vercel/analytics';
@@ -228,7 +226,6 @@ useEffect(() => {
   const [lat, setLat] = useState<number | null>(null);
   const [lon, setLon] = useState<number | null>(null);
   const searchBoxRef = useRef<HTMLDivElement | null>(null);
-  const showCompactHeader = useScrollCompactHeader(120);
 
  useEffect(() => {
   const handleClickOutside = (event: MouseEvent) => {
@@ -294,14 +291,19 @@ async function loadAlertsIfNeeded(
   nextLon: number,
   lang: string,
   apiKey: string,
-  _isDayValue: boolean = true
+  isDayValue: boolean = true
 ) {
+  if (!isDayValue) {
+    setAlerts([]);
+    console.log("[ALERTS] Nit → no es consulta OpenWeather alerts");
+    return;
+  }
+
   const now = Date.now();
 
   let prevLat: number | null = null;
   let prevLon: number | null = null;
   let prevTs = 0;
-  let cachedAlerts: any[] = [];
 
   try {
     const raw = localStorage.getItem(ALERTS_CACHE_KEY);
@@ -310,7 +312,6 @@ async function loadAlertsIfNeeded(
       prevLat = typeof parsed.lat === "number" ? parsed.lat : null;
       prevLon = typeof parsed.lon === "number" ? parsed.lon : null;
       prevTs = typeof parsed.ts === "number" ? parsed.ts : 0;
-      cachedAlerts = Array.isArray(parsed.alerts) ? parsed.alerts : [];
     }
   } catch (err) {
     console.warn("[ALERTS] Error llegint caché local:", err);
@@ -322,19 +323,16 @@ async function loadAlertsIfNeeded(
     Math.abs(prevLat - nextLat) < 0.05 &&
     Math.abs(prevLon - nextLon) < 0.05;
 
-  const tooSoon = now - prevTs < 30 * 60 * 1000;
+  const tooSoon = now - prevTs < 30 * 60 * 1000; // 30 minuts
 
-  if (sameArea && tooSoon && cachedAlerts.length > 0) {
-    console.log("[ALERTS] Caché local reutilitzada");
-    setAlerts(cachedAlerts);
+  if (sameArea && tooSoon) {
+    console.log("[ALERTS] Omitida consulta: mateixa zona i dins finestra de 30 min");
     return;
   }
 
   try {
     const nextAlerts = await getWeatherAlerts(nextLat, nextLon, lang, apiKey);
-    const safeAlerts = Array.isArray(nextAlerts) ? nextAlerts : [];
-
-    setAlerts(safeAlerts);
+    setAlerts(nextAlerts || []);
 
     localStorage.setItem(
       ALERTS_CACHE_KEY,
@@ -342,20 +340,11 @@ async function loadAlertsIfNeeded(
         lat: nextLat,
         lon: nextLon,
         ts: now,
-        alerts: safeAlerts,
       })
     );
-
-    console.log("[ALERTS] Avisos carregats:", safeAlerts.length);
   } catch (err) {
     console.warn("[ALERTS] Error carregant avisos:", err);
-
-    if (cachedAlerts.length > 0) {
-      console.log("[ALERTS] Error API → reutilitzant caché");
-      setAlerts(cachedAlerts);
-    } else {
-      setAlerts([]);
-    }
+    setAlerts([]);
   }
 }
 
@@ -747,20 +736,12 @@ const locate = async (silent = false) => {
 
     if (isStaleRequest("gps", requestId)) return;
 
-const lat = position.coords.latitude;
+    const lat = position.coords.latitude;
 const lon = position.coords.longitude;
 
 // ✅ PUNT 4: desa coordenades a l’estat global (per components com UVSafeTime)
 setLat(lat);
 setLon(lon);
-
-// 🔔 Si les notificacions estan activades, actualitza la ubicació del token.
-// Si la nova ubicació és a 15 km o més de l'anterior, subscribe.ts reiniciarà els nivells a 0.
-if (localStorage.getItem("fcmToken")) {
-  updateRiskAlertLocation({ lat, lon }).catch((e) =>
-    console.warn("[PUSH] No s'ha pogut actualitzar la ubicació del token:", e)
-  );
-}
 
 console.log(`[DEBUG] Coordenades GPS obtingudes: ${lat}, ${lon}`);
 
@@ -1177,12 +1158,7 @@ const riskIcons = getRiskIcons(
 
 return (
   <div className="container">
-    <CompactHeader
-      visible={showCompactHeader}
-      city={city}
-      temp={temp}
-    />
-    <div className={`top-sticky-ui ${showCompactHeader ? "compact-mode" : ""}`}>
+    <div className="top-sticky-ui">
       {/* 🔄 Selector d’idioma */}
       <div style={{ display: "flex", justifyContent: "flex-end", marginBottom: "0.6rem" }}>
         <LanguageSwitcher />
@@ -1353,7 +1329,7 @@ return (
   )}
 
   <div style={{ marginTop: "0.4rem", marginBottom: "0.8rem" }}>
-    <button className="gps-btn gps-button" onClick={() => locate(false)}>
+    <button className="gps-btn" onClick={() => locate(false)}>
       {t("gps_button")}
     </button>
   </div>
