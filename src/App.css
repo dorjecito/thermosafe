@@ -1,7 +1,5 @@
 /* === Estils generals === */
-html,
-body,
-#root {
+html, body, #root {
   width: 100%;
   max-width: 100%;
   margin: 0;
@@ -15,36 +13,28 @@ body {
   color: #222;
 }
 
-/* === Capçalera superior sticky === */
-.top-sticky-ui {
-  position: sticky;
-  top: calc(52px + env(safe-area-inset-top));
-  z-index: 1000;
-
-  background: rgba(255, 255, 255, 0.92);
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
-
-  transition: all 0.25s ease;
+/* Quan feim scroll, amagarem només el títol gran */
+.top-sticky-ui.compact-mode .app-header {
+  display: none;
 }
 
-/* === Mode compacte en fer scroll === */
+/* Si vols amagar també les banderes en scroll, activa això */
+/*
+.top-sticky-ui.compact-mode .language-switcher,
+.top-sticky-ui.compact-mode > div:first-child {
+  display: none;
+}
+*/
+
 .top-sticky-ui.compact-mode {
-  padding: 0.55rem 0.75rem 0.6rem !important;
+  padding: 0.55rem 0.75rem;
   margin-bottom: 0.6rem;
 }
 
-/* Amaga el títol gran */
 .top-sticky-ui.compact-mode .app-header {
-  display: none !important;
+  display: none;
 }
 
-/* Amaga les banderes */
-.top-sticky-ui.compact-mode > div:first-child {
-  display: none !important;
-}
-
-/* Compacta el formulari */
 .top-sticky-ui.compact-mode form {
   margin-bottom: 0.4rem !important;
 }
@@ -58,9 +48,24 @@ body {
   padding: 0.35rem 0.6rem !important;
   font-size: 0.85rem !important;
 }
+.top-sticky-ui.compact-mode > div:first-child {
+  display: none !important;
+}
 
-/* Botó GPS més petit en mode compacte */
+.top-sticky-ui.compact-mode {
+  padding-top: 0.45rem !important;
+}
 .top-sticky-ui.compact-mode .gps-button {
   padding: 0.35rem 0.55rem !important;
   font-size: 0.82rem !important;
+}
+.top-sticky-ui {
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  background: rgba(255,255,255,0.92);
+}
+.top-sticky-ui {
+  position: sticky;
+  top: calc(52px + env(safe-area-inset-top));
+  z-index: 1000;
 }
