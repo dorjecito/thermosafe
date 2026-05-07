@@ -291,19 +291,14 @@ async function loadAlertsIfNeeded(
   nextLon: number,
   lang: string,
   apiKey: string,
-  isDayValue: boolean = true
+  _isDayValue: boolean = true
 ) {
-  if (!isDayValue) {
-    setAlerts([]);
-    console.log("[ALERTS] Nit → no es consulta OpenWeather alerts");
-    return;
-  }
-
   const now = Date.now();
 
   let prevLat: number | null = null;
   let prevLon: number | null = null;
   let prevTs = 0;
+  let cachedAlerts: any[] = [];
 
   try {
     const raw = localStorage.getItem(ALERTS_CACHE_KEY);
@@ -312,6 +307,7 @@ async function loadAlertsIfNeeded(
       prevLat = typeof parsed.lat === "number" ? parsed.lat : null;
       prevLon = typeof parsed.lon === "number" ? parsed.lon : null;
       prevTs = typeof parsed.ts === "number" ? parsed.ts : 0;
+      cachedAlerts = Array.isArray(parsed.alerts) ? parsed.alerts : [];
     }
   } catch (err) {
     console.warn("[ALERTS] Error llegint caché local:", err);
@@ -323,16 +319,19 @@ async function loadAlertsIfNeeded(
     Math.abs(prevLat - nextLat) < 0.05 &&
     Math.abs(prevLon - nextLon) < 0.05;
 
-  const tooSoon = now - prevTs < 30 * 60 * 1000; // 30 minuts
+  const tooSoon = now - prevTs < 30 * 60 * 1000;
 
-  if (sameArea && tooSoon) {
-    console.log("[ALERTS] Omitida consulta: mateixa zona i dins finestra de 30 min");
+  if (sameArea && tooSoon && cachedAlerts.length > 0) {
+    console.log("[ALERTS] Caché local reutilitzada");
+    setAlerts(cachedAlerts);
     return;
   }
 
   try {
     const nextAlerts = await getWeatherAlerts(nextLat, nextLon, lang, apiKey);
-    setAlerts(nextAlerts || []);
+    const safeAlerts = Array.isArray(nextAlerts) ? nextAlerts : [];
+
+    setAlerts(safeAlerts);
 
     localStorage.setItem(
       ALERTS_CACHE_KEY,
@@ -340,11 +339,20 @@ async function loadAlertsIfNeeded(
         lat: nextLat,
         lon: nextLon,
         ts: now,
+        alerts: safeAlerts,
       })
     );
+
+    console.log("[ALERTS] Avisos carregats:", safeAlerts.length);
   } catch (err) {
     console.warn("[ALERTS] Error carregant avisos:", err);
-    setAlerts([]);
+
+    if (cachedAlerts.length > 0) {
+      console.log("[ALERTS] Error API → reutilitzant caché");
+      setAlerts(cachedAlerts);
+    } else {
+      setAlerts([]);
+    }
   }
 }
 
