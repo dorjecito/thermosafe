@@ -64,17 +64,26 @@ body {
   -webkit-backdrop-filter: blur(10px);
   background: rgba(255,255,255,0.92);
 }
-/* Espai perquè el contingut no quedi tapat per la capçalera compacta */
+/* Espai perquè el contingut no quedi tapat */
 .top-sticky-space {
   height: 0;
 }
 
+/* Android / general */
 .top-sticky-ui.compact-mode + .top-sticky-space {
-  height: 185px;
+  height: 190px;
 }
 
+/* iPhone */
+@supports (padding: max(0px)) {
+  .top-sticky-ui.compact-mode + .top-sticky-space {
+    height: calc(230px + env(safe-area-inset-top));
+  }
+}
+
+/* Pantalles petites */
 @media (max-width: 480px) {
   .top-sticky-ui.compact-mode + .top-sticky-space {
-    height: 215px;
+    height: calc(250px + env(safe-area-inset-top));
   }
 }
