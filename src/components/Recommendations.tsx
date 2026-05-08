@@ -39,7 +39,9 @@ type TextKeys =
   | "humid"
   | "windModerate"
   | "windStrong"
-  | "loading";
+  | "loading"
+  | "safeUvCloudy"
+  | "tropicalNight";
 
 type TextPack = Record<TextKeys, string>;
 type TxtDict = Record<Lang, TextPack>;
@@ -115,6 +117,10 @@ const TXT: TxtDict = {
       "Vent moderat. Vigila eines, materials lleugers i maniobres en zones exposades.",
     windStrong:
       "Vent destacable. Revalora tasques exposades i extrema la precaució amb objectes, eines i estabilitat.",
+    safeUvCloudy:
+      "Tot i existir radiació UV moderada, la nuvolositat o la pluja poden reduir parcialment l’exposició solar directa. Mantén precaucions bàsiques si passes molta estona a l’exterior.",
+    tropicalNight:
+      "Nit tropical. La temperatura es manté elevada durant la nit i pot dificultar el descans i la recuperació tèrmica. Ventila els espais, hidrata’t i evita esforços físics innecessaris.",
     loading: "Carregant recomanacions…",
   },
 
@@ -168,6 +174,10 @@ const TXT: TxtDict = {
       "Viento moderado. Vigila herramientas, materiales ligeros y maniobras en zonas expuestas.",
     windStrong:
       "Viento destacable. Reevalúa tareas expuestas y extrema la precaución con objetos, herramientas y estabilidad.",
+    safeUvCloudy:
+      "Aunque exista radiación UV moderada, la nubosidad o la lluvia pueden reducir parcialmente la exposición solar directa. Mantén precauciones básicas si permaneces mucho tiempo al aire libre.",
+    tropicalNight:
+      "Noche tropical. La temperatura se mantiene elevada durante la noche y puede dificultar el descanso y la recuperación térmica. Ventila los espacios, hidrátate y evita esfuerzos físicos innecesarios.",
     loading: "Cargando recomendaciones…",
   },
 
@@ -221,6 +231,10 @@ const TXT: TxtDict = {
       "Haize moderatua. Zaindu tresnak, material arinak eta eremu irekietan egindako maniobrak.",
     windStrong:
       "Haize nabarmena. Berrikusi agerian dauden lanak eta arreta handitu objektu, tresna eta egonkortasunarekin.",
+    safeUvCloudy:
+      "UV erradiazio moderatua egon arren, hodeiek edo euriak eguzki-esposizio zuzena neurri batean murriztu dezakete. Mantendu oinarrizko neurriak kanpoan denbora asko ematen baduzu.",
+    tropicalNight:
+      "Gau tropikala. Tenperatura altua mantentzen da gauez eta atseden termikoa zaildu dezake. Aireztatu espazioak, hidratatu eta saihestu alferrikako ahalegin fisikoak.",
     loading: "Gomendioak kargatzen…",
   },
 
@@ -274,6 +288,10 @@ const TXT: TxtDict = {
       "Vento moderado. Vixía ferramentas, materiais lixeiros e manobras en zonas expostas.",
     windStrong:
       "Vento destacable. Reavalia tarefas expostas e extrema a precaución con obxectos, ferramentas e estabilidade.",
+    safeUvCloudy:
+      "Aínda que exista radiación UV moderada, a nubosidade ou a choiva poden reducir parcialmente a exposición solar directa. Mantén precaucións básicas se permaneces moito tempo ao aire libre.",
+    tropicalNight:
+      "Noite tropical. A temperatura mantense elevada durante a noite e pode dificultar o descanso e a recuperación térmica. Ventila os espazos, hidrátate e evita esforzos físicos innecesarios.",
     loading: "Cargando recomendacións…",
   },
 
@@ -327,6 +345,10 @@ const TXT: TxtDict = {
       "Moderate wind. Watch tools, light materials and manoeuvres in exposed areas.",
     windStrong:
       "Noticeable wind. Reassess exposed tasks and increase caution with objects, tools and stability.",
+    safeUvCloudy:
+      "Although moderate UV radiation may be present, cloudiness or rain can partially reduce direct sun exposure. Maintain basic precautions if you stay outdoors for long periods.",
+    tropicalNight:
+      "Tropical night conditions. Temperatures remain elevated overnight and may hinder rest and thermal recovery. Ventilate indoor spaces, stay hydrated and avoid unnecessary physical effort.",
     loading: "Loading recommendations…",
   },
 } as const;
@@ -335,21 +357,22 @@ const TXT: TxtDict = {
 // ✨ Sistema d'icones segons intensitat del risc
 // ----------------------------------------------
 const getIcon = (key: string): string => {
-  if (key.startsWith("night")) return "🌙";
-  if (key === "cold_low") return "❄️";
-  if (key === "cold_mod") return "❄️❄️";
-  if (key === "cold_high") return "❄️❄️❄️";
-  if (key === "cold_ext") return "❄️❄️❄️❄️";
-  if (key === "uvModerate") return "☀️";
-  if (key === "uvHigh") return "☀️☀️";
-  if (key === "uvVeryHigh") return "☀️☀️☀️";
-  if (key === "uvExtreme") return "☀️☀️☀️☀️";
-  if (key === "mild") return "🔥";
-  if (key === "moderate") return "🔥🔥";
-  if (key === "high") return "🔥🔥🔥";
-  if (key === "ext") return "🔥🔥🔥🔥";
-  if (key === "safe") return "🟢";
-  return "🟢";
+  if (key === "tropicalNight") return "🌙🔥";
+  if (key.startsWith("night")) return "🌙";
+  if (key === "cold_low") return "❄️";
+  if (key === "cold_mod") return "❄️❄️";
+  if (key === "cold_high") return "❄️❄️❄️";
+  if (key === "cold_ext") return "❄️❄️❄️❄️";
+  if (key === "uvModerate") return "☀️";
+  if (key === "uvHigh") return "☀️☀️";
+  if (key === "uvVeryHigh") return "☀️☀️☀️";
+  if (key === "uvExtreme") return "☀️☀️☀️☀️";
+  if (key === "mild") return "🔥";
+  if (key === "moderate") return "🔥🔥";
+  if (key === "high") return "🔥🔥🔥";
+  if (key === "ext") return "🔥🔥🔥🔥";
+  if (key === "safe") return "🟢";
+  return "🟢";
 };
 
 const normalizeLang = (lang: Lang | string): Lang => {
@@ -364,7 +387,7 @@ const normalizeLang = (lang: Lang | string): Lang => {
 type HeatKey = "safe" | "mild" | "moderate" | "high" | "ext";
 type ColdKey = "cold_low" | "cold_mod" | "cold_high" | "cold_ext";
 type UvKey = "uvModerate" | "uvHigh" | "uvVeryHigh" | "uvExtreme";
-type NightKey = "nightCool" | "nightSafe" | "nightHeat";
+type NightKey = "nightCool" | "nightSafe" | "nightHeat" | "tropicalNight";
 
 const mapHeatLevelToKey = (levelRaw: unknown): HeatKey => {
   const s = String(levelRaw ?? "")
@@ -410,9 +433,10 @@ const getUvKey = (uvi: number | null | undefined): UvKey | null => {
 };
 
 const getNightKey = (effectiveTemp: number): NightKey => {
-  if (effectiveTemp < 18) return "nightCool";
-  if (effectiveTemp < 25) return "nightSafe";
-  return "nightHeat";
+  if (effectiveTemp >= 25) return "tropicalNight";
+  if (effectiveTemp < 18) return "nightCool";
+  if (effectiveTemp < 25) return "nightSafe";
+  return "nightHeat";
 };
 
 const isRainyWeather = (weatherMain?: string): boolean =>
@@ -542,7 +566,7 @@ export default function Recommendations({
   /* =========================================================
      2️⃣ CALOR IMPORTANT — abans que UV moderat
   ========================================================== */
-  if (effectiveTemp >= 30) {
+  if (effectiveTemp >= 30 && isDay) {
     const heatKey: HeatKey = effectiveTemp < 33 ? "moderate" : effectiveTemp < 41 ? "high" : "ext";
 
     return (
@@ -583,10 +607,27 @@ export default function Recommendations({
     );
   }
 
+  const uvSuppressedByWeather = isDay && !!uvKey && (rainy || stormy || veryCloudy);
+
   /* =========================================================
      3️⃣ UV — només si realment és rellevant de dia
   ========================================================== */
-  if (isDay && uvKey) {
+ if (uvSuppressedByWeather) {
+  return (
+    <RecommendationBox
+      className="recommendation-box safe"
+      title={`${getIcon("safe")} ${t.title}`}
+      body={joinLines(
+        stormy ? t.storm : rainy ? t.rain : t.safeCloudy,
+        t.safeUvCloudy,
+        humid && t.humid,
+        windyModerate && t.windModerate
+      )}
+    />
+  );
+} 
+
+if (isDay && uvKey) {
     return (
       <RecommendationBox
         className={`recommendation-box ${uvKey}`}

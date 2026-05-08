@@ -66,7 +66,7 @@ import { getUVFromOpenUV } from "./services/openUV";
    import SkinTypeInfo, { type SkinType } from "./components/SkinTypeInfo";
    import TopAlertBanner from "./components/TopAlertBanner";
    import CompactHeader from "./components/CompactHeader";
-   //import { useScrollCompactHeader } from "./hooks/useScrollCompactHeader";
+   import { useScrollCompactHeader } from "./hooks/useScrollCompactHeader";
    
    /* —— analítica (opcional) ———————————— */
    import { inject } from '@vercel/analytics';
@@ -228,18 +228,7 @@ useEffect(() => {
   const [lat, setLat] = useState<number | null>(null);
   const [lon, setLon] = useState<number | null>(null);
   const searchBoxRef = useRef<HTMLDivElement | null>(null);
-  const [showCompactHeader, setShowCompactHeader] = useState(false);
-
-useEffect(() => {
-  const onScroll = () => {
-    setShowCompactHeader(window.scrollY > 120);
-  };
-
-  onScroll();
-  window.addEventListener("scroll", onScroll, { passive: true });
-
-  return () => window.removeEventListener("scroll", onScroll);
-}, []);
+  const showCompactHeader = useScrollCompactHeader(120);
 
  useEffect(() => {
   const handleClickOutside = (event: MouseEvent) => {
@@ -1372,7 +1361,7 @@ return (
 </div>
 
     {/* Espai perquè la capçalera fixa no tapi el contingut */}
-    {/* <div className="top-sticky-spacer" /> */}
+    <div className="top-sticky-spacer" />
 
 {/* 🔔 Interruptor per activar/desactivar avisos meteorològics */}
 <div
@@ -1500,12 +1489,12 @@ return (
 />
 
      {/* 📊 DADES */}
-{city && !showCompactHeader && (
+{city && (
   <LocationCard
-    city={city}
-    realCity={realCity}
-    label={t("location")}
-  />
+  city={city}
+  realCity={realCity}
+  label={t("location")}
+/>
 )}
 
 {/* ⭐ ESTAT PRINCIPAL */}
