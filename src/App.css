@@ -69,21 +69,15 @@ body {
   height: 0;
 }
 
-/* Android / general */
-.top-sticky-ui.compact-mode + .top-sticky-space {
-  height: 190px;
+/* Quan la capçalera està compacta, deixam espai real davall */
+.top-sticky-ui.compact-mode {
+  padding: 0.55rem 0.75rem 0.6rem !important;
+  margin-bottom: 210px !important;
 }
 
-/* iPhone */
-@supports (padding: max(0px)) {
-  .top-sticky-ui.compact-mode + .top-sticky-space {
-    height: calc(230px + env(safe-area-inset-top));
-  }
-}
-
-/* Pantalles petites */
+/* iPhone / pantalles petites */
 @media (max-width: 480px) {
-  .top-sticky-ui.compact-mode + .top-sticky-space {
-    height: calc(250px + env(safe-area-inset-top));
+  .top-sticky-ui.compact-mode {
+    margin-bottom: 250px !important;
   }
 }
