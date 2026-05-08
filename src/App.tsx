@@ -1360,8 +1360,13 @@ return (
 </div>
 </div>
 
-    {/* Espai perquè la capçalera fixa no tapi el contingut */}
-    <div className="top-sticky-spacer" />
+  /* Espai dinàmic perquè la capçalera sticky no tapi el contingut */
+<div
+  style={{
+    height: showCompactHeader ? "260px" : "0px",
+    transition: "height 0.25s ease",
+  }}
+/>
 
 {/* 🔔 Interruptor per activar/desactivar avisos meteorològics */}
 <div
