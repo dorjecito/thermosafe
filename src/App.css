@@ -81,3 +81,15 @@ body {
     margin-bottom: 250px !important;
   }
 }
+/* Correcció definitiva: el cercador no ha de tapar contingut en mode compacte */
+.top-sticky-ui.compact-mode {
+  position: relative !important;
+  top: auto !important;
+  z-index: 10 !important;
+  margin-bottom: 1rem !important;
+}
+
+/* Ja no cal espai artificial */
+.top-sticky-space {
+  height: 0 !important;
+}
