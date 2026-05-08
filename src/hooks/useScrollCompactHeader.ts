@@ -4,11 +4,19 @@ export function useScrollCompactHeader(threshold = 120) {
   const [showCompactHeader, setShowCompactHeader] = useState(false);
 
   useEffect(() => {
+    // Evita que Chrome restauri una posició antiga de scroll
+    if ("scrollRestoration" in window.history) {
+      window.history.scrollRestoration = "manual";
+    }
+
+    // Estat inicial sempre normal
+    setShowCompactHeader(false);
+
     const handleScroll = () => {
-      setShowCompactHeader(window.scrollY > threshold);
+      const shouldShow = window.scrollY > threshold;
+      setShowCompactHeader(shouldShow);
     };
 
-    handleScroll();
     window.addEventListener("scroll", handleScroll, { passive: true });
 
     return () => {

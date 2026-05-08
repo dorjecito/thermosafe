@@ -64,8 +64,17 @@ body {
   -webkit-backdrop-filter: blur(10px);
   background: rgba(255,255,255,0.92);
 }
-.top-sticky-ui {
-  position: sticky;
-  top: calc(52px + env(safe-area-inset-top));
-  z-index: 1000;
+/* Espai perquè el contingut no quedi tapat per la capçalera compacta */
+.top-sticky-space {
+  height: 0;
+}
+
+.top-sticky-ui.compact-mode + .top-sticky-space {
+  height: 145px;
+}
+
+@media (max-width: 480px) {
+  .top-sticky-ui.compact-mode + .top-sticky-space {
+    height: 165px;
+  }
 }
