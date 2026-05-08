@@ -70,11 +70,11 @@ body {
 }
 
 .top-sticky-ui.compact-mode + .top-sticky-space {
-  height: 145px;
+  height: 185px;
 }
 
 @media (max-width: 480px) {
   .top-sticky-ui.compact-mode + .top-sticky-space {
-    height: 165px;
+    height: 215px;
   }
 }
