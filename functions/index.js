@@ -2260,29 +2260,41 @@ exports.cronCheckAemetRisk = functions
 
         const alerts = await alertsPromise;
 
-        if (!alerts || alerts.length === 0) {
-          await zoneRef.set(
-            {
-              zoneKey,
-              level: 0,
-              event: "",
-              sender: "",
-              description: "",
-              updatedAt: Date.now(),
-            },
-            { merge: true }
-          );
+        if (!alerts || alerts.length === 0) {
+          await zoneRef.set(
+            {
+              zoneKey,
+              level: 0,
+              event: "",
+              sender: "",
+              description: "",
+              updatedAt: Date.now(),
+            },
+            { merge: true }
+          );
 
-          stats.tokensSkipped++;
-          stats.reasons.noAlerts++;
+          await doc.ref.set(
+            {
+              lastAemetLevel: 0,
+              lastAemetEvent: "",
+              lastAemetSender: "",
+              lastAemetEventKey: "",
+              lastAemetAt: now,
+            },
+            { merge: true }
+          );
 
-          console.log("[AEMET][ZONE SAVE NO ALERT]", {
-            zoneKey,
-            level: 0,
-          });
+          stats.tokensSkipped++;
+          stats.reasons.noAlerts++;
 
-          return;
-        }
+          console.log("[AEMET][ZONE SAVE NO ALERT][SUB RESET]", {
+            docId: doc.id,
+            zoneKey,
+            level: 0,
+          });
+
+          return;
+        }
 
         const info = getAemetLevelFromAlerts(alerts);
 
