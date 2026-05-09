@@ -273,25 +273,26 @@ function shouldNotifyLevelIncrease(prevLevel, nextLevel) {
 }
 
 async function getWeather(lat, lon) {
-  const url =
-    `https://api.openweathermap.org/data/2.5/weather?lat=${lat}&lon=${lon}` +
-    `&appid=${OPENWEATHER_KEY.value()}&units=metric`;
+  const url =
+    `https://api.openweathermap.org/data/2.5/weather?lat=${lat}&lon=${lon}` +
+    `&appid=${OPENWEATHER_KEY.value()}&units=metric`;
 
-  const r = await fetch(url);
-  if (!r.ok) throw new Error(`OpenWeather ${r.status}`);
+  const r = await fetch(url);
+  if (!r.ok) throw new Error(`OpenWeather ${r.status}`);
 
-  const j = await r.json();
+  const j = await r.json();
 
-  return {
-    temp: j.main?.temp,
-    hum: j.main?.humidity,
-    feels: j.main?.feels_like,
-    wind: j.wind?.speed,
-    tzOffset: j.timezone,
-    place: j.name || "",
-    weatherMain: j.weather?.[0]?.main || "",
-    weatherDescription: j.weather?.[0]?.description || "",
-  };
+  return {
+    temp: j.main?.temp,
+    hum: j.main?.humidity,
+    feels: j.main?.feels_like,
+    wind: j.wind?.speed,
+    tzOffset: j.timezone,
+    place: j.name || "",
+    weatherMain: j.weather?.[0]?.main || "",
+    weatherDescription: j.weather?.[0]?.description || "",
+    clouds: j.clouds?.all ?? null,
+  };
 }
 
 async function getUV(lat, lon) {
@@ -636,9 +637,9 @@ function buildCombinedRiskMessage({
   const t = txt[l] || txt.ca;
   const parts = [];
 
-  if (hasAemet) {
-    parts.push(`${t.official}${aemetEvent ? `: ${aemetEvent}` : ""}`);
-  }
+  if (hasAemet) {
+    parts.push(t.official);
+  }
 
   if (hasUv) {
     parts.push(`${t.uv} ${Number(uvi).toFixed(1)}`);
@@ -817,10 +818,41 @@ async function sendWindPush(token, lang, info, windKmh, place) {
 // ─────────────────────────────────────────────
 // Textos i notificacions · UV
 // ─────────────────────────────────────────────
-function getUvInfo(uvi) {
+function getUvInfo(uvi, weather = {}) {
   if (uvi == null || Number.isNaN(uvi)) {
     return { level: 0, risk: null, title: null, body: null };
   }
+
+  const weatherMain = weather.weatherMain || weather.main || "";
+  const cloudiness =
+    typeof weather.cloudiness === "number"
+      ? weather.cloudiness
+      : typeof weather.clouds === "number"
+      ? weather.clouds
+      : null;
+
+  const veryCloudy = typeof cloudiness === "number" && cloudiness >= 75;
+  const rainy = weatherMain === "Rain" || weatherMain === "Drizzle";
+  const stormy = weatherMain === "Thunderstorm";
+  const uvReducedByWeather = veryCloudy || rainy || stormy;
+
+  const cloudyBody = {
+    ca: `Índex UV ${uvi >= 8 ? "molt alt" : uvi >= 6 ? "alt" : "moderat"} (${uvi.toFixed(
+      1
+    )}), però la nuvolositat o la pluja poden reduir parcialment l’exposició solar directa. Mantén protecció solar si passes temps a l’exterior.`,
+    es: `Índice UV ${uvi >= 8 ? "muy alto" : uvi >= 6 ? "alto" : "moderado"} (${uvi.toFixed(
+      1
+    )}), pero la nubosidad o la lluvia pueden reducir parcialmente la exposición solar directa. Mantén protección solar si pasas tiempo al aire libre.`,
+    eu: `UV indize ${uvi >= 8 ? "oso altua" : uvi >= 6 ? "altua" : "moderatua"} (${uvi.toFixed(
+      1
+    )}), baina hodeiek edo euriak eguzki-esposizio zuzena neurri batean murriztu dezakete. Mantendu eguzki-babesa kanpoan denbora ematen baduzu.`,
+    gl: `Índice UV ${uvi >= 8 ? "moi alto" : uvi >= 6 ? "alto" : "moderado"} (${uvi.toFixed(
+      1
+    )}), pero a nubosidade ou a choiva poden reducir parcialmente a exposición solar directa. Mantén protección solar se permaneces ao aire libre.`,
+    en: `UV index ${uvi >= 8 ? "very high" : uvi >= 6 ? "high" : "moderate"} (${uvi.toFixed(
+      1
+    )}), but cloudiness or rain may partially reduce direct sun exposure. Keep sun protection if you stay outdoors.`,
+  };
 
   if (uvi >= 11) {
     return {
@@ -833,13 +865,15 @@ function getUvInfo(uvi) {
         gl: "☀️ ThermoSafe – UV extremo",
         en: "☀️ ThermoSafe – Extreme UV",
       },
-      body: {
-        ca: `Índex UV extrem (${uvi.toFixed(1)}). Evita el sol directe.`,
-        es: `Índice UV extremo (${uvi.toFixed(1)}). Evita el sol directo.`,
-        eu: `UV indize muturrekoa (${uvi.toFixed(1)}). Saihestu eguzki zuzena.`,
-        gl: `Índice UV extremo (${uvi.toFixed(1)}). Evita o sol directo.`,
-        en: `Extreme UV index (${uvi.toFixed(1)}). Avoid direct sun exposure.`,
-      },
+      body: uvReducedByWeather
+        ? cloudyBody
+        : {
+            ca: `Índex UV extrem (${uvi.toFixed(1)}). Evita el sol directe.`,
+            es: `Índice UV extremo (${uvi.toFixed(1)}). Evita el sol directo.`,
+            eu: `UV indize muturrekoa (${uvi.toFixed(1)}). Saihestu eguzki zuzena.`,
+            gl: `Índice UV extremo (${uvi.toFixed(1)}). Evita o sol directo.`,
+            en: `Extreme UV index (${uvi.toFixed(1)}). Avoid direct sun exposure.`,
+          },
     };
   }
 
@@ -854,13 +888,15 @@ function getUvInfo(uvi) {
         gl: "☀️ ThermoSafe – UV moi alto",
         en: "☀️ ThermoSafe – Very high UV",
       },
-      body: {
-        ca: `Índex UV molt alt (${uvi.toFixed(1)}). Protecció solar imprescindible.`,
-        es: `Índice UV muy alto (${uvi.toFixed(1)}). Protección solar imprescindible.`,
-        eu: `UV indize oso altua (${uvi.toFixed(1)}). Eguzki-babesa ezinbestekoa.`,
-        gl: `Índice UV moi alto (${uvi.toFixed(1)}). Protección solar imprescindible.`,
-        en: `Very high UV index (${uvi.toFixed(1)}). Sun protection is essential.`,
-      },
+      body: uvReducedByWeather
+        ? cloudyBody
+        : {
+            ca: `Índex UV molt alt (${uvi.toFixed(1)}). Protecció solar imprescindible.`,
+            es: `Índice UV muy alto (${uvi.toFixed(1)}). Protección solar imprescindible.`,
+            eu: `UV indize oso altua (${uvi.toFixed(1)}). Eguzki-babesa ezinbestekoa.`,
+            gl: `Índice UV moi alto (${uvi.toFixed(1)}). Protección solar imprescindible.`,
+            en: `Very high UV index (${uvi.toFixed(1)}). Sun protection is essential.`,
+          },
     };
   }
 
@@ -875,13 +911,15 @@ function getUvInfo(uvi) {
         gl: "☀️ ThermoSafe – UV alto",
         en: "☀️ ThermoSafe – High UV",
       },
-      body: {
-        ca: `Índex UV alt (${uvi.toFixed(1)}). Usa crema solar, gorra i busca ombra.`,
-        es: `Índice UV alto (${uvi.toFixed(1)}). Usa crema solar, gorra y busca sombra.`,
-        eu: `UV indize altua (${uvi.toFixed(1)}). Erabili krema, txapela eta itzala bilatu.`,
-        gl: `Índice UV alto (${uvi.toFixed(1)}). Usa crema solar, gorra e busca sombra.`,
-        en: `High UV index (${uvi.toFixed(1)}). Use sunscreen, a cap, and seek shade.`,
-      },
+      body: uvReducedByWeather
+        ? cloudyBody
+        : {
+            ca: `Índex UV alt (${uvi.toFixed(1)}). Usa crema solar, gorra i busca ombra.`,
+            es: `Índice UV alto (${uvi.toFixed(1)}). Usa crema solar, gorra y busca sombra.`,
+            eu: `UV indize altua (${uvi.toFixed(1)}). Erabili krema, txapela eta itzala bilatu.`,
+            gl: `Índice UV alto (${uvi.toFixed(1)}). Usa crema solar, gorra e busca sombra.`,
+            en: `High UV index (${uvi.toFixed(1)}). Use sunscreen, a cap, and seek shade.`,
+          },
     };
   }
 
@@ -896,13 +934,15 @@ function getUvInfo(uvi) {
         gl: "☀️ ThermoSafe – UV moderado",
         en: "☀️ ThermoSafe – Moderate UV",
       },
-      body: {
-        ca: `Índex UV moderat (${uvi.toFixed(1)}). Recomanable crema solar, gorra i busca ombra.`,
-        es: `Índice UV moderado (${uvi.toFixed(1)}). Recomendable crema solar, gorra y busca sombra.`,
-        eu: `UV indize moderatua (${uvi.toFixed(1)}). Gomendagarria krema, txapela eta itzala bilatu.`,
-        gl: `Índice UV moderado (${uvi.toFixed(1)}). Recomendable crema solar, gorra e busca sombra.`,
-        en: `Moderate UV index (${uvi.toFixed(1)}). Sunscreen, a cap, and shade are recommended.`,
-      },
+      body: uvReducedByWeather
+        ? cloudyBody
+        : {
+            ca: `Índex UV moderat (${uvi.toFixed(1)}). Recomanable crema solar, gorra i busca ombra.`,
+            es: `Índice UV moderado (${uvi.toFixed(1)}). Recomendable crema solar, gorra y busca sombra.`,
+            eu: `UV indize moderatua (${uvi.toFixed(1)}). Gomendagarria krema, txapela eta itzala bilatu.`,
+            gl: `Índice UV moderado (${uvi.toFixed(1)}). Recomendable crema solar, gorra e busca sombra.`,
+            en: `Moderate UV index (${uvi.toFixed(1)}). Sunscreen, a cap, and shade are recommended.`,
+          },
     };
   }
 
@@ -996,15 +1036,14 @@ async function sendAemetPush(token, lang, info, place) {
     }[lang] ?? "🚨 ThermoSafe – Official alert";
 
   const eventText =
-    info.event ||
-    {
-      ca: "Avís meteorològic actiu",
-      es: "Aviso meteorológico activo",
-      eu: "Eguraldi-abisu aktiboa",
-      gl: "Aviso meteorolóxico activo",
-      en: "Active weather alert",
-    }[lang] ||
-    "Active weather alert";
+  {
+    ca: "Avís meteorològic oficial actiu",
+    es: "Aviso meteorológico oficial activo",
+    eu: "Eguraldi-abisu ofiziala aktibo",
+    gl: "Aviso meteorolóxico oficial activo",
+    en: "Active official weather alert",
+  }[lang] ||
+  "Active official weather alert";
 
   const tail =
     {
@@ -1463,7 +1502,10 @@ exports.cronCheckWeatherRisk = functions
                   let currentUvi = await getUVfromOpenWeather(sub.lat, sub.lon);
                   if (currentUvi == null) currentUvi = 0;
 
-                  const currentUvInfo = getUvInfo(currentUvi);
+                  const currentUvInfo = getUvInfo(currentUvi, {
+                  cloudiness: w.clouds,
+                  weatherMain: w.weatherMain,
+                });
 
                   const combined = buildCombinedRiskMessage({
                     lang,
@@ -1939,7 +1981,10 @@ exports.cronCheckUvRisk = functions
 
             stats.lastUvi = uvi;
 
-            const info = getUvInfo(uvi);
+            const info = getUvInfo(uvi, {
+            cloudiness: w.clouds,
+            weatherMain: w.weatherMain,
+          });
             const prevLevel = Number(sub.lastUvLevel ?? 0);
 
             const hi = w.temp < 18 ? w.temp : calcHI(w.temp, w.hum);
@@ -2685,7 +2730,10 @@ exports.runUvNow = functions
               }
 
               if (uvi == null) uvi = 0;
-              const info = getUvInfo(uvi);
+              const info = getUvInfo(uvi, {
+              cloudiness: Number(req.query.cloudiness || 0),
+              weatherMain: String(req.query.weatherMain || ""),
+            });
 
               console.log("[MANUAL UV]", {
                 docId: doc.id,
@@ -2764,7 +2812,10 @@ exports.testCombinedRiskNow = functions
       const aemetEvent = String(req.query.aemetEvent || "");
 
       const heatInfo = levelFromINSST(hi);
-      const uvInfo = getUvInfo(uvi);
+      const uvInfo = getUvInfo(uvi, {
+      cloudiness: Number(req.query.cloudiness || 0),
+      weatherMain: String(req.query.weatherMain || ""),
+    });
 
       const combined = buildCombinedRiskMessage({
         lang,

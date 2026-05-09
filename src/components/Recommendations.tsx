@@ -118,7 +118,7 @@ const TXT: TxtDict = {
     windStrong:
       "Vent destacable. Revalora tasques exposades i extrema la precaució amb objectes, eines i estabilitat.",
     safeUvCloudy:
-      "Tot i existir radiació UV moderada, la nuvolositat o la pluja poden reduir parcialment l’exposició solar directa. Mantén precaucions bàsiques si passes molta estona a l’exterior.",
+      "Pot existir radiació UV significativa encara que hi hagi núvols o pluja. Si passes temps a l’exterior, mantén protecció solar bàsica i adapta l’activitat segons l’evolució del temps.",
     tropicalNight:
       "Nit tropical. La temperatura es manté elevada durant la nit i pot dificultar el descans i la recuperació tèrmica. Ventila els espais, hidrata’t i evita esforços físics innecessaris.",
     loading: "Carregant recomanacions…",
@@ -175,7 +175,7 @@ const TXT: TxtDict = {
     windStrong:
       "Viento destacable. Reevalúa tareas expuestas y extrema la precaución con objetos, herramientas y estabilidad.",
     safeUvCloudy:
-      "Aunque exista radiación UV moderada, la nubosidad o la lluvia pueden reducir parcialmente la exposición solar directa. Mantén precauciones básicas si permaneces mucho tiempo al aire libre.",
+      "Puede existir radiación UV significativa aunque haya nubes o lluvia. Si pasas tiempo al aire libre, mantén protección solar básica y adapta la actividad según la evolución del tiempo.",
     tropicalNight:
       "Noche tropical. La temperatura se mantiene elevada durante la noche y puede dificultar el descanso y la recuperación térmica. Ventila los espacios, hidrátate y evita esfuerzos físicos innecesarios.",
     loading: "Cargando recomendaciones…",
@@ -232,7 +232,7 @@ const TXT: TxtDict = {
     windStrong:
       "Haize nabarmena. Berrikusi agerian dauden lanak eta arreta handitu objektu, tresna eta egonkortasunarekin.",
     safeUvCloudy:
-      "UV erradiazio moderatua egon arren, hodeiek edo euriak eguzki-esposizio zuzena neurri batean murriztu dezakete. Mantendu oinarrizko neurriak kanpoan denbora asko ematen baduzu.",
+      "Hodeiak edo euria egon arren, UV erradiazio esanguratsua egon daiteke. Kanpoan denbora ematen baduzu, mantendu oinarrizko eguzki-babesa eta egokitu jarduera eguraldiaren bilakaeraren arabera.",
     tropicalNight:
       "Gau tropikala. Tenperatura altua mantentzen da gauez eta atseden termikoa zaildu dezake. Aireztatu espazioak, hidratatu eta saihestu alferrikako ahalegin fisikoak.",
     loading: "Gomendioak kargatzen…",
@@ -289,7 +289,7 @@ const TXT: TxtDict = {
     windStrong:
       "Vento destacable. Reavalia tarefas expostas e extrema a precaución con obxectos, ferramentas e estabilidade.",
     safeUvCloudy:
-      "Aínda que exista radiación UV moderada, a nubosidade ou a choiva poden reducir parcialmente a exposición solar directa. Mantén precaucións básicas se permaneces moito tempo ao aire libre.",
+      "Pode existir radiación UV significativa aínda que haxa nubes ou choiva. Se permaneces ao aire libre, mantén protección solar básica e adapta a actividade segundo a evolución do tempo.",
     tropicalNight:
       "Noite tropical. A temperatura mantense elevada durante a noite e pode dificultar o descanso e a recuperación térmica. Ventila os espazos, hidrátate e evita esforzos físicos innecesarios.",
     loading: "Cargando recomendacións…",
@@ -346,7 +346,7 @@ const TXT: TxtDict = {
     windStrong:
       "Noticeable wind. Reassess exposed tasks and increase caution with objects, tools and stability.",
     safeUvCloudy:
-      "Although moderate UV radiation may be present, cloudiness or rain can partially reduce direct sun exposure. Maintain basic precautions if you stay outdoors for long periods.",
+      "Significant UV radiation may still be present even with clouds or rain. If you stay outdoors, keep basic sun protection and adapt activity according to weather evolution.",
     tropicalNight:
       "Tropical night conditions. Temperatures remain elevated overnight and may hinder rest and thermal recovery. Ventilate indoor spaces, stay hydrated and avoid unnecessary physical effort.",
     loading: "Loading recommendations…",
@@ -523,6 +523,10 @@ export default function Recommendations({
   const windyModerate = typeof windKmh === "number" && windKmh >= 25 && windKmh < 45;
   const windyStrong = typeof windKmh === "number" && windKmh >= 45;
   const veryCloudy = typeof cloudiness === "number" && cloudiness >= 85;
+  const uvSuppressedByWeather =
+  isDay &&
+  !!uvKey &&
+  (veryCloudy || rainy || stormy);
 
   if (!Number.isFinite(effectiveTemp)) {
     return (
@@ -607,8 +611,6 @@ export default function Recommendations({
     );
   }
 
-  const uvSuppressedByWeather = isDay && !!uvKey && (rainy || stormy || veryCloudy);
-
   /* =========================================================
      3️⃣ UV — només si realment és rellevant de dia
   ========================================================== */
@@ -618,11 +620,10 @@ export default function Recommendations({
       className="recommendation-box safe"
       title={`${getIcon("safe")} ${t.title}`}
       body={joinLines(
-        stormy ? t.storm : rainy ? t.rain : t.safeCloudy,
-        t.safeUvCloudy,
-        humid && t.humid,
-        windyModerate && t.windModerate
-      )}
+      stormy ? t.storm : rainy ? t.rain : t.safeUvCloudy,
+      humid && t.humid,
+      windyModerate && t.windModerate
+    )}
     />
   );
 } 
