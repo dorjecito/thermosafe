@@ -522,7 +522,7 @@ export default function Recommendations({
   const humid = typeof humidity === "number" && humidity >= 70 && effectiveTemp >= 24;
   const windyModerate = typeof windKmh === "number" && windKmh >= 25 && windKmh < 45;
   const windyStrong = typeof windKmh === "number" && windKmh >= 45;
-  const veryCloudy = typeof cloudiness === "number" && cloudiness >= 85;
+  const veryCloudy = typeof cloudiness === "number" && cloudiness >= 75;
   const uvSuppressedByWeather =
   isDay &&
   !!uvKey &&
