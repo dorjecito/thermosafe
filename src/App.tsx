@@ -1089,10 +1089,11 @@ const activeAlertEvent = `${activeAlert?.event || ""} ${activeAlertDescription |
 
 const workWindow = getWorkWindow({
   heatRisk,
+  heatIndex: hi,
   coldRisk,
   windRisk,
   uvi,
-  aemetActive,
+  aemetActive: aemetActive || aemetSoon,
   weatherMain,
 });
 

@@ -14,16 +14,18 @@ type HeatRiskLike =
 type ColdRiskLike = "cap" | "lleu" | "moderat" | "alt" | "molt alt" | "extrem";
 
 type Params = {
-  heatRisk?: HeatRiskLike;
-  coldRisk?: ColdRiskLike;
-  windRisk?: WindRisk;
-  uvi?: number | null;
-  aemetActive?: boolean;
-  weatherMain?: string | null;
+  heatRisk?: HeatRiskLike;
+  heatIndex?: number | null;
+  coldRisk?: ColdRiskLike;
+  windRisk?: WindRisk;
+  uvi?: number | null;
+  aemetActive?: boolean;
+  weatherMain?: string | null;
 };
 
 export function getWorkWindow({
   heatRisk,
+  heatIndex = null,
   coldRisk = "cap",
   windRisk = "none",
   uvi = null,
@@ -31,6 +33,10 @@ export function getWorkWindow({
   weatherMain = null,
 }: Params): WorkWindow {
   const uv = typeof uvi === "number" && Number.isFinite(uvi) ? uvi : 0;
+  const hi =
+  typeof heatIndex === "number" && Number.isFinite(heatIndex)
+    ? heatIndex
+    : null;
 
   const rainy =
     weatherMain === "Rain" ||
@@ -54,6 +60,11 @@ export function getWorkWindow({
   ) {
     return coldRisk === "moderat" ? "limited" : "avoid";
   }
+
+  /* 2b) Calor segons sensació tèrmica directa */
+  if (hi !== null && hi >= 41) return "avoid";
+  if (hi !== null && hi >= 32) return "limited";
+  if (hi !== null && hi >= 27) return "caution";
 
   /* 3) Situacions altes */
   if (coldRisk === "alt" || coldRisk === "molt alt") return "limited";

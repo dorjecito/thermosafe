@@ -1265,31 +1265,21 @@ async function getCachedUV(lat, lon) {
     uvInflight.delete(key);
   }
 }
-
 // ─────────────────────────────────────────────
-// 🌦️ CRON METEO UNIFICAT — V2 REAL
-// calor + fred + vent
-// Envia notificacions reals
-// Escriu a Firestore
+// 🌦️ CRON METEO UNIFICAT — calor + fred + vent
+// - Reset diari intel·ligent a les 06:00 (hora local)
+// - No sobreescriu nivells amb 0 a cada cron
+// - Resum final per zona
 // ─────────────────────────────────────────────
-
-exports.cronCheckWeatherRiskV2 = onSchedule(
-  {
-    schedule: "every 60 minutes",
-    timeZone: "Europe/Madrid",
-    region: REGION,
-    secrets: [OPENWEATHER_KEY],
-  },
-  async () => {
+exports.cronCheckWeatherRisk = functions
+  .region(REGION)
+  .runWith({ secrets: [OPENWEATHER_KEY] })
+  .pubsub.schedule("every 60 minutes")
+  .timeZone("Europe/Madrid")
+  .onRun(async () => {
     const now = Date.now();
-    console.log("[WEATHER V2] start");
-
     const snap = await db.collection("subs").limit(1000).get();
-
-    if (snap.empty) {
-      console.log("[WEATHER V2] no subs");
-      return;
-    }
+    if (snap.empty) return null;
 
     const tasks = [];
     const zoneStats = new Map();
@@ -1310,20 +1300,19 @@ exports.cronCheckWeatherRiskV2 = onSchedule(
           heat: {
             lastValue: null,
             tokensSent: 0,
-            skipped: 0,
-            combinedSent: 0,
+            tokensSkipped: 0,
             reasons: {
-              noLevelIncrease: 0,
-              belowThreshold: 0,
-              blockedByAemet: 0,
-              sendError: 0,
-              removedInvalidToken: 0,
-            },
+              noLevelIncrease: 0,
+              belowThreshold: 0,
+              blockedByAemet: 0,
+              sendError: 0,
+              removedInvalidToken: 0,
+            },
           },
           cold: {
             lastValue: null,
             tokensSent: 0,
-            skipped: 0,
+            tokensSkipped: 0,
             reasons: {
               noRisk: 0,
               noLevelIncrease: 0,
@@ -1335,7 +1324,7 @@ exports.cronCheckWeatherRiskV2 = onSchedule(
           wind: {
             lastValue: null,
             tokensSent: 0,
-            skipped: 0,
+            tokensSkipped: 0,
             reasons: {
               noRisk: 0,
               noLevelIncrease: 0,
@@ -1369,7 +1358,7 @@ exports.cronCheckWeatherRiskV2 = onSchedule(
             const w = await getCachedWeather(sub.lat, sub.lon);
 
             if (!w || w.temp === undefined) {
-              console.warn("[WEATHER V2] invalid weather", {
+              console.warn("[WEATHER] dades invàlides, saltant usuari", {
                 docId: doc.id,
                 zoneKey,
               });
@@ -1383,29 +1372,18 @@ exports.cronCheckWeatherRiskV2 = onSchedule(
 
             if (isQuietHours(now, w.tzOffset)) {
               stats.quietHours++;
-
-              console.log("[WEATHER V2][QUIET HOURS]", {
-                docId: doc.id,
-                place,
-                zoneKey,
-              });
-
               return;
             }
 
             const updates = {};
 
-            // ───────── RESET DIARI REAL ─────────
+            // ───────── RESET DIARI INTEL·LIGENT (06:00 hora local) ─────────
             const { shouldReset, todayKey } = shouldRunDailyReset(
               now,
               w.tzOffset,
               sub.lastDailyResetDay,
               6
             );
-
-            let currentLastHeatLevel = Number(sub.lastHeatLevel ?? 0);
-            let currentLastColdLevel = Number(sub.lastColdLevel ?? 0);
-            let currentLastWindLevel = Number(sub.lastWindLevel ?? 0);
 
             if (shouldReset) {
               await doc.ref.set(
@@ -1418,13 +1396,14 @@ exports.cronCheckWeatherRiskV2 = onSchedule(
                 { merge: true }
               );
 
-              currentLastHeatLevel = 0;
-              currentLastColdLevel = 0;
-              currentLastWindLevel = 0;
+              sub.lastHeatLevel = 0;
+              sub.lastColdLevel = 0;
+              sub.lastWindLevel = 0;
+              sub.lastDailyResetDay = todayKey;
 
               stats.dailyResets++;
 
-              console.log("[WEATHER V2][DAILY RESET]", {
+              console.log("[WEATHER][DAILY RESET]", {
                 docId: doc.id,
                 place,
                 zoneKey,
@@ -1433,211 +1412,213 @@ exports.cronCheckWeatherRiskV2 = onSchedule(
             }
 
             // ───────── CALOR ─────────
-            const hi = w.temp < 18 ? w.temp : calcHI(w.temp, w.hum);
-            const heatInfo = levelFromINSST(hi);
-            const prevHeatLevel = currentLastHeatLevel;
+            const hi = w.temp < 18 ? w.temp : calcHI(w.temp, w.hum);
+            const heatInfo = levelFromINSST(hi);
+            const prevHeatLevel = Number(sub.lastHeatLevel ?? 0);
 
-            let aemetLevel = 0;
-            let aemetEvent = "";
+            let aemetLevel = 0;
+            let aemetEvent = "";
 
-            try {
-              const aemetSnap = await db
-                .collection("aemetZones")
-                .doc(zoneKey)
-                .get();
+            try {
+              const aemetSnap = await db.collection("aemetZones").doc(zoneKey).get();
 
-              if (aemetSnap.exists) {
-                const aemetData = aemetSnap.data() || {};
-                const updatedAt = Number(aemetData.updatedAt ?? 0);
-                const ageMinutes = (now - updatedAt) / 60000;
+              if (aemetSnap.exists) {
+                const aemetData = aemetSnap.data() || {};
+                const updatedAt = Number(aemetData.updatedAt ?? 0);
+                const ageMinutes = (now - updatedAt) / 60000;
 
-                if (ageMinutes <= 90) {
-                  aemetLevel = Number(aemetData.level ?? 0);
-                  aemetEvent = aemetData.event || "";
-                }
-              }
-            } catch (e) {
-              console.warn("[WEATHER V2][AEMET CHECK ERROR]", {
-                docId: doc.id,
-                zoneKey,
-                error: e.message,
-              });
-            }
+                if (ageMinutes <= 90) {
+                  aemetLevel = Number(aemetData.level ?? 0);
+                  aemetEvent = aemetData.event || "";
+                }
+              }
+            } catch (e) {
+              console.warn("[WEATHER][HEAT][AEMET CHECK ERROR]", {
+                docId: doc.id,
+                zoneKey,
+                error: e.message,
+              });
+            }
 
-            const aemetText = String(aemetEvent || "").toLowerCase();
+            const aemetText = String(aemetEvent || "").toLowerCase();
 
-            const shouldBlockHeatByAemet =
-              aemetLevel >= 2 ||
-              aemetText.includes("heat") ||
-              aemetText.includes("temperature") ||
-              aemetText.includes("high temperature") ||
-              aemetText.includes("calor") ||
-              aemetText.includes("temperatura");
+            const shouldBlockHeatByAemet =
+              aemetLevel >= 2 ||
+              aemetText.includes("heat") ||
+              aemetText.includes("temperature") ||
+              aemetText.includes("high temperature") ||
+              aemetText.includes("calor") ||
+              aemetText.includes("temperatura");
 
-            stats.heat.lastValue = hi;
+            stats.heat.lastValue = hi;
 
-            const heatLevelIncreases = shouldNotifyLevelIncrease(
-              prevHeatLevel,
-              heatInfo.level
-            );
+            console.log("[WEATHER][HEAT]", {
+              docId: doc.id,
+              place,
+              zoneKey,
+              temp: w.temp,
+              hum: w.hum,
+              hi,
+              prevLevel: prevHeatLevel,
+              nextLevel: heatInfo.level,
+              threshold: sub.threshold,
+              aemetLevel,
+              aemetEvent,
+              shouldBlockHeatByAemet,
+            });
 
-            const heatThresholdOk = meetsUserThreshold(
-              heatInfo.level,
-              sub.threshold
-            );
+            const heatLevelIncreases = shouldNotifyLevelIncrease(
+              prevHeatLevel,
+              heatInfo.level
+            );
 
-            let heatSent = false;
-            let heatCombinedSent = false;
+            const heatThresholdOk = meetsUserThreshold(heatInfo.level, sub.threshold);
 
-            if (!heatLevelIncreases) {
-              stats.heat.skipped++;
-              stats.heat.reasons.noLevelIncrease++;
-            } else if (!heatThresholdOk) {
-              stats.heat.skipped++;
-              stats.heat.reasons.belowThreshold++;
-            } else if (shouldBlockHeatByAemet) {
-              stats.heat.skipped++;
-              stats.heat.reasons.blockedByAemet++;
-            } else {
-              try {
-                let currentUvi = await getUVfromOpenWeather(sub.lat, sub.lon);
-                if (currentUvi == null) currentUvi = 0;
+            if (!heatLevelIncreases) {
+                      stats.heat.tokensSkipped++;
+                      stats.heat.reasons.noLevelIncrease++;
+                    } else if (!heatThresholdOk) {
+                      stats.heat.tokensSkipped++;
+                      stats.heat.reasons.belowThreshold++;
+                    } else {
+              try {
+                // 🔥 PRIORITAT AEMET SELECTIVA
+                // Només bloqueja calor si AEMET és nivell >= 2
+                // o si l'avís oficial és de calor/temperatura.
+                if (shouldBlockHeatByAemet) {
+                  console.log("[WEATHER][HEAT][SKIP AEMET PRIORITY]", {
+                    docId: doc.id,
+                    place,
+                    zoneKey,
+                    hi,
+                    heatLevel: heatInfo.level,
+                    aemetLevel,
+                    aemetEvent,
+                    shouldBlockHeatByAemet,
+                  });
 
-                const currentUvInfo = getUvInfo(currentUvi, {
-                  cloudiness: w.clouds,
-                  weatherMain: w.weatherMain,
-                });
+                  stats.heat.tokensSkipped++;
+                  stats.heat.reasons.blockedByAemet++;
+                } else {
+                  // 🔥 CONSULTAM UV PER COMBINAR
+                  let currentUvi = await getUVfromOpenWeather(sub.lat, sub.lon);
+                  if (currentUvi == null) currentUvi = 0;
 
-                const combined = buildCombinedRiskMessage({
-                  lang,
-                  uvInfo: currentUvInfo,
-                  uvi: currentUvi,
-                  heatInfo,
-                  hi,
-                  aemetLevel,
-                  aemetEvent,
-                });
+                  const currentUvInfo = getUvInfo(currentUvi, {
+                  cloudiness: w.clouds,
+                  weatherMain: w.weatherMain,
+                });
 
-                const isCombined =
-                  combined &&
-                  combined.type === "heat_uv" &&
-                  heatInfo.level > 0 &&
-                  currentUvInfo.level > 0;
+                  const combined = buildCombinedRiskMessage({
+                    lang,
+                    uvInfo: currentUvInfo,
+                    uvi: currentUvi,
+                    heatInfo,
+                    hi,
+                    aemetLevel,
+                    aemetEvent,
+                  });
 
-                if (isCombined) {
-                  await admin.messaging().send({
-                    token: sub.token,
-                    data: {
-                      title: combined.title,
-                      body: combined.body,
-                      icon: "https://thermosafe.app/icons/icon-192.png",
-                      badge: "https://thermosafe.app/icons/badge-72.png",
-                      tag: "thermosafe-combined",
-                      url: "https://thermosafe.app",
-                      type: "combined",
-                      lang,
-                      place: place || "",
-                      hi: String(Math.round(hi)),
-                      uvi: String(Math.round(currentUvi)),
-                      heatLevel: String(heatInfo.level),
-                      uvLevel: String(currentUvInfo.level),
-                    },
-                    webpush: {
-                      headers: {
-                        TTL: "3600",
-                        Urgency: "high",
-                      },
-                      fcmOptions: {
-                        link: "https://thermosafe.app",
-                      },
-                    },
-                  });
+                  const isCombined =
+                    combined &&
+                    combined.type === "heat_uv" &&
+                    heatInfo.level > 0 &&
+                    currentUvInfo.level > 0;
 
-                  updates.lastHeatAt = now;
-                  updates.lastHeatLevel = heatInfo.level;
-                  updates.lastUvAt = now;
-                  updates.lastUvLevel = currentUvInfo.level;
-                  updates.lastNotified = now;
+                  if (isCombined) {
+                    console.log("[WEATHER][COMBINED][SEND]", {
+                      docId: doc.id,
+                      place,
+                      hi,
+                      uvi: currentUvi,
+                    });
 
-                  heatSent = true;
-                  heatCombinedSent = true;
-                  stats.heat.tokensSent++;
-                  stats.heat.combinedSent++;
-                } else {
-                  await sendPush(
-                    sub.token,
-                    lang,
-                    heatInfo.level,
-                    hi,
-                    {
-                      ca: heatInfo.ca,
-                      es: heatInfo.es,
-                      eu: heatInfo.eu,
-                      gl: heatInfo.gl,
-                      en: heatInfo.en,
-                    },
-                    place
-                  );
+                    await admin.messaging().send({
+                      token: sub.token,
+                      data: {
+                        title: combined.title,
+                        body: combined.body,
+                        icon: "https://thermosafe.app/icons/icon-192.png",
+                        badge: "https://thermosafe.app/icons/badge-72.png",
+                        tag: "thermosafe-combined",
+                        url: "https://thermosafe.app",
+                        type: "combined",
+                        lang,
+                        place: place || "",
+                        hi: String(Math.round(hi)),
+                        uvi: String(Math.round(currentUvi)),
+                        heatLevel: String(heatInfo.level),
+                        uvLevel: String(currentUvInfo.level),
+                      },
+                      webpush: {
+                        headers: {
+                          TTL: "3600",
+                          Urgency: "high",
+                        },
+                        fcmOptions: {
+                          link: "https://thermosafe.app",
+                        },
+                      },
+                    });
 
-                  updates.lastHeatAt = now;
-                  updates.lastHeatLevel = heatInfo.level;
-                  updates.lastNotified = now;
+                    updates.lastHeatAt = now;
+                    updates.lastHeatLevel = heatInfo.level;
+                    updates.lastUvAt = now;
+                    updates.lastUvLevel = currentUvInfo.level;
+                    updates.lastNotified = now;
+                  } else {
+                    // 🔥 CALOR NORMAL
+                    await sendPush(
+                      sub.token,
+                      lang,
+                      heatInfo.level,
+                      hi,
+                      {
+                        ca: heatInfo.ca,
+                        es: heatInfo.es,
+                        eu: heatInfo.eu,
+                        gl: heatInfo.gl,
+                        en: heatInfo.en,
+                      },
+                      place
+                    );
 
-                  heatSent = true;
-                  stats.heat.tokensSent++;
-                }
+                    updates.lastHeatAt = now;
+                    updates.lastHeatLevel = heatInfo.level;
+                    updates.lastNotified = now;
+                  }
 
-                console.log("[WEATHER V2][HEAT SENT]", {
-                  docId: doc.id,
-                  place,
-                  zoneKey,
-                  hi,
-                  heatLevel: heatInfo.level,
-                  prevHeatLevel,
-                  combined: heatCombinedSent,
-                });
-              } catch (sendErr) {
-                const removed = await removeInvalidSub(
-                  doc.ref,
-                  doc.id,
-                  sendErr,
-                  "WEATHER-V2-HEAT"
-                );
+                  stats.heat.tokensSent++;
 
-                stats.heat.skipped++;
+                  console.log("[WEATHER][HEAT][SENT]", {
+                    docId: doc.id,
+                    place,
+                    hi,
+                    combined: isCombined,
+                  });
+                }
+              } catch (sendErr) {
+                const removed = await removeInvalidSub(
+                  doc.ref,
+                  doc.id,
+                  sendErr,
+                  "WEATHER-HEAT"
+                );
 
-                if (removed) {
-                  stats.heat.reasons.removedInvalidToken++;
-                  return;
-                }
+                stats.heat.tokensSkipped++;
 
-                stats.heat.reasons.sendError++;
-                throw sendErr;
-              }
-            }
+                if (removed) {
+                  stats.heat.reasons.removedInvalidToken++;
+                  return;
+                }
 
-            console.log("[WEATHER V2][HEAT]", {
-              docId: doc.id,
-              place,
-              zoneKey,
-              temp: w.temp,
-              hum: w.hum,
-              hi,
-              prevLevel: prevHeatLevel,
-              nextLevel: heatInfo.level,
-              threshold: sub.threshold,
-              aemetLevel,
-              aemetEvent,
-              shouldBlockHeatByAemet,
-              heatLevelIncreases,
-              heatThresholdOk,
-              heatSent,
-              heatCombinedSent,
-            });
+                stats.heat.reasons.sendError++;
+                throw sendErr;
+              }
+            }
 
             // ───────── FRED ─────────
             const windKmhExact = (w.wind ?? 0) * 3.6;
-
             const windChill =
               w.temp <= 10 && windKmhExact > 4.8
                 ? 13.12 +
@@ -1647,9 +1628,21 @@ exports.cronCheckWeatherRiskV2 = onSchedule(
                 : w.temp;
 
             const coldInfo = getColdInfo(windChill);
-            const prevColdLevel = currentLastColdLevel;
+            const prevColdLevel = Number(sub.lastColdLevel ?? 0);
 
             stats.cold.lastValue = windChill;
+
+            console.log("[WEATHER][COLD]", {
+              docId: doc.id,
+              place,
+              zoneKey,
+              temp: w.temp,
+              windKmh: windKmhExact,
+              windChill,
+              prevLevel: prevColdLevel,
+              nextLevel: coldInfo.level,
+              threshold: sub.threshold,
+            });
 
             const coldLevelIncreases = shouldNotifyLevelIncrease(
               prevColdLevel,
@@ -1661,51 +1654,42 @@ exports.cronCheckWeatherRiskV2 = onSchedule(
               sub.threshold
             );
 
-            let coldSent = false;
-
             if (coldInfo.level <= 0) {
-              stats.cold.skipped++;
+              stats.cold.tokensSkipped++;
               stats.cold.reasons.noRisk++;
             } else if (!coldLevelIncreases) {
-              stats.cold.skipped++;
+              stats.cold.tokensSkipped++;
               stats.cold.reasons.noLevelIncrease++;
             } else if (!coldThresholdOk) {
-              stats.cold.skipped++;
+              stats.cold.tokensSkipped++;
               stats.cold.reasons.belowThreshold++;
             } else {
               try {
-                await sendColdPush(
-                  sub.token,
-                  lang,
-                  coldInfo,
-                  windChill,
-                  place
-                );
+                await sendColdPush(sub.token, lang, coldInfo, windChill, place);
 
-                updates.lastColdAt = now;
-                updates.lastColdLevel = coldInfo.level;
-                updates.lastNotified = now;
+                updates.lastColdAt = now;
+                updates.lastColdLevel = coldInfo.level;
+                updates.lastNotified = now;
 
-                coldSent = true;
                 stats.cold.tokensSent++;
 
-                console.log("[WEATHER V2][COLD SENT]", {
+                console.log("[WEATHER][COLD][SENT]", {
                   docId: doc.id,
                   place,
                   zoneKey,
                   windChill,
-                  prevColdLevel,
-                  coldLevel: coldInfo.level,
+                  prevLevel: prevColdLevel,
+                  nextLevel: coldInfo.level,
                 });
               } catch (sendErr) {
                 const removed = await removeInvalidSub(
                   doc.ref,
                   doc.id,
                   sendErr,
-                  "WEATHER-V2-COLD"
+                  "WEATHER-COLD"
                 );
 
-                stats.cold.skipped++;
+                stats.cold.tokensSkipped++;
 
                 if (removed) {
                   stats.cold.reasons.removedInvalidToken++;
@@ -1717,28 +1701,23 @@ exports.cronCheckWeatherRiskV2 = onSchedule(
               }
             }
 
-            console.log("[WEATHER V2][COLD]", {
-              docId: doc.id,
-              place,
-              zoneKey,
-              temp: w.temp,
-              windKmh: windKmhExact,
-              windChill,
-              prevLevel: prevColdLevel,
-              nextLevel: coldInfo.level,
-              threshold: sub.threshold,
-              coldLevelIncreases,
-              coldThresholdOk,
-              coldSent,
-            });
-
             // ───────── VENT ─────────
             const windKmh = Math.round((w.wind ?? 0) * 3.6);
             const jobType = sub.jobType || "generic";
-            const windInfo = getWindInfo(windKmh, jobType);
-            const prevWindLevel = currentLastWindLevel;
+            const windInfo = getWindInfo(windKmh, jobType);
+            const prevWindLevel = Number(sub.lastWindLevel ?? 0);
 
             stats.wind.lastValue = windKmh;
+
+            console.log("[WEATHER][WIND]", {
+              docId: doc.id,
+              place,
+              zoneKey,
+              windKmh,
+              prevLevel: prevWindLevel,
+              nextLevel: windInfo.level,
+              threshold: sub.threshold,
+            });
 
             const windLevelIncreases = shouldNotifyLevelIncrease(
               prevWindLevel,
@@ -1750,52 +1729,42 @@ exports.cronCheckWeatherRiskV2 = onSchedule(
               sub.threshold
             );
 
-            let windSent = false;
-
             if (windInfo.level <= 0) {
-              stats.wind.skipped++;
+              stats.wind.tokensSkipped++;
               stats.wind.reasons.noRisk++;
             } else if (!windLevelIncreases) {
-              stats.wind.skipped++;
+              stats.wind.tokensSkipped++;
               stats.wind.reasons.noLevelIncrease++;
             } else if (!windThresholdOk) {
-              stats.wind.skipped++;
+              stats.wind.tokensSkipped++;
               stats.wind.reasons.belowThreshold++;
             } else {
               try {
-                await sendWindPush(
-                  sub.token,
-                  lang,
-                  windInfo,
-                  windKmh,
-                  place
-                );
+                await sendWindPush(sub.token, lang, windInfo, windKmh, place);
 
-                updates.lastWindAt = now;
-                updates.lastWindLevel = windInfo.level;
-                updates.lastNotified = now;
+                updates.lastWindAt = now;
+                updates.lastWindLevel = windInfo.level;
+                updates.lastNotified = now;
 
-                windSent = true;
                 stats.wind.tokensSent++;
 
-                console.log("[WEATHER V2][WIND SENT]", {
+                console.log("[WEATHER][WIND][SENT]", {
                   docId: doc.id,
                   place,
                   zoneKey,
                   windKmh,
-                  jobType,
-                  prevWindLevel,
-                  windLevel: windInfo.level,
+                  prevLevel: prevWindLevel,
+                  nextLevel: windInfo.level,
                 });
               } catch (sendErr) {
                 const removed = await removeInvalidSub(
                   doc.ref,
                   doc.id,
                   sendErr,
-                  "WEATHER-V2-WIND"
+                  "WEATHER-WIND"
                 );
 
-                stats.wind.skipped++;
+                stats.wind.tokensSkipped++;
 
                 if (removed) {
                   stats.wind.reasons.removedInvalidToken++;
@@ -1807,37 +1776,17 @@ exports.cronCheckWeatherRiskV2 = onSchedule(
               }
             }
 
-            console.log("[WEATHER V2][WIND]", {
-              docId: doc.id,
-              place,
-              zoneKey,
-              windKmh,
-              jobType,
-              prevLevel: prevWindLevel,
-              nextLevel: windInfo.level,
-              threshold: sub.threshold,
-              windLevelIncreases,
-              windThresholdOk,
-              windSent,
-            });
-
             if (Object.keys(updates).length > 0) {
-              await doc.ref.set(updates, { merge: true });
-            }
+              await doc.ref.set(updates, { merge: true });
+            }
+
           } catch (e) {
             const stats = getZoneStats(zoneKey, place);
-
-            console.error("[WEATHER V2] token error", {
-              docId: doc.id,
-              zoneKey,
-              place,
-              error: e.message,
-              stack: e.stack,
-            });
-
             stats.heat.reasons.sendError++;
             stats.cold.reasons.sendError++;
             stats.wind.reasons.sendError++;
+
+            console.error("cron weather error", doc.id, e);
           }
         })()
       );
@@ -1846,15 +1795,11 @@ exports.cronCheckWeatherRiskV2 = onSchedule(
     await Promise.allSettled(tasks);
 
     for (const stats of zoneStats.values()) {
-      console.log("[WEATHER V2 SUMMARY]", stats);
+      console.log("[WEATHER SENT SUMMARY]", stats);
     }
 
-    console.log("[WEATHER V2] done", {
-      zones: zoneStats.size,
-      subs: snap.size,
-    });
-  }
-);
+    return null;
+  });
 
 // ─────────────────────────────────────────────
 // ☀️ CRON UV ROBUST — OpenUV principal + fallback OpenWeather
@@ -1949,27 +1894,31 @@ exports.cronCheckUvRisk = functions
             );
 
             if (shouldReset) {
-              uvLevelsByZone = {};
+              uvLevelsByZone = {};
 
-              await doc.ref.set(
-                {
-                  lastUvLevel: 0,
-                  lastUvAt: 0,
-                  lastUvResetDay: todayKey,
-                  uvLevelsByZone: {},
-                },
-                { merge: true }
-              );
+              await doc.ref.set(
+                {
+                  lastUvLevel: 0,
+                  lastUvAt: 0,
+                  lastUvResetDay: todayKey,
+                  uvLevelsByZone: {},
+                },
+                { merge: true }
+              );
 
-              console.log("[UV V2][DAILY RESET][ALL ZONES]", {
-                docId: doc.id,
-                place,
-                zoneKey,
-                todayKey,
-              });
+              sub.lastUvLevel = 0;
+              sub.lastUvAt = 0;
+              sub.lastUvResetDay = todayKey;
 
-              return;
-            }
+              stats.reasons.dailyReset++;
+
+              console.log("[UV][DAILY RESET][ALL ZONES]", {
+                docId: doc.id,
+                place,
+                zoneKey,
+                todayKey,
+              });
+            }
 
             const localHour = new Date(now + w.tzOffset * 1000).getUTCHours();
             const isNight = localHour < 7 || localHour >= 20;
@@ -3034,473 +2983,6 @@ exports.runUvNowV2 = onRequest(
         error: e?.message || "manual uv v2 error",
       });
     }
-  }
-);
-
-// ─────────────────────────────────────────────
-// ☀️ CRON UV — V2 REAL
-// Migració a Cloud Functions v2
-// ENVIA notificacions push
-// ESCRIU a Firestore
-// Manté la lògica robusta de V1:
-// - Agrupació/cache per zones
-// - uvLevelsByZone
-// - Reset diari UV només a les 06:00 hora local
-// - Nit / quiet hours sense posar nivells a 0
-// - Bloqueig per AEMET
-// - Missatge combinat calor + UV
-// - Eliminació de tokens invàlids
-// ─────────────────────────────────────────────
-
-exports.cronCheckUvRiskV2 = onSchedule(
-  {
-    schedule: "every 60 minutes",
-    timeZone: "Europe/Madrid",
-    region: REGION,
-    secrets: [OPENUV_KEY, OPENWEATHER_KEY],
-  },
-  async () => {
-    const now = Date.now();
-    const snap = await db.collection("subs").limit(1000).get();
-
-    console.log("[UV V2 REAL] start");
-
-    if (snap.empty) {
-      console.log("[UV V2 REAL] no subs");
-      return null;
-    }
-
-    const tasks = [];
-    const weatherCache = new Map();
-    const zoneStats = new Map();
-
-    function makeZoneKey(lat, lon) {
-      return `${Number(lat).toFixed(1)},${Number(lon).toFixed(1)}`;
-    }
-
-    function getZoneStats(zoneKey, place = "") {
-      if (!zoneStats.has(zoneKey)) {
-        zoneStats.set(zoneKey, {
-          zoneKey,
-          place,
-          tokensTotal: 0,
-          tokensSent: 0,
-          tokensSkipped: 0,
-          lastUvi: null,
-          reasons: {
-            night: 0,
-            quietHours: 0,
-            noData: 0,
-            noLevelIncrease: 0,
-            belowThreshold: 0,
-            blockedByAemet: 0,
-            dailyReset: 0,
-            sendError: 0,
-            removedInvalidToken: 0,
-          },
-        });
-      }
-
-      const stats = zoneStats.get(zoneKey);
-      if (!stats.place && place) stats.place = place;
-      return stats;
-    }
-
-    for (const doc of snap.docs) {
-      const sub = doc.data();
-      const lang = normalizeLang(sub.lang);
-
-      tasks.push(
-        (async () => {
-          let zoneKey = "unknown";
-          let place = "";
-
-          try {
-            zoneKey = makeZoneKey(sub.lat, sub.lon);
-            const stats = getZoneStats(zoneKey);
-            stats.tokensTotal++;
-
-            let wPromise = weatherCache.get(zoneKey);
-
-            if (!wPromise) {
-              wPromise = getCachedWeather(sub.lat, sub.lon);
-              weatherCache.set(zoneKey, wPromise);
-            }
-
-            const w = await wPromise;
-
-            place = sub.place || w.place || "";
-            if (!stats.place && place) stats.place = place;
-
-            let uvLevelsByZone =
-              sub.uvLevelsByZone && typeof sub.uvLevelsByZone === "object"
-                ? { ...sub.uvLevelsByZone }
-                : {};
-
-            const { shouldReset, todayKey } = shouldRunDailyReset(
-              now,
-              w.tzOffset,
-              sub.lastUvResetDay,
-              6
-            );
-
-            // ───────── RESET DIARI REAL — NOMÉS A LES 06:00 ─────────
-            if (shouldReset) {
-              uvLevelsByZone = {};
-
-              await doc.ref.set(
-                {
-                  lastUvLevel: 0,
-                  lastUvAt: 0,
-                  lastUvResetDay: todayKey,
-                  uvLevelsByZone: {},
-                },
-                { merge: true }
-              );
-
-              sub.lastUvLevel = 0;
-              sub.lastUvAt = 0;
-              sub.lastUvResetDay = todayKey;
-
-              stats.reasons.dailyReset++;
-
-              console.log("[UV V2][DAILY RESET][ALL ZONES]", {
-                docId: doc.id,
-                place,
-                zoneKey,
-                todayKey,
-              });
-            }
-
-            const localHour = new Date(now + w.tzOffset * 1000).getUTCHours();
-            const isNight = localHour < 7 || localHour >= 20;
-
-            console.log("[UV V2 DAYCHECK]", {
-              docId: doc.id,
-              place,
-              zoneKey,
-              localHour,
-              isNight,
-            });
-
-            // IMPORTANT:
-            // De nit NO posam lastUvLevel a 0.
-            // El nivell només es reinicia al reset diari de les 06:00.
-            if (isNight) {
-              stats.tokensSkipped++;
-              stats.reasons.night++;
-
-              console.log("[UV V2][NIGHT - KEEP PREVIOUS LEVEL]", {
-                docId: doc.id,
-                place,
-                zoneKey,
-                uvLevelsByZone,
-              });
-
-              return;
-            }
-
-            const quiet = isQuietHours(now, w.tzOffset);
-
-            if (quiet) {
-              stats.tokensSkipped++;
-              stats.reasons.quietHours++;
-              return;
-            }
-
-            let uvi = await getCachedUV(sub.lat, sub.lon);
-
-            console.log("[UV V2 CACHE ZONE]", {
-              zoneKey,
-              uvi,
-              sampleLat: sub.lat,
-              sampleLon: sub.lon,
-            });
-
-            if (uvi == null) {
-              console.log("[UV V2 FALLBACK] trying OpenWeather", {
-                zoneKey,
-                sampleLat: sub.lat,
-                sampleLon: sub.lon,
-              });
-
-              const fallbackUvi = await getUVfromOpenWeather(sub.lat, sub.lon);
-
-              if (fallbackUvi != null) {
-                uvi = fallbackUvi;
-
-                const key = locationKey(sub.lat, sub.lon);
-
-                await db.collection("uvCache").doc(key).set(
-                  {
-                    key,
-                    lat: Number(sub.lat),
-                    lon: Number(sub.lon),
-                    uvi,
-                    source: "openweather_fallback",
-                    updatedAt: Date.now(),
-                  },
-                  { merge: true }
-                );
-
-                console.log("[UV V2 CACHE SAVE][fallback]", {
-                  key,
-                  uvi,
-                  source: "openweather_fallback",
-                });
-              }
-            }
-
-            if (uvi == null) {
-              console.warn("[UV V2 NO DATA AFTER FALLBACK]", {
-                zoneKey,
-                sampleLat: sub.lat,
-                sampleLon: sub.lon,
-              });
-
-              stats.reasons.noData++;
-              uvi = 0;
-            }
-
-            stats.lastUvi = uvi;
-
-            const info = getUvInfo(uvi, {
-              cloudiness: w.clouds,
-              weatherMain: w.weatherMain,
-            });
-
-            const prevLevel = Number(uvLevelsByZone[zoneKey] ?? 0);
-
-            const hi = w.temp < 18 ? w.temp : calcHI(w.temp, w.hum);
-            const heatInfo = levelFromINSST(hi);
-
-            let aemetLevel = 0;
-            let aemetEvent = "";
-
-            try {
-              const aemetSnap = await db
-                .collection("aemetZones")
-                .doc(zoneKey)
-                .get();
-
-              if (aemetSnap.exists) {
-                const aemetData = aemetSnap.data() || {};
-                const updatedAt = Number(aemetData.updatedAt ?? 0);
-                const ageMinutes = (now - updatedAt) / 60000;
-
-                if (ageMinutes <= 90) {
-                  aemetLevel = Number(aemetData.level ?? 0);
-                  aemetEvent = aemetData.event || "";
-                }
-              }
-            } catch (e) {
-              console.warn("[UV V2][AEMET CHECK ERROR]", {
-                docId: doc.id,
-                zoneKey,
-                error: e.message,
-              });
-            }
-
-            const aemetText = String(aemetEvent || "").toLowerCase();
-
-            const shouldBlockUvByAemet =
-              aemetLevel >= 2 ||
-              aemetText.includes("heat") ||
-              aemetText.includes("temperature") ||
-              aemetText.includes("high temperature") ||
-              aemetText.includes("calor") ||
-              aemetText.includes("temperatura");
-
-            console.log("[UV V2]", {
-              docId: doc.id,
-              place,
-              zoneKey,
-              uvi,
-              clouds: w.clouds,
-              weatherMain: w.weatherMain,
-              hi,
-              prevLevel,
-              nextLevel: info.level,
-              heatLevel: heatInfo.level,
-              threshold: sub.threshold,
-              aemetLevel,
-              aemetEvent,
-              shouldBlockUvByAemet,
-              uvLevelsByZone,
-            });
-
-            const updates = {};
-
-            const levelIncreases = shouldNotifyLevelIncrease(
-              prevLevel,
-              info.level
-            );
-
-            const thresholdOk = meetsUserThreshold(info.level, sub.threshold);
-
-            // IMPORTANT:
-            // Si el UV baixa a 0 al capvespre, NO esborrem lastUvLevel
-            // ni uvLevelsByZone. El reset real serà demà a les 06:00.
-            if (info.level <= 0) {
-              stats.tokensSkipped++;
-              stats.reasons.noLevelIncrease++;
-
-              console.log("[UV V2][NO RISK - KEEP PREVIOUS LEVEL]", {
-                docId: doc.id,
-                place,
-                zoneKey,
-                uvi,
-                prevLevel,
-                nextLevel: info.level,
-                uvLevelsByZone,
-              });
-            } else if (!levelIncreases) {
-              stats.tokensSkipped++;
-              stats.reasons.noLevelIncrease++;
-            } else if (!thresholdOk) {
-              stats.tokensSkipped++;
-              stats.reasons.belowThreshold++;
-            } else if (shouldBlockUvByAemet) {
-              stats.tokensSkipped++;
-              stats.reasons.blockedByAemet++;
-
-              console.log("[UV V2 SKIP AEMET HIGHER]", {
-                docId: doc.id,
-                place,
-                zoneKey,
-                uvi,
-                uvLevel: info.level,
-                prevLevel,
-                aemetLevel,
-                aemetEvent,
-                shouldBlockUvByAemet,
-              });
-            } else {
-              try {
-                const combined = buildCombinedRiskMessage({
-                  lang,
-                  uvInfo: info,
-                  uvi,
-                  heatInfo,
-                  hi,
-                  aemetLevel,
-                  aemetEvent,
-                });
-
-                const isCombined =
-                  combined &&
-                  combined.type === "heat_uv" &&
-                  info.level > 0 &&
-                  heatInfo.level > 0;
-
-                if (isCombined) {
-                  console.log("[UV V2][COMBINED][SEND]", {
-                    docId: doc.id,
-                    place,
-                    zoneKey,
-                    uvi,
-                    hi,
-                    uvLevel: info.level,
-                    heatLevel: heatInfo.level,
-                  });
-
-                  await admin.messaging().send({
-                    token: sub.token,
-                    data: {
-                      title: combined.title,
-                      body: combined.body,
-                      icon: "https://thermosafe.app/icons/icon-192.png",
-                      badge: "https://thermosafe.app/icons/badge-72.png",
-                      tag: "thermosafe-combined",
-                      url: "https://thermosafe.app",
-                      type: "combined",
-                      lang,
-                      place: place || "",
-                      uvi: String(Math.round(uvi)),
-                      hi: String(Math.round(hi)),
-                      uvLevel: String(info.level),
-                      heatLevel: String(heatInfo.level),
-                    },
-                    webpush: {
-                      headers: {
-                        TTL: "3600",
-                        Urgency: "high",
-                      },
-                      fcmOptions: {
-                        link: "https://thermosafe.app",
-                      },
-                    },
-                  });
-
-                  updates.lastHeatAt = now;
-                  updates.lastHeatLevel = heatInfo.level;
-                } else {
-                  await sendUvPush(sub.token, lang, info, uvi, place);
-                }
-
-                uvLevelsByZone[zoneKey] = info.level;
-
-                updates.lastUvLevel = info.level;
-                updates.lastUvAt = now;
-                updates.lastUvResetDay = todayKey;
-                updates.uvLevelsByZone = uvLevelsByZone;
-                updates.lastNotified = now;
-
-                stats.tokensSent++;
-
-                console.log("[UV V2 SENT]", {
-                  docId: doc.id,
-                  place,
-                  zoneKey,
-                  uvi,
-                  clouds: w.clouds,
-                  weatherMain: w.weatherMain,
-                  prevLevel,
-                  nextLevel: info.level,
-                  combined: isCombined,
-                  uvLevelsByZone,
-                });
-              } catch (sendErr) {
-                const removed = await removeInvalidSub(
-                  doc.ref,
-                  doc.id,
-                  sendErr,
-                  "UV V2"
-                );
-
-                stats.tokensSkipped++;
-
-                if (removed) {
-                  stats.reasons.removedInvalidToken++;
-                  return;
-                }
-
-                stats.reasons.sendError++;
-                throw sendErr;
-              }
-            }
-
-            if (Object.keys(updates).length > 0) {
-              await doc.ref.set(updates, { merge: true });
-            }
-          } catch (e) {
-            const stats = getZoneStats(zoneKey, place);
-            stats.reasons.sendError++;
-
-            console.error("cron uv v2 error", doc.id, e);
-          }
-        })()
-      );
-    }
-
-    await Promise.allSettled(tasks);
-
-    for (const stats of zoneStats.values()) {
-      console.log("[UV V2 SENT SUMMARY]", stats);
-    }
-
-    console.log("[UV V2 REAL] done");
-    return null;
   }
 );
 
