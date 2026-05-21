@@ -1531,6 +1531,7 @@ return (
 <TopAlertBanner
   primary={primary}
   heatRisk={heatRisk}
+  activityLevel={heldActivityLevel}
   uvi={uvi}
   day={day}
   weatherMain={weatherMain}

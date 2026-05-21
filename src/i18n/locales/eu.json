@@ -337,5 +337,6 @@
   "uvHigh": "UV indize altua. Babes handia.",
   "uvVeryHigh": "UV indize oso altua. Eguzki-babesa ezinbestekoa!",
   "uvExtreme": "🚨 UV MUTURREKOA (11+) — Saihestu esposizio zuzena",
-  "uv_source_note": "UV erreferentzia-datuak (OpenUV/NASA). Orduaren eta iturriaren arabera alda daitezke."
+  "uv_source_note": "UV erreferentzia-datuak (OpenUV/NASA). Orduaren eta iturriaren arabera alda daitezke.",
+  "alert_extreme_activity": "🚨 Bero arrisku muturrekoa jarduera biziaren ondorioz. Ahalegina etetea, hidratatzea eta leku fresko batean atseden hartzea gomendatzen da."
 }

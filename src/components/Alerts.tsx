@@ -3,14 +3,22 @@ import { useTranslation } from "react-i18next";
 import type { HeatRisk } from "../utils/heatRisk";
 
 interface Props {
-  hi: number | null;          // index de calor
-  irr: number | null;         // irradiància solar W/m2
-  uvi: number | null;         // índex UV
-  heatRisk: HeatRisk | null;  // resultat combinat (inclou activitat)
+  hi: number | null; // index de calor
+  irr: number | null; // irradiància solar W/m2
+  uvi: number | null; // índex UV
+  heatRisk: HeatRisk | null; // resultat combinat (inclou activitat)
+  activityLevel: string;
   loading: boolean;
 }
 
-export default function Alerts({ hi, irr, uvi, heatRisk, loading }: Props) {
+export default function Alerts({
+  hi,
+  irr,
+  uvi,
+  heatRisk,
+  activityLevel,
+  loading,
+}: Props) {
   const { t } = useTranslation();
 
   return (
@@ -19,7 +27,11 @@ export default function Alerts({ hi, irr, uvi, heatRisk, loading }: Props) {
       {/* 🔥 ALERTA PER CALOR */}
       {hi !== null && hi >= 18 && heatRisk?.isHigh && (
         <div className="alert-banner">
-          {heatRisk.isExtreme ? t("alert_extreme") : t("alertRisk")}
+          {heatRisk.isExtreme
+            ? activityLevel === "high"
+              ? t("alert_extreme_activity")
+              : t("alert_extreme")
+            : t("alertRisk")}
         </div>
       )}
 

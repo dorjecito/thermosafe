@@ -4,6 +4,7 @@ import React, { useEffect, useMemo, useState } from "react";
 type Props = {
   primary: any;
   heatRisk: any;
+  activityLevel: "rest" | "low" | "moderate" | "high" | "unknown";
   uvi: number | null;
   day: boolean;
   weatherMain: string | null;
@@ -17,6 +18,7 @@ type Props = {
 export default function TopAlertBanner({
   primary,
   heatRisk,
+  activityLevel,
   uvi,
   day,
   weatherMain,
@@ -34,7 +36,12 @@ export default function TopAlertBanner({
       return {
         severity: heatRisk.isExtreme ? 3 : 2,
         key: `heat-${heatRisk.isExtreme ? "extreme" : "high"}`,
-        content: heatRisk.isExtreme ? t("alert_extreme") : t("alertRisk"),
+        content:
+          heatRisk.isExtreme
+            ? activityLevel === "high"
+              ? t("alert_extreme_activity")
+              : t("alert_extreme")
+            : t("alertRisk"),
         pulse: heatRisk.isExtreme,
       };
     }
@@ -87,7 +94,19 @@ export default function TopAlertBanner({
     }
 
     return null;
-  }, [primary, heatRisk, uvi, day, weatherMain, clouds, irr, t, UV_HIGH, UV_EXTREME]);
+  }, [
+    primary,
+    heatRisk,
+    activityLevel,
+    uvi,
+    day,
+    weatherMain,
+    clouds,
+    irr,
+    t,
+    UV_HIGH,
+    UV_EXTREME,
+  ]);
 
   useEffect(() => {
     const nextSeverity = bannerState?.severity ?? 0;
@@ -107,7 +126,9 @@ export default function TopAlertBanner({
       className="top-alert-banner-wrap alert-banner-enter"
     >
       <div
-        className={`alert-banner ${bannerState.pulse ? "alert-banner-pulse" : ""}`}
+        className={`alert-banner ${
+          bannerState.pulse ? "alert-banner-pulse" : ""
+        }`}
       >
         {typeof bannerState.content === "string" ? (
           <p>{bannerState.content}</p>
