@@ -394,33 +394,50 @@ const {
 
 const activityLevelStable = useStableValue(activityLevel, 800);
 const activityDeltaStable = useStableValue(activityDelta, 800);
-
-type ActivityLevel = "rest" | "low" | "moderate" | "high" | "unknown";
-
+// ⏱️ Manté activitat uns minuts encara que l’usuari s’aturi
 const ACTIVITY_HOLD_MS = 3 * 60 * 1000;
 
-const [heldActivityLevel, setHeldActivityLevel] =
-  useState<ActivityLevel>("rest");
+const [heldActivityLevel, setHeldActivityLevel] = useState<
+  "rest" | "low" | "moderate" | "high" | "unknown"
+>(
+  activityLevelStable as
+    | "rest"
+    | "low"
+    | "moderate"
+    | "high"
+    | "unknown"
+);
 
 const [lastActiveAt, setLastActiveAt] = useState(Date.now());
 
 useEffect(() => {
   const now = Date.now();
-  const level = activityLevelStable as ActivityLevel;
 
-  if (level !== "rest" && level !== "unknown") {
-    setHeldActivityLevel(level);
+  // Si hi ha activitat real, guarda-la
+  if (activityLevelStable !== "rest") {
+    setHeldActivityLevel(
+      activityLevelStable as
+        | "rest"
+        | "low"
+        | "moderate"
+        | "high"
+        | "unknown"
+    );
+
     setLastActiveAt(now);
     return;
   }
 
+  // Temps restant abans de tornar a "repòs"
   const remaining = ACTIVITY_HOLD_MS - (now - lastActiveAt);
 
+  // Si ja ha passat el temps, passa a repòs
   if (remaining <= 0) {
     setHeldActivityLevel("rest");
     return;
   }
 
+  // Espera el temps restant abans de posar "repòs"
   const timer = window.setTimeout(() => {
     setHeldActivityLevel("rest");
   }, remaining);
