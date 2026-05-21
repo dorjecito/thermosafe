@@ -395,50 +395,32 @@ const {
 const activityLevelStable = useStableValue(activityLevel, 800);
 const activityDeltaStable = useStableValue(activityDelta, 800);
 
-// ⏱️ Manté activitat uns minuts encara que l’usuari s’aturi
+type ActivityLevel = "rest" | "low" | "moderate" | "high" | "unknown";
+
 const ACTIVITY_HOLD_MS = 3 * 60 * 1000;
 
-const [heldActivityLevel, setHeldActivityLevel] = useState<
-  "rest" | "low" | "moderate" | "high" | "unknown"
->(
-  activityLevelStable as
-    | "rest"
-    | "low"
-    | "moderate"
-    | "high"
-    | "unknown"
-);
+const [heldActivityLevel, setHeldActivityLevel] =
+  useState<ActivityLevel>("rest");
 
 const [lastActiveAt, setLastActiveAt] = useState(Date.now());
 
 useEffect(() => {
   const now = Date.now();
+  const level = activityLevelStable as ActivityLevel;
 
-  // Si hi ha activitat real, guarda-la
-  if (activityLevelStable !== "rest") {
-    setHeldActivityLevel(
-      activityLevelStable as
-        | "rest"
-        | "low"
-        | "moderate"
-        | "high"
-        | "unknown"
-    );
-
+  if (level !== "rest" && level !== "unknown") {
+    setHeldActivityLevel(level);
     setLastActiveAt(now);
     return;
   }
 
-  // Temps restant abans de tornar a "repòs"
   const remaining = ACTIVITY_HOLD_MS - (now - lastActiveAt);
 
-  // Si ja ha passat el temps, passa a repòs
   if (remaining <= 0) {
     setHeldActivityLevel("rest");
     return;
   }
 
-  // Espera el temps restant abans de posar "repòs"
   const timer = window.setTimeout(() => {
     setHeldActivityLevel("rest");
   }, remaining);
@@ -1479,47 +1461,47 @@ return (
     </p>
   )}
 
-    <button
-      onClick={() => {
-        if (activityEnabled) deactivate();
-        else activate();
-      }}
-      className="btn-activity"
-      style={{
-        backgroundColor: activityEnabled
-          ? ACTIVITY_COLORS[heldActivityLevel]
-          : "#555",
-        color: "white",
-        padding: "0.75rem 0.9rem",
-        borderRadius: "6px",
-        border: "none",
-        cursor: "pointer",
-        fontWeight: 600,
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        gap: "0.4rem",
-        flex: "1 1 220px",
-        maxWidth: "100%",
-        whiteSpace: "normal",
-        textAlign: "center",
-        lineHeight: 1.25,
-        minHeight: "52px",
-        width: "100%",
-      }}
-    >
-      {activityEnabled ? (
-        <>
-          {ACTIVITY_ICONS[heldActivityLevel]}
-          {t("activity.active_label")}: {t(`activity.${heldActivityLevel}`)}
-          ({activityDeltaStable}°C {t("activity.extra")})
-        </>
-      ) : (
-        <>
-          💤 {t("activity.inactive")}
-        </>
-      )}
-    </button>
+  <button
+    onClick={() => {
+      if (activityEnabled) deactivate();
+      else activate();
+    }}
+    className="btn-activity"
+    style={{
+      backgroundColor: activityEnabled
+        ? ACTIVITY_COLORS[activityLevelStable]
+        : "#555",
+      color: "white",
+      padding: "0.75rem 0.9rem",
+      borderRadius: "6px",
+      border: "none",
+      cursor: "pointer",
+      fontWeight: 600,
+      display: "flex",
+      alignItems: "center",
+      justifyContent: "center",
+      gap: "0.4rem",
+      flex: "1 1 220px",
+      maxWidth: "100%",
+      whiteSpace: "normal",
+      textAlign: "center",
+      lineHeight: 1.25,
+      minHeight: "52px",
+      width:"100%",
+    }}
+  >
+    {activityEnabled ? (
+      <>
+        {ACTIVITY_ICONS[activityLevelStable]}
+        {t("activity.active_label")}: {t(`activity.${activityLevelStable}`)}
+        ({activityDeltaStable}°C {t("activity.extra")})
+      </>
+    ) : (
+      <>
+        💤 {t("activity.inactive")}
+      </>
+    )}
+  </button>
 
   {activityError && (
     <p style={{ color: "salmon", marginTop: "0.25rem", width: "100%" }}>
@@ -1531,7 +1513,6 @@ return (
 <TopAlertBanner
   primary={primary}
   heatRisk={heatRisk}
-  activityLevel={heldActivityLevel}
   uvi={uvi}
   day={day}
   weatherMain={weatherMain}

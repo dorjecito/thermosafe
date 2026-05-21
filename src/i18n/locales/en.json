@@ -370,6 +370,5 @@
   "uvHigh": "High UV index. Strong protection advised.",
   "uvVeryHigh": "Very high UV index. Sun protection is essential!",
   "uvExtreme": "🚨 EXTREME UV (11+) — Avoid direct exposure",
-  "uv_source_note": "Reference UV data (OpenUV/NASA). Values may vary by time and source.",
-  "alert_extreme_activity": "🚨 Extreme heat risk during intense activity. It is recommended to stop exertion, hydrate and rest in a cool area."
+  "uv_source_note": "Reference UV data (OpenUV/NASA). Values may vary by time and source."
 }

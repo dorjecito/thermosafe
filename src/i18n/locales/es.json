@@ -354,6 +354,5 @@
   "uvHigh": "Índice UV alto. Protección elevada.",
   "uvVeryHigh": "Índice UV muy alto. ¡Protección solar imprescindible!",
   "uvExtreme": "🚨 UV EXTREMO (11+) — Evita exposición directa",
-  "uv_source_note": "Datos UV de referencia (OpenUV/NASA). Pueden variar según la hora y la fuente.",
-  "alert_extreme_activity": "🚨 Riesgo extremo por calor durante actividad intensa. Recomendable interrumpir el esfuerzo, hidratarse y descansar en una zona fresca."
+  "uv_source_note": "Datos UV de referencia (OpenUV/NASA). Pueden variar según la hora y la fuente."
 }
