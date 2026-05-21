@@ -1042,7 +1042,7 @@ const windText16 =
 const risk = temp != null ? getThermalRisk(temp) : "cap";
 
 // 🔥 Calcular risc de calor ajustat per activitat (rest, walk, moderate, intense)
-const heatRisk = hi !== null ? getHeatRisk(hi, activityLevel) : null;
+const heatRisk = hi !== null ? getHeatRisk(hi, activityLevelStable) : null;
 
 const nowTs = Math.floor(Date.now() / 1000);
 

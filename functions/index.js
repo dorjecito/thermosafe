@@ -1381,56 +1381,58 @@ exports.cronCheckWeatherRiskV2 = onSchedule(
             place = sub.place || w.place || "";
             if (!stats.place && place) stats.place = place;
 
-            if (isQuietHours(now, w.tzOffset)) {
-              stats.quietHours++;
-
-              console.log("[WEATHER V2][QUIET HOURS]", {
-                docId: doc.id,
-                place,
-                zoneKey,
-              });
-
-              return;
-            }
-
-            const updates = {};
-
             // ───────── RESET DIARI REAL ─────────
-            const { shouldReset, todayKey } = shouldRunDailyReset(
-              now,
-              w.tzOffset,
-              sub.lastDailyResetDay,
-              6
-            );
+              const { shouldReset, todayKey } = shouldRunDailyReset(
+                now,
+                w.tzOffset,
+                sub.lastDailyResetDay,
+                6
+              );
 
-            let currentLastHeatLevel = Number(sub.lastHeatLevel ?? 0);
-            let currentLastColdLevel = Number(sub.lastColdLevel ?? 0);
-            let currentLastWindLevel = Number(sub.lastWindLevel ?? 0);
+              let currentLastHeatLevel = Number(sub.lastHeatLevel ?? 0);
+              let currentLastColdLevel = Number(sub.lastColdLevel ?? 0);
+              let currentLastWindLevel = Number(sub.lastWindLevel ?? 0);
 
-            if (shouldReset) {
-              await doc.ref.set(
-                {
-                  lastHeatLevel: 0,
-                  lastColdLevel: 0,
-                  lastWindLevel: 0,
-                  lastDailyResetDay: todayKey,
-                },
-                { merge: true }
-              );
+              if (shouldReset) {
+                await doc.ref.set(
+                  {
+                    lastHeatLevel: 0,
+                    lastColdLevel: 0,
+                    lastWindLevel: 0,
+                    lastDailyResetDay: todayKey,
+                  },
+                  { merge: true }
+                );
 
-              currentLastHeatLevel = 0;
-              currentLastColdLevel = 0;
-              currentLastWindLevel = 0;
+                currentLastHeatLevel = 0;
+                currentLastColdLevel = 0;
+                currentLastWindLevel = 0;
 
-              stats.dailyResets++;
+                stats.dailyResets++;
 
-              console.log("[WEATHER V2][DAILY RESET]", {
-                docId: doc.id,
-                place,
-                zoneKey,
-                todayKey,
-              });
-            }
+                console.log("[WEATHER V2][DAILY RESET]", {
+                  docId: doc.id,
+                  place,
+                  zoneKey,
+                  todayKey,
+                });
+              }
+
+              // ───────── QUIET HOURS ─────────
+              // IMPORTANT:
+              // El reset ja s'ha executat abans.
+              // Ara sí podem sortir sense bloquejar el reset diari.
+              if (isQuietHours(now, w.tzOffset)) {
+                stats.quietHours++;
+
+                console.log("[WEATHER V2][QUIET HOURS]", {
+                  docId: doc.id,
+                  place,
+                  zoneKey,
+                });
+
+                return;
+              }
 
             // ───────── CALOR ─────────
             const hi = w.temp < 18 ? w.temp : calcHI(w.temp, w.hum);
