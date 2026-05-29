@@ -22,6 +22,7 @@ type PrimaryStatusBlockArgs = {
   windRisk: string | null;
   uvi: number | null;
   day: boolean;
+  isLateDay?: boolean;
   primaryAdvice: string | null;
   contextualUVMessage: string;
   t: TFunctionLike;
@@ -42,6 +43,7 @@ export function getPrimaryStatusBlock({
   windRisk,
   uvi,
   day,
+  isLateDay = false,
   primaryAdvice,
   contextualUVMessage,
   t,
@@ -97,6 +99,8 @@ export function getPrimaryStatusBlock({
 
   // 🔥 CALOR
   if (primary.kind === "heat") {
+    const isLowHeat = primary.severity <= 1;
+
     if (heatRisk?.isExtreme) {
       return {
         icon: "⛔",
@@ -131,14 +135,40 @@ export function getPrimaryStatusBlock({
       };
     }
 
+    if (isLowHeat) {
+      return {
+        icon: "🟡",
+        title: day
+          ? isLateDay
+            ? "Temperatura encara elevada"
+            : "Precaució lleu per calor"
+          : "Temperatura nocturna elevada",
+        text: day
+          ? isLateDay
+            ? "El sol ja baixa, però la sensació tèrmica encara pot cansar. Hidrata’t i evita esforços innecessaris."
+            : "La sensació tèrmica és moderadament elevada. Hidrata’t i adapta l’activitat si mantens esforç físic."
+          : tr(
+              "officialAdviceDynamic.heat.moderate_night",
+              "La temperatura es manté elevada durant la nit. Hidrata’t, ventila els espais i evita esforços innecessaris."
+            ),
+        className: "status-card status-warning",
+      };
+    }
+
     return {
       icon: "🟠",
-      title: day ? "Risc moderat per calor" : "Temperatura nocturna elevada",
+      title: day
+        ? isLateDay
+          ? "Calor encara elevada"
+          : "Risc moderat per calor"
+        : "Temperatura nocturna elevada",
       text: day
-        ? tr(
-            "officialAdviceDynamic.heat.moderate",
-            "Evita esforços intensos i fes pauses en llocs frescos."
-          )
+        ? isLateDay
+          ? "Tot i ser capvespre, la sensació tèrmica continua elevada. Redueix esforços intensos, hidrata’t i fes pauses en llocs frescos."
+          : tr(
+              "officialAdviceDynamic.heat.moderate",
+              "Evita esforços intensos i fes pauses en llocs frescos."
+            )
         : tr(
             "officialAdviceDynamic.heat.moderate_night",
             "La temperatura es manté elevada durant la nit. Hidrata’t, ventila els espais i evita esforços innecessaris."

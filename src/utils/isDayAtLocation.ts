@@ -12,3 +12,23 @@ export function isDayAtLocation(
 
   return localNow >= localSunrise && localNow < localSunset;
 }
+
+export function isLateDayAtLocation(
+  nowUtcSec: number,
+  timezoneOffsetSec: number,
+  sunriseUtcSec?: number,
+  sunsetUtcSec?: number,
+  windowMinutes = 90
+): boolean {
+  if (!isDayAtLocation(nowUtcSec, timezoneOffsetSec, sunriseUtcSec, sunsetUtcSec)) {
+    return false;
+  }
+
+  if (!sunsetUtcSec) return false;
+
+  const localNow = nowUtcSec + timezoneOffsetSec;
+  const localSunset = sunsetUtcSec + timezoneOffsetSec;
+  const secondsUntilSunset = localSunset - localNow;
+
+  return secondsUntilSunset >= 0 && secondsUntilSunset <= windowMinutes * 60;
+}

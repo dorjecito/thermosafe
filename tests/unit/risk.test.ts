@@ -6,7 +6,7 @@ import { calcHI } from "../../src/utils/calcHI";
 import { getColdRisk } from "../../src/utils/getColdRisk";
 import { getWindRisk } from "../../src/utils/windRisk";
 import { getUvAdvice, getUvLevel, getUvText } from "../../src/utils/uv";
-import { isDayAtLocation } from "../../src/utils/isDayAtLocation";
+import { isDayAtLocation, isLateDayAtLocation } from "../../src/utils/isDayAtLocation";
 import { getPrimaryStatusBlock } from "../../src/utils/getPrimaryStatusBlock";
 
 test("heat risk follows INSST-style threshold boundaries", () => {
@@ -67,6 +67,36 @@ test("day/night detection uses local sunrise and sunset boundaries", () => {
   assert.equal(isDayAtLocation(sunrise - 1, tz, sunrise, sunset), false);
   assert.equal(isDayAtLocation(sunset, tz, sunrise, sunset), false);
   assert.equal(isDayAtLocation(10_000, tz), true);
+});
+
+test("late-day detection follows the local sunset window", () => {
+  const tz = 2 * 60 * 60;
+  const sunrise = 1_800;
+  const sunset = 45_000;
+
+  assert.equal(isLateDayAtLocation(sunset - 60 * 60, tz, sunrise, sunset), true);
+  assert.equal(isLateDayAtLocation(sunset - 2 * 60 * 60, tz, sunrise, sunset), false);
+  assert.equal(isLateDayAtLocation(sunset, tz, sunrise, sunset), false);
+});
+
+test("mild heat near sunset avoids moderate-risk and shade wording", () => {
+  const result = getPrimaryStatusBlock({
+    alerts: [],
+    primary: { kind: "heat", severity: 1, labelKey: "heat_mild" },
+    heatRisk: { isHigh: false, isExtreme: false },
+    coldRisk: "cap",
+    windRisk: "none",
+    uvi: 0.2,
+    day: true,
+    isLateDay: true,
+    primaryAdvice: null,
+    contextualUVMessage: "",
+    t: (key) => key,
+  });
+
+  assert.equal(result.title, "Temperatura encara elevada");
+  assert.doesNotMatch(result.title, /moderat/i);
+  assert.doesNotMatch(result.text, /ombra/i);
 });
 
 test("night heat status avoids daytime shade advice", () => {

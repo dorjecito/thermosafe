@@ -38,7 +38,7 @@ import { getUVFromOpenUV } from "./services/openUV";
    import { getAlertIcon } from "./utils/getAlertIcon";
    import { pickPrimaryRisk } from "./utils/PickPrimaryRisk";
    import { calcHI } from "./utils/calcHI";
-   import { isDayAtLocation } from "./utils/isDayAtLocation";
+   import { isDayAtLocation, isLateDayAtLocation } from "./utils/isDayAtLocation";
    import { getPrimaryStatusBlock } from "./utils/getPrimaryStatusBlock";
    import { getPrimaryAdviceText } from "./utils/getPrimaryAdviceText";
    import { formatLastUpdate } from "./utils/formatLastUpdate";
@@ -1089,6 +1089,14 @@ const heatRisk =
   hi !== null ? getHeatRisk(hi, heldActivityLevel) : null;
 
 const nowTs = Math.floor(Date.now() / 1000);
+const isLateDay = data
+  ? isLateDayAtLocation(
+      nowTs,
+      data.timezone ?? 0,
+      data.sys?.sunrise,
+      data.sys?.sunset
+    )
+  : false;
 
 const aemetActive =
   Array.isArray(alerts) &&
@@ -1193,6 +1201,7 @@ const primaryStatus = getPrimaryStatusBlock({
   windRisk,
   uvi,
   day,
+  isLateDay,
   primaryAdvice,
   contextualUVMessage,
   t,

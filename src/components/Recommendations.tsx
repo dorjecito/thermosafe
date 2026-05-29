@@ -78,7 +78,7 @@ const TXT: TxtDict = {
     safeCloudy:
       "Condicions generals favorables. Tot i els núvols, mantén vigilància bàsica si estàs molta estona a l’exterior.",
     mild:
-      "Precaució per calor. Pot aparèixer fatiga tèrmica. Beu aigua amb freqüència i fes pauses en zones ombrejades.",
+      "Precaució lleu per calor. Pot aparèixer fatiga tèrmica si mantens esforç físic. Beu aigua amb freqüència i fes pauses en llocs frescos.",
     moderate:
       "Risc moderat d’estrès tèrmic. Programa pauses freqüents, redueix la càrrega física i mantén una hidratació constant.",
     high:
@@ -135,7 +135,7 @@ const TXT: TxtDict = {
     safeCloudy:
       "Condiciones generales favorables. Aunque haya nubes, mantén vigilancia básica si pasas mucho tiempo al aire libre.",
     mild:
-      "Precaución por calor. Puede aparecer fatiga térmica. Bebe agua con frecuencia y programa pausas en zonas sombreadas.",
+      "Precaución leve por calor. Puede aparecer fatiga térmica si mantienes esfuerzo físico. Bebe agua con frecuencia y programa pausas en lugares frescos.",
     moderate:
       "Riesgo moderado de estrés térmico. Programa pausas frecuentes, reduce la carga física y mantén una hidratación constante.",
     high:
@@ -192,7 +192,7 @@ const TXT: TxtDict = {
     safeCloudy:
       "Baldintza orokorrak onak dira. Hodeiak egon arren, mantendu oinarrizko arreta kanpoan denbora asko ematen baduzu.",
     mild:
-      "Kontuz beroarekin. Nekea ager daiteke. Edan ura maiz eta egin atsedenaldiak itzalpean.",
+      "Beroagatik arreta arina. Ahalegin fisikoa mantenduz gero nekea ager daiteke. Edan ura maiz eta egin atsedenaldiak leku freskoetan.",
     moderate:
       "Bero-estresaren arrisku ertaina. Egin atsedenaldi maizak, murriztu lan-karga fisikoa eta mantendu hidratazio jarraitua.",
     high:
@@ -249,7 +249,7 @@ const TXT: TxtDict = {
     safeCloudy:
       "Condicións xerais favorables. Aínda con nubes, mantén unha vixilancia básica se pasas moito tempo ao aire libre.",
     mild:
-      "Precaución por calor. Pode aparecer fatiga térmica. Bebe auga con frecuencia e fai pausas en zonas sombreadas.",
+      "Precaución leve por calor. Pode aparecer fatiga térmica se mantés esforzo físico. Bebe auga con frecuencia e fai pausas en lugares frescos.",
     moderate:
       "Risco moderado de estrés térmico. Programa pausas frecuentes, reduce a carga física e mantén unha hidratación constante.",
     high:
@@ -306,7 +306,7 @@ const TXT: TxtDict = {
     safeCloudy:
       "Generally favourable conditions. Even with clouds, maintain basic awareness if you remain outdoors for long periods.",
     mild:
-      "Heat caution. Heat fatigue may occur. Drink water regularly and take breaks in shaded areas.",
+      "Mild heat caution. Heat fatigue may occur if physical effort continues. Drink water regularly and take breaks in cool places.",
     moderate:
       "Moderate heat stress risk. Schedule frequent breaks, reduce physical strain and maintain constant hydration.",
     high:
@@ -400,12 +400,10 @@ const mapHeatLevelToKey = (levelRaw: unknown): HeatKey => {
     s === "sin riesgo" ||
     s === "no risk" ||
     s === "none" ||
-    s === "baix" ||
-    s === "bajo" ||
-    s === "low" ||
     s === "safe"
   ) return "safe";
 
+  if (s === "baix" || s === "bajo" || s === "low") return "mild";
   if (s.includes("lleu") || s.includes("leve") || s.includes("mild")) return "mild";
   if (s.includes("moderat") || s.includes("moderado") || s.includes("moderate")) return "moderate";
   if (s.includes("alt") || s.includes("alto") || s.includes("high")) return "high";
