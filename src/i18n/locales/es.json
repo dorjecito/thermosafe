@@ -289,7 +289,7 @@
   "officialAdviceDynamic": {
     "heat": {
       "mild": "Hidrátate a menudo y descansa en zonas frescas.",
-      "moderate": "Evita esfuerzos intensos y busca sombra con regularidad.",
+      "moderate": "Evita esfuerzos intensos, hidrátate adecuadamente y adapta la actividad según las condiciones ambientales.",
       "high": "Riesgo importante: limita la actividad exterior e hidrátate de forma continua.",
       "extreme": "Peligro extremo: evita completamente el exterior. Alto riesgo de golpe de calor."
     },

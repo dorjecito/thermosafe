@@ -15,10 +15,34 @@ type SuggestionItem = {
 };
 
 type Params = {
-  apiKey: string;
+  apiKey?: string;
 };
 
-export function useCitySuggestions({ apiKey }: Params) {
+function buildGeoDirectUrl(query: string, apiKey?: string) {
+  const directKey =
+    apiKey ||
+    (import.meta.env.DEV
+      ? import.meta.env.VITE_OPENWEATHER_API_KEY ||
+        import.meta.env.VITE_OPENWEATHER_KEY ||
+        import.meta.env.VITE_OWM_KEY
+      : "");
+
+  const url = new URL(
+    directKey
+      ? "https://api.openweathermap.org/geo/1.0/direct"
+      : "/api/openweather",
+    directKey ? undefined : window.location.origin
+  );
+
+  if (!directKey) url.searchParams.set("route", "geo-direct");
+  url.searchParams.set("q", query);
+  url.searchParams.set("limit", "10");
+  if (directKey) url.searchParams.set("appid", directKey);
+
+  return directKey ? url.toString() : `${url.pathname}${url.search}`;
+}
+
+export function useCitySuggestions({ apiKey }: Params = {}) {
   const [suggestions, setSuggestions] = useState<SuggestionItem[]>([]);
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [suggestLoading, setSuggestLoading] = useState(false);
@@ -34,9 +58,7 @@ export function useCitySuggestions({ apiKey }: Params) {
     try {
       setSuggestLoading(true);
 
-      const res = await fetch(
-        `https://api.openweathermap.org/geo/1.0/direct?q=${query}&limit=10&appid=${apiKey}`
-      );
+      const res = await fetch(buildGeoDirectUrl(query, apiKey));
 
       const data = await res.json();
       console.log("[SUGGESTIONS]", data);

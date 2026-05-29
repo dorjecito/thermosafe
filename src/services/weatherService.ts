@@ -1,8 +1,12 @@
 // 🌤️ Serveis meteorològics unificats (OpenWeather 2.5 i 3.0)
 
-const BASE_URL = "https://api.openweathermap.org/data/2.5";
-const GEO_URL = "https://api.openweathermap.org/geo/1.0";
-const ONECALL_URL = "https://api.openweathermap.org/data/3.0/onecall";
+const OPENWEATHER_PROXY_URL = "/api/openweather";
+
+const DIRECT_ENDPOINTS = {
+  weather: "https://api.openweathermap.org/data/2.5/weather",
+  onecall: "https://api.openweathermap.org/data/3.0/onecall",
+  "geo-direct": "https://api.openweathermap.org/geo/1.0/direct",
+} as const;
 
 const normLang2 = (lang: string) => (lang || "en").slice(0, 2).toLowerCase();
 
@@ -41,9 +45,37 @@ function saveToCache<T>(key: string, data: T) {
   });
 }
 
-function getApiKey(apiKey?: string): string | null {
-  const key = apiKey || import.meta.env.VITE_OPENWEATHER_API_KEY;
+function getDirectApiKey(apiKey?: string): string | null {
+  const key =
+    apiKey ||
+    (import.meta.env.DEV
+      ? import.meta.env.VITE_OPENWEATHER_API_KEY ||
+        import.meta.env.VITE_OPENWEATHER_KEY ||
+        import.meta.env.VITE_OWM_KEY
+      : "");
   return typeof key === "string" && key.trim() ? key.trim() : null;
+}
+
+function buildOpenWeatherUrl(
+  route: keyof typeof DIRECT_ENDPOINTS,
+  params: Record<string, string | number>,
+  apiKey?: string
+) {
+  const directKey = getDirectApiKey(apiKey);
+  const url = new URL(
+    directKey ? DIRECT_ENDPOINTS[route] : OPENWEATHER_PROXY_URL,
+    directKey ? undefined : window.location.origin
+  );
+
+  if (!directKey) url.searchParams.set("route", route);
+
+  for (const [key, value] of Object.entries(params)) {
+    url.searchParams.set(key, String(value));
+  }
+
+  if (directKey) url.searchParams.set("appid", directKey);
+
+  return directKey ? url.toString() : `${url.pathname}${url.search}`;
 }
 
 // 📡 Obté temps actual per coordenades
@@ -53,19 +85,17 @@ export async function getWeatherByCoords(
   lang: string = "en",
   apiKey?: string
 ) {
-  const API_KEY = getApiKey(apiKey);
-  if (!API_KEY) {
-    console.error("[DEBUG] Falta VITE_OPENWEATHER_API_KEY a getWeatherByCoords");
-    return null;
-  }
-
   const lang2 = normLang2(lang);
 
   const cacheKey = getCacheKey("coords", lat.toFixed(4), lon.toFixed(4), lang2);
   const cached = getFromCache<any>(cacheKey);
   if (cached) return cached;
 
-  const url = `${BASE_URL}/weather?lat=${lat}&lon=${lon}&appid=${API_KEY}&units=metric&lang=${lang2}`;
+  const url = buildOpenWeatherUrl(
+    "weather",
+    { lat, lon, units: "metric", lang: lang2 },
+    apiKey
+  );
 
   try {
     const response = await fetch(url);
@@ -96,19 +126,17 @@ export async function getWeatherByCity(
   lang: string = "en",
   apiKey?: string
 ) {
-  const API_KEY = getApiKey(apiKey);
-  if (!API_KEY) {
-    console.error("[DEBUG] Falta VITE_OPENWEATHER_API_KEY a getWeatherByCity");
-    return null;
-  }
-
   const lang2 = normLang2(lang);
 
   const cacheKey = getCacheKey("city", cityName.trim().toLowerCase(), lang2);
   const cached = getFromCache<any>(cacheKey);
   if (cached) return cached;
 
-  const url = `${BASE_URL}/weather?q=${encodeURIComponent(cityName)}&appid=${API_KEY}&units=metric&lang=${lang2}`;
+  const url = buildOpenWeatherUrl(
+    "weather",
+    { q: cityName, units: "metric", lang: lang2 },
+    apiKey
+  );
 
   try {
     const response = await fetch(url);
@@ -124,7 +152,11 @@ export async function getWeatherByCity(
     const missingCoords = data?.coord?.lat == null || data?.coord?.lon == null;
 
     if (missingCoords) {
-      const geoUrl = `${GEO_URL}/direct?q=${encodeURIComponent(cityName)}&limit=1&appid=${API_KEY}`;
+      const geoUrl = buildOpenWeatherUrl(
+        "geo-direct",
+        { q: cityName, limit: 1 },
+        apiKey
+      );
 
       try {
         const geoResp = await fetch(geoUrl);
@@ -168,12 +200,6 @@ export async function getWeatherAlerts(
   lang: string = "en",
   apiKey?: string
 ): Promise<any[]> {
-  const API_KEY = getApiKey(apiKey);
-  if (!API_KEY) {
-    console.error("[DEBUG] Falta VITE_OPENWEATHER_API_KEY a getWeatherAlerts");
-    return [];
-  }
-
   const lang2 = normLang2(lang);
   const cacheKey = getCacheKey("alerts", lat.toFixed(3), lon.toFixed(3), lang2);
   const cached = getFromCache<any[]>(cacheKey);
@@ -181,10 +207,17 @@ export async function getWeatherAlerts(
   if (cached) return cached;
 
   // Demanam essencialment alerts
-  const url =
-    `${ONECALL_URL}?lat=${lat}&lon=${lon}` +
-    `&appid=${API_KEY}&units=metric&lang=${lang2}` +
-    `&exclude=current,minutely,hourly,daily`;
+  const url = buildOpenWeatherUrl(
+    "onecall",
+    {
+      lat,
+      lon,
+      units: "metric",
+      lang: lang2,
+      exclude: "current,minutely,hourly,daily",
+    },
+    apiKey
+  );
 
   try {
     const response = await fetch(url);
@@ -211,21 +244,22 @@ export async function getUVFromOW(
   lon: number,
   apiKey?: string
 ): Promise<number | null> {
-  const API_KEY = getApiKey(apiKey);
-  if (!API_KEY) {
-    console.error("[DEBUG] Falta VITE_OPENWEATHER_API_KEY a getUVFromOW");
-    return null;
-  }
-
   const cacheKey = getCacheKey("uv", lat.toFixed(2), lon.toFixed(2));
   const cached = getFromCache<number | null>(cacheKey);
   if (cached !== null) return cached;
 
   try {
     // Deixam només current
-    const url =
-      `${ONECALL_URL}?lat=${lat}&lon=${lon}` +
-      `&appid=${API_KEY}&units=metric&exclude=minutely,hourly,daily,alerts`;
+    const url = buildOpenWeatherUrl(
+      "onecall",
+      {
+        lat,
+        lon,
+        units: "metric",
+        exclude: "minutely,hourly,daily,alerts",
+      },
+      apiKey
+    );
 
     const response = await fetch(url);
 

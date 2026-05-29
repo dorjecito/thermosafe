@@ -6,8 +6,7 @@ const functions = require("firebase-functions");
 const { onRequest } = require("firebase-functions/v2/https");
 const { onSchedule } = require("firebase-functions/v2/scheduler");
 const { defineSecret } = require("firebase-functions/params");
-const fetch = (...args) =>
-  import("node-fetch").then(({ default: fetch }) => fetch(...args));
+const fetch = (...args) => globalThis.fetch(...args);
 
 admin.initializeApp();
 const db = admin.firestore();
@@ -1434,6 +1433,8 @@ exports.cronCheckWeatherRiskV2 = onSchedule(
                 return;
               }
 
+              const updates = {};
+
             // ───────── CALOR ─────────
             const hi = w.temp < 18 ? w.temp : calcHI(w.temp, w.hum);
             const heatInfo = levelFromINSST(hi);
@@ -2613,6 +2614,277 @@ exports.cronCheckAemetRisk = functions
 
     return null;
   });
+
+  
+  // ─────────────────────────────────────────────
+// 🚨 CRON AEMET / ALERTES OFICIALS — V2
+// ─────────────────────────────────────────────
+exports.cronCheckAemetRiskV2 = onSchedule(
+  {
+    schedule: "every 60 minutes",
+    timeZone: "Europe/Madrid",
+    region: REGION,
+    secrets: [OPENWEATHER_KEY],
+    timeoutSeconds: 540,
+    memory: "512MiB",
+  },
+  async () => {
+    const now = Date.now();
+    const snap = await db.collection("subs").limit(1000).get();
+
+    if (snap.empty) {
+      console.log("[AEMET V2] no subscriptions");
+      return null;
+    }
+
+    const alertsCache = new Map();
+    const weatherCache = new Map();
+    const zoneStats = new Map();
+
+    function makeZoneKey(lat, lon) {
+      return `${Number(lat).toFixed(1)},${Number(lon).toFixed(1)}`;
+    }
+
+    function makeAemetEventKey(info) {
+      return [
+        info.level ?? 0,
+        info.event ?? "",
+        info.sender ?? "",
+        String(info.description ?? "").slice(0, 120),
+      ].join("|");
+    }
+
+    function getZoneStats(zoneKey, place = "") {
+      if (!zoneStats.has(zoneKey)) {
+        zoneStats.set(zoneKey, {
+          zoneKey,
+          place,
+          tokensTotal: 0,
+          tokensSent: 0,
+          tokensSkipped: 0,
+          alertLevel: 0,
+          alertEvent: "",
+          reasons: {
+            noAlerts: 0,
+            noRisk: 0,
+            repeatedAlert: 0,
+            dailyReset: 0,
+            sendError: 0,
+            removedInvalidToken: 0,
+          },
+        });
+      }
+
+      const stats = zoneStats.get(zoneKey);
+      if (!stats.place && place) stats.place = place;
+      return stats;
+    }
+
+    const tasks = snap.docs.map(async (doc) => {
+      const sub = doc.data();
+      const lang = normalizeLang(sub.lang);
+
+      let zoneKey = "unknown";
+      let place = "";
+
+      try {
+        zoneKey = makeZoneKey(sub.lat, sub.lon);
+        const zoneRef = db.collection("aemetZones").doc(zoneKey);
+
+        const stats = getZoneStats(zoneKey);
+        stats.tokensTotal++;
+
+        let alertsPromise = alertsCache.get(zoneKey);
+
+        if (!alertsPromise) {
+          alertsPromise = getWeatherAlerts(sub.lat, sub.lon);
+          alertsCache.set(zoneKey, alertsPromise);
+        }
+
+        const alerts = await alertsPromise;
+
+        if (!alerts || alerts.length === 0) {
+          await zoneRef.set(
+            {
+              zoneKey,
+              level: 0,
+              event: "",
+              sender: "",
+              description: "",
+              updatedAt: Date.now(),
+            },
+            { merge: true }
+          );
+
+          await doc.ref.set(
+            {
+              lastAemetLevel: 0,
+              lastAemetEvent: "",
+              lastAemetSender: "",
+              lastAemetEventKey: "",
+              lastAemetAt: now,
+            },
+            { merge: true }
+          );
+
+          stats.tokensSkipped++;
+          stats.reasons.noAlerts++;
+
+          console.log("[AEMET V2][ZONE SAVE NO ALERT][SUB RESET]", {
+            docId: doc.id,
+            zoneKey,
+            level: 0,
+          });
+
+          return;
+        }
+
+        const info = getAemetLevelFromAlerts(alerts);
+
+        await zoneRef.set(
+          {
+            zoneKey,
+            level: info?.level ?? 0,
+            event: info?.event || "",
+            sender: info?.sender || "",
+            description: info?.description || "",
+            updatedAt: Date.now(),
+          },
+          { merge: true }
+        );
+
+        stats.alertLevel = info?.level ?? 0;
+        stats.alertEvent = info?.event ?? "";
+
+        if (!info || (info.level ?? 0) === 0) {
+          stats.tokensSkipped++;
+          stats.reasons.noRisk++;
+          return;
+        }
+
+        let wPromise = weatherCache.get(zoneKey);
+
+        if (!wPromise) {
+          wPromise = getCachedWeather(sub.lat, sub.lon);
+          weatherCache.set(zoneKey, wPromise);
+        }
+
+        const w = await wPromise;
+        place = sub.place || w?.place || "";
+
+        if (!stats.place && place) stats.place = place;
+
+        const eventKey = makeAemetEventKey(info);
+        let prevEventKey = sub.lastAemetEventKey || "";
+
+        const { shouldReset, todayKey } = shouldRunDailyReset(
+          now,
+          w.tzOffset,
+          sub.lastAemetResetDay,
+          6
+        );
+
+        if (shouldReset) {
+          prevEventKey = "";
+
+          await doc.ref.set(
+            {
+              lastAemetEventKey: "",
+              lastAemetLevel: 0,
+              lastAemetAt: 0,
+              lastAemetResetDay: todayKey,
+            },
+            { merge: true }
+          );
+
+          stats.reasons.dailyReset++;
+
+          console.log("[AEMET V2][DAILY RESET]", {
+            docId: doc.id,
+            place,
+            zoneKey,
+            todayKey,
+          });
+        }
+
+        if (prevEventKey === eventKey) {
+          stats.tokensSkipped++;
+          stats.reasons.repeatedAlert++;
+
+          console.log("[AEMET V2][SKIP REPEATED]", {
+            docId: doc.id,
+            place,
+            zoneKey,
+            level: info.level,
+            event: info.event,
+          });
+
+          return;
+        }
+
+        try {
+          await sendAemetPush(sub.token, lang, info, place);
+
+          await doc.ref.set(
+            {
+              lastAemetAt: now,
+              lastNotified: now,
+              lastAemetLevel: info.level,
+              lastAemetEvent: info.event || "",
+              lastAemetSender: info.sender || "",
+              lastAemetEventKey: eventKey,
+              lastAemetResetDay: todayKey,
+            },
+            { merge: true }
+          );
+
+          stats.tokensSent++;
+
+          console.log("[AEMET V2][SENT]", {
+            docId: doc.id,
+            place,
+            zoneKey,
+            level: info.level,
+            event: info.event,
+            sender: info.sender,
+          });
+        } catch (sendErr) {
+          const removed = await removeInvalidSub(
+            doc.ref,
+            doc.id,
+            sendErr,
+            "AEMET V2"
+          );
+
+          stats.tokensSkipped++;
+
+          if (removed) {
+            stats.reasons.removedInvalidToken++;
+            return;
+          }
+
+          stats.reasons.sendError++;
+          throw sendErr;
+        }
+      } catch (err) {
+        const stats = getZoneStats(zoneKey, place);
+        stats.reasons.sendError++;
+
+        console.error("[AEMET V2][ERROR]", doc.id, err);
+      }
+    });
+
+    await Promise.allSettled(tasks);
+
+    for (const stats of zoneStats.values()) {
+      console.log("[AEMET V2 SENT SUMMARY]", stats);
+    }
+
+    console.log("[AEMET V2] done");
+
+    return null;
+  }
+);
 
 // ─────────────────────────────────────────────
 // Endpoint de prova manual — només 1 token

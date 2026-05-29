@@ -1,6 +1,6 @@
 import axios from "axios";
 
-const API_KEY = "ebd4ce67a42857776f4463c756e18b45";
+const API_KEY = import.meta.env.VITE_AEMET_API_KEY || "";
 
 // 📍 Rutes candidates (per si canvien)
 const ENDPOINTS = [
@@ -11,6 +11,8 @@ const ENDPOINTS = [
 // 🔹 Funció auxiliar per obtenir la URL de dades reals
 async function fetchAemetData(url: string) {
   try {
+    if (!API_KEY) return null;
+
     const res = await axios.get(`${url}?api_key=${API_KEY}`);
     if (res.data?.datos) {
       const datosRes = await axios.get(res.data.datos);

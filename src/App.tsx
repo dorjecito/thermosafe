@@ -293,7 +293,6 @@ async function loadAlertsIfNeeded(
   nextLat: number,
   nextLon: number,
   lang: string,
-  apiKey: string,
   _isDayValue: boolean = true
 ) {
   const now = Date.now();
@@ -331,7 +330,7 @@ async function loadAlertsIfNeeded(
   }
 
   try {
-    const nextAlerts = await getWeatherAlerts(nextLat, nextLon, lang, apiKey);
+    const nextAlerts = await getWeatherAlerts(nextLat, nextLon, lang);
     const safeAlerts = Array.isArray(nextAlerts) ? nextAlerts : [];
 
     setAlerts(safeAlerts);
@@ -360,7 +359,6 @@ async function loadAlertsIfNeeded(
 }
 
 /* === CONFIGURACIÓ GENERAL === */
-const API_KEY = "ebd4ce67a42857776f4463c756e18b45"; // 🔑 substitueix per la teva clau real
 const lang = i18n.resolvedLanguage?.slice(0,2) || "ca";
 
 const {
@@ -388,9 +386,7 @@ const {
   showSearchHelp,
   setShowSearchHelp,
   fetchCitySuggestions,
-} = useCitySuggestions({
-  apiKey: API_KEY,
-});
+} = useCitySuggestions();
 
 const activityLevelStable = useStableValue(activityLevel, 800);
 const activityDeltaStable = useStableValue(activityDelta, 800);
@@ -532,7 +528,7 @@ const fetchWeather = async (cityName: string) => {
     setCurrentSource("search");
     setDataSource("search");
 
-    const data = await getWeatherByCity(cityName, lang, API_KEY);
+    const data = await getWeatherByCity(cityName, lang);
 
     if (isStaleRequest("search", requestId)) return;
 
@@ -639,7 +635,6 @@ const fetchWeather = async (cityName: string) => {
         newLat,
         newLon,
         lang,
-        API_KEY,
         isDayHere
       );
     } else {
@@ -815,7 +810,7 @@ if (localStorage.getItem("fcmToken")) {
 console.log(`[DEBUG] Coordenades GPS obtingudes: ${lat}, ${lon}`);
 
 // 🌦️ // 2. Obté dades del temps per coordenades
-const d = await getWeatherByCoords(lat, lon, lang, API_KEY);
+const d = await getWeatherByCoords(lat, lon, lang);
 
 if (isStaleRequest("gps", requestId)) return;
 setData(d);
@@ -947,7 +942,6 @@ await loadAlertsIfNeeded(
   lat,
   lon,
   lang,
-  API_KEY,
   isDayHere
 );
 
@@ -999,7 +993,7 @@ const handleSuggestionSelect = async (s: any) => {
     setCurrentSource("search");
     setDataSource("search");
 
-    const data = await getWeatherByCoords(s.lat, s.lon, lang, API_KEY);
+    const data = await getWeatherByCoords(s.lat, s.lon, lang);
 
     setData(data);
     setLat(s.lat);
@@ -1060,7 +1054,6 @@ const handleSuggestionSelect = async (s: any) => {
       s.lat,
       s.lon,
       lang,
-      API_KEY,
       isDayHere
     );
   } catch (err) {

@@ -673,7 +673,7 @@ if (isDay && uvKey) {
   const riskObj: any = getHeatRisk(effectiveTemp, "rest");
   const heatKey = mapHeatLevelToKey(riskObj?.level);
 
-  if (heatKey !== "safe") {
+  if (heatKey !== "safe" && isDay) {
     return (
       <RecommendationBox
         className={`recommendation-box ${heatKey}`}

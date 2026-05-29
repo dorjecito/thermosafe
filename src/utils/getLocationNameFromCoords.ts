@@ -120,21 +120,28 @@ async function getFromOpenWeather(
   lang?: string
 ): Promise<string> {
   try {
-    const API_KEY =
-      (import.meta as any).env?.VITE_OPENWEATHER_KEY ||
-      (import.meta as any).env?.VITE_OWM_KEY ||
-      (import.meta as any).env?.VITE_OPENWEATHER_API_KEY;
+    const directKey = import.meta.env.DEV
+      ? import.meta.env.VITE_OPENWEATHER_API_KEY ||
+        import.meta.env.VITE_OPENWEATHER_KEY ||
+        import.meta.env.VITE_OWM_KEY
+      : "";
 
-    if (!API_KEY) return "";
+    const url = new URL(
+      directKey
+        ? "https://api.openweathermap.org/geo/1.0/reverse"
+        : "/api/openweather",
+      directKey ? undefined : window.location.origin
+    );
 
-    const url =
-      `https://api.openweathermap.org/geo/1.0/reverse` +
-      `?lat=${encodeURIComponent(lat)}` +
-      `&lon=${encodeURIComponent(lon)}` +
-      `&limit=1` +
-      `&appid=${API_KEY}`;
+    if (!directKey) url.searchParams.set("route", "geo-reverse");
+    url.searchParams.set("lat", String(lat));
+    url.searchParams.set("lon", String(lon));
+    url.searchParams.set("limit", "1");
+    if (directKey) url.searchParams.set("appid", directKey);
 
-    const res = await fetch(url);
+    const res = await fetch(
+      directKey ? url.toString() : `${url.pathname}${url.search}`
+    );
 
     if (!res.ok) {
       console.warn("[OpenWeather Reverse] HTTP", res.status, res.statusText);
