@@ -121,8 +121,11 @@ export default function UVScale({ lang, uvi, lat, lon }: UVScaleProps) {
   }, [lat, lon]);
 
   return (
-    <div style={{ marginTop: '2rem' }}>
-      <button onClick={() => setVisible(!visible)} style={{ marginBottom: '1rem' }}>
+    <div className="uv-scale-wrap">
+      <button
+        className="secondary-toggle-btn uv-scale-toggle"
+        onClick={() => setVisible(!visible)}
+      >
         {toggle}
       </button>
 

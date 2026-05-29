@@ -362,6 +362,31 @@ color: #111827;
   opacity: 0.9;
 }
 
+.uv-block.uv-night {
+  --uv-color: #94a3b8;
+  background: #f8fafc;
+  border-color: rgba(100, 116, 139, 0.28);
+  box-shadow:
+    0 2px 8px rgba(15, 23, 42, 0.06),
+    inset 0 0 0 1px rgba(148, 163, 184, 0.14);
+}
+
+.uv-block.uv-night::before {
+  background: #94a3b8;
+}
+
+.uv-block.uv-night .uv-title {
+  color: #334155;
+}
+
+.uv-block.uv-night .uv-title::before {
+  content: "🌙";
+}
+
+.uv-block.uv-night .data-label {
+  color: #475569;
+}
+
 
 /* Bloc UV */
 @media (prefers-color-scheme: dark) {
@@ -1302,6 +1327,14 @@ text-align: left;
   box-shadow: 0 2px 6px rgba(0,0,0,0.06);
 }
 
+.uv-scale-wrap {
+  margin-top: 1.5rem;
+}
+
+.uv-scale-toggle {
+  margin-bottom: 1rem;
+}
+
 .secondary-toggle-btn:hover {
   background: #eef2f7;
   border-color: #94a3b8;
@@ -1903,6 +1936,5 @@ body,
 .alert-banner {
   will-change: transform;
 }
-
 
 
