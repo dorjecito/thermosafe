@@ -259,12 +259,15 @@
 
   "activity": {
     "inactive": "Activar detecció de moviment",
+    "requesting": "Activant detecció…",
     "active_label": "Activitat",
     "rest": "Repòs",
     "walk": "Caminar",
     "moderate": "Esforç moderat",
     "intense": "Esforç intens",
-    "extra": "Extra"
+    "extra": "Extra",
+    "adjusts_risk": "ajust preventiu actiu",
+    "no_impact": "sense impacte en el risc actual"
   },
 
   "official_links": "Enllaços oficials",

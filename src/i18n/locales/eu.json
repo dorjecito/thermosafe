@@ -245,12 +245,15 @@
 
   "activity": {
   "inactive": "Mugimendua detektatzea aktibatu",
+  "requesting": "Detekzioa aktibatzen…",
   "active_label": "Jarduera",
   "rest": "Atsedena",
   "walk": "Oinez",
   "moderate": "Esfortzu ertaina",
   "intense": "Esfortzu bizia",
-  "extra": "gehigarri"
+  "extra": "gehigarri",
+  "adjusts_risk": "prebentzio-doikuntza aktibo",
+  "no_impact": "ez du eraginik uneko arriskuan"
 },
 
 "insst_heat": "INSST: estres termikoa eta beroa",

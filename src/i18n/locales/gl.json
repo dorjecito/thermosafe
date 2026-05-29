@@ -286,12 +286,15 @@
 
   "activity": {
   "inactive": "Activar detección de movemento",
+  "requesting": "Activando detección…",
   "active_label": "Actividade",
   "rest": "Reposo",
   "walk": "Camiñando",
   "moderate": "Esforzo moderado",
   "intense": "Esforzo intenso",
-  "extra": "extra"
+  "extra": "extra",
+  "adjusts_risk": "axuste preventivo activo",
+  "no_impact": "sen impacto no risco actual"
 },
 
 "insst_heat": "INSST: estrés térmico e calor",

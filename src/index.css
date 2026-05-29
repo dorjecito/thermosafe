@@ -1914,6 +1914,14 @@ body,
   text-align: center;
 }
 
+.activity-impact-note {
+  flex-basis: 100%;
+  font-size: 0.78rem;
+  font-weight: 600;
+  line-height: 1.2;
+  opacity: 0.86;
+}
+
 @media (max-width: 640px) {
   .btn-activity {
     width: 100% !important;
@@ -1960,4 +1968,3 @@ body,
 .alert-banner {
   will-change: transform;
 }
-

@@ -78,7 +78,7 @@ import { getUVFromOpenUV } from "./services/openUV";
    /* —— hooks ———————————— */
    import { useRiskNotifications } from "./hooks/useRiskNotifications";
    import { useCitySuggestions } from "./hooks/useCitySuggestions";
-   import { useSmartActivity } from "./hooks/useSmartActivity";
+   import { useSmartActivity, type ActivityLevel } from "./hooks/useSmartActivity";
 
 function useStableValue<T>(value: T, delay = 800): T {
   const [stable, setStable] = useState(value);
@@ -279,7 +279,6 @@ const [alerts, setAlerts] = useState<any[]>([]);
 
  const {
   level: activityLevel,
-  delta: activityDelta,
   enabled: activityEnabled,
   requesting: activityRequesting,
   error: activityError,
@@ -389,19 +388,11 @@ const {
 } = useCitySuggestions();
 
 const activityLevelStable = useStableValue(activityLevel, 800);
-const activityDeltaStable = useStableValue(activityDelta, 800);
 // ⏱️ Manté activitat uns minuts encara que l’usuari s’aturi
 const ACTIVITY_HOLD_MS = 3 * 60 * 1000;
 
-const [heldActivityLevel, setHeldActivityLevel] = useState<
-  "rest" | "low" | "moderate" | "high" | "unknown"
->(
-  activityLevelStable as
-    | "rest"
-    | "low"
-    | "moderate"
-    | "high"
-    | "unknown"
+const [heldActivityLevel, setHeldActivityLevel] = useState<ActivityLevel>(
+  activityLevelStable
 );
 
 const [lastActiveAt, setLastActiveAt] = useState(Date.now());
@@ -411,14 +402,7 @@ useEffect(() => {
 
   // Si hi ha activitat real, guarda-la
   if (activityLevelStable !== "rest") {
-    setHeldActivityLevel(
-      activityLevelStable as
-        | "rest"
-        | "low"
-        | "moderate"
-        | "high"
-        | "unknown"
-    );
+    setHeldActivityLevel(activityLevelStable);
 
     setLastActiveAt(now);
     return;
@@ -441,20 +425,18 @@ useEffect(() => {
   return () => window.clearTimeout(timer);
 }, [activityLevelStable, lastActiveAt]);
 
-const ACTIVITY_ICONS: Record<string, string> = {
+const ACTIVITY_ICONS: Record<ActivityLevel, string> = {
   rest: "🧘",
-  low: "🚶",
+  walk: "🚶",
   moderate: "🏃",
-  high: "🏃‍♂️💨",
-  unknown: "🔄"
+  intense: "🏃‍♂️💨",
 };
 
-const ACTIVITY_COLORS: Record<string, string> = {
+const ACTIVITY_COLORS: Record<ActivityLevel, string> = {
   rest: "#6c757d",
-  low: "#2f9e44",
+  walk: "#2f9e44",
   moderate: "#f08c00",
-  high: "#d6336c",
-  unknown: "#6c757d"
+  intense: "#d6336c",
 };
 
 // 🔔 Demana permís de notificació automàticament
@@ -1085,8 +1067,19 @@ const windText16 =
 const risk = temp != null ? getThermalRisk(temp) : "cap";
 
 // 🔥 Calcular risc de calor ajustat per activitat (rest, walk, moderate, intense)
+const baseHeatRisk =
+  hi !== null ? getHeatRisk(hi, "rest") : null;
+
 const heatRisk =
   hi !== null ? getHeatRisk(hi, heldActivityLevel) : null;
+
+const activityAffectsHeatRisk =
+  activityEnabled &&
+  baseHeatRisk !== null &&
+  heatRisk !== null &&
+  baseHeatRisk.class !== heatRisk.class;
+
+const displayedActivityLevel = activityEnabled ? heldActivityLevel : activityLevelStable;
 
 const nowTs = Math.floor(Date.now() / 1000);
 const isLateDay = data
@@ -1485,20 +1478,25 @@ return (
       if (activityEnabled) deactivate();
       else activate();
     }}
+    disabled={activityRequesting}
     className="btn-activity"
     style={{
       backgroundColor: activityEnabled
-        ? ACTIVITY_COLORS[activityLevelStable]
+        ? activityAffectsHeatRisk
+          ? ACTIVITY_COLORS[displayedActivityLevel]
+          : "#4b5563"
         : "#555",
       color: "white",
       padding: "0.75rem 0.9rem",
       borderRadius: "6px",
       border: "none",
-      cursor: "pointer",
+      cursor: activityRequesting ? "progress" : "pointer",
+      opacity: activityRequesting ? 0.82 : 1,
       fontWeight: 600,
       display: "flex",
       alignItems: "center",
       justifyContent: "center",
+      flexWrap: "wrap",
       gap: "0.4rem",
       flex: "1 1 220px",
       maxWidth: "100%",
@@ -1509,11 +1507,21 @@ return (
       width:"100%",
     }}
   >
-    {activityEnabled ? (
+    {activityRequesting ? (
       <>
-        {ACTIVITY_ICONS[activityLevelStable]}
-        {t("activity.active_label")}: {t(`activity.${activityLevelStable}`)}
-        ({activityDeltaStable}°C {t("activity.extra")})
+        ⏳ {t("activity.requesting")}
+      </>
+    ) : activityEnabled ? (
+      <>
+        {ACTIVITY_ICONS[displayedActivityLevel]}
+        <span>
+          {t("activity.active_label")}: {t(`activity.${displayedActivityLevel}`)}
+        </span>
+        <span className="activity-impact-note">
+          {activityAffectsHeatRisk
+            ? t("activity.adjusts_risk")
+            : t("activity.no_impact")}
+        </span>
       </>
     ) : (
       <>

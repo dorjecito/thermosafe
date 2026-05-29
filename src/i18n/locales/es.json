@@ -278,12 +278,15 @@
 
   "activity": {
     "inactive": "Activar detección de movimiento",
+    "requesting": "Activando detección…",
     "active_label": "Actividad",
     "rest": "Reposo",
     "walk": "Caminando",
     "moderate": "Esfuerzo moderado",
     "intense": "Esfuerzo intenso",
-    "extra": "extra"
+    "extra": "extra",
+    "adjusts_risk": "ajuste preventivo activo",
+    "no_impact": "sin impacto en el riesgo actual"
   },
 
   "officialAdviceDynamic": {

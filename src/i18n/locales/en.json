@@ -264,12 +264,15 @@
 
   "activity": {
     "inactive": "Enable motion detection",
+    "requesting": "Enabling detection…",
     "active_label": "Activity",
     "rest": "Rest",
     "walk": "Walking",
     "moderate": "Moderate effort",
     "intense": "Intense effort",
-    "extra": "extra"
+    "extra": "extra",
+    "adjusts_risk": "preventive adjustment active",
+    "no_impact": "no impact on current risk"
   },
 
   "official_links": "Official links",
