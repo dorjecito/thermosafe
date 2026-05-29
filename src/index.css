@@ -1255,13 +1255,37 @@ text-align: left;
   overflow: visible;
 }
 
+.top-sticky-ui.compact-mode {
+  top: 54px;
+  z-index: 2050;
+  border-radius: 0 0 12px 12px;
+}
+
 .top-sticky-spacer {
   height: 245px;
+}
+
+.top-sticky-spacer.compact-spacer {
+  height: 222px;
 }
 
 @media (max-width: 640px) {
   .top-sticky-spacer {
     height: 245px;
+  }
+
+  .top-sticky-ui.compact-mode {
+    top: 54px;
+    width: 100%;
+    left: 0;
+    transform: none;
+    border-left: 0;
+    border-right: 0;
+    border-radius: 0 0 14px 14px;
+  }
+
+  .top-sticky-spacer.compact-spacer {
+    height: 222px;
   }
 }
 
@@ -1936,5 +1960,4 @@ body,
 .alert-banner {
   will-change: transform;
 }
-
 

@@ -1415,7 +1415,7 @@ return (
 </div>
 
     {/* Espai perquè la capçalera fixa no tapi el contingut */}
-    <div className="top-sticky-spacer" />
+    <div className={`top-sticky-spacer ${showCompactHeader ? "compact-spacer" : ""}`} />
 
 {/* 🔔 Interruptor per activar/desactivar avisos meteorològics */}
 <div

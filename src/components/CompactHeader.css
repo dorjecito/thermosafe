@@ -3,11 +3,12 @@
   top: 0;
   left: 0;
   right: 0;
-  z-index: 2000;
+  z-index: 2100;
 
   display: flex;
   justify-content: space-between;
   align-items: center;
+  gap: 12px;
 
   padding: 10px 16px;
   backdrop-filter: blur(12px);
@@ -17,15 +18,30 @@
 
   font-weight: 700;
   font-size: 15px;
+  min-height: 44px;
+  box-sizing: border-box;
 }
 
 .compact-header-right {
   display: flex;
   gap: 12px;
   align-items: center;
+  justify-content: flex-end;
+  min-width: 0;
+  overflow: hidden;
 
   font-size: 14px;
   font-weight: 600;
+}
+
+.compact-header span {
+  min-width: 0;
+  white-space: nowrap;
+}
+
+.compact-header-right span:first-child {
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 @keyframes compactSlideDown {
