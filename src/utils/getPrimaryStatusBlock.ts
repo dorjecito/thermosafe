@@ -46,6 +46,11 @@ export function getPrimaryStatusBlock({
   contextualUVMessage,
   t,
 }: PrimaryStatusBlockArgs): PrimaryStatusBlockResult {
+  const tr = (key: string, fallback: string) => {
+    const text = t(key);
+    return text && text !== key ? text : fallback;
+  };
+
   const nowTs = Math.floor(Date.now() / 1000);
 
   const activeAlert =
@@ -95,10 +100,16 @@ export function getPrimaryStatusBlock({
     if (heatRisk?.isExtreme) {
       return {
         icon: "⛔",
-        title: "Risc extrem per calor",
-        text:
-          t("officialAdviceDynamic.heat.extreme") ||
-          "Evita completament l’exposició i interromp l’activitat física.",
+        title: day ? "Risc extrem per calor" : "Calor nocturna extrema",
+        text: day
+          ? tr(
+              "officialAdviceDynamic.heat.extreme",
+              "Evita completament l’exposició i interromp l’activitat física."
+            )
+          : tr(
+              "officialAdviceDynamic.heat.extreme_night",
+              "Temperatura nocturna extrema. Evita esforços, hidrata’t i prioritza espais frescos o climatitzats."
+            ),
         className: "status-card status-danger",
       };
     }
@@ -106,20 +117,32 @@ export function getPrimaryStatusBlock({
     if (heatRisk?.isHigh) {
       return {
         icon: "🔴",
-        title: "Risc alt per calor",
-        text:
-          t("officialAdviceDynamic.heat.high") ||
-          "Limita l’activitat exterior, hidrata’t sovint i cerca ombra.",
+        title: day ? "Risc alt per calor" : "Temperatura nocturna molt elevada",
+        text: day
+          ? tr(
+              "officialAdviceDynamic.heat.high",
+              "Limita l’activitat exterior, hidrata’t sovint i cerca ombra."
+            )
+          : tr(
+              "officialAdviceDynamic.heat.high_night",
+              "La calor continua elevada durant la nit. Redueix esforços, hidrata’t i afavoreix la ventilació."
+            ),
         className: "status-card status-danger",
       };
     }
 
     return {
       icon: "🟠",
-      title: "Risc moderat per calor",
-      text:
-        t("officialAdviceDynamic.heat.moderate") ||
-        "Evita esforços intensos i fes pauses en llocs frescos.",
+      title: day ? "Risc moderat per calor" : "Temperatura nocturna elevada",
+      text: day
+        ? tr(
+            "officialAdviceDynamic.heat.moderate",
+            "Evita esforços intensos i fes pauses en llocs frescos."
+          )
+        : tr(
+            "officialAdviceDynamic.heat.moderate_night",
+            "La temperatura es manté elevada durant la nit. Hidrata’t, ventila els espais i evita esforços innecessaris."
+          ),
       className: "status-card status-warning",
     };
   }

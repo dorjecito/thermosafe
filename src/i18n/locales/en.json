@@ -302,8 +302,11 @@
     "heat": {
       "mild": "Hydrate often and rest in cool areas.",
       "moderate": "Avoid intense effort and seek shade regularly.",
+      "moderate_night": "Temperatures remain elevated overnight. Stay hydrated, ventilate indoor spaces and avoid unnecessary effort.",
       "high": "High risk: limit outdoor activity and hydrate continuously.",
-      "extreme": "Extreme danger: avoid going outside completely. High heat-stroke risk."
+      "high_night": "Heat remains high overnight. Reduce effort, stay hydrated and improve ventilation.",
+      "extreme": "Extreme danger: avoid going outside completely. High heat-stroke risk.",
+      "extreme_night": "Extreme night-time heat. Avoid effort, stay hydrated and prioritise cool or air-conditioned spaces."
     },
     "cold": {
       "mild": "Low temperature: dress warmly and protect your hands.",

@@ -7,6 +7,7 @@ import { getColdRisk } from "../../src/utils/getColdRisk";
 import { getWindRisk } from "../../src/utils/windRisk";
 import { getUvAdvice, getUvLevel, getUvText } from "../../src/utils/uv";
 import { isDayAtLocation } from "../../src/utils/isDayAtLocation";
+import { getPrimaryStatusBlock } from "../../src/utils/getPrimaryStatusBlock";
 
 test("heat risk follows INSST-style threshold boundaries", () => {
   assert.equal(getBaseHeatRisk(26.9).class, "safe");
@@ -66,4 +67,29 @@ test("day/night detection uses local sunrise and sunset boundaries", () => {
   assert.equal(isDayAtLocation(sunrise - 1, tz, sunrise, sunset), false);
   assert.equal(isDayAtLocation(sunset, tz, sunrise, sunset), false);
   assert.equal(isDayAtLocation(10_000, tz), true);
+});
+
+test("night heat status avoids daytime shade advice", () => {
+  const translations: Record<string, string> = {
+    "officialAdviceDynamic.heat.moderate": "Evita esforços intensos i busca ombra regularment.",
+    "officialAdviceDynamic.heat.moderate_night":
+      "La temperatura es manté elevada durant la nit. Hidrata't i evita esforços innecessaris.",
+  };
+
+  const result = getPrimaryStatusBlock({
+    alerts: [],
+    primary: { kind: "heat", severity: 2, labelKey: "heat_moderate" },
+    heatRisk: { isHigh: false, isExtreme: false },
+    coldRisk: "cap",
+    windRisk: "none",
+    uvi: 0,
+    day: false,
+    primaryAdvice: null,
+    contextualUVMessage: "",
+    t: (key) => translations[key] || key,
+  });
+
+  assert.equal(result.title, "Temperatura nocturna elevada");
+  assert.match(result.text, /nit/i);
+  assert.doesNotMatch(result.text, /ombra/i);
 });

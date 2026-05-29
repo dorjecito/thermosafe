@@ -332,16 +332,67 @@ async function getUVfromOpenWeather(lat, lon) {
 // ─────────────────────────────────────────────
 // Textos i notificacions · calor
 // ─────────────────────────────────────────────
-function makeTitle(lang) {
-  return (
-    {
-      ca: "🌡️ ThermoSafe – Avís INSST",
-      es: "🌡️ ThermoSafe – Aviso INSST",
-      eu: "🌡️ ThermoSafe – INSST abisua",
-      gl: "🌡️ ThermoSafe – Aviso INSST",
-      en: "🌡️ ThermoSafe – INSST alert",
-    }[lang] ?? "🌡️ ThermoSafe – INSST alert"
-  );
+function heatPushLevelKey(level) {
+  if (level >= 3) return "veryHigh";
+  if (level >= 2) return "high";
+  return "moderate";
+}
+
+const HEAT_PUSH_TEXT = {
+  ca: {
+    moderate: "Calor moderada",
+    high: "Calor alta",
+    veryHigh: "Calor molt alta",
+    moderateAdvice: "Hidrata't i adapta l'activitat.",
+    highAdvice: "Redueix esforços i hidrata't sovint.",
+    veryHighAdvice: "Evita esforços i prioritza espais frescos.",
+    tail: "Obre ThermoSafe per veure els detalls.",
+  },
+  es: {
+    moderate: "Calor moderado",
+    high: "Calor alto",
+    veryHigh: "Calor muy alto",
+    moderateAdvice: "Hidrátate y adapta la actividad.",
+    highAdvice: "Reduce esfuerzos e hidrátate a menudo.",
+    veryHighAdvice: "Evita esfuerzos y prioriza espacios frescos.",
+    tail: "Abre ThermoSafe para ver los detalles.",
+  },
+  eu: {
+    moderate: "Bero moderatua",
+    high: "Bero handia",
+    veryHigh: "Bero oso handia",
+    moderateAdvice: "Hidratatu eta egokitu jarduera.",
+    highAdvice: "Murriztu ahaleginak eta hidratatu maiz.",
+    veryHighAdvice: "Saihestu ahaleginak eta lehenetsi leku freskoak.",
+    tail: "Ireki ThermoSafe xehetasunak ikusteko.",
+  },
+  gl: {
+    moderate: "Calor moderada",
+    high: "Calor alta",
+    veryHigh: "Calor moi alta",
+    moderateAdvice: "Hidrátate e adapta a actividade.",
+    highAdvice: "Reduce esforzos e hidrátate a miúdo.",
+    veryHighAdvice: "Evita esforzos e prioriza espazos frescos.",
+    tail: "Abre ThermoSafe para ver os detalles.",
+  },
+  en: {
+    moderate: "Moderate heat",
+    high: "High heat",
+    veryHigh: "Very high heat",
+    moderateAdvice: "Stay hydrated and adjust activity.",
+    highAdvice: "Reduce exertion and hydrate often.",
+    veryHighAdvice: "Avoid exertion and prioritise cool spaces.",
+    tail: "Open ThermoSafe for details.",
+  },
+};
+
+function heatPushText(lang) {
+  return HEAT_PUSH_TEXT[lang] ?? HEAT_PUSH_TEXT.en;
+}
+
+function makeTitle(lang, level = 1) {
+  const text = heatPushText(lang);
+  return `🌡️ ThermoSafe – ${text[heatPushLevelKey(level)]}`;
 }
 
 const HI_LABEL = {
@@ -352,20 +403,14 @@ const HI_LABEL = {
   en: "Heat index",
 };
 
-function makeBody(lang, labelByLang, hi) {
-  const label = labelByLang[lang] ?? labelByLang.en ?? labelByLang.ca;
+function makeBody(lang, labelByLang, hi, level = 1) {
+  const text = heatPushText(lang);
+  const levelKey = heatPushLevelKey(level);
+  const label = text[levelKey] ?? labelByLang[lang] ?? labelByLang.en ?? labelByLang.ca;
+  const advice = text[`${levelKey}Advice`] ?? text.moderateAdvice;
   const hiStr = `${Math.round(hi)} °C`;
 
-  const tail =
-    {
-      ca: "Obre ThermoSafe per veure recomanacions.",
-      es: "Abre ThermoSafe para ver recomendaciones.",
-      eu: "Ireki ThermoSafe gomendioak ikusteko.",
-      gl: "Abre ThermoSafe para ver recomendacións.",
-      en: "Open ThermoSafe to see recommendations.",
-    }[lang] ?? "Open ThermoSafe to see recommendations.";
-
-  return `${label}. ${HI_LABEL[lang] ?? HI_LABEL.en}: ${hiStr}. ${tail}`;
+  return `${label}. ${HI_LABEL[lang] ?? HI_LABEL.en}: ${hiStr}. ${advice} ${text.tail}`;
 }
 
 async function sendPush(token, lang, level, hi, labelByLang, place) {
@@ -379,8 +424,8 @@ async function sendPush(token, lang, level, hi, labelByLang, place) {
     return;
   }
 
-  const title = makeTitle(lang);
-  const body = makeBody(lang, labelByLang, hi);
+  const title = makeTitle(lang, level);
+  const body = makeBody(lang, labelByLang, hi, level);
 
   const data = {
     title,

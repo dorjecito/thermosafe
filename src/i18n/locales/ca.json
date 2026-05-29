@@ -282,8 +282,11 @@
     "heat": {
       "mild": "Hidrata’t sovint i descansa en zones fresques.",
       "moderate": "Evita esforços intensos i busca ombra regularment.",
+      "moderate_night": "La temperatura es manté elevada durant la nit. Hidrata’t, ventila els espais i evita esforços innecessaris.",
       "high": "Risc important: limita l’activitat exterior i hidrata’t de manera contínua.",
-      "extreme": "Perill extrem: evita completament l’exterior. Alt risc de cop de calor."
+      "high_night": "La calor continua elevada durant la nit. Redueix esforços, hidrata’t i afavoreix la ventilació.",
+      "extreme": "Perill extrem: evita completament l’exterior. Alt risc de cop de calor.",
+      "extreme_night": "Temperatura nocturna extrema. Evita esforços, hidrata’t i prioritza espais frescos o climatitzats."
     },
     "cold": {
       "mild": "Temperatura baixa: abriga’t lleugerament i protegeix les mans.",
@@ -353,4 +356,3 @@
 "uvVeryHigh": "Índex UV molt alt. Protecció solar imprescindible!",
 "uvExtreme": "🚨 UV EXTREM (11+) — Evita exposició directa"
 }
-

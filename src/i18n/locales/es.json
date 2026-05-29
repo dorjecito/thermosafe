@@ -290,8 +290,11 @@
     "heat": {
       "mild": "Hidrátate a menudo y descansa en zonas frescas.",
       "moderate": "Evita esfuerzos intensos, hidrátate adecuadamente y adapta la actividad según las condiciones ambientales.",
+      "moderate_night": "La temperatura se mantiene elevada durante la noche. Hidrátate, ventila los espacios y evita esfuerzos innecesarios.",
       "high": "Riesgo importante: limita la actividad exterior e hidrátate de forma continua.",
-      "extreme": "Peligro extremo: evita completamente el exterior. Alto riesgo de golpe de calor."
+      "high_night": "El calor continúa elevado durante la noche. Reduce esfuerzos, hidrátate y favorece la ventilación.",
+      "extreme": "Peligro extremo: evita completamente el exterior. Alto riesgo de golpe de calor.",
+      "extreme_night": "Temperatura nocturna extrema. Evita esfuerzos, hidrátate y prioriza espacios frescos o climatizados."
     },
     "cold": {
       "mild": "Temperatura baja: abrígate ligeramente y protege las manos.",
