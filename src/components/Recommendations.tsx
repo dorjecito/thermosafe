@@ -13,6 +13,7 @@ import { getHeatRisk } from "../utils/heatRisk";
 import { getUvLevelIndex } from "../utils/uv";
 
 type Lang = "ca" | "es" | "eu" | "gl" | "en";
+type ActivityLevel = "rest" | "walk" | "moderate" | "intense";
 
 type TextKeys =
   | "title"
@@ -51,6 +52,7 @@ interface Props {
   temp: number;
   lang: Lang | string;
   isDay: boolean;
+  activity?: ActivityLevel;
   humidity?: number;
   forceSafe?: boolean;
   aemetActive?: boolean;
@@ -497,6 +499,7 @@ export default function Recommendations({
   temp,
   lang,
   isDay,
+  activity,
   humidity,
   forceSafe,
   aemetActive,
@@ -669,7 +672,7 @@ if (isDay && uvKey) {
   /* =========================================================
      5️⃣ RISC PER CALOR (via getHeatRisk) — només en franges suaus
   ========================================================== */
-  const riskObj: any = getHeatRisk(effectiveTemp, "rest");
+  const riskObj: any = getHeatRisk(effectiveTemp, activity || "rest");
   const heatKey = mapHeatLevelToKey(riskObj?.level);
 
   if (heatKey !== "safe" && isDay) {

@@ -8,6 +8,7 @@ type PickPrimaryRiskArgs = {
   effForCold: number | null;
   windRisk: string;
   uvi: number | null;
+  heatRiskClass?: "safe" | "mild" | "moderate" | "high" | "ext";
 };
 
 type PickPrimaryRiskResult = {
@@ -21,6 +22,7 @@ export function pickPrimaryRisk({
   effForCold,
   windRisk,
   uvi,
+  heatRiskClass,
 }: PickPrimaryRiskArgs): PickPrimaryRiskResult {
   // --- 1) CALOR ---
   let heatSev: Severity = 0;
@@ -40,6 +42,23 @@ export function pickPrimaryRisk({
       heatSev = 1;
       heatKey = "heat_mild";
     }
+  }
+
+  const adjustedHeatSeverity: Record<string, Severity> = {
+    safe: 0,
+    mild: 1,
+    moderate: 2,
+    high: 3,
+    ext: 4,
+  };
+
+  const adjustedHeatSev = heatRiskClass
+    ? adjustedHeatSeverity[heatRiskClass] ?? 0
+    : 0;
+
+  if (adjustedHeatSev > heatSev) {
+    heatSev = adjustedHeatSev;
+    heatKey = `heat_${heatRiskClass}`;
   }
 
   // --- 2) FRED ---

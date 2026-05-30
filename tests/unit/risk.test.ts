@@ -13,6 +13,8 @@ import {
 } from "../../src/utils/uv";
 import { isDayAtLocation, isLateDayAtLocation } from "../../src/utils/isDayAtLocation";
 import { getPrimaryStatusBlock } from "../../src/utils/getPrimaryStatusBlock";
+import { pickPrimaryRisk } from "../../src/utils/PickPrimaryRisk";
+import { getWorkWindow } from "../../src/utils/workWindow";
 
 test("heat risk follows INSST-style threshold boundaries", () => {
   assert.equal(getBaseHeatRisk(26.9).class, "safe");
@@ -27,6 +29,50 @@ test("activity can raise heat risk but cannot turn safe weather into high heat r
   assert.equal(getHeatRisk(25, "intense").class, "mild");
   assert.equal(getHeatRisk(30, "moderate").class, "high");
   assert.equal(getHeatRisk(45, "rest").class, "high");
+});
+
+test("intense activity below the official heat threshold raises preventive UI risk", () => {
+  const heatRisk = getHeatRisk(26.4, "intense");
+  const primary = pickPrimaryRisk({
+    hi: 26.4,
+    effForCold: 26.4,
+    windRisk: "none",
+    uvi: 1.4,
+    heatRiskClass: heatRisk.class,
+  });
+
+  assert.equal(heatRisk.class, "mild");
+  assert.equal(primary.kind, "heat");
+  assert.equal(primary.severity, 1);
+
+  const status = getPrimaryStatusBlock({
+    alerts: [],
+    primary,
+    heatRisk,
+    coldRisk: "cap",
+    windRisk: "none",
+    uvi: 1.4,
+    day: true,
+    primaryAdvice: null,
+    contextualUVMessage: "",
+    t: (key) => key,
+  });
+
+  assert.equal(status.title, "Precaució lleu per calor");
+  assert.notEqual(status.title, "Condicions segures");
+});
+
+test("outdoor activity conditions react to physical effort below 27 degrees", () => {
+  const heatRisk = getHeatRisk(26.4, "intense");
+
+  assert.equal(
+    getWorkWindow({
+      heatRisk,
+      heatIndex: 26.4,
+      activity: "intense",
+    }),
+    "caution"
+  );
 });
 
 test("heat index calculation is stable for representative warm and humid conditions", () => {

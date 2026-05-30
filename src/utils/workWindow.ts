@@ -3,11 +3,13 @@ import { getUvLevelIndex } from "./uv";
 
 export type WorkWindow = "optimal" | "caution" | "limited" | "avoid";
 export type WorkWindowLang = "ca" | "es" | "eu" | "gl" | "en";
+type ActivityLevel = "rest" | "walk" | "moderate" | "intense";
 
 type HeatRiskLike =
   | {
       isHigh?: boolean;
       isExtreme?: boolean;
+      class?: "safe" | "mild" | "moderate" | "high" | "ext";
     }
   | null
   | undefined;
@@ -22,6 +24,7 @@ type Params = {
   uvi?: number | null;
   aemetActive?: boolean;
   weatherMain?: string | null;
+  activity?: ActivityLevel;
 };
 
 export function getWorkWindow({
@@ -32,6 +35,7 @@ export function getWorkWindow({
   uvi = null,
   aemetActive = false,
   weatherMain = null,
+  activity = "rest",
 }: Params): WorkWindow {
   const uvLevel = getUvLevelIndex(uvi);
   const hi =
@@ -66,6 +70,16 @@ export function getWorkWindow({
   if (hi !== null && hi >= 41) return "avoid";
   if (hi !== null && hi >= 32) return "limited";
   if (hi !== null && hi >= 27) return "caution";
+
+  /* 2c) L'esforç físic pot exigir precaució abans del llindar tèrmic oficial */
+  if (
+    hi !== null &&
+    hi >= 24 &&
+    activity !== "rest" &&
+    heatRisk?.class !== "safe"
+  ) {
+    return "caution";
+  }
 
   /* 3) Situacions altes */
   if (coldRisk === "alt" || coldRisk === "molt alt") return "limited";

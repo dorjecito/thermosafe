@@ -1078,8 +1078,10 @@ const risk = temp != null ? getThermalRisk(temp) : "cap";
 const baseHeatRisk =
   hi !== null ? getHeatRisk(hi, "rest") : null;
 
+const preventiveActivity: ActivityLevel = activityEnabled ? heldActivityLevel : "rest";
+
 const heatRisk =
-  hi !== null ? getHeatRisk(hi, heldActivityLevel) : null;
+  hi !== null ? getHeatRisk(hi, preventiveActivity) : null;
 
 const activityAffectsHeatRisk =
   activityEnabled &&
@@ -1148,6 +1150,7 @@ const workWindow = getWorkWindow({
   uvi,
   aemetActive: aemetActive || aemetSoon,
   weatherMain,
+  activity: preventiveActivity,
 });
 
 const workWindowLang = currentLang;
@@ -1159,6 +1162,7 @@ const primary = pickPrimaryRisk({
   effForCold: wc ?? temp,
   windRisk,
   uvi,
+  heatRiskClass: heatRisk?.class,
 });
 
 const primaryAdvice = getPrimaryAdviceText({
@@ -1811,9 +1815,10 @@ return (
    Ara les governa directament el component Recommendations
    ============================================================ */}
 <Recommendations
-    temp={data?.main?.temp ?? 0}
+    temp={hi ?? data?.main?.temp ?? 0}
     lang={i18n.resolvedLanguage || i18n.language || "ca"}
     isDay={day}
+    activity={preventiveActivity}
     humidity={data?.main?.humidity ?? undefined}
     aemetActive={aemetActive}
     aemetSoon={aemetSoon}
