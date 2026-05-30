@@ -3,22 +3,30 @@
 // 🌞 Helpers UV — nivell, text i recomanació multillenguatge
 // ======================================================
 
+export type UvLevelIndex = 0 | 1 | 2 | 3 | 4;
+
+export function getRoundedUvi(uvi: number | null | undefined): number {
+  if (typeof uvi !== "number" || !Number.isFinite(uvi)) return 0;
+  return Math.max(0, Math.round(uvi));
+}
+
+export function getUvLevelIndex(uvi: number | null | undefined): UvLevelIndex {
+  const u = getRoundedUvi(uvi);
+  if (u <= 2) return 0;
+  if (u <= 5) return 1;
+  if (u <= 7) return 2;
+  if (u <= 10) return 3;
+  return 4;
+}
+
 export function getUvLevel(uvi: number | null): string {
-  if (uvi === null) return "low";
-  if (uvi < 3) return "low";
-  if (uvi < 6) return "moderate";
-  if (uvi < 8) return "high";
-  if (uvi < 11) return "very-high";
-  return "extreme";
+  return ["low", "moderate", "high", "very-high", "extreme"][
+    getUvLevelIndex(uvi)
+  ];
 }
 
 export function getUvText(uvi: number | null, lang: string): string {
-  const level =
-    uvi === null ? -1 :
-    uvi < 3 ? 0 :
-    uvi < 6 ? 1 :
-    uvi < 8 ? 2 :
-    uvi < 11 ? 3 : 4;
+  const level = uvi === null ? -1 : getUvLevelIndex(uvi);
 
   const text: Record<string, string[]> = {
     ca: ["Baix (0–2)", "Moderat (3–5)", "Alt (6–7)", "Molt alt (8–10)", "Extrem (11+)"],
@@ -33,11 +41,7 @@ export function getUvText(uvi: number | null, lang: string): string {
 export function getUvAdvice(uvi: number | null, lang: string): string {
   if (uvi === null) return "";
 
-  const level =
-    uvi < 3 ? 0 :
-    uvi < 6 ? 1 :
-    uvi < 8 ? 2 :
-    uvi < 11 ? 3 : 4;
+  const level = getUvLevelIndex(uvi);
 
   const advice: Record<string, string[]> = {
     ca: [

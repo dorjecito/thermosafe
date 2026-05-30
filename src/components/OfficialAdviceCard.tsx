@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { useTranslation } from "react-i18next";
+import { getUvLevelIndex } from "../utils/uv";
 
 interface Props {
   risk: string;
@@ -74,9 +75,11 @@ export default function OfficialAdviceCard({
     if (txt !== key) dynamicAdvice.push(txt);
   }
 
-  if (typeof uvi === "number" && uvi >= 3) {
+  const uvLevel = getUvLevelIndex(uvi);
+
+  if (uvLevel >= 1) {
     const lvl =
-      uvi < 6 ? "moderate" : uvi < 8 ? "high" : uvi < 11 ? "very_high" : "extreme";
+      uvLevel === 1 ? "moderate" : uvLevel === 2 ? "high" : uvLevel === 3 ? "very_high" : "extreme";
     const key = `officialAdviceDynamic.uv.${lvl}`;
     const txt = t(key);
     if (txt !== key) dynamicAdvice.push(txt);
@@ -136,7 +139,7 @@ export default function OfficialAdviceCard({
       ];
     }
 
-    if (typeof uvi === "number" && uvi >= 6) {
+    if (uvLevel >= 2) {
       return [
         t("official_advice.useSPF"),
         t("official_advice.useShade"),
@@ -173,7 +176,7 @@ if (risk.startsWith("cold_") && !risk.endsWith("_safe")) {
 }
 
 // ☀️ UV
-if (typeof uvi === "number" && uvi >= 3) {
+if (typeof uvi === "number" && uvLevel >= 1) {
   riskLines.push(`• ${t("uvi")}: ${uvi.toFixed(1)}`);
 }
 

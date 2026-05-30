@@ -10,6 +10,7 @@
 
 import * as React from "react";
 import { getHeatRisk } from "../utils/heatRisk";
+import { getUvLevelIndex } from "../utils/uv";
 
 type Lang = "ca" | "es" | "eu" | "gl" | "en";
 
@@ -422,11 +423,11 @@ const getColdKey = (effectiveTemp: number): ColdKey | null => {
 
 const getUvKey = (uvi: number | null | undefined): UvKey | null => {
   if (typeof uvi !== "number" || !Number.isFinite(uvi)) return null;
-  const uv = Math.max(0, uvi);
-  if (uv >= 11) return "uvExtreme";
-  if (uv >= 8) return "uvVeryHigh";
-  if (uv >= 6) return "uvHigh";
-  if (uv >= 3) return "uvModerate";
+  const level = getUvLevelIndex(uvi);
+  if (level === 4) return "uvExtreme";
+  if (level === 3) return "uvVeryHigh";
+  if (level === 2) return "uvHigh";
+  if (level === 1) return "uvModerate";
   return null;
 };
 

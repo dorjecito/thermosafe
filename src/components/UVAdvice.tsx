@@ -1,4 +1,5 @@
 import React from "react";
+import { getUvLevelIndex } from "../utils/uv";
 
 type Lang = "ca" | "es" | "eu" | "gl" | "en";
 
@@ -128,12 +129,7 @@ const normalizeLang = (lang: string): Lang => {
 const safeUvi = (uvi: number) => Math.max(0, uvi);
 
 const band = (uviRounded1: number): 0 | 1 | 2 | 3 | 4 => {
-  const u = safeUvi(uviRounded1);
-  if (u < 3) return 0;
-  if (u < 6) return 1;
-  if (u < 8) return 2;
-  if (u < 11) return 3;
-  return 4;
+  return getUvLevelIndex(uviRounded1);
 };
 
 const isRainyWeather = (weatherMain?: string | null): boolean => {

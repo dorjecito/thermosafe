@@ -1,3 +1,5 @@
+import { getUvLevelIndex } from "./uv";
+
 export function getRiskIcons(
   heatRisk: { isModerate?: boolean; isHigh?: boolean; isExtreme?: boolean } | null,
   coldRisk: string | null,
@@ -6,8 +8,7 @@ export function getRiskIcons(
 ): string {
   const icons = new Set<string>();
 
-  const hasUvRisk =
-    typeof uvi === "number" && uvi >= 3;
+  const hasUvRisk = getUvLevelIndex(uvi) >= 1;
 
   const hasHeatRisk =
     Boolean(heatRisk?.isModerate || heatRisk?.isHigh || heatRisk?.isExtreme);

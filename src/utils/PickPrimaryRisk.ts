@@ -1,3 +1,5 @@
+import { getUvLevelIndex } from "./uv";
+
 export type PrimaryKind = "heat" | "cold" | "wind" | "uv" | "none";
 export type Severity = 0 | 1 | 2 | 3 | 4;
 
@@ -81,18 +83,18 @@ export function pickPrimaryRisk({
   let uvKey = "uv_low";
 
   if (typeof uvi === "number" && Number.isFinite(uvi)) {
-    const uviSafe = Math.max(0, uvi);
+    const uvLevel = getUvLevelIndex(uvi);
 
-    if (uviSafe >= 11) {
+    if (uvLevel === 4) {
       uvSev = 4;
       uvKey = "uv_extreme";
-    } else if (uviSafe >= 8) {
+    } else if (uvLevel === 3) {
       uvSev = 3;
       uvKey = "uv_very_high";
-    } else if (uviSafe >= 6) {
+    } else if (uvLevel === 2) {
       uvSev = 2;
       uvKey = "uv_high";
-    } else if (uviSafe >= 3) {
+    } else if (uvLevel === 1) {
       uvSev = 1;
       uvKey = "uv_moderate";
     } else {

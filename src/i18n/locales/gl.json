@@ -66,6 +66,39 @@
   "official_alert_soon": "Aviso meteorolóxico oficial próximo",
   "follow_official_alerts_soon": "Hai un aviso meteorolóxico previsto. Convén anticiparse e revisar a actividade prevista.",
   "safe_conditions_text_night_warm": "Temperaturas nocturnas elevadas. Asegura ventilación cruzada e utiliza roupa lixeira.",
+  "primaryStatus": {
+    "heat": {
+      "extreme": "Risco extremo por calor",
+      "extremeNight": "Calor nocturna extrema",
+      "high": "Risco alto por calor",
+      "highNight": "Temperatura nocturna moi elevada",
+      "mild": "Precaución leve por calor",
+      "mildLateDay": "Temperatura aínda elevada",
+      "night": "Temperatura nocturna elevada",
+      "moderate": "Risco moderado por calor",
+      "moderateLateDay": "Calor aínda elevada",
+      "mildText": "A sensación térmica é moderadamente elevada. Hidrátate e adapta a actividade se mantés esforzo físico.",
+      "mildLateDayText": "O sol xa baixa, pero a sensación térmica aínda pode cansar. Hidrátate e evita esforzos innecesarios.",
+      "moderateLateDayText": "Aínda que xa sexa tarde, a sensación térmica continúa elevada. Reduce esforzos intensos, hidrátate e fai pausas en lugares frescos."
+    },
+    "cold": {
+      "moderate": "Risco moderado por frío",
+      "high": "Risco alto por frío",
+      "extreme": "Risco extremo por frío"
+    },
+    "wind": {
+      "default": "Risco por vento",
+      "moderate": "Risco moderado por vento",
+      "high": "Risco alto por vento",
+      "veryHigh": "Risco moi alto por vento"
+    },
+    "uv": {
+      "moderate": "Radiación UV moderada",
+      "high": "Radiación UV alta",
+      "veryHigh": "Radiación UV moi alta",
+      "extreme": "Radiación UV extrema"
+    }
+  },
 
   "push": {
     "label": "Recibir avisos cando o risco por calor ≥ moderado",

@@ -1,6 +1,7 @@
 import React from "react";
 import { useTranslation } from "react-i18next";
 import type { LangKey as AemetLangKey } from "../utils/aemetAi";
+import { getUvLevelIndex } from "../utils/uv";
 
 type LangKey = AemetLangKey | "en";
 
@@ -66,7 +67,7 @@ export default function SafetyActions({
     }
 
     // ☀️ UV
-    if (typeof uvi === "number" && uvi >= 3) {
+    if (typeof uvi === "number" && getUvLevelIndex(uvi) >= 1) {
       riskLines.push(`• ${t("uvi")}: ${uvi.toFixed(1)}`);
     }
 

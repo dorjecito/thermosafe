@@ -1,4 +1,5 @@
 import type { WindRisk } from "./windRisk";
+import { getUvLevelIndex } from "./uv";
 
 export type WorkWindow = "optimal" | "caution" | "limited" | "avoid";
 export type WorkWindowLang = "ca" | "es" | "eu" | "gl" | "en";
@@ -32,7 +33,7 @@ export function getWorkWindow({
   aemetActive = false,
   weatherMain = null,
 }: Params): WorkWindow {
-  const uv = typeof uvi === "number" && Number.isFinite(uvi) ? uvi : 0;
+  const uvLevel = getUvLevelIndex(uvi);
   const hi =
   typeof heatIndex === "number" && Number.isFinite(heatIndex)
     ? heatIndex
@@ -51,7 +52,7 @@ export function getWorkWindow({
   if (coldRisk === "extrem") return "avoid";
   if (heatRisk?.isExtreme) return "avoid";
   if (windRisk === "very_strong") return "avoid";
-  if (uv >= 11) return "avoid";
+  if (uvLevel === 4) return "avoid";
 
   /* 2) Fred + vent combinats */
   if (
@@ -71,7 +72,7 @@ export function getWorkWindow({
   if (coldRisk === "moderat") return "limited";
   if (heatRisk?.isHigh) return "limited";
   if (windRisk === "strong") return "limited";
-  if (uv >= 8) return "limited";
+  if (uvLevel >= 3) return "limited";
 
   /* 3b) Avís oficial + situació ja delicada */
   if (
@@ -79,7 +80,7 @@ export function getWorkWindow({
     (
       coldRisk === "lleu" ||
       windRisk === "moderate" ||
-      uv >= 6 ||
+      uvLevel >= 2 ||
       rainy
     )
   ) {
@@ -89,7 +90,7 @@ export function getWorkWindow({
   /* 4) Situacions de precaució */
   if (aemetActive) return "caution";
   if (windRisk === "moderate") return "caution";
-  if (uv >= 6) return "caution";
+  if (uvLevel >= 2) return "caution";
   if (rainy) return "caution";
   if (coldRisk === "lleu") return "caution";
 

@@ -1,6 +1,7 @@
 import React from "react";
 import { useTranslation } from "react-i18next";
 import type { HeatRisk } from "../utils/heatRisk";
+import { getUvLevelIndex } from "../utils/uv";
 
 interface Props {
   hi: number | null;          // index de calor
@@ -32,7 +33,7 @@ export default function Alerts({ hi, irr, uvi, heatRisk, loading }: Props) {
       )}
 
       {/* 🔆 ALERTA PER UVI */}
-      {uvi !== null && uvi >= 8 && (
+      {uvi !== null && getUvLevelIndex(uvi) >= 3 && (
         <div className="alert-banner">
           <p>{t("highUVIWarning")}</p>
         </div>

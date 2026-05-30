@@ -43,6 +43,39 @@
   "official_alert_soon": "Avís meteorològic oficial proper",
   "follow_official_alerts_soon": "Hi ha un avís meteorològic previst. Convé anticipar-se i revisar l’activitat prevista.",
   "safe_conditions_text_night_warm": "Temperatures nocturnes elevades. Assegura ventilació creuada i utilitza roba lleugera.",
+  "primaryStatus": {
+    "heat": {
+      "extreme": "Risc extrem per calor",
+      "extremeNight": "Calor nocturna extrema",
+      "high": "Risc alt per calor",
+      "highNight": "Temperatura nocturna molt elevada",
+      "mild": "Precaució lleu per calor",
+      "mildLateDay": "Temperatura encara elevada",
+      "night": "Temperatura nocturna elevada",
+      "moderate": "Risc moderat per calor",
+      "moderateLateDay": "Calor encara elevada",
+      "mildText": "La sensació tèrmica és moderadament elevada. Hidrata’t i adapta l’activitat si mantens esforç físic.",
+      "mildLateDayText": "El sol ja baixa, però la sensació tèrmica encara pot cansar. Hidrata’t i evita esforços innecessaris.",
+      "moderateLateDayText": "Tot i ser capvespre, la sensació tèrmica continua elevada. Redueix esforços intensos, hidrata’t i fes pauses en llocs frescos."
+    },
+    "cold": {
+      "moderate": "Risc moderat per fred",
+      "high": "Risc alt per fred",
+      "extreme": "Risc extrem per fred"
+    },
+    "wind": {
+      "default": "Risc per vent",
+      "moderate": "Risc moderat per vent",
+      "high": "Risc alt per vent",
+      "veryHigh": "Risc molt alt per vent"
+    },
+    "uv": {
+      "moderate": "Radiació UV moderada",
+      "high": "Radiació UV alta",
+      "veryHigh": "Radiació UV molt alta",
+      "extreme": "Radiació UV extrema"
+    }
+  },
 
 
   "highIrradianceWarning": "⚠️ Irradiància solar molt alta. Evita l'exposició directa al sol.",
@@ -97,7 +130,8 @@
   "uvTitle": "Avís ThermoSafe",
   "uvModerate": "Índex UV moderat. Protegeix-te si estàs exposat al sol.",
   "uvHigh": "Índex UV alt. Usa crema solar i evita exposició prolongada.",
-  "uvVeryHigh": "Índex UV molt alt. Protecció solar imprescindible."
+  "uvVeryHigh": "Índex UV molt alt. Protecció solar imprescindible.",
+  "uvExtreme": "Índex UV extrem. Evita l’exposició directa al sol."
 },
 
 "search_help_title": "Ajuda de cerca",

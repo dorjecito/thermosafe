@@ -50,6 +50,39 @@
   "official_alert_soon": "Upcoming official weather alert",
   "follow_official_alerts_soon": "A weather alert is expected. It is advisable to anticipate it and review planned activities.",
   "safe_conditions_text_night_warm": "Elevated night-time temperatures. Ensure cross ventilation and wear light clothing.",
+  "primaryStatus": {
+    "heat": {
+      "extreme": "Extreme heat risk",
+      "extremeNight": "Extreme night-time heat",
+      "high": "High heat risk",
+      "highNight": "Very high night-time temperature",
+      "mild": "Mild heat caution",
+      "mildLateDay": "Temperature still elevated",
+      "night": "Elevated night-time temperature",
+      "moderate": "Moderate heat risk",
+      "moderateLateDay": "Heat still elevated",
+      "mildText": "The apparent temperature is moderately elevated. Stay hydrated and adapt your activity if physical effort continues.",
+      "mildLateDayText": "The sun is lower, but the apparent temperature may still cause fatigue. Stay hydrated and avoid unnecessary effort.",
+      "moderateLateDayText": "Although it is later in the day, the apparent temperature remains elevated. Reduce intense effort, stay hydrated and take breaks in cool places."
+    },
+    "cold": {
+      "moderate": "Moderate cold risk",
+      "high": "High cold risk",
+      "extreme": "Extreme cold risk"
+    },
+    "wind": {
+      "default": "Wind risk",
+      "moderate": "Moderate wind risk",
+      "high": "High wind risk",
+      "veryHigh": "Very high wind risk"
+    },
+    "uv": {
+      "moderate": "Moderate UV radiation",
+      "high": "High UV radiation",
+      "veryHigh": "Very high UV radiation",
+      "extreme": "Extreme UV radiation"
+    }
+  },
 
   "combinedRisk": {
   "highTitle": "Relevant combination of risks",

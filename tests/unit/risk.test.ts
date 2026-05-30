@@ -5,7 +5,12 @@ import { getBaseHeatRisk, getHeatRisk } from "../../src/utils/heatRisk";
 import { calcHI } from "../../src/utils/calcHI";
 import { getColdRisk } from "../../src/utils/getColdRisk";
 import { getWindRisk } from "../../src/utils/windRisk";
-import { getUvAdvice, getUvLevel, getUvText } from "../../src/utils/uv";
+import {
+  getUvAdvice,
+  getUvLevel,
+  getUvLevelIndex,
+  getUvText,
+} from "../../src/utils/uv";
 import { isDayAtLocation, isLateDayAtLocation } from "../../src/utils/isDayAtLocation";
 import { getPrimaryStatusBlock } from "../../src/utils/getPrimaryStatusBlock";
 
@@ -48,15 +53,47 @@ test("wind risk follows km/h threshold boundaries", () => {
 
 test("UV level, text and advice are classified consistently", () => {
   assert.equal(getUvLevel(null), "low");
-  assert.equal(getUvLevel(2.9), "low");
+  assert.equal(getUvLevel(2.4), "low");
+  assert.equal(getUvLevel(2.5), "moderate");
   assert.equal(getUvLevel(3), "moderate");
   assert.equal(getUvLevel(6), "high");
   assert.equal(getUvLevel(8), "very-high");
   assert.equal(getUvLevel(11), "extreme");
 
+  assert.equal(getUvLevelIndex(4.9), 1);
+  assert.equal(getUvLevelIndex(5.2), 1);
+  assert.equal(getUvLevelIndex(6.1), 2);
+  assert.equal(getUvLevelIndex(10.6), 4);
+  assert.equal(getUvLevelIndex(16.4), 4);
+
   assert.equal(getUvText(8, "ca"), "Molt alt (8–10)");
   assert.equal(getUvText(11, "es"), "Extremo (11+)");
   assert.match(getUvAdvice(6, "ca"), /Protecció extra/);
+});
+
+test("primary UV status title is translated and follows rounded bands", () => {
+  const translations: Record<string, string> = {
+    "primaryStatus.uv.high": "High UV radiation",
+    "primaryStatus.uv.veryHigh": "Very high UV radiation",
+  };
+  const t = (key: string) => translations[key] || key;
+
+  const makeStatus = (uvi: number) =>
+    getPrimaryStatusBlock({
+      alerts: [],
+      primary: { kind: "uv", severity: 2, labelKey: "uv_high" },
+      heatRisk: null,
+      coldRisk: "cap",
+      windRisk: "none",
+      uvi,
+      day: true,
+      primaryAdvice: null,
+      contextualUVMessage: "",
+      t,
+    });
+
+  assert.equal(makeStatus(7.3).title, "High UV radiation");
+  assert.equal(makeStatus(7.6).title, "Very high UV radiation");
 });
 
 test("day/night detection uses local sunrise and sunset boundaries", () => {

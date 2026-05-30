@@ -1,5 +1,6 @@
 // src/components/TopAlertBanner.tsx
 import React, { useEffect, useMemo, useState } from "react";
+import { getRoundedUvi } from "../utils/uv";
 
 type Props = {
   primary: any;
@@ -40,7 +41,7 @@ export default function TopAlertBanner({
     }
 
     const hasUvi = typeof uvi === "number" && Number.isFinite(uvi);
-    const uviRounded = hasUvi ? Math.max(0, Math.round(uvi)) : null;
+    const uviRounded = hasUvi ? getRoundedUvi(uvi) : null;
 
     if (uviRounded !== null && uviRounded >= UV_EXTREME) {
       const key = "extremeUVIWarning";

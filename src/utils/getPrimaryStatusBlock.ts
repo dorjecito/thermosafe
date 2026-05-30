@@ -1,3 +1,5 @@
+import { getUvLevelIndex } from "./uv";
+
 type TFunctionLike = (key: string) => string;
 
 type PrimaryKind = "heat" | "cold" | "wind" | "uv" | "none";
@@ -104,7 +106,9 @@ export function getPrimaryStatusBlock({
     if (heatRisk?.isExtreme) {
       return {
         icon: "⛔",
-        title: day ? "Risc extrem per calor" : "Calor nocturna extrema",
+        title: day
+          ? tr("primaryStatus.heat.extreme", "Risc extrem per calor")
+          : tr("primaryStatus.heat.extremeNight", "Calor nocturna extrema"),
         text: day
           ? tr(
               "officialAdviceDynamic.heat.extreme",
@@ -121,7 +125,9 @@ export function getPrimaryStatusBlock({
     if (heatRisk?.isHigh) {
       return {
         icon: "🔴",
-        title: day ? "Risc alt per calor" : "Temperatura nocturna molt elevada",
+        title: day
+          ? tr("primaryStatus.heat.high", "Risc alt per calor")
+          : tr("primaryStatus.heat.highNight", "Temperatura nocturna molt elevada"),
         text: day
           ? tr(
               "officialAdviceDynamic.heat.high",
@@ -140,13 +146,19 @@ export function getPrimaryStatusBlock({
         icon: "🟡",
         title: day
           ? isLateDay
-            ? "Temperatura encara elevada"
-            : "Precaució lleu per calor"
-          : "Temperatura nocturna elevada",
+            ? tr("primaryStatus.heat.mildLateDay", "Temperatura encara elevada")
+            : tr("primaryStatus.heat.mild", "Precaució lleu per calor")
+          : tr("primaryStatus.heat.night", "Temperatura nocturna elevada"),
         text: day
           ? isLateDay
-            ? "El sol ja baixa, però la sensació tèrmica encara pot cansar. Hidrata’t i evita esforços innecessaris."
-            : "La sensació tèrmica és moderadament elevada. Hidrata’t i adapta l’activitat si mantens esforç físic."
+            ? tr(
+                "primaryStatus.heat.mildLateDayText",
+                "El sol ja baixa, però la sensació tèrmica encara pot cansar. Hidrata’t i evita esforços innecessaris."
+              )
+            : tr(
+                "primaryStatus.heat.mildText",
+                "La sensació tèrmica és moderadament elevada. Hidrata’t i adapta l’activitat si mantens esforç físic."
+              )
           : tr(
               "officialAdviceDynamic.heat.moderate_night",
               "La temperatura es manté elevada durant la nit. Hidrata’t, ventila els espais i evita esforços innecessaris."
@@ -159,12 +171,15 @@ export function getPrimaryStatusBlock({
       icon: "🟠",
       title: day
         ? isLateDay
-          ? "Calor encara elevada"
-          : "Risc moderat per calor"
-        : "Temperatura nocturna elevada",
+          ? tr("primaryStatus.heat.moderateLateDay", "Calor encara elevada")
+          : tr("primaryStatus.heat.moderate", "Risc moderat per calor")
+        : tr("primaryStatus.heat.night", "Temperatura nocturna elevada"),
       text: day
         ? isLateDay
-          ? "Tot i ser capvespre, la sensació tèrmica continua elevada. Redueix esforços intensos, hidrata’t i fes pauses en llocs frescos."
+          ? tr(
+              "primaryStatus.heat.moderateLateDayText",
+              "Tot i ser capvespre, la sensació tèrmica continua elevada. Redueix esforços intensos, hidrata’t i fes pauses en llocs frescos."
+            )
           : tr(
               "officialAdviceDynamic.heat.moderate",
               "Evita esforços intensos i fes pauses en llocs frescos."
@@ -182,7 +197,7 @@ export function getPrimaryStatusBlock({
     if (coldRisk === "extrem") {
       return {
         icon: "⛔",
-        title: "Risc extrem per fred",
+        title: tr("primaryStatus.cold.extreme", "Risc extrem per fred"),
         text:
           t("officialAdviceDynamic.cold.extreme") ||
           "Evita l’exterior. Hi ha risc greu de pèrdua ràpida de calor corporal.",
@@ -193,7 +208,7 @@ export function getPrimaryStatusBlock({
     if (coldRisk === "alt" || coldRisk === "molt alt") {
       return {
         icon: "🔵",
-        title: "Risc alt per fred",
+        title: tr("primaryStatus.cold.high", "Risc alt per fred"),
         text:
           t("officialAdviceDynamic.cold.high") ||
           "Protegeix extremitats i limita el temps d’exposició exterior.",
@@ -203,7 +218,7 @@ export function getPrimaryStatusBlock({
 
     return {
       icon: "❄️",
-      title: "Risc moderat per fred",
+      title: tr("primaryStatus.cold.moderate", "Risc moderat per fred"),
       text:
         t("officialAdviceDynamic.cold.moderate") ||
         "Abriga’t per capes i evita exposicions prolongades.",
@@ -218,14 +233,14 @@ export function getPrimaryStatusBlock({
     ["moderate", "strong", "very_strong"].includes(windRisk)
   ) {
     const windTitles: Record<string, string> = {
-      moderate: "Risc moderat per vent",
-      strong: "Risc alt per vent",
-      very_strong: "Risc molt alt per vent",
+      moderate: tr("primaryStatus.wind.moderate", "Risc moderat per vent"),
+      strong: tr("primaryStatus.wind.high", "Risc alt per vent"),
+      very_strong: tr("primaryStatus.wind.veryHigh", "Risc molt alt per vent"),
     };
 
     return {
       icon: "💨",
-      title: windTitles[windRisk] || "Risc per vent",
+      title: windTitles[windRisk] || tr("primaryStatus.wind.default", "Risc per vent"),
       text:
         primaryAdvice ||
         t(`officialAdviceDynamic.wind.${windRisk}`) ||
@@ -236,14 +251,13 @@ export function getPrimaryStatusBlock({
 
   // ☀️ UV
   if (primary.kind === "uv" && day) {
-    let uvTitle = "Radiació UV alta";
+    const uvLevel = getUvLevelIndex(uvi);
+    let uvTitle = tr("primaryStatus.uv.high", "Radiació UV alta");
 
-    if (typeof uvi === "number") {
-      if (uvi >= 11) uvTitle = "Radiació UV extrema";
-      else if (uvi >= 8) uvTitle = "Radiació UV molt alta";
-      else if (uvi >= 6) uvTitle = "Radiació UV alta";
-      else uvTitle = "Radiació UV moderada";
-    }
+    if (uvLevel === 4) uvTitle = tr("primaryStatus.uv.extreme", "Radiació UV extrema");
+    else if (uvLevel === 3) uvTitle = tr("primaryStatus.uv.veryHigh", "Radiació UV molt alta");
+    else if (uvLevel === 2) uvTitle = tr("primaryStatus.uv.high", "Radiació UV alta");
+    else uvTitle = tr("primaryStatus.uv.moderate", "Radiació UV moderada");
 
     return {
       icon: "☀️",

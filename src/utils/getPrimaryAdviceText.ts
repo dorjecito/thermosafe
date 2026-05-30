@@ -1,3 +1,5 @@
+import { getUvLevelIndex } from "./uv";
+
 type TFunctionLike = (key: string) => string;
 
 type PrimaryKind = "heat" | "cold" | "wind" | "uv" | "none";
@@ -87,11 +89,12 @@ export function getPrimaryAdviceText({
 
   // ☀️ UV
   if (primary.kind === "uv" && typeof uvi === "number") {
+    const currentUvLevel = getUvLevelIndex(uvi);
     let uvLevel: "moderate" | "high" | "very_high" | "extreme" = "moderate";
 
-    if (uvi >= 11) uvLevel = "extreme";
-    else if (uvi >= 8) uvLevel = "very_high";
-    else if (uvi >= 6) uvLevel = "high";
+    if (currentUvLevel === 4) uvLevel = "extreme";
+    else if (currentUvLevel === 3) uvLevel = "very_high";
+    else if (currentUvLevel === 2) uvLevel = "high";
 
     const key = `officialAdviceDynamic.uv.${uvLevel}`;
     const text = t(key);

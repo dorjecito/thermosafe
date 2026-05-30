@@ -66,6 +66,39 @@
   "official_alert_soon": "Laster abisu meteorologiko ofiziala",
   "follow_official_alerts_soon": "Abisu meteorologiko bat aurreikusita dago. Komeni da aurrea hartzea eta aurreikusitako jarduera berrikustea.",
   "safe_conditions_text_night_warm": "Gaueko tenperatura altuak. Ziurtatu aireztapen gurutzatua eta erabili arropa arina.",
+  "primaryStatus": {
+    "heat": {
+      "extreme": "Muturreko bero-arriskua",
+      "extremeNight": "Gaueko muturreko beroa",
+      "high": "Bero-arrisku handia",
+      "highNight": "Gaueko tenperatura oso altua",
+      "mild": "Beroagatik arreta arina",
+      "mildLateDay": "Tenperatura oraindik altua",
+      "night": "Gaueko tenperatura altua",
+      "moderate": "Bero-arrisku ertaina",
+      "moderateLateDay": "Beroa oraindik altua",
+      "mildText": "Sentsazio termikoa nahiko altua da. Hidratatu eta egokitu jarduera ahalegin fisikoa mantentzen baduzu.",
+      "mildLateDayText": "Eguzkia jaisten ari da, baina sentsazio termikoak oraindik nekea eragin dezake. Hidratatu eta saihestu beharrezkoak ez diren ahaleginak.",
+      "moderateLateDayText": "Arratsaldea izan arren, sentsazio termikoa altua da oraindik. Murriztu ahalegin biziak, hidratatu eta egin atsedenaldiak leku freskoetan."
+    },
+    "cold": {
+      "moderate": "Hotz-arrisku ertaina",
+      "high": "Hotz-arrisku handia",
+      "extreme": "Muturreko hotz-arriskua"
+    },
+    "wind": {
+      "default": "Haize-arriskua",
+      "moderate": "Haize-arrisku ertaina",
+      "high": "Haize-arrisku handia",
+      "veryHigh": "Haize-arrisku oso handia"
+    },
+    "uv": {
+      "moderate": "UV erradiazio moderatua",
+      "high": "UV erradiazio handia",
+      "veryHigh": "UV erradiazio oso handia",
+      "extreme": "Muturreko UV erradiazioa"
+    }
+  },
 
   "push": {
     "label": "Jaso abisuak bero arriskua ≥ moderatua denean",

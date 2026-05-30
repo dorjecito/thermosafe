@@ -1,17 +1,21 @@
+import { getUvLevelIndex } from "./uv";
+
 export function getContextualUVMessage(uv: number): string {
-  if (uv <= 2) {
+  const level = getUvLevelIndex(uv);
+
+  if (level === 0) {
     return "Risc baix. Pots estar a l'exterior amb normalitat.";
   }
 
-  if (uv <= 5) {
+  if (level === 1) {
     return "Risc moderat. Recomanable protecció solar si l'exposició és prolongada.";
   }
 
-  if (uv <= 7) {
+  if (level === 2) {
     return "Risc alt. Utilitza crema solar, gorra i ulleres de sol.";
   }
 
-  if (uv <= 10) {
+  if (level === 3) {
     return "Risc molt alt. Evita l'exposició prolongada al sol.";
   }
 

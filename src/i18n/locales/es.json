@@ -65,6 +65,39 @@
   "official_alert_soon": "Aviso meteorológico oficial próximo",
   "follow_official_alerts_soon": "Hay un aviso meteorológico previsto. Conviene anticiparse y revisar la actividad prevista.",
   "safe_conditions_text_night_warm": "Temperaturas nocturnas elevadas. Asegura ventilación cruzada y utiliza ropa ligera.",
+  "primaryStatus": {
+    "heat": {
+      "extreme": "Riesgo extremo por calor",
+      "extremeNight": "Calor nocturno extremo",
+      "high": "Riesgo alto por calor",
+      "highNight": "Temperatura nocturna muy elevada",
+      "mild": "Precaución leve por calor",
+      "mildLateDay": "Temperatura todavía elevada",
+      "night": "Temperatura nocturna elevada",
+      "moderate": "Riesgo moderado por calor",
+      "moderateLateDay": "Calor todavía elevado",
+      "mildText": "La sensación térmica es moderadamente elevada. Hidrátate y adapta la actividad si mantienes esfuerzo físico.",
+      "mildLateDayText": "El sol ya baja, pero la sensación térmica todavía puede cansar. Hidrátate y evita esfuerzos innecesarios.",
+      "moderateLateDayText": "Aunque ya sea tarde, la sensación térmica continúa elevada. Reduce esfuerzos intensos, hidrátate y haz pausas en lugares frescos."
+    },
+    "cold": {
+      "moderate": "Riesgo moderado por frío",
+      "high": "Riesgo alto por frío",
+      "extreme": "Riesgo extremo por frío"
+    },
+    "wind": {
+      "default": "Riesgo por viento",
+      "moderate": "Riesgo moderado por viento",
+      "high": "Riesgo alto por viento",
+      "veryHigh": "Riesgo muy alto por viento"
+    },
+    "uv": {
+      "moderate": "Radiación UV moderada",
+      "high": "Radiación UV alta",
+      "veryHigh": "Radiación UV muy alta",
+      "extreme": "Radiación UV extrema"
+    }
+  },
 
   "push": {
     "label": "Recibir avisos cuando el riesgo por calor sea ≥ moderado",

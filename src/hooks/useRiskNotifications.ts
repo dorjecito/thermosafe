@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { getColdRisk } from "../utils/getColdRisk";
 import { getWindRisk } from "../utils/windRisk";
+import { getUvLevelIndex } from "../utils/uv";
 
 type Params = {
   t: any;
@@ -15,6 +16,14 @@ type Params = {
 
 const COLD_ALERT_MIN_INTERVAL_MIN = 60;
 const WIND_ALERT_MIN_INTERVAL_MIN = 60;
+
+function getLocalDayKey(): string {
+  const now = new Date();
+  const year = now.getFullYear();
+  const month = String(now.getMonth() + 1).padStart(2, "0");
+  const day = String(now.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+}
 
 function showBrowserNotification(title: string, body: string, tag?: string) {
   if (!("Notification" in window)) return;
@@ -119,27 +128,32 @@ export function useRiskNotifications({
     if (!enableUvAlerts) return;
     if (dataSource !== "gps") return;
 
-    const title = `${t("notify.uvTitle")} · ${place}`;
+    const currentUvLevel = getUvLevelIndex(uvi);
+    if (currentUvLevel === 0) return;
 
-    if (uvi >= 8) {
-      showBrowserNotification(
-        title,
-        t("notify.uvVeryHigh"),
-        `uv-${safePlace}`
-      );
-    } else if (uvi >= 6) {
-      showBrowserNotification(
-        title,
-        t("notify.uvHigh"),
-        `uv-${safePlace}`
-      );
-    } else if (uvi >= 3) {
-      showBrowserNotification(
-        title,
-        t("notify.uvModerate"),
-        `uv-${safePlace}`
-      );
-    }
+    const storagePrefix = `uv-${safePlace}`;
+    const storedDay = localStorage.getItem(`${storagePrefix}-day`);
+    const today = getLocalDayKey();
+    const lastUvLevel =
+      storedDay === today
+        ? Number(localStorage.getItem(`${storagePrefix}-level`) || "0")
+        : 0;
+
+    if (currentUvLevel <= lastUvLevel) return;
+
+    const title = `${t("notify.uvTitle")} · ${place}`;
+    const bodyKey =
+      currentUvLevel === 4
+        ? "notify.uvExtreme"
+        : currentUvLevel === 3
+        ? "notify.uvVeryHigh"
+        : currentUvLevel === 2
+        ? "notify.uvHigh"
+        : "notify.uvModerate";
+
+    showBrowserNotification(title, t(bodyKey), storagePrefix);
+    localStorage.setItem(`${storagePrefix}-day`, today);
+    localStorage.setItem(`${storagePrefix}-level`, String(currentUvLevel));
   }
 
   async function maybeNotifyHeat(hi: number | null) {
