@@ -18,6 +18,7 @@ test("heat risk follows INSST-style threshold boundaries", () => {
 });
 
 test("activity can raise heat risk but cannot turn safe weather into high heat risk", () => {
+  assert.equal(getHeatRisk(19.8, "rest").class, "safe");
   assert.equal(getHeatRisk(25, "intense").class, "mild");
   assert.equal(getHeatRisk(30, "moderate").class, "high");
   assert.equal(getHeatRisk(45, "rest").class, "high");
