@@ -8,6 +8,8 @@
   --alert-bg: #ff3b30;
   --alert-text: #ffffff;
   --font-family: 'Segoe UI', Roboto, sans-serif;
+  --surface-border: rgba(15, 23, 42, 0.12);
+  --surface-shadow: 0 2px 8px rgba(15, 23, 42, 0.07);
 }
 
 body {
@@ -80,7 +82,54 @@ button:focus-visible {
   border-radius: 12px;
   padding: 1rem;
   margin-bottom: 1rem;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
+  box-shadow: var(--surface-shadow);
+}
+
+.block-conditions {
+  margin: 1rem 0;
+  padding: 0.9rem 1.1rem;
+  border: 1px solid var(--surface-border);
+  border-radius: 12px;
+  background: #f8fafc;
+  box-shadow: var(--surface-shadow);
+  text-align: left;
+}
+
+.block-conditions p {
+  margin: 0.45rem 0;
+}
+
+.loading-weather-card {
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
+  margin: 1rem 0;
+  padding: 0.9rem 1rem;
+  border: 1px solid var(--surface-border);
+  border-radius: 12px;
+  background: #f8fafc;
+  box-shadow: var(--surface-shadow);
+  color: #334155;
+}
+
+.loading-weather-card p {
+  margin: 0;
+  font-weight: 600;
+}
+
+.loading-weather-icon {
+  display: inline-block;
+  color: #3b82f6;
+  font-size: 1.35rem;
+  line-height: 1;
+}
+
+.loading-weather-card.is-loading .loading-weather-icon {
+  animation: loading-weather-spin 1s linear infinite;
+}
+
+@keyframes loading-weather-spin {
+  to { transform: rotate(360deg); }
 }
 
 /* � ️ BANNER ALERTA */
@@ -295,11 +344,11 @@ color: #111827;
 .uv-block {
   position: relative;
   background: #ffffff;
-  border-radius: 10px;
+  border-radius: 12px;
   padding: 1.2rem 1.2rem 1.2rem 1.4rem;
-  margin-top: 1.4rem;
-  border: 2px solid rgba(0,0,0,0.12);
-  box-shadow: 0 3px 10px rgba(0,0,0,0.10);
+  margin-top: 1rem;
+  border: 1px solid var(--surface-border);
+  box-shadow: var(--surface-shadow);
   overflow: hidden;
 }
 
@@ -309,7 +358,7 @@ color: #111827;
   position: absolute;
   left: 0;
   top: 0;
-  width: 10px;
+  width: 5px;
   height: 100%;
   border-radius: 10px 0 0 10px;
   background: var(--uv-color, #2ecc71);
@@ -625,10 +674,10 @@ color: #111827;
   background-color: var(--card-bg);
   color: var(--card-text);
   border-radius: 12px;
-  padding: 1.2rem 1.4rem;
-  margin: 1.5rem 0;
-  border: 1px solid rgba(0,0,0,0.15);
-  box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+  padding: 1rem 1.1rem;
+  margin: 0.85rem 0;
+  border: 1px solid var(--surface-border);
+  box-shadow: var(--surface-shadow);
   transition: background 0.3s ease, border-color 0.3s ease;
 }
 
@@ -1145,7 +1194,7 @@ text-align: left;
 
   border-left: 4px solid #3b82f6;
 
-  box-shadow: 0 3px 10px rgba(0,0,0,0.08);
+  box-shadow: var(--surface-shadow);
   margin-bottom: 1rem;
 
   display: flex;
@@ -1447,9 +1496,9 @@ text-align: left;
 /* 🔧 Correcció mínima: contorn resum r� pid */
 .quick-summary-card {
   background-color: #f1f5f9;
-  border: 1px solid rgba(0, 0, 0, 0.12) !important;
-  border-radius: 16px !important;
-  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.08) !important;
+  border: 1px solid var(--surface-border) !important;
+  border-radius: 12px !important;
+  box-shadow: var(--surface-shadow) !important;
 }
 
 @media (prefers-color-scheme: dark) {
@@ -1580,15 +1629,20 @@ body,
   }
 
   .status-card-title,
-  .uv-title,
   .official-title,
   .aemet-alert-title,
-  .recommendations-title,
   .sky-card h3,
   .block-temp h3 {
     font-size: 1.55rem !important;
     line-height: 1.15 !important;
     margin-bottom: 0.55rem !important;
+  }
+
+  .uv-title,
+  .recommendations-title {
+    font-size: 1.3rem !important;
+    line-height: 1.18 !important;
+    margin-bottom: 0.5rem !important;
   }
 
   .status-card-text,

@@ -7,9 +7,12 @@ type Props = {
   lon: number | null;
   lang: Lang;
   uvi?: number | null;
+  skinType: SelectedSkinType;
+  onSkinTypeChange: (skinType: SelectedSkinType) => void;
 };
 
 type SkinType = "1" | "2" | "3" | "4" | "5" | "6";
+type SelectedSkinType = 1 | 2 | 3 | 4 | 5 | 6;
 
 const MAX_MINUTES = 480;
 const MIN_UV_TO_SHOW_TIME = 3;
@@ -179,16 +182,20 @@ function estimateSafeMinutes(uvi: number, skinType: SkinType): number | null {
   return Math.max(5, adjusted);
 }
 
-export default function UVSafeTime({ lang, uvi }: Props) {
+export default function UVSafeTime({
+  lang,
+  uvi,
+  skinType,
+  onSkinTypeChange,
+}: Props) {
   const t = TXT[lang] ?? TXT.ca;
-  const [skinType, setSkinType] = React.useState<SkinType>("3");
 
   const hasValidUvi = typeof uvi === "number" && Number.isFinite(uvi);
   const isNight = hasValidUvi && (uvi as number) <= 0;
   const shouldShowTime = hasValidUvi && (uvi as number) >= MIN_UV_TO_SHOW_TIME;
 
   const safeMinutes = shouldShowTime
-    ? estimateSafeMinutes(uvi as number, skinType)
+    ? estimateSafeMinutes(uvi as number, String(skinType) as SkinType)
     : null;
 
   let note = t.unknown;
@@ -225,10 +232,12 @@ export default function UVSafeTime({ lang, uvi }: Props) {
           {t.skinType}:
         </label>
 
-        <select
+         <select
           id="uv-skin-type"
           value={skinType}
-          onChange={(e) => setSkinType(e.target.value as SkinType)}
+          onChange={(e) =>
+            onSkinTypeChange(Number(e.target.value) as SelectedSkinType)
+          }
           disabled={!shouldShowTime}
           style={{
             padding: "0.45rem 0.7rem",

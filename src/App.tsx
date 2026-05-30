@@ -113,8 +113,12 @@ export default function App() {
   const { t, i18n } = useTranslation();
 
   // 🧴 Fototip (1–6)
-  type SkinType = 1 | 2 | 3 | 4 | 5 | 6;
-  const [skinType, setSkinType] = useState<SkinType>(3);
+  const [skinType, setSkinType] = useState<SkinType>(() => {
+    const savedSkinType = Number(localStorage.getItem("skinType"));
+    return savedSkinType >= 1 && savedSkinType <= 6
+      ? (savedSkinType as SkinType)
+      : 3;
+  });
   const [showSkinInfo, setShowSkinInfo] = useState(false);
    const searchInputRef = useRef<HTMLInputElement | null>(null);
   
@@ -206,6 +210,10 @@ useEffect(() => {
 useEffect(() => {
     localStorage.setItem("pushEnabled", JSON.stringify(pushEnabled));
 }, [pushEnabled]);
+
+useEffect(() => {
+    localStorage.setItem("skinType", String(skinType));
+}, [skinType]);
 
   /* state */
   const [data, setData] = useState<any | null>(null);
@@ -1537,19 +1545,23 @@ return (
   )}
 </div>
 
-<TopAlertBanner
-  primary={primary}
-  heatRisk={heatRisk}
-  uvi={uvi}
-  day={day}
-  weatherMain={weatherMain}
-  clouds={clouds}
-  irr={irr}
-  t={t}
-  UV_HIGH={UV_HIGH}
-  UV_EXTREME={UV_EXTREME}
-/>
+{data && (
+  <TopAlertBanner
+    primary={primary}
+    heatRisk={heatRisk}
+    uvi={uvi}
+    day={day}
+    weatherMain={weatherMain}
+    clouds={clouds}
+    irr={irr}
+    t={t}
+    UV_HIGH={UV_HIGH}
+    UV_EXTREME={UV_EXTREME}
+  />
+)}
 
+{data ? (
+  <>
      {/* 📊 DADES */}
 {city && (
   <LocationCard
@@ -1598,18 +1610,7 @@ return (
 </div>
 
   {/* 🌡️ CONDICIONS ACTUALS */}
-<div
-  className="block-conditions"
-  style={{
-    backgroundColor: "#f3f4f6",
-    borderRadius: "6px",
-    padding: "0.9rem 1.1rem",
-    marginTop: "1rem",
-    marginBottom: "1rem",
-    textAlign: "left",
-    boxShadow: "0 2px 6px rgba(0,0,0,0.1)",
-  }}
->
+<div className="block-conditions">
   <h3 style={{ marginTop: 0, marginBottom: "0.6rem", fontWeight: 600 }}>
     {t("current_conditions")}
   </h3>
@@ -1708,6 +1709,8 @@ return (
                 lon={lon}
                 lang={lang}
                 uvi={uvi}
+                skinType={skinType}
+                onSkinTypeChange={setSkinType}
               />
 
               {/* 📊 Detall UV (OpenUV) */}
@@ -1807,8 +1810,7 @@ return (
    ✅ RECOMANACIONS PRINCIPALS
    Ara les governa directament el component Recommendations
    ============================================================ */}
-{data ? (
-  <Recommendations
+<Recommendations
     temp={data?.main?.temp ?? 0}
     lang={i18n.resolvedLanguage || i18n.language || "ca"}
     isDay={day}
@@ -1824,16 +1826,6 @@ return (
     currentHour={new Date().getHours()}
     
   />
-) : (
-  <div className="recommendations-block">
-    <h3 className="recommendations-title">
-      🟢 {t("recommendations_title") || "Recomanacions:"}
-    </h3>
-    <p className="recommendations-text" style={{ opacity: 0.85 }}>
-      {t("loading") || "Carregant recomanacions…"}
-    </p>
-  </div>
-)}
 
 <div className={`work-window-card work-window-${workWindow}`}>
   <div className="work-window-header">
@@ -1886,6 +1878,15 @@ return (
     />
   )}
 </div>
+  </>
+) : (
+  !err && (
+    <div className={`loading-weather-card ${loading ? "is-loading" : ""}`} aria-busy={loading}>
+      <span className="loading-weather-icon" aria-hidden="true">↻</span>
+      <p>{t("loading") || "Carregant dades meteorològiques..."}</p>
+    </div>
+  )
+)}
 {err && <p style={{ color: 'red' }}>{err}</p>}
 </div>
 );
