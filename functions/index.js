@@ -864,11 +864,21 @@ async function sendWindPush(token, lang, info, windKmh, place) {
 // ─────────────────────────────────────────────
 // Textos i notificacions · UV
 // ─────────────────────────────────────────────
+function getUvLevel(uvi) {
+  const u = Math.max(0, Math.round(Number(uvi) || 0));
+  if (u <= 2) return 0;
+  if (u <= 5) return 1;
+  if (u <= 7) return 2;
+  if (u <= 10) return 3;
+  return 4;
+}
+
 function getUvInfo(uvi, weather = {}) {
   if (uvi == null || Number.isNaN(uvi)) {
     return { level: 0, risk: null, title: null, body: null };
   }
 
+  const level = getUvLevel(uvi);
   const weatherMain = weather.weatherMain || weather.main || "";
   const cloudiness =
     typeof weather.cloudiness === "number"
@@ -883,24 +893,24 @@ function getUvInfo(uvi, weather = {}) {
   const uvReducedByWeather = veryCloudy || rainy || stormy;
 
   const cloudyBody = {
-    ca: `Índex UV ${uvi >= 8 ? "molt alt" : uvi >= 6 ? "alt" : "moderat"} (${uvi.toFixed(
+    ca: `Índex UV ${level >= 3 ? "molt alt" : level >= 2 ? "alt" : "moderat"} (${uvi.toFixed(
       1
     )}), però la nuvolositat o la pluja poden reduir parcialment l’exposició solar directa. Mantén protecció solar si passes temps a l’exterior.`,
-    es: `Índice UV ${uvi >= 8 ? "muy alto" : uvi >= 6 ? "alto" : "moderado"} (${uvi.toFixed(
+    es: `Índice UV ${level >= 3 ? "muy alto" : level >= 2 ? "alto" : "moderado"} (${uvi.toFixed(
       1
     )}), pero la nubosidad o la lluvia pueden reducir parcialmente la exposición solar directa. Mantén protección solar si pasas tiempo al aire libre.`,
-    eu: `UV indize ${uvi >= 8 ? "oso altua" : uvi >= 6 ? "altua" : "moderatua"} (${uvi.toFixed(
+    eu: `UV indize ${level >= 3 ? "oso altua" : level >= 2 ? "altua" : "moderatua"} (${uvi.toFixed(
       1
     )}), baina hodeiek edo euriak eguzki-esposizio zuzena neurri batean murriztu dezakete. Mantendu eguzki-babesa kanpoan denbora ematen baduzu.`,
-    gl: `Índice UV ${uvi >= 8 ? "moi alto" : uvi >= 6 ? "alto" : "moderado"} (${uvi.toFixed(
+    gl: `Índice UV ${level >= 3 ? "moi alto" : level >= 2 ? "alto" : "moderado"} (${uvi.toFixed(
       1
     )}), pero a nubosidade ou a choiva poden reducir parcialmente a exposición solar directa. Mantén protección solar se permaneces ao aire libre.`,
-    en: `UV index ${uvi >= 8 ? "very high" : uvi >= 6 ? "high" : "moderate"} (${uvi.toFixed(
+    en: `UV index ${level >= 3 ? "very high" : level >= 2 ? "high" : "moderate"} (${uvi.toFixed(
       1
     )}), but cloudiness or rain may partially reduce direct sun exposure. Keep sun protection if you stay outdoors.`,
   };
 
-  if (uvi >= 11) {
+  if (level === 4) {
     return {
       level: 4,
       risk: "extreme",
@@ -923,7 +933,7 @@ function getUvInfo(uvi, weather = {}) {
     };
   }
 
-  if (uvi >= 8) {
+  if (level === 3) {
     return {
       level: 3,
       risk: "very_high",
@@ -946,7 +956,7 @@ function getUvInfo(uvi, weather = {}) {
     };
   }
 
-  if (uvi >= 6) {
+  if (level === 2) {
     return {
       level: 2,
       risk: "high",
@@ -969,7 +979,7 @@ function getUvInfo(uvi, weather = {}) {
     };
   }
 
-  if (uvi >= 3) {
+  if (level === 1) {
     return {
       level: 1,
       risk: "moderate",
@@ -3294,29 +3304,54 @@ exports.runUvNowV2 = onRequest(
 
               if (uvi == null) uvi = 0;
 
+              const currentUvLevel = getUvLevel(uvi);
               const info = getUvInfo(uvi, {
                 cloudiness: Number(req.query.cloudiness || 0),
                 weatherMain: String(req.query.weatherMain || ""),
               });
+              const zoneKey = `${Number(sub.lat).toFixed(1)},${Number(
+                sub.lon
+              ).toFixed(1)}`;
+              const uvLevelsByZone =
+                sub.uvLevelsByZone && typeof sub.uvLevelsByZone === "object"
+                  ? { ...sub.uvLevelsByZone }
+                  : {};
+              const prevLevel = Number(
+                uvLevelsByZone[zoneKey] ?? sub.lastUvLevel ?? 0
+              );
 
               console.log("[MANUAL UV V2]", {
                 docId: doc.id,
                 place,
                 uvi,
-                level: info.level,
+                prevLevel,
+                nextLevel: currentUvLevel,
                 tokenPreview: String(sub.token || "").slice(0, 20),
               });
 
-              if (!info || info.level === 0) return;
-              if (!meetsUserThreshold(info.level, sub.threshold)) return;
+              if (!info || currentUvLevel === 0) return;
+              if (!shouldNotifyLevelIncrease(prevLevel, currentUvLevel)) return;
+              if (!meetsUserThreshold(currentUvLevel, sub.threshold)) return;
 
               await sendUvPush(sub.token, lang, info, uvi, place);
+
+              uvLevelsByZone[zoneKey] = currentUvLevel;
+
+              await doc.ref.set(
+                {
+                  lastUvLevel: currentUvLevel,
+                  lastUvAt: Date.now(),
+                  uvLevelsByZone,
+                  lastNotified: Date.now(),
+                },
+                { merge: true }
+              );
 
               console.log("[MANUAL UV V2][SENT]", {
                 docId: doc.id,
                 place,
                 uvi,
-                level: info.level,
+                level: currentUvLevel,
                 tokenPreview: String(sub.token || "").slice(0, 20),
               });
             } catch (err) {
@@ -3583,12 +3618,15 @@ exports.cronCheckUvRiskV2 = onSchedule(
 
             stats.lastUvi = uvi;
 
+            const currentUvLevel = getUvLevel(uvi);
             const info = getUvInfo(uvi, {
               cloudiness: w.clouds,
               weatherMain: w.weatherMain,
             });
 
-            const prevLevel = Number(uvLevelsByZone[zoneKey] ?? 0);
+            const prevLevel = Number(
+              uvLevelsByZone[zoneKey] ?? sub.lastUvLevel ?? 0
+            );
 
             const hi = w.temp < 18 ? w.temp : calcHI(w.temp, w.hum);
             const heatInfo = levelFromINSST(hi);
@@ -3639,7 +3677,7 @@ exports.cronCheckUvRiskV2 = onSchedule(
               weatherMain: w.weatherMain,
               hi,
               prevLevel,
-              nextLevel: info.level,
+              nextLevel: currentUvLevel,
               heatLevel: heatInfo.level,
               threshold: sub.threshold,
               aemetLevel,
@@ -3652,15 +3690,15 @@ exports.cronCheckUvRiskV2 = onSchedule(
 
             const levelIncreases = shouldNotifyLevelIncrease(
               prevLevel,
-              info.level
+              currentUvLevel
             );
 
-            const thresholdOk = meetsUserThreshold(info.level, sub.threshold);
+            const thresholdOk = meetsUserThreshold(currentUvLevel, sub.threshold);
 
             // IMPORTANT:
             // Si el UV baixa a 0 al capvespre, NO esborrem lastUvLevel
             // ni uvLevelsByZone. El reset real serà demà a les 06:00.
-            if (info.level <= 0) {
+            if (currentUvLevel <= 0) {
               stats.tokensSkipped++;
               stats.reasons.noLevelIncrease++;
 
@@ -3670,7 +3708,7 @@ exports.cronCheckUvRiskV2 = onSchedule(
                 zoneKey,
                 uvi,
                 prevLevel,
-                nextLevel: info.level,
+                nextLevel: currentUvLevel,
                 uvLevelsByZone,
               });
             } else if (!levelIncreases) {
@@ -3688,7 +3726,7 @@ exports.cronCheckUvRiskV2 = onSchedule(
                 place,
                 zoneKey,
                 uvi,
-                uvLevel: info.level,
+                uvLevel: currentUvLevel,
                 prevLevel,
                 aemetLevel,
                 aemetEvent,
@@ -3709,7 +3747,7 @@ exports.cronCheckUvRiskV2 = onSchedule(
                 const isCombined =
                   combined &&
                   combined.type === "heat_uv" &&
-                  info.level > 0 &&
+                  currentUvLevel > 0 &&
                   heatInfo.level > 0;
 
                 if (isCombined) {
@@ -3719,7 +3757,7 @@ exports.cronCheckUvRiskV2 = onSchedule(
                     zoneKey,
                     uvi,
                     hi,
-                    uvLevel: info.level,
+                    uvLevel: currentUvLevel,
                     heatLevel: heatInfo.level,
                   });
 
@@ -3737,7 +3775,7 @@ exports.cronCheckUvRiskV2 = onSchedule(
                       place: place || "",
                       uvi: String(Math.round(uvi)),
                       hi: String(Math.round(hi)),
-                      uvLevel: String(info.level),
+                      uvLevel: String(currentUvLevel),
                       heatLevel: String(heatInfo.level),
                     },
                     webpush: {
@@ -3757,9 +3795,9 @@ exports.cronCheckUvRiskV2 = onSchedule(
                   await sendUvPush(sub.token, lang, info, uvi, place);
                 }
 
-                uvLevelsByZone[zoneKey] = info.level;
+                uvLevelsByZone[zoneKey] = currentUvLevel;
 
-                updates.lastUvLevel = info.level;
+                updates.lastUvLevel = currentUvLevel;
                 updates.lastUvAt = now;
                 updates.lastUvResetDay = todayKey;
                 updates.uvLevelsByZone = uvLevelsByZone;
@@ -3775,7 +3813,7 @@ exports.cronCheckUvRiskV2 = onSchedule(
                   clouds: w.clouds,
                   weatherMain: w.weatherMain,
                   prevLevel,
-                  nextLevel: info.level,
+                  nextLevel: currentUvLevel,
                   combined: isCombined,
                   uvLevelsByZone,
                 });
