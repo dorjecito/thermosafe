@@ -69,6 +69,7 @@ export function getWorkWindow({
   /* 2b) Calor segons sensació tèrmica directa */
   if (hi !== null && hi >= 41) return "avoid";
   if (hi !== null && hi >= 32) return "limited";
+  if (heatRisk?.isHigh) return "limited";
   if (hi !== null && hi >= 27) return "caution";
 
   /* 2c) L'esforç físic pot exigir precaució abans del llindar tèrmic oficial */
@@ -84,7 +85,6 @@ export function getWorkWindow({
   /* 3) Situacions altes */
   if (coldRisk === "alt" || coldRisk === "molt alt") return "limited";
   if (coldRisk === "moderat") return "limited";
-  if (heatRisk?.isHigh) return "limited";
   if (windRisk === "strong") return "limited";
   if (uvLevel >= 3) return "limited";
 

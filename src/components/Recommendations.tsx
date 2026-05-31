@@ -10,6 +10,7 @@
 
 import * as React from "react";
 import { getHeatRisk } from "../utils/heatRisk";
+import { getColdRisk } from "../utils/getColdRisk";
 import { getUvLevelIndex } from "../utils/uv";
 
 type Lang = "ca" | "es" | "eu" | "gl" | "en";
@@ -416,10 +417,11 @@ const mapHeatLevelToKey = (levelRaw: unknown): HeatKey => {
 };
 
 const getColdKey = (effectiveTemp: number): ColdKey | null => {
-  if (effectiveTemp < -20) return "cold_ext";
-  if (effectiveTemp < -10) return "cold_high";
-  if (effectiveTemp < 5) return "cold_mod";
-  if (effectiveTemp < 10) return "cold_low";
+  const coldRisk = getColdRisk(effectiveTemp, null);
+  if (coldRisk === "extrem") return "cold_ext";
+  if (coldRisk === "alt" || coldRisk === "molt alt") return "cold_high";
+  if (coldRisk === "moderat") return "cold_mod";
+  if (coldRisk === "lleu") return "cold_low";
   return null;
 };
 
@@ -573,7 +575,8 @@ export default function Recommendations({
      2️⃣ CALOR IMPORTANT — abans que UV moderat
   ========================================================== */
   if (effectiveTemp >= 30 && isDay) {
-    const heatKey: HeatKey = effectiveTemp < 33 ? "moderate" : effectiveTemp < 41 ? "high" : "ext";
+    const riskObj = getHeatRisk(effectiveTemp, activity || "rest");
+    const heatKey = mapHeatLevelToKey(riskObj.level);
 
     return (
       <RecommendationBox
@@ -672,7 +675,7 @@ if (isDay && uvKey) {
   /* =========================================================
      5️⃣ RISC PER CALOR (via getHeatRisk) — només en franges suaus
   ========================================================== */
-  const riskObj: any = getHeatRisk(effectiveTemp, activity || "rest");
+  const riskObj = getHeatRisk(effectiveTemp, activity || "rest");
   const heatKey = mapHeatLevelToKey(riskObj?.level);
 
   if (heatKey !== "safe" && isDay) {

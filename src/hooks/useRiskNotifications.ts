@@ -16,6 +16,7 @@ type Params = {
 
 const COLD_ALERT_MIN_INTERVAL_MIN = 60;
 const WIND_ALERT_MIN_INTERVAL_MIN = 60;
+const HEAT_ALERT_MIN_INTERVAL_MIN = 60;
 
 function getLocalDayKey(): string {
   const now = new Date();
@@ -64,17 +65,31 @@ export function useRiskNotifications({
   const safePlace = place.toLowerCase().replace(/\s+/g, "-");
 
   async function maybeNotifyCold(temp: number, windKmh: number) {
+    if (!pushEnabled) return;
     if (!enableColdAlerts) return;
     if (dataSource !== "gps") return;
 
     const coldRiskValue = getColdRisk(temp, windKmh);
+    const storagePrefix = `cold-${safePlace}`;
+    const previousRisk = localStorage.getItem(`${storagePrefix}-risk`) || "cap";
+    const rank: Record<string, number> = {
+      cap: 0,
+      lleu: 1,
+      moderat: 2,
+      alt: 3,
+      "molt alt": 4,
+      extrem: 5,
+    };
 
     const now = Date.now();
-    const lastColdAlert = Number(localStorage.getItem("lastColdAlert")) || 0;
+    const lastColdAlert = Number(localStorage.getItem(`${storagePrefix}-at`)) || 0;
+    const crossedUp = rank[coldRiskValue] > rank[previousRisk];
 
-    if (now - lastColdAlert < COLD_ALERT_MIN_INTERVAL_MIN * 60 * 1000) return;
-
-    if (coldRiskValue !== "cap") {
+    if (
+      coldRiskValue !== "cap" &&
+      crossedUp &&
+      now - lastColdAlert >= COLD_ALERT_MIN_INTERVAL_MIN * 60 * 1000
+    ) {
       const title = `❄️ ${t("notify.coldTitle")} · ${place}`;
       const msg = t("notify.coldBody", {
         risk: t(`coldRisk.${coldRiskValue}`),
@@ -82,11 +97,13 @@ export function useRiskNotifications({
       });
 
       showBrowserNotification(title, msg, `cold-${safePlace}`);
-      localStorage.setItem("lastColdAlert", now.toString());
+      localStorage.setItem(`${storagePrefix}-at`, now.toString());
     }
+    localStorage.setItem(`${storagePrefix}-risk`, coldRiskValue);
   }
 
   async function maybeNotifyWind(kmh: number) {
+    if (!pushEnabled) return;
     if (!enableWindAlerts) return;
     if (dataSource !== "gps") return;
 
@@ -119,8 +136,8 @@ export function useRiskNotifications({
       showBrowserNotification(title, msg, `wind-${safePlace}`);
 
       localStorage.setItem("lastWindAlertAt", Date.now().toString());
-      localStorage.setItem("lastWindRisk", risk);
     }
+    localStorage.setItem("lastWindRisk", risk);
   }
 
   async function maybeNotifyUV(uvi: number | null) {
@@ -160,25 +177,36 @@ export function useRiskNotifications({
     if (!pushEnabled || hi == null) return;
     if (dataSource !== "gps") return;
 
-    if (hi >= 54) {
+    const storagePrefix = `heat-${safePlace}`;
+    const currentLevel = hi >= 54 ? 3 : hi >= 41 ? 2 : hi >= 32 ? 1 : 0;
+    const previousLevel = Number(localStorage.getItem(`${storagePrefix}-level`) || "0");
+    const lastAt = Number(localStorage.getItem(`${storagePrefix}-at`) || "0");
+    const cooldownOk =
+      Date.now() - lastAt >= HEAT_ALERT_MIN_INTERVAL_MIN * 60 * 1000;
+
+    if (currentLevel > previousLevel && cooldownOk && hi >= 54) {
       showBrowserNotification(
         `🔥 ${t("notify.heatTitle")} · ${place}`,
         t("notify.heatBody", { risk: t("heatRisk.extreme"), hi: hi.toFixed(1) }),
         `heat-${safePlace}`
       );
-    } else if (hi >= 41) {
+    } else if (currentLevel > previousLevel && cooldownOk && hi >= 41) {
       showBrowserNotification(
         `🌋 ${t("notify.heatTitle")} · ${place}`,
         t("notify.heatBody", { risk: t("heatRisk.high"), hi: hi.toFixed(1) }),
         `heat-${safePlace}`
       );
-    } else if (hi >= 32) {
+    } else if (currentLevel > previousLevel && cooldownOk && hi >= 32) {
       showBrowserNotification(
         `☀️ ${t("notify.heatTitle")} · ${place}`,
         t("notify.heatBody", { risk: t("heatRisk.moderate"), hi: hi.toFixed(1) }),
         `heat-${safePlace}`
       );
     }
+    if (currentLevel > previousLevel && cooldownOk) {
+      localStorage.setItem(`${storagePrefix}-at`, Date.now().toString());
+    }
+    localStorage.setItem(`${storagePrefix}-level`, String(currentLevel));
   }
 
   return {

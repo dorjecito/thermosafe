@@ -205,7 +205,7 @@ export function getPrimaryStatusBlock({
       };
     }
 
-    if (coldRisk === "alt" || coldRisk === "molt alt") {
+    if (coldRisk === "alt" || coldRisk === "molt alt") {
       return {
         icon: "🔵",
         title: tr("primaryStatus.cold.high", "Risc alt per fred"),
@@ -213,10 +213,21 @@ export function getPrimaryStatusBlock({
           t("officialAdviceDynamic.cold.high") ||
           "Protegeix extremitats i limita el temps d’exposició exterior.",
         className: "status-card status-cold",
-      };
-    }
+      };
+    }
 
-    return {
+    if (coldRisk === "lleu") {
+      return {
+        icon: "❄️",
+        title: tr("primaryStatus.cold.mild", "Precaució lleu per fred"),
+        text:
+          t("officialAdviceDynamic.cold.mild") ||
+          "Abriga’t lleugerament si passes temps a l’exterior.",
+        className: "status-card status-cold",
+      };
+    }
+
+    return {
       icon: "❄️",
       title: tr("primaryStatus.cold.moderate", "Risc moderat per fred"),
       text:

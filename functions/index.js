@@ -490,10 +490,10 @@ async function sendPush(token, lang, level, hi, labelByLang, place) {
 // Textos i notificacions · fred
 // ─────────────────────────────────────────────
 function getColdInfo(windChill) {
-  if (windChill <= -10) {
+  if (windChill <= -40) {
     return {
-      level: 3,
-      riskLevel: "extrem",
+      level: 5,
+       riskLevel: "extrem",
       title: {
         ca: "❄️ ThermoSafe – Fred extrem",
         es: "❄️ ThermoSafe – Frío extremo",
@@ -511,30 +511,51 @@ function getColdInfo(windChill) {
     };
   }
 
-  if (windChill <= -5) {
+  if (windChill <= -25) {
     return {
-      level: 2,
-      riskLevel: "alt",
-      title: {
-        ca: "❄️ ThermoSafe – Fred intens",
-        es: "❄️ ThermoSafe – Frío intenso",
-        eu: "❄️ ThermoSafe – Hotz handia",
-        gl: "❄️ ThermoSafe – Frío intenso",
-        en: "❄️ ThermoSafe – Intense cold",
-      },
-      body: {
-        ca: `Fred intens (${windChill.toFixed(1)} °C). Protegeix-te les mans i la cara.`,
-        es: `Frío intenso (${windChill.toFixed(1)} °C). Protégete las manos y la cara.`,
-        eu: `Hotz handia (${windChill.toFixed(1)} °C). Babestu eskuak eta aurpegia.`,
-        gl: `Frío intenso (${windChill.toFixed(1)} °C). Protexe as mans e a cara.`,
-        en: `Intense cold (${windChill.toFixed(1)} °C). Protect your hands and face.`,
-      },
+      level: 4,
+      riskLevel: "molt alt",
+       title: {
+        ca: "❄️ ThermoSafe – Risc molt alt per fred",
+        es: "❄️ ThermoSafe – Riesgo muy alto por frío",
+        eu: "❄️ ThermoSafe – Hotz-arrisku oso handia",
+        gl: "❄️ ThermoSafe – Risco moi alto por frío",
+        en: "❄️ ThermoSafe – Very high cold risk",
+       },
+       body: {
+        ca: `Risc molt alt per fred (${windChill.toFixed(1)} °C). Limita l’exposició i protegeix les extremitats.`,
+        es: `Riesgo muy alto por frío (${windChill.toFixed(1)} °C). Limita la exposición y protege las extremidades.`,
+        eu: `Hotz-arrisku oso handia (${windChill.toFixed(1)} °C). Mugatu esposizioa eta babestu gorputz-adarrak.`,
+        gl: `Risco moi alto por frío (${windChill.toFixed(1)} °C). Limita a exposición e protexe as extremidades.`,
+        en: `Very high cold risk (${windChill.toFixed(1)} °C). Limit exposure and protect extremities.`,
+       },
     };
   }
 
-  if (windChill <= 4) {
+  if (windChill <= -15) {
     return {
-      level: 1,
+      level: 3,
+      riskLevel: "alt",
+       title: {
+        ca: "❄️ ThermoSafe – Risc alt per fred",
+        es: "❄️ ThermoSafe – Riesgo alto por frío",
+        eu: "❄️ ThermoSafe – Hotz-arrisku handia",
+        gl: "❄️ ThermoSafe – Risco alto por frío",
+        en: "❄️ ThermoSafe – High cold risk",
+       },
+       body: {
+        ca: `Risc alt per fred (${windChill.toFixed(1)} °C). Evita exposicions prolongades.`,
+        es: `Riesgo alto por frío (${windChill.toFixed(1)} °C). Evita exposiciones prolongadas.`,
+        eu: `Hotz-arrisku handia (${windChill.toFixed(1)} °C). Saihestu esposizio luzeak.`,
+        gl: `Risco alto por frío (${windChill.toFixed(1)} °C). Evita exposicións prolongadas.`,
+        en: `High cold risk (${windChill.toFixed(1)} °C). Avoid prolonged exposure.`,
+       },
+    };
+  }
+
+  if (windChill <= -5) {
+    return {
+      level: 2,
       riskLevel: "moderat",
       title: {
         ca: "🧥 ThermoSafe – Fred moderat",
@@ -544,11 +565,32 @@ function getColdInfo(windChill) {
         en: "🧥 ThermoSafe – Moderate cold",
       },
       body: {
-        ca: `Fred moderat (${windChill.toFixed(1)} °C). Usa roba d’abric.`,
-        es: `Frío moderado (${windChill.toFixed(1)} °C). Usa ropa de abrigo.`,
-        eu: `Hotz moderatua (${windChill.toFixed(1)} °C). Erabili arropa beroa.`,
-        gl: `Frío moderado (${windChill.toFixed(1)} °C). Usa roupa de abrigo.`,
-        en: `Moderate cold (${windChill.toFixed(1)} °C). Wear warm clothing.`,
+        ca: `Fred moderat (${windChill.toFixed(1)} °C). Protegeix-te les mans i la cara.`,
+        es: `Frío moderado (${windChill.toFixed(1)} °C). Protégete las manos y la cara.`,
+        eu: `Hotz moderatua (${windChill.toFixed(1)} °C). Babestu eskuak eta aurpegia.`,
+        gl: `Frío moderado (${windChill.toFixed(1)} °C). Protexe as mans e a cara.`,
+        en: `Moderate cold (${windChill.toFixed(1)} °C). Protect your hands and face.`,
+      },
+    };
+  }
+
+  if (windChill <= 0) {
+    return {
+      level: 1,
+      riskLevel: "lleu",
+      title: {
+        ca: "🧥 ThermoSafe – Fred lleu",
+        es: "🧥 ThermoSafe – Frío leve",
+        eu: "🧥 ThermoSafe – Hotz arina",
+        gl: "🧥 ThermoSafe – Frío leve",
+        en: "🧥 ThermoSafe – Mild cold",
+      },
+      body: {
+        ca: `Fred lleu (${windChill.toFixed(1)} °C). Usa roba d’abric si passes temps a l’exterior.`,
+        es: `Frío leve (${windChill.toFixed(1)} °C). Usa ropa de abrigo si pasas tiempo al aire libre.`,
+        eu: `Hotz arina (${windChill.toFixed(1)} °C). Erabili arropa beroa kanpoan denbora emango baduzu.`,
+        gl: `Frío leve (${windChill.toFixed(1)} °C). Usa roupa de abrigo se pasas tempo no exterior.`,
+        en: `Mild cold (${windChill.toFixed(1)} °C). Wear warm clothing if spending time outside.`,
       },
     };
   }
@@ -865,11 +907,11 @@ async function sendWindPush(token, lang, info, windKmh, place) {
 // Textos i notificacions · UV
 // ─────────────────────────────────────────────
 function getUvLevel(uvi) {
-  const u = Math.max(0, Math.round(Number(uvi) || 0));
-  if (u <= 2) return 0;
-  if (u <= 5) return 1;
-  if (u <= 7) return 2;
-  if (u <= 10) return 3;
+  const u = Math.max(0, Number(uvi) || 0);
+  if (u < 3) return 0;
+  if (u < 6) return 1;
+  if (u < 8) return 2;
+  if (u < 11) return 3;
   return 4;
 }
 
@@ -1064,18 +1106,40 @@ function getAemetLevelFromAlerts(alerts) {
     return {
       level: 0,
       event: "",
-      sender: "",
-      description: "",
+       sender: "",
+       description: "",
+      timing: "",
     };
   }
 
-  const first = alerts[0] || {};
+  const nowTs = Math.floor(Date.now() / 1000);
+  const relevantAlerts = alerts.filter(
+    (alert) => typeof alert?.end !== "number" || alert.end >= nowTs
+  );
+  const activeAlert = relevantAlerts.find(
+    (alert) => typeof alert?.start !== "number" || alert.start <= nowTs
+  );
+  const upcomingAlert = relevantAlerts
+    .filter((alert) => typeof alert?.start === "number" && alert.start > nowTs)
+    .sort((a, b) => a.start - b.start)[0];
+  const first = activeAlert || upcomingAlert;
+
+  if (!first) {
+    return {
+      level: 0,
+      event: "",
+      sender: "",
+      description: "",
+      timing: "",
+    };
+  }
 
   return {
     level: 1,
     event: String(first.event || ""),
     sender: String(first.sender_name || ""),
     description: String(first.description || ""),
+    timing: activeAlert ? "active" : "soon",
   };
 }
 
@@ -1092,14 +1156,21 @@ async function sendAemetPush(token, lang, info, place) {
     }[lang] ?? "🚨 ThermoSafe – Official alert";
 
   const eventText =
-  {
-    ca: "Avís meteorològic oficial actiu",
-    es: "Aviso meteorológico oficial activo",
-    eu: "Eguraldi-abisu ofiziala aktibo",
-    gl: "Aviso meteorolóxico oficial activo",
-    en: "Active official weather alert",
-  }[lang] ||
-  "Active official weather alert";
+    info.timing === "soon"
+      ? {
+          ca: "Avís meteorològic oficial proper",
+          es: "Aviso meteorológico oficial próximo",
+          eu: "Hurrengo eguraldi-abisu ofiziala",
+          gl: "Aviso meteorolóxico oficial próximo",
+          en: "Upcoming official weather alert",
+        }[lang] || "Upcoming official weather alert"
+      : {
+          ca: "Avís meteorològic oficial actiu",
+          es: "Aviso meteorológico oficial activo",
+          eu: "Eguraldi-abisu ofiziala aktibo",
+          gl: "Aviso meteorolóxico oficial activo",
+          en: "Active official weather alert",
+        }[lang] || "Active official weather alert";
 
   const tail =
     {
@@ -2437,6 +2508,7 @@ exports.cronCheckAemetRisk = functions
         info.level ?? 0,
         info.event ?? "",
         info.sender ?? "",
+        info.timing ?? "",
         String(info.description ?? "").slice(0, 120),
       ].join("|");
     }
@@ -2705,6 +2777,7 @@ exports.cronCheckAemetRiskV2 = onSchedule(
         info.level ?? 0,
         info.event ?? "",
         info.sender ?? "",
+        info.timing ?? "",
         String(info.description ?? "").slice(0, 120),
       ].join("|");
     }

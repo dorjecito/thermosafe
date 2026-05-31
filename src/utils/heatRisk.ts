@@ -57,21 +57,29 @@ const ACTIVITY_BOOST: Record<string, number> = {
    activitat = "moderate" (+2)
    resultat = "high"
    ============================================================ */
-export function applyActivityToHeatRisk(baseRisk: HeatRisk, activity: string): HeatRisk {
+export function applyActivityToHeatRisk(baseRisk: HeatRisk, activity: string, st?: number): HeatRisk {
   const idx = HEAT_LEVELS.indexOf(baseRisk.class as HeatKey);
   if (idx === -1) return baseRisk;
 
   const boost = ACTIVITY_BOOST[activity] ?? 0;
 
-  // 🛑 TALL DE SEGURETAT
-  // En ambient fresc o fred, l'activitat NO pot generar risc alt o extrem per calor
+  // L'activitat no ha de convertir una temperatura fresca en risc tèrmic.
   if (baseRisk.class === "safe") {
-    // Sense activitat, mantenim el resultat segur. Amb activitat, permetem
-    // com a màxim una precaució lleu.
-    return boost > 0 ? getBaseHeatRisk(30) : baseRisk;
+    return boost > 0 && typeof st === "number" && st >= 24
+      ? getBaseHeatRisk(30)
+      : baseRisk;
   }
 
-  const newIdx = Math.min(idx + boost, HEAT_LEVELS.length - 1);
+  // A l'inici de la franja càlida mantenim una resposta preventiva però
+  // proporcional: l'esforç no pot generar risc alt o extrem per si sol.
+  const maxIdx =
+    typeof st === "number" && st < 28
+      ? HEAT_LEVELS.indexOf("mild")
+      : typeof st === "number" && st < 32
+      ? HEAT_LEVELS.indexOf("moderate")
+      : HEAT_LEVELS.length - 1;
+
+  const newIdx = Math.min(idx + boost, maxIdx);
 
   if (newIdx === idx) return baseRisk;
 
@@ -92,5 +100,5 @@ export function applyActivityToHeatRisk(baseRisk: HeatRisk, activity: string): H
    ============================================================ */
 export function getHeatRisk(st: number, activity: string): HeatRisk {
   const base = getBaseHeatRisk(st);
-  return applyActivityToHeatRisk(base, activity);
+  return applyActivityToHeatRisk(base, activity, st);
 }

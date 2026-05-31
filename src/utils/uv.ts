@@ -11,11 +11,14 @@ export function getRoundedUvi(uvi: number | null | undefined): number {
 }
 
 export function getUvLevelIndex(uvi: number | null | undefined): UvLevelIndex {
-  const u = getRoundedUvi(uvi);
-  if (u <= 2) return 0;
-  if (u <= 5) return 1;
-  if (u <= 7) return 2;
-  if (u <= 10) return 3;
+  const u =
+    typeof uvi === "number" && Number.isFinite(uvi)
+      ? Math.max(0, uvi)
+      : 0;
+  if (u < 3) return 0;
+  if (u < 6) return 1;
+  if (u < 8) return 2;
+  if (u < 11) return 3;
   return 4;
 }
 

@@ -1,6 +1,5 @@
 // src/components/TopAlertBanner.tsx
 import React, { useEffect, useMemo, useState } from "react";
-import { getRoundedUvi } from "../utils/uv";
 
 type Props = {
   primary: any;
@@ -41,25 +40,25 @@ export default function TopAlertBanner({
     }
 
     const hasUvi = typeof uvi === "number" && Number.isFinite(uvi);
-    const uviRounded = hasUvi ? getRoundedUvi(uvi) : null;
+    const normalizedUvi = hasUvi ? Math.max(0, uvi) : null;
 
-    if (uviRounded !== null && uviRounded >= UV_EXTREME) {
+    if (normalizedUvi !== null && normalizedUvi >= UV_EXTREME) {
       const key = "extremeUVIWarning";
       const raw = t(key);
       const safeText = raw === key ? t("highUVIWarning") : raw;
 
       return {
         severity: 3,
-        key: `uv-extreme-${uviRounded}`,
+        key: `uv-extreme-${normalizedUvi.toFixed(1)}`,
         content: safeText,
         pulse: true,
       };
     }
 
     if (
-      uviRounded !== null &&
-      uviRounded >= UV_HIGH &&
-      uviRounded < UV_EXTREME &&
+      normalizedUvi !== null &&
+      normalizedUvi >= UV_HIGH &&
+      normalizedUvi < UV_EXTREME &&
       primary.kind === "uv" &&
       day &&
       !["Rain", "Drizzle", "Thunderstorm"].includes(weatherMain ?? "") &&
@@ -67,7 +66,7 @@ export default function TopAlertBanner({
     ) {
       return {
         severity: 2,
-        key: `uv-high-${uviRounded}`,
+        key: `uv-high-${normalizedUvi.toFixed(1)}`,
         content: t("highUVIWarning"),
         pulse: false,
       };

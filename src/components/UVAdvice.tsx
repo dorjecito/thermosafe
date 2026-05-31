@@ -171,7 +171,7 @@ const UVAdvice: React.FC<UVAdviceProps> = ({
   }
 
   const u = Number(safeUvi(uvi).toFixed(1));
-  const b = band(u);
+  const b = band(safeUvi(uvi));
 
   const rainy = isRainyWeather(weatherMain);
   const veryCloudy = isVeryCloudy(cloudiness);

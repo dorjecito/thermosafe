@@ -26,8 +26,12 @@ test("heat risk follows INSST-style threshold boundaries", () => {
 
 test("activity can raise heat risk but cannot turn safe weather into high heat risk", () => {
   assert.equal(getHeatRisk(19.8, "rest").class, "safe");
+  assert.equal(getHeatRisk(19.8, "intense").class, "safe");
   assert.equal(getHeatRisk(25, "intense").class, "mild");
-  assert.equal(getHeatRisk(30, "moderate").class, "high");
+  assert.equal(getHeatRisk(27, "intense").class, "mild");
+  assert.equal(getHeatRisk(30, "moderate").class, "moderate");
+  assert.equal(getHeatRisk(31.9, "intense").class, "moderate");
+  assert.equal(getHeatRisk(35, "intense").class, "ext");
   assert.equal(getHeatRisk(45, "rest").class, "high");
 });
 
@@ -75,6 +79,17 @@ test("outdoor activity conditions react to physical effort below 27 degrees", ()
   );
 });
 
+test("outdoor activity conditions do not hide high heat risk behind caution", () => {
+  assert.equal(
+    getWorkWindow({
+      heatRisk: { class: "high", isHigh: true, isExtreme: false },
+      heatIndex: 30,
+      activity: "moderate",
+    }),
+    "limited"
+  );
+});
+
 test("heat index calculation is stable for representative warm and humid conditions", () => {
   assert.equal(calcHI(30, 70), 35);
 });
@@ -89,6 +104,23 @@ test("cold risk follows effective-temperature thresholds", () => {
   assert.equal(getColdRisk(-40, 20), "extrem");
 });
 
+test("mild cold status is not presented as moderate", () => {
+  const result = getPrimaryStatusBlock({
+    alerts: [],
+    primary: { kind: "cold", severity: 1, labelKey: "cold_mild" },
+    heatRisk: null,
+    coldRisk: "lleu",
+    windRisk: "none",
+    uvi: 0,
+    day: true,
+    primaryAdvice: null,
+    contextualUVMessage: "",
+    t: (key) => key,
+  });
+
+  assert.equal(result.title, "Precaució lleu per fred");
+});
+
 test("wind risk follows km/h threshold boundaries", () => {
   assert.equal(getWindRisk(14.9), "none");
   assert.equal(getWindRisk(15), "breezy");
@@ -100,8 +132,10 @@ test("wind risk follows km/h threshold boundaries", () => {
 test("UV level, text and advice are classified consistently", () => {
   assert.equal(getUvLevel(null), "low");
   assert.equal(getUvLevel(2.4), "low");
-  assert.equal(getUvLevel(2.5), "moderate");
+  assert.equal(getUvLevel(2.5), "low");
+  assert.equal(getUvLevel(2.9), "low");
   assert.equal(getUvLevel(3), "moderate");
+  assert.equal(getUvLevel(3.1), "moderate");
   assert.equal(getUvLevel(6), "high");
   assert.equal(getUvLevel(8), "very-high");
   assert.equal(getUvLevel(11), "extreme");
@@ -109,7 +143,8 @@ test("UV level, text and advice are classified consistently", () => {
   assert.equal(getUvLevelIndex(4.9), 1);
   assert.equal(getUvLevelIndex(5.2), 1);
   assert.equal(getUvLevelIndex(6.1), 2);
-  assert.equal(getUvLevelIndex(10.6), 4);
+  assert.equal(getUvLevelIndex(10.6), 3);
+  assert.equal(getUvLevelIndex(11), 4);
   assert.equal(getUvLevelIndex(16.4), 4);
 
   assert.equal(getUvText(8, "ca"), "Molt alt (8–10)");
@@ -117,7 +152,7 @@ test("UV level, text and advice are classified consistently", () => {
   assert.match(getUvAdvice(6, "ca"), /Protecció extra/);
 });
 
-test("primary UV status title is translated and follows rounded bands", () => {
+test("primary UV status title is translated and follows raw bands", () => {
   const translations: Record<string, string> = {
     "primaryStatus.uv.high": "High UV radiation",
     "primaryStatus.uv.veryHigh": "Very high UV radiation",
@@ -138,8 +173,8 @@ test("primary UV status title is translated and follows rounded bands", () => {
       t,
     });
 
-  assert.equal(makeStatus(7.3).title, "High UV radiation");
-  assert.equal(makeStatus(7.6).title, "Very high UV radiation");
+  assert.equal(makeStatus(7.9).title, "High UV radiation");
+  assert.equal(makeStatus(8).title, "Very high UV radiation");
 });
 
 test("day/night detection uses local sunrise and sunset boundaries", () => {
