@@ -1558,6 +1558,8 @@ return (
     weatherMain={weatherMain}
     clouds={clouds}
     irr={irr}
+    aemetActive={aemetActive}
+    aemetSoon={aemetSoon}
     t={t}
     UV_HIGH={UV_HIGH}
     UV_EXTREME={UV_EXTREME}

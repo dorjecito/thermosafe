@@ -453,6 +453,10 @@ color: #111827;
     color: #fff !important;
   }
 
+  .uv-block.uv-night .data-label {
+    color: #e2e8f0 !important;
+  }
+
   /* Els nivells UV ja tenen color propi, només ajustem bordes */
   .uv-risk-card {
     border: 1px solid rgba(255, 255, 255, 0.2);
@@ -2021,4 +2025,19 @@ body,
 
 .alert-banner {
   will-change: transform;
+}
+
+.alert-banner-aemet-active {
+  background: #b91c1c;
+  border-color: #7f1d1d;
+  color: #ffffff;
+  box-shadow: 0 4px 12px rgba(185, 28, 28, 0.32);
+}
+
+.alert-banner-aemet-soon {
+  background: #d97706;
+  border-color: #92400e;
+  color: #ffffff;
+  box-shadow: 0 4px 12px rgba(217, 119, 6, 0.28);
+  animation: none;
 }

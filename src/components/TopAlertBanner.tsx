@@ -9,6 +9,8 @@ type Props = {
   weatherMain: string | null;
   clouds: number | null;
   irr: number | null;
+  aemetActive?: boolean;
+  aemetSoon?: boolean;
   t: (key: string) => string;
   UV_HIGH: number;
   UV_EXTREME: number;
@@ -22,6 +24,8 @@ export default function TopAlertBanner({
   weatherMain,
   clouds,
   irr,
+  aemetActive,
+  aemetSoon,
   t,
   UV_HIGH,
   UV_EXTREME,
@@ -30,6 +34,26 @@ export default function TopAlertBanner({
   const [prevBannerSeverity, setPrevBannerSeverity] = useState(0);
 
   const bannerState = useMemo(() => {
+    if (aemetActive) {
+      return {
+        severity: 3,
+        key: "aemet-active",
+        content: `⚠️ ${t("official_alert")}`,
+        pulse: true,
+        visualClass: "alert-banner-aemet-active",
+      };
+    }
+
+    if (aemetSoon) {
+      return {
+        severity: 2,
+        key: "aemet-soon",
+        content: `⚠️ ${t("official_alert_soon")}`,
+        pulse: false,
+        visualClass: "alert-banner-aemet-soon",
+      };
+    }
+
     if (primary.kind === "heat" && heatRisk && heatRisk.isHigh) {
       return {
         severity: heatRisk.isExtreme ? 3 : 2,
@@ -87,7 +111,7 @@ export default function TopAlertBanner({
     }
 
     return null;
-  }, [primary, heatRisk, uvi, day, weatherMain, clouds, irr, t, UV_HIGH, UV_EXTREME]);
+  }, [aemetActive, aemetSoon, primary, heatRisk, uvi, day, weatherMain, clouds, irr, t, UV_HIGH, UV_EXTREME]);
 
   useEffect(() => {
     const nextSeverity = bannerState?.severity ?? 0;
@@ -107,7 +131,7 @@ export default function TopAlertBanner({
       className="top-alert-banner-wrap alert-banner-enter"
     >
       <div
-        className={`alert-banner ${bannerState.pulse ? "alert-banner-pulse" : ""}`}
+        className={`alert-banner ${bannerState.visualClass ?? ""} ${bannerState.pulse ? "alert-banner-pulse" : ""}`}
       >
         {typeof bannerState.content === "string" ? (
           <p>{bannerState.content}</p>
