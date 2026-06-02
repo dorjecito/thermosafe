@@ -38,19 +38,9 @@ export default function TopAlertBanner({
       return {
         severity: 3,
         key: "aemet-active",
-        content: `⚠️ ${t("official_alert")}`,
+        content: "🚨 ALERTA AEMET ACTIVA",
         pulse: true,
         visualClass: "alert-banner-aemet-active",
-      };
-    }
-
-    if (aemetSoon) {
-      return {
-        severity: 2,
-        key: "aemet-soon",
-        content: `⚠️ ${t("official_alert_soon")}`,
-        pulse: false,
-        visualClass: "alert-banner-aemet-soon",
       };
     }
 
@@ -111,7 +101,7 @@ export default function TopAlertBanner({
     }
 
     return null;
-  }, [aemetActive, aemetSoon, primary, heatRisk, uvi, day, weatherMain, clouds, irr, t, UV_HIGH, UV_EXTREME]);
+  }, [aemetActive, primary, heatRisk, uvi, day, weatherMain, clouds, irr, t, UV_HIGH, UV_EXTREME]);
 
   useEffect(() => {
     const nextSeverity = bannerState?.severity ?? 0;
