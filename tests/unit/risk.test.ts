@@ -147,7 +147,7 @@ test("UV level, text and advice are classified consistently", () => {
   assert.equal(getUvLevelIndex(11), 4);
   assert.equal(getUvLevelIndex(16.4), 4);
 
-  assert.equal(getUvText(8, "ca"), "Molt alt (8–10)");
+  assert.equal(getUvText(8, "ca"), "Molt alt (8–10.9)");
   assert.equal(getUvText(11, "es"), "Extremo (11+)");
   assert.match(getUvAdvice(6, "ca"), /Protecció extra/);
 });

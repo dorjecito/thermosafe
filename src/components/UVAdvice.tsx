@@ -13,7 +13,7 @@ interface UVAdviceProps {
 const texts = {
   ca: {
     idx: "Índex UV",
-    levels: ["Baix (0–2)", "Moderat (3–5)", "Alt (6–7)", "Molt alt (8–10)", "Extrem (11+)"],
+    levels: ["Baix (0–2)", "Moderat (3–5)", "Alt (6–7.9)", "Molt alt (8–10.9)", "Extrem (11+)"],
     msgs: [
       "Protecció mínima necessària.",
       "Evita el sol de 12 h a 16 h. Protecció extra.",
@@ -34,7 +34,7 @@ const texts = {
   },
   es: {
     idx: "Índice UV",
-    levels: ["Bajo (0–2)", "Moderado (3–5)", "Alto (6–7)", "Muy alto (8–10)", "Extremo (11+)"],
+    levels: ["Bajo (0–2)", "Moderado (3–5)", "Alto (6–7.9)", "Muy alto (8–10.9)", "Extremo (11+)"],
     msgs: [
       "Protección mínima necesaria.",
       "Evita el sol de 12 h a 16 h. Protección extra.",
@@ -55,7 +55,7 @@ const texts = {
   },
   eu: {
     idx: "UV indizea",
-    levels: ["Baxua (0–2)", "Moderatua (3–5)", "Altua (6–7)", "Oso altua (8–10)", "Muturrekoa (11+)"],
+    levels: ["Baxua (0–2)", "Moderatua (3–5)", "Altua (6–7.9)", "Oso altua (8–10.9)", "Muturrekoa (11+)"],
     msgs: [
       "Babes minimoa behar da.",
       "12etatik 16etara eguzkia saihestu. Babes gehigarria.",
@@ -76,7 +76,7 @@ const texts = {
   },
   gl: {
     idx: "Índice UV",
-    levels: ["Baixo (0–2)", "Moderado (3–5)", "Alto (6–7)", "Moi alto (8–10)", "Extremo (11+)"],
+    levels: ["Baixo (0–2)", "Moderado (3–5)", "Alto (6–7.9)", "Moi alto (8–10.9)", "Extremo (11+)"],
     msgs: [
       "Precísase protección mínima.",
       "Evita o sol de 12 h a 16 h. Protección extra.",
@@ -97,7 +97,7 @@ const texts = {
   },
   en: {
     idx: "UV index",
-    levels: ["Low (0–2)", "Moderate (3–5)", "High (6–7)", "Very high (8–10)", "Extreme (11+)"],
+    levels: ["Low (0–2)", "Moderate (3–5)", "High (6–7.9)", "Very high (8–10.9)", "Extreme (11+)"],
     msgs: [
       "Minimal protection required.",
       "Avoid sun from 12:00 to 16:00. Extra protection.",

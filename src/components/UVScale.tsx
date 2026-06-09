@@ -67,7 +67,7 @@ const escalaUV = [
     },
   },
   {
-    rang: '6–7',
+    rang: '6–7.9',
     color: '#F88C2B',
     nivell: { ca: 'Alt', es: 'Alto', eu: 'Altua', gl: 'Alto', en: 'High' },
     consell: {
@@ -79,7 +79,7 @@ const escalaUV = [
     },
   },
   {
-    rang: '8–10',
+    rang: '8–10.9',
     color: '#E03E2D',
     nivell: { ca: 'Molt alt', es: 'Muy alto', eu: 'Oso altua', gl: 'Moi alto', en: 'Very High' },
     consell: {
