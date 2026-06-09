@@ -78,7 +78,7 @@ const TXT: TxtDict = {
     safeUvModerate:
       "Radiació UV moderada. Es recomana protecció solar si l’exposició és prolongada.",
     safeWind:
-      "Vent present però dins marges assumibles. Mantén precaució bàsica amb objectes lleugers i eines.",
+      "Vent moderat. Assegura objectes, evita manipular materials lleugers exposats i augmenta la precaució amb eines o treballs a l’exterior.",
     safeCloudy:
       "Condicions generals favorables. Tot i els núvols, mantén vigilància bàsica si estàs molta estona a l’exterior.",
     mild:
@@ -135,7 +135,7 @@ const TXT: TxtDict = {
     safeUvModerate:
       "Radiación UV moderada. Se recomienda protección solar si la exposición es prolongada.",
     safeWind:
-      "Viento presente pero dentro de márgenes asumibles. Mantén una precaución básica con objetos ligeros y herramientas.",
+      "Viento moderado. Asegura objetos, evita manipular materiales ligeros expuestos y aumenta la precaución con herramientas o trabajos al aire libre.",
     safeCloudy:
       "Condiciones generales favorables. Aunque haya nubes, mantén vigilancia básica si pasas mucho tiempo al aire libre.",
     mild:
@@ -192,7 +192,7 @@ const TXT: TxtDict = {
     safeUvModerate:
       "UV erradiazio moderatua. Eguzki-babesa gomendatzen da esposizio luzea bada.",
     safeWind:
-      "Haizea badago, baina onargarri diren mugetan. Mantendu oinarrizko arreta objektu arin eta tresnekin.",
+      "Haize moderatua. Lotu objektuak, saihestu agerian dauden material arinak manipulatzea eta handitu arreta tresnekin edo kanpoko lanetan.",
     safeCloudy:
       "Baldintza orokorrak onak dira. Hodeiak egon arren, mantendu oinarrizko arreta kanpoan denbora asko ematen baduzu.",
     mild:
@@ -249,7 +249,7 @@ const TXT: TxtDict = {
     safeUvModerate:
       "Radiación UV moderada. Recoméndase protección solar se a exposición é prolongada.",
     safeWind:
-      "Hai vento, pero dentro de marxes asumibles. Mantén precaución básica con obxectos lixeiros e ferramentas.",
+      "Vento moderado. Asegura obxectos, evita manipular materiais lixeiros expostos e aumenta a precaución con ferramentas ou traballos ao aire libre.",
     safeCloudy:
       "Condicións xerais favorables. Aínda con nubes, mantén unha vixilancia básica se pasas moito tempo ao aire libre.",
     mild:
@@ -306,7 +306,7 @@ const TXT: TxtDict = {
     safeUvModerate:
       "Moderate UV radiation. Sun protection is recommended if exposure is prolonged.",
     safeWind:
-      "Wind is present but within acceptable margins. Keep basic caution with light objects and tools.",
+      "Moderate wind. Secure objects, avoid handling exposed light materials and increase caution with tools or outdoor work.",
     safeCloudy:
       "Generally favourable conditions. Even with clouds, maintain basic awareness if you remain outdoors for long periods.",
     mild:
