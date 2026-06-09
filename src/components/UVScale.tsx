@@ -43,7 +43,7 @@ const ui = {
 /* ─── Dades de la taula UV (traduïdes) ─────────────── */
 const escalaUV = [
   {
-    rang: '0–2',
+    rang: '0–2.9',
     color: '#6EC664',
     nivell: { ca: 'Baix', es: 'Bajo', eu: 'Baxua', gl: 'Baixo', en: 'Low' },
     consell: {
@@ -55,7 +55,7 @@ const escalaUV = [
     },
   },
   {
-    rang: '3–5',
+    rang: '3–5.9',
     color: '#F9D648',
     nivell: { ca: 'Moderat', es: 'Moderado', eu: 'Moderatua', gl: 'Moderado', en: 'Moderate' },
     consell: {

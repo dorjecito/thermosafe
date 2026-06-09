@@ -32,10 +32,10 @@ export function getUvText(uvi: number | null, lang: string): string {
   const level = uvi === null ? -1 : getUvLevelIndex(uvi);
 
   const text: Record<string, string[]> = {
-    ca: ["Baix (0–2)", "Moderat (3–5)", "Alt (6–7.9)", "Molt alt (8–10.9)", "Extrem (11+)"],
-    es: ["Bajo (0–2)", "Moderado (3–5)", "Alto (6–7.9)", "Muy alto (8–10.9)", "Extremo (11+)"],
-    gl: ["Baixo (0–2)", "Moderado (3–5)", "Alto (6–7.9)", "Moi alto (8–10.9)", "Extremo (11+)"],
-    eu: ["Baxua (0–2)", "Moderatua (3–5)", "Altua (6–7.9)", "Oso altua (8–10.9)", "Muturrekoa (11+)"],
+    ca: ["Baix (0–2.9)", "Moderat (3–5.9)", "Alt (6–7.9)", "Molt alt (8–10.9)", "Extrem (11+)"],
+    es: ["Bajo (0–2.9)", "Moderado (3–5.9)", "Alto (6–7.9)", "Muy alto (8–10.9)", "Extremo (11+)"],
+    gl: ["Baixo (0–2.9)", "Moderado (3–5.9)", "Alto (6–7.9)", "Moi alto (8–10.9)", "Extremo (11+)"],
+    eu: ["Baxua (0–2.9)", "Moderatua (3–5.9)", "Altua (6–7.9)", "Oso altua (8–10.9)", "Muturrekoa (11+)"],
   };
 
   return level === -1 ? "—" : (text[lang] || text["ca"])[level];
