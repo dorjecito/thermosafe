@@ -106,6 +106,18 @@ const isAlertActiveNow = (start: number, end: number) => {
   return now >= start && now <= end;
 };
 
+const getQuickTempToneClass = (value: number | null): string => {
+  if (typeof value !== "number" || !Number.isFinite(value)) {
+    return "quick-temp-neutral";
+  }
+
+  if (value < 10) return "quick-temp-cold";
+  if (value < 27) return "quick-temp-comfort";
+  if (value < 32) return "quick-temp-heat-mild";
+  if (value < 41) return "quick-temp-heat-moderate";
+  return "quick-temp-heat-high";
+};
+
 /* ──────── component ──────── */
 export default function App() {
   /* i18next */
@@ -1073,6 +1085,7 @@ const windText16 =
 
 /* === RISC TÈRMIC GENERAL (fora del map i fora d'avisos) === */
 const risk = temp != null ? getThermalRisk(temp) : "cap";
+const quickTempToneClass = getQuickTempToneClass(hi ?? temp);
 
 // 🔥 Calcular risc de calor ajustat per activitat (rest, walk, moderate, intense)
 const baseHeatRisk =
@@ -1601,7 +1614,7 @@ return (
 
 {/* 🌡️ RESUM RÀPID */}
 <div className={`quick-summary-card quick-summary-${risk}`}>
-  <div className="quick-temp">
+  <div className={`quick-temp ${quickTempToneClass}`}>
     {temp !== null ? `${temp.toFixed(1)}°C` : "—"}
   </div>
 

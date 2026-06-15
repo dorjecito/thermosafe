@@ -1187,6 +1187,56 @@ text-align: left;
   border-left: 4px solid #ef4444;
   background: rgba(239,68,68,0.08);
 }
+
+.quick-temp-neutral {
+  color: #111827;
+}
+
+.quick-temp-cold {
+  color: #2563eb;
+}
+
+.quick-temp-comfort {
+  color: #15803d;
+}
+
+.quick-temp-heat-mild {
+  color: #ca8a04;
+}
+
+.quick-temp-heat-moderate {
+  color: #ea580c;
+}
+
+.quick-temp-heat-high {
+  color: #dc2626;
+}
+
+@media (prefers-color-scheme: dark) {
+  .quick-temp-neutral {
+    color: #f9fafb;
+  }
+
+  .quick-temp-cold {
+    color: #60a5fa;
+  }
+
+  .quick-temp-comfort {
+    color: #86efac;
+  }
+
+  .quick-temp-heat-mild {
+    color: #facc15;
+  }
+
+  .quick-temp-heat-moderate {
+    color: #fb923c;
+  }
+
+  .quick-temp-heat-high {
+    color: #f87171;
+  }
+}
 /* 📍 Targeta de localització */
 
 .location-card {
