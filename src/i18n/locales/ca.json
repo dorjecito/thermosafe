@@ -59,6 +59,7 @@
       "moderateLateDayText": "Tot i ser capvespre, la sensació tèrmica continua elevada. Redueix esforços intensos, hidrata’t i fes pauses en llocs frescos."
     },
     "cold": {
+      "mild": "Precaució lleu per fred",
       "moderate": "Risc moderat per fred",
       "high": "Risc alt per fred",
       "extreme": "Risc extrem per fred"
@@ -100,9 +101,13 @@
   "no_specific_risk": "Sense risc específic",
 
   "risk_levels": {
+    "safe": "Condicions segures",
+    "mild": "Risc lleu",
     "low": "Risc baix",
+    "medium": "Risc mitjà",
     "moderate": "Risc moderat",
     "high": "Risc alt",
+    "severe": "Risc sever",
     "extreme": "Risc extrem"
   },
   "risk": {

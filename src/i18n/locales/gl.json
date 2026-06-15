@@ -82,6 +82,7 @@
       "moderateLateDayText": "Aínda que xa sexa tarde, a sensación térmica continúa elevada. Reduce esforzos intensos, hidrátate e fai pausas en lugares frescos."
     },
     "cold": {
+      "mild": "Precaución leve por frío",
       "moderate": "Risco moderado por frío",
       "high": "Risco alto por frío",
       "extreme": "Risco extremo por frío"
@@ -329,9 +330,13 @@
 "aemet_health": "AEMET: saúde e meteoroloxía",
 
 "risk_levels": {
+  "safe": "Condicións seguras",
+  "mild": "Risco leve",
   "low": "Risco baixo",
+  "medium": "Risco medio",
   "moderate": "Risco moderado",
   "high": "Risco alto",
+  "severe": "Risco severo",
   "extreme": "Risco extremo"
 },
 "skin": {

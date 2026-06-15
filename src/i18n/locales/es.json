@@ -81,6 +81,7 @@
       "moderateLateDayText": "Aunque ya sea tarde, la sensación térmica continúa elevada. Reduce esfuerzos intensos, hidrátate y haz pausas en lugares frescos."
     },
     "cold": {
+      "mild": "Precaución leve por frío",
       "moderate": "Riesgo moderado por frío",
       "high": "Riesgo alto por frío",
       "extreme": "Riesgo extremo por frío"
@@ -161,6 +162,16 @@
   "no_risk": "Sin riesgo",
   "no_risk_overall": "Sin riesgo detectado",
   "no_specific_risk": "Sin riesgo específico",
+  "risk_levels": {
+    "safe": "Condiciones seguras",
+    "mild": "Riesgo leve",
+    "low": "Riesgo bajo",
+    "medium": "Riesgo medio",
+    "moderate": "Riesgo moderado",
+    "high": "Riesgo alto",
+    "severe": "Riesgo severo",
+    "extreme": "Riesgo extremo"
+  },
   "high": "Alto",
   "extreme": "Extremo",
   "moderate": "Moderado",

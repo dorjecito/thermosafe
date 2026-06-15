@@ -82,6 +82,7 @@
       "moderateLateDayText": "Arratsaldea izan arren, sentsazio termikoa altua da oraindik. Murriztu ahalegin biziak, hidratatu eta egin atsedenaldiak leku freskoetan."
     },
     "cold": {
+      "mild": "Hotzagatik arreta arina",
       "moderate": "Hotz-arrisku ertaina",
       "high": "Hotz-arrisku handia",
       "extreme": "Muturreko hotz-arriskua"
@@ -288,9 +289,13 @@
 "aemet_health": "AEMET: osasuna eta meteorologia",
 
 "risk_levels": {
+  "safe": "Baldintza seguruak",
+  "mild": "Arrisku arina",
   "low": "Arrisku baxua",
+  "medium": "Arrisku ertaina",
   "moderate": "Arrisku ertaina",
   "high": "Arrisku handia",
+  "severe": "Arrisku larria",
   "extreme": "Arrisku muturrekoa"
 },
 "skin": {

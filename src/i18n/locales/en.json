@@ -66,6 +66,7 @@
       "moderateLateDayText": "Although it is later in the day, the apparent temperature remains elevated. Reduce intense effort, stay hydrated and take breaks in cool places."
     },
     "cold": {
+      "mild": "Mild cold caution",
       "moderate": "Moderate cold risk",
       "high": "High cold risk",
       "extreme": "Extreme cold risk"
@@ -313,9 +314,13 @@
   "aemet_health": "AEMET: Health and meteorology",
 
   "risk_levels": {
+    "safe": "Safe conditions",
+    "mild": "Mild risk",
     "low": "Low risk",
+    "medium": "Medium risk",
     "moderate": "Moderate risk",
     "high": "High risk",
+    "severe": "Severe risk",
     "extreme": "Extreme risk"
   },
 
