@@ -209,11 +209,6 @@
   "cold_risk_title": "Risco por frío",
   "wind_chill": "Temperatura efectiva",
 
-  "notify": {
-  "windTitle": "Vento forte",
-  "windBody": "Risco por vento {{risk}}. Velocidade do vento: {{speed}} km/h"
-},
-
   "windRisk": {
   "none": "sen risco",
   "breezy": "baixo",

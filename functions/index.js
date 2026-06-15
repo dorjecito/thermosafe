@@ -656,7 +656,7 @@ function buildCombinedRiskMessage({
 
   const txt = {
     ca: {
-      combinedTitle: "⚠️ ThermoSafe — Riscos combinats",
+      combinedTitle: "Riscos combinats – ThermoSafe",
       officialTitle: "🚨 ThermoSafe — Avís oficial actiu",
       official: "Avís oficial actiu",
       uv: "Índex UV",
@@ -669,7 +669,7 @@ function buildCombinedRiskMessage({
         "Revisa les condicions i adapta l’activitat exterior.",
     },
     es: {
-      combinedTitle: "⚠️ ThermoSafe — Riesgos combinados",
+      combinedTitle: "Riesgos combinados – ThermoSafe",
       officialTitle: "🚨 ThermoSafe — Aviso oficial activo",
       official: "Aviso oficial activo",
       uv: "Índice UV",
@@ -682,7 +682,7 @@ function buildCombinedRiskMessage({
         "Revisa las condiciones y adapta la actividad exterior.",
     },
     eu: {
-      combinedTitle: "⚠️ ThermoSafe — Arrisku konbinatuak",
+      combinedTitle: "Arrisku konbinatuak – ThermoSafe",
       officialTitle: "🚨 ThermoSafe — Abisu ofiziala aktibo",
       official: "Abisu ofiziala aktibo",
       uv: "UV indizea",
@@ -695,7 +695,7 @@ function buildCombinedRiskMessage({
         "Berrikusi baldintzak eta egokitu kanpoko jarduera.",
     },
     gl: {
-      combinedTitle: "⚠️ ThermoSafe — Riscos combinados",
+      combinedTitle: "Riscos combinados – ThermoSafe",
       officialTitle: "🚨 ThermoSafe — Aviso oficial activo",
       official: "Aviso oficial activo",
       uv: "Índice UV",
@@ -708,7 +708,7 @@ function buildCombinedRiskMessage({
         "Revisa as condicións e adapta a actividade exterior.",
     },
     en: {
-      combinedTitle: "⚠️ ThermoSafe — Combined risks",
+      combinedTitle: "Combined risks – ThermoSafe",
       officialTitle: "🚨 ThermoSafe — Active official alert",
       official: "Active official alert",
       uv: "UV index",

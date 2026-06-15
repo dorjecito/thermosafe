@@ -209,11 +209,6 @@
 "cold_risk_title": "Hotz-arriskua",
 "wind_chill": "Benetako tenperatura",
 
-"notify": {
-  "windTitle": "Haize arriskuaren abisua",
-  "windBody": "Haize arriskua: {{risk}}. Haizearen abiadura: {{speed}} km/h"
-},
-
 "windRisk": {
   "none": "arriskurik ez",
   "breezy": "ahula",
