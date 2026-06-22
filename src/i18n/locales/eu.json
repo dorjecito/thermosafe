@@ -193,9 +193,13 @@
   "heatRisk": {
     "Cap risc": "Arriskurik ez",
     "Baix": "Baxua",
+    "low": "baxua",
     "Moderat": "Moderatua",
+    "moderate": "moderatua",
     "Alt": "Handia",
-    "Extrem": "Larria"
+    "high": "altua",
+    "Extrem": "Larria",
+    "extreme": "muturrekoa"
   },
 
   "coldRisk": {

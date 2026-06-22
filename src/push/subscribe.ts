@@ -11,6 +11,7 @@ type SavedLocation = {
   lat: number;
   lon: number;
   place?: string;
+  lang?: Lang;
 };
 
 type SubDoc = {
@@ -60,6 +61,13 @@ async function getCoords(): Promise<{ lat: number; lon: number } | null> {
 
 function normalizeLang(fallback: Lang = "ca"): Lang {
   const raw = (navigator.language || fallback).slice(0, 2) as Lang;
+  return (["ca", "es", "eu", "gl", "en"] as Lang[]).includes(raw)
+    ? raw
+    : fallback;
+}
+
+function normalizeLangValue(lang: string | undefined, fallback: Lang = "ca"): Lang {
+  const raw = (lang || fallback).slice(0, 2).toLowerCase() as Lang;
   return (["ca", "es", "eu", "gl", "en"] as Lang[]).includes(raw)
     ? raw
     : fallback;
@@ -149,6 +157,7 @@ export async function updateRiskAlertLocation({
   lat,
   lon,
   place,
+  lang,
 }: SavedLocation): Promise<boolean> {
   const token =
     localStorage.getItem("fcmToken") || (await getCurrentFcmToken());
@@ -165,11 +174,14 @@ export async function updateRiskAlertLocation({
 
     let distanceKm = 0;
     let mustResetLevels = false;
+    let prevLang: Lang | undefined;
+    const langNorm = lang ? normalizeLangValue(lang) : undefined;
 
     if (snap.exists()) {
       const prev = snap.data() as SubDoc;
       const prevLat = Number(prev.lat);
       const prevLon = Number(prev.lon);
+      prevLang = prev.lang;
 
       distanceKm =
         Number.isFinite(prevLat) && Number.isFinite(prevLon)
@@ -180,8 +192,9 @@ export async function updateRiskAlertLocation({
     }
 
     const roundedDistanceKm = Math.round(distanceKm * 100) / 100;
+    const langChanged = Boolean(langNorm && langNorm !== prevLang);
 
-    if (snap.exists() && distanceKm < MIN_UPDATE_DISTANCE_KM) {
+    if (snap.exists() && distanceKm < MIN_UPDATE_DISTANCE_KM && !langChanged) {
       console.log("📍 Ubicació de notificacions sense canvis rellevants:", {
         tokenPreview: token.slice(0, 20),
         lat,
@@ -200,6 +213,7 @@ export async function updateRiskAlertLocation({
       lat,
       lon,
       ...(place ? { place } : {}),
+      ...(langNorm ? { lang: langNorm } : {}),
       updatedAt: now,
       ...(mustResetLevels ? resetRiskLevelsPayload() : {}),
     };
@@ -218,6 +232,40 @@ export async function updateRiskAlertLocation({
     return true;
   } catch (e) {
     console.error("⚠️ Error actualitzant ubicació de notificacions:", e);
+    return false;
+  }
+}
+
+export async function updateRiskAlertLanguage(lang: Lang): Promise<boolean> {
+  const token = localStorage.getItem("fcmToken");
+
+  if (!token) {
+    console.log("🌍 No hi ha token FCM per actualitzar l'idioma de notificacions.");
+    return false;
+  }
+
+  try {
+    const ref = doc(db, "subs", token);
+    const snap = await getDoc(ref);
+
+    if (!snap.exists()) {
+      console.log("🌍 No existeix subscripció a Firestore per actualitzar idioma.");
+      return false;
+    }
+
+    await setDoc(
+      ref,
+      {
+        lang: normalizeLangValue(lang),
+        updatedAt: Date.now(),
+      },
+      { merge: true }
+    );
+
+    console.log("🌍 Idioma de notificacions actualitzat:", lang);
+    return true;
+  } catch (e) {
+    console.warn("⚠️ No s'ha pogut actualitzar l'idioma de notificacions:", e);
     return false;
   }
 }
@@ -268,7 +316,7 @@ export async function enableRiskAlerts({
     throw new Error("Token FCM invàlid o buit");
   }
 
-  const langNorm = lang ?? normalizeLang("ca");
+  const langNorm = lang ? normalizeLangValue(lang) : normalizeLang("ca");
   const ref = doc(db, "subs", token);
   const snap = await getDoc(ref);
   const now = Date.now();

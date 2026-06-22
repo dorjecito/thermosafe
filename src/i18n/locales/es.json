@@ -202,9 +202,13 @@
   "heatRisk": {
     "cap": "sin riesgo",
     "baix": "bajo",
+    "low": "bajo",
     "moderat": "moderado",
+    "moderate": "moderado",
     "alt": "alto",
-    "extrem": "extremo"
+    "high": "alto",
+    "extrem": "extremo",
+    "extreme": "extremo"
   },
 
   "coldRisk": {

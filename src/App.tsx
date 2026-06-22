@@ -508,9 +508,12 @@ async function onTogglePush(next: boolean) {
   // ✅ no mostram textos d'estat (enabled/disabled)
   setMsgHeat(null);
 
-  try {
+    try {
     if (next) {
-      const token = await enableRiskAlerts({ threshold: "moderate" });
+      const token = await enableRiskAlerts({
+        threshold: "moderate",
+        lang: normalizeLang(i18n.resolvedLanguage || i18n.language || "ca"),
+      });
       setPushEnabled(true);
       setPushToken(token);
       // ❌ eliminat: setMsgHeat(t("push.enabled"));
@@ -822,7 +825,7 @@ setLon(lon);
 // 🔔 Si les notificacions estan activades, actualitza la ubicació del token.
 // Si la nova ubicació és a 15 km o més de l'anterior, subscribe.ts reiniciarà els nivells a 0.
 if (localStorage.getItem("fcmToken")) {
-  updateRiskAlertLocation({ lat, lon }).catch((e) =>
+  updateRiskAlertLocation({ lat, lon, lang }).catch((e) =>
     console.warn("[PUSH] No s'ha pogut actualitzar la ubicació del token:", e)
   );
 }
@@ -1799,39 +1802,34 @@ return (
     {temp !== null ? `${temp.toFixed(1)}°C` : "—"}
   </div>
 
-  <div className="quick-subline">
-    {hi !== null ? `${t("feels_like")}: ${hi.toFixed(1)}°C` : "—"}
-  </div>
-
-  <div className="quick-meta">
+  <div className="quick-meta quick-meta-inline">
+    <span>{hi !== null ? `${t("feels_like")}: ${hi.toFixed(1)}°C` : "—"}</span>
     <span>💨 {windKmh !== null ? `${windKmh.toFixed(1)} km/h` : "—"}</span>
     <span>☀️ {uvi !== null ? uvi.toFixed(1) : "—"}</span>
   </div>
 </div>
 
   {/* 🌡️ CONDICIONS ACTUALS */}
-<div className="block-conditions">
-  <h3 style={{ marginTop: 0, marginBottom: "0.6rem", fontWeight: 600 }}>
-    {t("current_conditions")}
-  </h3>
+<div className="block-conditions block-conditions-compact">
+  <h3 className="conditions-compact-title">{t("current_conditions")}</h3>
 
-  <p>
-    <strong>{t("humidity")}:</strong>{" "}
-    {hum !== null ? `${hum}%` : "—"}
-  </p>
-
-  <p>
-    <strong>{t("wind_direction")}:</strong>{" "}
-    {windDeg !== null
-      ? `${windText16} (${windDeg.toFixed(0)}°)`
-      : "—"}
-  </p>
-
-  <p>
-    <strong>{t("cloudiness")}:</strong>{" "}
-    {typeof clouds === "number" ? `${clouds}%` :
-    `${data?.clouds?.all ?? "—"}${typeof data?.clouds?.all === "number" ? "%" : ""}`}
-      </p>
+  <div className="conditions-inline">
+    <span className="condition-item">
+      <strong>{t("humidity")}:</strong>{" "}
+      {hum !== null ? `${hum}%` : "—"}
+    </span>
+    <span className="condition-item">
+      <strong>{t("wind_direction")}:</strong>{" "}
+      {windDeg !== null
+        ? `${windText16} (${windDeg.toFixed(0)}°)`
+        : "—"}
+    </span>
+    <span className="condition-item">
+      <strong>{t("cloudiness")}:</strong>{" "}
+      {typeof clouds === "number" ? `${clouds}%` :
+      `${data?.clouds?.all ?? "—"}${typeof data?.clouds?.all === "number" ? "%" : ""}`}
+    </span>
+  </div>
 </div>
 
 {/* 🕒 Targeta d'actualització */}
@@ -1846,20 +1844,18 @@ return (
 
           {/* 🌤️ ESTAT DEL CEL */}
 {sky && (
-  <div className="card sky-card">
-    <h3>{t("sky_state")}</h3>
-
-    <div className="sky-row">
+  <div className="card sky-card sky-card-compact">
+    <div className="sky-inline">
+      <h3>{t("sky_state")}:</h3>
       {icon && (
         <img
           src={`https://openweathermap.org/img/wn/${icon}@2x.png`}
           alt={sky}
           className="sky-icon"
-          width="32"
-          height="32"
+          width="28"
+          height="28"
         />
       )}
-
       <span className="sky-label">
         {t(`weather_desc.${sky.toLowerCase()}`) !==
         `weather_desc.${sky.toLowerCase()}`
@@ -1875,36 +1871,43 @@ return (
   <div className={`uv-block ${day ? "" : "uv-night"}`}>
     <h3 className="uv-title">{t("solar_info")}</h3>
 
-    {(() => {
-      const lang = normalizeLang(
-        i18n.resolvedLanguage || i18n.language || "ca"
-      ) as any;
+	    {(() => {
+	      const lang = normalizeLang(
+	        i18n.resolvedLanguage || i18n.language || "ca"
+	      ) as any;
+	      const uvCompactLevel = uvSummaryText.replace(/\s*\([^)]*\)/g, "");
+	      const uvCompactAdvice = uvSummaryAdvice
+	        ? uvSummaryAdvice.split(".")[0] + "."
+	        : "";
 
-      return (
-        <>
-	          {/* ☀️ Durant el dia */}
-	          {day && (
-	            <>
-	              <div className="uv-context-card uv-context-card--info">
-	                <span className="uv-context-icon" aria-hidden="true">☀️</span>
-	                <span className="uv-context-text">
-	                  <strong>{localUi.currentUv}:</strong>{" "}
-	                  {uvSummaryValue != null ? uvSummaryValue.toFixed(1) : "—"} — {uvSummaryText}
-	                  <br />
-	                  {uvSummaryAdvice}
-	                  <br />
-	                  <strong>{localUi.uvMaxToday}:</strong>{" "}
-	                  {uvMaxSummaryValue != null ? uvMaxSummaryValue.toFixed(1) : "—"}
-	                </span>
-	              </div>
+	      return (
+	        <>
+		          {/* ☀️ Durant el dia */}
+		          {day && (
+		            <>
+		              <div className="uv-context-card uv-context-card--info uv-summary-compact">
+		                <span className="uv-context-text">
+		                  <strong>UV {uvSummaryValue != null ? uvSummaryValue.toFixed(1) : "—"}</strong>
+		                  {" · "}
+		                  {uvCompactLevel}
+		                  {uvCompactAdvice && (
+		                    <span className="uv-compact-advice">{uvCompactAdvice}</span>
+		                  )}
+		                </span>
+		              </div>
 
-	              <details className="aemet-alert-details" style={{ marginTop: "0.75rem" }}>
+		              <details className="aemet-alert-details" style={{ marginTop: "0.75rem" }}>
 	                <summary className="aemet-alert-summary">
 	                  <span className="summary-closed">{localUi.moreUv}</span>
-	                  <span className="summary-open">{localUi.lessUv}</span>
-	                </summary>
+		                  <span className="summary-open">{localUi.lessUv}</span>
+		                </summary>
 
-	                <UVAdvice
+		                <p className="uv-max-detail">
+		                  <strong>{localUi.uvMaxToday}:</strong>{" "}
+		                  {uvMaxSummaryValue != null ? uvMaxSummaryValue.toFixed(1) : "—"}
+		                </p>
+
+		                <UVAdvice
 	                  uvi={uvi}
 	                  lang={i18n.resolvedLanguage || i18n.language || "ca"}
 	                  weatherMain={data?.weather?.[0]?.main ?? null}

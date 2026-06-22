@@ -2091,3 +2091,169 @@ body,
   box-shadow: 0 4px 12px rgba(217, 119, 6, 0.28);
   animation: none;
 }
+
+/* Compactació de targetes meteorològiques secundàries */
+.quick-summary-card {
+  padding: 0.62rem 0.9rem !important;
+  margin: 0.45rem 0 0.6rem !important;
+}
+
+.uv-summary-compact {
+  padding: 0.5rem 0.65rem !important;
+  margin: 0 !important;
+}
+
+.uv-summary-compact .uv-context-text {
+  display: block;
+  line-height: 1.25;
+}
+
+.uv-compact-advice {
+  display: block;
+  margin-top: 0.16rem;
+  font-size: 0.92rem;
+}
+
+.uv-max-detail {
+  margin: 0.55rem 0 0.65rem;
+  font-size: 0.92rem;
+  line-height: 1.25;
+}
+
+.quick-summary-card .quick-temp {
+  font-size: 2.55rem;
+  line-height: 0.9;
+}
+
+.quick-summary-card .quick-subline {
+  margin-bottom: 0.22rem;
+  line-height: 1.15;
+}
+
+.quick-summary-card .quick-meta {
+  gap: 0.85rem;
+  margin-top: 0.05rem;
+  line-height: 1.15;
+}
+
+.quick-meta-inline {
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.quick-meta-inline span:not(:last-child)::after {
+  content: "·";
+  margin-left: 0.85rem;
+  opacity: 0.55;
+}
+
+.block-conditions {
+  padding: 0.58rem 0.8rem !important;
+  margin: 0.45rem 0 0.6rem !important;
+}
+
+.conditions-compact-title {
+  margin: 0 0 0.22rem !important;
+  font-size: 0.98rem;
+  line-height: 1.15;
+  font-weight: 700;
+}
+
+.conditions-inline {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.2rem 0.55rem;
+  font-size: 0.9rem;
+  line-height: 1.2;
+}
+
+.condition-item:not(:last-child)::after {
+  content: "·";
+  margin-left: 0.55rem;
+  opacity: 0.55;
+}
+
+.sky-card {
+  padding: 0.5rem 0.8rem !important;
+  margin: 0.45rem 0 0.6rem !important;
+}
+
+.sky-inline {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  min-height: 30px;
+}
+
+.sky-card-compact h3 {
+  margin: 0 !important;
+  font-size: 0.98rem;
+  line-height: 1.15;
+  white-space: nowrap;
+}
+
+.sky-row {
+  gap: 0.45rem !important;
+  margin-top: 0 !important;
+}
+
+.sky-icon {
+  width: 24px !important;
+  height: 24px !important;
+  flex: 0 0 auto;
+}
+
+.sky-label {
+  font-size: 0.92rem;
+  line-height: 1.15;
+}
+
+@media (max-width: 640px) {
+  .quick-summary-card,
+  .block-conditions,
+  .sky-card {
+    padding: 0.5rem 0.72rem !important;
+    margin-top: 0.4rem !important;
+    margin-bottom: 0.5rem !important;
+  }
+
+  .quick-summary-card .quick-temp {
+    font-size: 2.25rem !important;
+  }
+
+  .quick-summary-card .quick-subline,
+  .quick-summary-card .quick-meta,
+  .uv-summary-compact .uv-context-text,
+  .uv-compact-advice,
+  .uv-max-detail,
+  .conditions-inline,
+  .sky-label {
+    font-size: 0.86rem !important;
+    line-height: 1.18 !important;
+  }
+
+  .quick-summary-card .quick-meta {
+    gap: 0.65rem;
+    flex-wrap: wrap;
+  }
+
+  .quick-meta-inline span:not(:last-child)::after {
+    margin-left: 0.65rem;
+  }
+
+  .sky-card-compact h3,
+  .conditions-compact-title {
+    font-size: 0.92rem !important;
+    margin-bottom: 0.18rem !important;
+  }
+
+  .sky-inline {
+    min-height: 26px;
+  }
+
+  .sky-icon {
+    width: 22px !important;
+    height: 22px !important;
+  }
+}
