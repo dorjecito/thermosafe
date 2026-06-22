@@ -123,6 +123,7 @@ const getQuickTempToneClass = (value: number | null): string => {
 export default function App() {
   /* i18next */
   const [loading, setLoading] = useState(false);
+  const [isInitialRiskReady, setIsInitialRiskReady] = useState(false);
   const { t, i18n } = useTranslation();
 
   // 🧴 Fototip (1–6)
@@ -545,6 +546,7 @@ const fetchWeather = async (cityName: string) => {
   const requestId = startRequest("search");
 
   try {
+    setIsInitialRiskReady(false);
     setLoading(true);
     setCurrentSource("search");
     setDataSource("search");
@@ -669,6 +671,7 @@ const fetchWeather = async (cityName: string) => {
     setErr("Error obtenint dades de ciutat");
   } finally {
     if (!isStaleRequest("search", requestId)) {
+      setIsInitialRiskReady(true);
       setLoading(false);
     }
   }
@@ -803,7 +806,10 @@ const locate = async (silent = false) => {
   const requestId = startRequest("gps");
 
   try {
-    if (!silent) setLoading(true);
+    if (!silent) {
+      setIsInitialRiskReady(false);
+      setLoading(true);
+    }
     setCurrentSource("gps");
     setDataSource("gps");
     setInput('');
@@ -988,6 +994,7 @@ if (isStaleRequest("gps", requestId)) return;
   if (!silent) setErr(t("errorGPS"));
 } finally {
   if (!silent && !isStaleRequest("gps", requestId)) {
+    setIsInitialRiskReady(true);
     setLoading(false);
   }
 }
@@ -1013,6 +1020,7 @@ const handleSuggestionSelect = async (s: any) => {
   setErr("");
 
   try {
+    setIsInitialRiskReady(false);
     setLoading(true);
     setCurrentSource("search");
     setDataSource("search");
@@ -1085,6 +1093,7 @@ const handleSuggestionSelect = async (s: any) => {
     console.error("[DEBUG] Error obtenint dades del suggeriment:", err);
     setErr(t("errorCity"));
   } finally {
+    setIsInitialRiskReady(true);
     setLoading(false);
   }
 };
@@ -1382,6 +1391,7 @@ const uvMaxSummaryValue =
     : uvSummaryValue;
 const uvSummaryText = getUvText(uvSummaryValue, currentLang);
 const uvSummaryAdvice = getUvAdvice(uvSummaryValue, currentLang);
+const isRiskRenderReady = Boolean(data && isInitialRiskReady && !loading);
 
 //Return ok
 
@@ -1700,7 +1710,7 @@ return (
   )}
 </div>
 
-{data && (
+{isRiskRenderReady && (
   <TopAlertBanner
     primary={primary}
     heatRisk={heatRisk}
@@ -1717,7 +1727,7 @@ return (
   />
 )}
 
-{data ? (
+{isRiskRenderReady ? (
   <>
      {/* 📊 DADES */}
 {city && (
