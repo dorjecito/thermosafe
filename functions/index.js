@@ -2796,6 +2796,7 @@ exports.cronCheckAemetRiskV2 = onSchedule(
             noAlerts: 0,
             noRisk: 0,
             repeatedAlert: 0,
+            suppressedByRecentUvCombined: 0,
             dailyReset: 0,
             sendError: 0,
             removedInvalidToken: 0,
@@ -2933,6 +2934,39 @@ exports.cronCheckAemetRiskV2 = onSchedule(
             zoneKey,
             todayKey,
           });
+        }
+
+        const recentUvCombinedSnap = await db
+          .collection("notificationState")
+          .doc("aemetContextByZone")
+          .collection("zones")
+          .doc(zoneKey)
+          .get();
+
+        const recentUvCombined = recentUvCombinedSnap.exists
+          ? recentUvCombinedSnap.data() || {}
+          : null;
+        const lastUvCombinedAt = Number(recentUvCombined?.sentAt ?? 0);
+        const minutesSince =
+          lastUvCombinedAt > 0 ? (now - lastUvCombinedAt) / 60000 : null;
+
+        if (
+          typeof minutesSince === "number" &&
+          minutesSince >= 0 &&
+          minutesSince < 120
+        ) {
+          stats.tokensSkipped++;
+          stats.reasons.suppressedByRecentUvCombined++;
+
+          console.log("[AEMET V2][SKIP][RECENT_UV_COMBINED]", {
+            docId: doc.id,
+            zoneKey,
+            place,
+            lastUvCombinedAt,
+            minutesSince: Math.round(minutesSince),
+          });
+
+          return;
         }
 
         if (prevEventKey === eventKey) {
@@ -3733,7 +3767,7 @@ exports.cronCheckUvRiskV2 = onSchedule(
 
             const aemetText = String(aemetEvent || "").toLowerCase();
 
-            const shouldBlockUvByAemet =
+            const hasAemetContextForUv =
               aemetLevel >= 2 ||
               aemetText.includes("heat") ||
               aemetText.includes("temperature") ||
@@ -3755,7 +3789,7 @@ exports.cronCheckUvRiskV2 = onSchedule(
               threshold: sub.threshold,
               aemetLevel,
               aemetEvent,
-              shouldBlockUvByAemet,
+              hasAemetContextForUv,
               uvLevelsByZone,
             });
 
@@ -3790,21 +3824,6 @@ exports.cronCheckUvRiskV2 = onSchedule(
             } else if (!thresholdOk) {
               stats.tokensSkipped++;
               stats.reasons.belowThreshold++;
-            } else if (shouldBlockUvByAemet) {
-              stats.tokensSkipped++;
-              stats.reasons.blockedByAemet++;
-
-              console.log("[UV V2 SKIP AEMET HIGHER]", {
-                docId: doc.id,
-                place,
-                zoneKey,
-                uvi,
-                uvLevel: currentUvLevel,
-                prevLevel,
-                aemetLevel,
-                aemetEvent,
-                shouldBlockUvByAemet,
-              });
             } else {
               try {
                 const combined = buildCombinedRiskMessage({
@@ -3819,7 +3838,8 @@ exports.cronCheckUvRiskV2 = onSchedule(
 
                 const isCombined =
                   combined &&
-                  combined.type === "heat_uv" &&
+                  combined.hasHeat &&
+                  combined.hasUv &&
                   currentUvLevel > 0 &&
                   heatInfo.level > 0;
 
@@ -3830,8 +3850,10 @@ exports.cronCheckUvRiskV2 = onSchedule(
                     zoneKey,
                     uvi,
                     hi,
-                    uvLevel: currentUvLevel,
-                    heatLevel: heatInfo.level,
+                   uvLevel: currentUvLevel,
+                   heatLevel: heatInfo.level,
+                    aemetContext: hasAemetContextForUv,
+                    reason: hasAemetContextForUv ? "uvWithAemet" : "heat_uv",
                   });
 
                   await admin.messaging().send({
@@ -3860,7 +3882,34 @@ exports.cronCheckUvRiskV2 = onSchedule(
                         link: "https://thermosafe.app",
                       },
                     },
-                  });
+                   });
+
+                  if (hasAemetContextForUv) {
+                    try {
+                      await db
+                        .collection("notificationState")
+                        .doc("aemetContextByZone")
+                        .collection("zones")
+                        .doc(zoneKey)
+                        .set(
+                          {
+                            zoneKey,
+                            place: place || "",
+                            sentAt: now,
+                            source: "uvCombined",
+                            reason: "uvWithAemet",
+                          },
+                          { merge: true }
+                        );
+                    } catch (markErr) {
+                      console.warn("[UV V2][AEMET CONTEXT MARK ERROR]", {
+                        docId: doc.id,
+                        place,
+                        zoneKey,
+                        error: markErr.message,
+                      });
+                    }
+                  }
 
                   updates.lastHeatAt = now;
                   updates.lastHeatLevel = heatInfo.level;
@@ -3888,6 +3937,8 @@ exports.cronCheckUvRiskV2 = onSchedule(
                   prevLevel,
                   nextLevel: currentUvLevel,
                   combined: isCombined,
+                  aemetContext: hasAemetContextForUv,
+                  reason: hasAemetContextForUv ? "uvWithAemet" : "uvLevelIncrease",
                   uvLevelsByZone,
                 });
               } catch (sendErr) {
