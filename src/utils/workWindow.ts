@@ -114,11 +114,11 @@ export function getWorkWindow({
 
 export function getWorkWindowTitle(lang: WorkWindowLang): string {
   const txt = {
-    ca: "Condicions per a l’activitat exterior",
-    es: "Condiciones para la actividad exterior",
-    eu: "Kanpoko jarduerarako baldintzak",
-    gl: "Condicións para a actividade exterior",
-    en: "Outdoor activity conditions",
+    ca: "Activitat exterior",
+    es: "Actividad exterior",
+    eu: "Kanpoko jarduera",
+    gl: "Actividade exterior",
+    en: "Outdoor activity",
   };
 
   return txt[lang] || txt.ca;

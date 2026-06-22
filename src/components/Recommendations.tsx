@@ -72,7 +72,7 @@ interface Props {
 // ---------------------------------------------------------------
 const TXT: TxtDict = {
   ca: {
-    title: "Recomanacions segons les condicions actuals:",
+    title: "Recomanacions preventives",
     safe:
       "Condicions tèrmiques favorables. Mantén una hidratació adequada i segueix les mesures preventives habituals.",
     safeUvModerate:
@@ -129,7 +129,7 @@ const TXT: TxtDict = {
   },
 
   es: {
-    title: "Recomendaciones según las condiciones actuales:",
+    title: "Recomendaciones preventivas",
     safe:
       "Condiciones térmicas favorables. Mantén una hidratación adecuada y sigue las medidas preventivas habituales.",
     safeUvModerate:
@@ -186,7 +186,7 @@ const TXT: TxtDict = {
   },
 
   eu: {
-    title: "Gomendioak uneko baldintzen arabera:",
+    title: "Prebentzio-gomendioak",
     safe:
       "Baldintza termiko onak. Mantendu hidratazio egokia eta ohiko prebentzio-neurriak.",
     safeUvModerate:
@@ -243,7 +243,7 @@ const TXT: TxtDict = {
   },
 
   gl: {
-    title: "Recomendacións segundo as condicións actuais:",
+    title: "Recomendacións preventivas",
     safe:
       "Condicións térmicas favorables. Mantén unha hidratación adecuada e segue as medidas preventivas habituais.",
     safeUvModerate:
@@ -300,7 +300,7 @@ const TXT: TxtDict = {
   },
 
   en: {
-    title: "Recommendations based on current conditions:",
+    title: "Preventive recommendations",
     safe:
       "Favourable thermal conditions. Maintain adequate hydration and follow standard preventive measures.",
     safeUvModerate:
@@ -358,26 +358,9 @@ const TXT: TxtDict = {
 } as const;
 
 // ----------------------------------------------
-// ✨ Sistema d'icones segons intensitat del risc
+// ✨ Icona fixa per reforçar que són mesures preventives
 // ----------------------------------------------
-const getIcon = (key: string): string => {
-  if (key === "tropicalNight") return "🌙🔥";
-  if (key.startsWith("night")) return "🌙";
-  if (key === "cold_low") return "❄️";
-  if (key === "cold_mod") return "❄️❄️";
-  if (key === "cold_high") return "❄️❄️❄️";
-  if (key === "cold_ext") return "❄️❄️❄️❄️";
-  if (key === "uvModerate") return "☀️";
-  if (key === "uvHigh") return "☀️☀️";
-  if (key === "uvVeryHigh") return "☀️☀️☀️";
-  if (key === "uvExtreme") return "☀️☀️☀️☀️";
-  if (key === "mild") return "🔥";
-  if (key === "moderate") return "🔥🔥";
-  if (key === "high") return "🔥🔥🔥";
-  if (key === "ext") return "🔥🔥🔥🔥";
-  if (key === "safe") return "🟢";
-  return "🟢";
-};
+const getIcon = (_key: string): string => "🛡️";
 
 const normalizeLang = (lang: Lang | string): Lang => {
   const raw = String(lang || "ca").trim().toLowerCase();

@@ -22,7 +22,7 @@ import {
   WINDCHILL_WIND_MIN,
 } from "./constants/riskThresholds";
 
-import { getUVFromOpenUV } from "./services/openUV";
+import { getUVDetailFromOpenUV, getUVFromOpenUV } from "./services/openUV";
    
    /* —— utilitats ——————————————————————————— */
    import { getLocationNameFromCoords } from './utils/getLocationNameFromCoords';
@@ -42,8 +42,9 @@ import { getUVFromOpenUV } from "./services/openUV";
    import { getPrimaryStatusBlock } from "./utils/getPrimaryStatusBlock";
    import { getPrimaryAdviceText } from "./utils/getPrimaryAdviceText";
    import { formatLastUpdate } from "./utils/formatLastUpdate";
-   import { getRemainingTime } from "./utils/getRemainingTime";
-   import { normalizeLang } from "./utils/normalizeLang";
+	   import { getRemainingTime } from "./utils/getRemainingTime";
+	   import { normalizeLang } from "./utils/normalizeLang";
+	   import { getUvAdvice, getUvText } from "./utils/uv";
    import { safeUVFetch } from "./utils/safeUVFetch";
    import { fetchSolarIrr } from "./utils/fetchSolarIrr";
    import UVContextCard from "./components/UVContextCard";
@@ -234,6 +235,7 @@ useEffect(() => {
   const [hi, setHi] = useState<number | null>(null);
   const [irr, setIrr] = useState<number | null>(null);
   const [uvi, setUvi] = useState<number | null>(null);
+  const [uvMaxToday, setUvMaxToday] = useState<number | null>(null);
   const [wc, setWc] = useState<number | null>(null); // wind-chill
   const [clouds, setClouds] = useState<number | null>(null);
   const [weatherMain, setWeatherMain] = useState<string | null>(null);
@@ -374,6 +376,20 @@ async function loadAlertsIfNeeded(
     } else {
       setAlerts([]);
     }
+  }
+}
+
+async function loadUvMaxToday(nextLat: number, nextLon: number) {
+  try {
+    const detail = await getUVDetailFromOpenUV(nextLat, nextLon);
+    const maxToday =
+      typeof detail?.uv_max === "number" && Number.isFinite(detail.uv_max)
+        ? detail.uv_max
+        : null;
+    setUvMaxToday(maxToday);
+  } catch (err) {
+    console.warn("[UV] Error carregant UV màxim:", err);
+    setUvMaxToday(null);
   }
 }
 
@@ -627,10 +643,11 @@ const fetchWeather = async (cityName: string) => {
 
       if (isStaleRequest("search", requestId)) return;
 
-      console.log("[SEARCH] UV rebut:", uv);
-      setUvi(uv);
+	      console.log("[SEARCH] UV rebut:", uv);
+	      setUvi(uv);
+	      await loadUvMaxToday(newLat, newLon);
 
-      console.log("[DEBUG] Coordenades ciutat cercada:", newLat, newLon);
+	      console.log("[DEBUG] Coordenades ciutat cercada:", newLat, newLon);
 
       // ⚠️ Avisos oficials
       await loadAlertsIfNeeded(
@@ -639,10 +656,11 @@ const fetchWeather = async (cityName: string) => {
         lang,
         isDayHere
       );
-    } else {
-      setUvi(null);
-      setAlerts([]);
-    }
+	    } else {
+	      setUvi(null);
+	      setUvMaxToday(null);
+	      setAlerts([]);
+	    }
   } catch (err) {
     console.error("[DEBUG] Error obtenint dades:", err);
     setErr("Error obtenint dades de ciutat");
@@ -833,6 +851,7 @@ const uv = await safeUVFetch(lat, lon, isDayHere);
 if (isStaleRequest("gps", requestId)) return;
 
 setUvi(uv);
+await loadUvMaxToday(lat, lon);
 console.log("[DEBUG] UVI actual (nou):", uv);
 console.log("[TEST] Tipus UV (nou):", typeof uv, "Valor:", uv);
 
@@ -1049,8 +1068,9 @@ const handleSuggestionSelect = async (s: any) => {
     const rawDesc = data.weather?.[0]?.description || "";
     setSky(resolveSkyDescription(rawDesc, (key) => t(key)));
     setIcon(data.weather?.[0]?.icon || "");
-    const uv = await getUVFromOpenUV(s.lat, s.lon);
-    setUvi(uv);
+	    const uv = await getUVFromOpenUV(s.lat, s.lon);
+	    setUvi(uv);
+	    await loadUvMaxToday(s.lat, s.lon);
 
     await loadAlertsIfNeeded(
       s.lat,
@@ -1244,6 +1264,116 @@ const riskIcons = getRiskIcons(
   windRisk,
   uvi
 );
+
+const uiLabels = {
+  ca: {
+    viewAllAlerts: "Veure totes les alertes",
+    hideAlerts: "Amagar alertes",
+    currentUv: "Índex UV actual",
+    uvMaxToday: "UV màxim avui",
+    moreUv: "Veure més informació UV",
+    lessUv: "Amagar informació UV",
+  },
+  es: {
+    viewAllAlerts: "Ver todas las alertas",
+    hideAlerts: "Ocultar alertas",
+    currentUv: "Índice UV actual",
+    uvMaxToday: "UV máximo hoy",
+    moreUv: "Ver más información UV",
+    lessUv: "Ocultar información UV",
+  },
+  eu: {
+    viewAllAlerts: "Ikusi alerta guztiak",
+    hideAlerts: "Ezkutatu alertak",
+    currentUv: "Uneko UV indizea",
+    uvMaxToday: "Gaurko UV maximoa",
+    moreUv: "Ikusi UV informazio gehiago",
+    lessUv: "Ezkutatu UV informazioa",
+  },
+  gl: {
+    viewAllAlerts: "Ver todas as alertas",
+    hideAlerts: "Agochar alertas",
+    currentUv: "Índice UV actual",
+    uvMaxToday: "UV máximo hoxe",
+    moreUv: "Ver máis información UV",
+    lessUv: "Agochar información UV",
+  },
+  en: {
+    viewAllAlerts: "View all alerts",
+    hideAlerts: "Hide alerts",
+    currentUv: "Current UV index",
+    uvMaxToday: "Today's max UV",
+    moreUv: "View more UV information",
+    lessUv: "Hide UV information",
+  },
+} as const;
+
+const localUi = uiLabels[currentLang] || uiLabels.ca;
+const alertCards = alerts.map((alert, i) => {
+  const desc =
+    typeof alert.description === "string"
+      ? alert.description
+      : alert.description?.[i18n.language] ||
+        alert.description?.es ||
+        Object.values(alert.description || {})
+          .filter((v) => typeof v === "string" && v.trim().length > 0)
+          .join(". ");
+
+  const ai = buildAemetAiAlert(
+    alert.event || "",
+    desc,
+    i18n.language as LangKey
+  );
+
+  return { alert, ai, i };
+});
+
+const renderAlertCard = ({ alert, ai, i }: (typeof alertCards)[number]) => (
+  <div
+    key={`${alert.event}-${alert.start ?? i}-${alert.end ?? ""}`}
+    className="aemet-alert-card alert-ext"
+  >
+    <div className="aemet-alert-title">
+      {getAlertIcon(alert.event)} {ai.title}
+    </div>
+
+    {typeof alert?.start === "number" && typeof alert?.end === "number" && (
+      <div className="aemet-alert-time">
+        🕒 {formatAlertTime(alert.start, lang)} → {formatAlertTime(alert.end, lang)}
+        {isAlertActiveNow(alert.start, alert.end) && (
+          <span> · {t("alert_time.active")}</span>
+        )}
+        <br />
+        ⏳ {getRemainingTime(alert.end, lang, t)}
+      </div>
+    )}
+
+    <details className="aemet-alert-details">
+      <summary className="aemet-alert-summary">
+        <span className="summary-closed">{t("show_details")}</span>
+        <span className="summary-open">{t("hide_details")}</span>
+      </summary>
+
+      <div className="aemet-alert-description">{ai.body}</div>
+    </details>
+
+    <div className="aemet-alert-source">
+      {(alert.sender_name || "").toLowerCase().includes("aemet") ||
+      (alert.event || "").toLowerCase().includes("aemet")
+        ? "AEMET · Agencia Estatal de Meteorología"
+        : alert.sender_name || t("official_source") || "Font oficial"}
+    </div>
+  </div>
+);
+
+const uvSummaryValue =
+  typeof uvi === "number" && Number.isFinite(uvi) ? Math.max(0, uvi) : null;
+const uvMaxSummaryValue =
+  typeof uvMaxToday === "number" && Number.isFinite(uvMaxToday)
+    ? Math.max(0, uvMaxToday)
+    : uvSummaryValue;
+const uvSummaryText = getUvText(uvSummaryValue, currentLang);
+const uvSummaryAdvice = getUvAdvice(uvSummaryValue, currentLang);
 
 //Return ok
 
@@ -1612,6 +1742,57 @@ return (
   </p>
 )}
 
+{/* 🔔 AVISOS AEMET (Targetes noves) */}
+{alerts.length > 0 && (
+  <div style={{ marginTop: "1.5rem" }}>
+    {alertCards.slice(0, 1).map(renderAlertCard)}
+
+    {alertCards.length > 1 && (
+      <details className="aemet-alert-details" style={{ marginTop: "0.75rem" }}>
+        <summary className="aemet-alert-summary">
+          <span className="summary-closed">
+            {localUi.viewAllAlerts} ({alertCards.length - 1})
+          </span>
+          <span className="summary-open">{localUi.hideAlerts}</span>
+        </summary>
+
+        {alertCards.slice(1).map(renderAlertCard)}
+      </details>
+    )}
+  </div>
+)}
+
+<div className={`work-window-card work-window-${workWindow}`}>
+  <div className="work-window-header">
+    <span className={`work-window-dot work-window-dot-${workWindow}`}></span>
+    <h3 className="work-window-title">{workWindowTitle}</h3>
+  </div>
+
+  <p className="work-window-text">{workWindowText}</p>
+</div>
+
+{/* ============================================================
+   ✅ RECOMANACIONS PRINCIPALS
+   Ara les governa directament el component Recommendations
+   ============================================================ */}
+<Recommendations
+    temp={hi ?? data?.main?.temp ?? 0}
+    lang={i18n.resolvedLanguage || i18n.language || "ca"}
+    isDay={day}
+    activity={preventiveActivity}
+    humidity={data?.main?.humidity ?? undefined}
+    aemetActive={aemetActive}
+    aemetSoon={aemetSoon}
+    alertType={activeAlertEvent}
+    uvi={uvi}
+    weatherMain={data?.weather?.[0]?.main ?? ""}
+    weatherDescription={data?.weather?.[0]?.description ?? ""}
+    cloudiness={data?.clouds?.all ?? null}
+    windKmh={windKmh}
+    currentHour={new Date().getHours()}
+
+  />
+
 {/* 🌡️ RESUM RÀPID */}
 <div className={`quick-summary-card quick-summary-${risk}`}>
   <div className={`quick-temp ${quickTempToneClass}`}>
@@ -1701,47 +1882,67 @@ return (
 
       return (
         <>
-          {/* ☀️ Durant el dia */}
-          {day && (
-            <>
-              <UVAdvice
-                uvi={uvi}
-                lang={i18n.resolvedLanguage || i18n.language || "ca"}
-                weatherMain={data?.weather?.[0]?.main ?? null}
-                cloudiness={data?.clouds?.all}
-              />
+	          {/* ☀️ Durant el dia */}
+	          {day && (
+	            <>
+	              <div className="uv-context-card uv-context-card--info">
+	                <span className="uv-context-icon" aria-hidden="true">☀️</span>
+	                <span className="uv-context-text">
+	                  <strong>{localUi.currentUv}:</strong>{" "}
+	                  {uvSummaryValue != null ? uvSummaryValue.toFixed(1) : "—"} — {uvSummaryText}
+	                  <br />
+	                  {uvSummaryAdvice}
+	                  <br />
+	                  <strong>{localUi.uvMaxToday}:</strong>{" "}
+	                  {uvMaxSummaryValue != null ? uvMaxSummaryValue.toFixed(1) : "—"}
+	                </span>
+	              </div>
 
-              <UVContextCard
-              uvi={uvi}
-              lang={i18n.resolvedLanguage || i18n.language || "ca"}
-              />
+	              <details className="aemet-alert-details" style={{ marginTop: "0.75rem" }}>
+	                <summary className="aemet-alert-summary">
+	                  <span className="summary-closed">{localUi.moreUv}</span>
+	                  <span className="summary-open">{localUi.lessUv}</span>
+	                </summary>
 
-              {/* ℹ️ Nota informativa UV */}
-              <p className="uv-source-note">
-                ℹ️ {t("uv_source_note") ??
-                  "Els valors d’índex UV poden variar segons l’hora i la font meteorològica (OpenUV, NASA o OpenWeather)."}
-              </p>
+	                <UVAdvice
+	                  uvi={uvi}
+	                  lang={i18n.resolvedLanguage || i18n.language || "ca"}
+	                  weatherMain={data?.weather?.[0]?.main ?? null}
+	                  cloudiness={data?.clouds?.all}
+	                />
 
-              {/* ⏱ Temps segur d’exposició */}
-             <UVSafeTime
-                lat={lat}
-                lon={lon}
-                lang={lang}
-                uvi={uvi}
-                skinType={skinType}
-                onSkinTypeChange={setSkinType}
-              />
+	                <UVContextCard
+	                uvi={uvi}
+	                lang={i18n.resolvedLanguage || i18n.language || "ca"}
+	                />
 
-              {/* 📊 Detall UV (OpenUV) */}
-              {lat != null && lon != null && (
-                <UVDetailPanel
-                  lat={lat}
-                  lon={lon}
-                  lang={lang}
-                />
-              )}
-            </>
-          )}
+	                {/* ℹ️ Nota informativa UV */}
+	                <p className="uv-source-note">
+	                  ℹ️ {t("uv_source_note") ??
+	                    "Els valors d’índex UV poden variar segons l’hora i la font meteorològica (OpenUV, NASA o OpenWeather)."}
+	                </p>
+
+	                {/* ⏱ Temps segur d’exposició */}
+	               <UVSafeTime
+	                  lat={lat}
+	                  lon={lon}
+	                  lang={lang}
+	                  uvi={uvi}
+	                  skinType={skinType}
+	                  onSkinTypeChange={setSkinType}
+	                />
+
+	                {/* 📊 Detall UV (OpenUV) */}
+	                {lat != null && lon != null && (
+	                  <UVDetailPanel
+	                    lat={lat}
+	                    lon={lon}
+	                    lang={lang}
+	                  />
+	                )}
+	              </details>
+	            </>
+	          )}
 
           {/* 🌙 Durant la nit */}
           {!day && (
@@ -1755,107 +1956,6 @@ return (
     })()}
   </div>
 )}
-
-{/* 🔔 AVISOS AEMET (Targetes noves) */}
-{alerts.length > 0 && (
-  <div style={{ marginTop: "1.5rem" }}>
-    {alerts.map((alert, i) => {
-
-      // 🔍 Normalitza la descripció
-      const desc =
-  typeof alert.description === "string"
-    ? alert.description
-    : alert.description?.[i18n.language] ||
-      alert.description?.es ||
-      Object.values(alert.description || {})
-        .filter((v) => typeof v === "string" && v.trim().length > 0)
-        .join(". ");
-
-      // 🎯 Processat IA per títol + cos
-      const ai = buildAemetAiAlert(
-        alert.event || "",
-        desc,
-        i18n.language as LangKey
-      );
-
-      return (
-  <div
-    key={`${alert.event}-${alert.start ?? i}-${alert.end ?? ""}`}
-    className="aemet-alert-card alert-ext"
-  >
-    {/* Títol */}
-    <div className="aemet-alert-title">
-  {getAlertIcon(alert.event)} {ai.title}
-  </div>
-
-    {/* 🕒 Línia temporal + temps restant */}
-    {typeof alert?.start === "number" && typeof alert?.end === "number" && (
-      <div className="aemet-alert-time">
-        🕒 {formatAlertTime(alert.start, lang)} → {formatAlertTime(alert.end, lang)}
-        {isAlertActiveNow(alert.start, alert.end) && (
-          <span> · {t("alert_time.active")}</span>
-        )}
-        <br />
-        ⏳ {getRemainingTime(alert.end, lang, t)}
-      </div>
-    )}
-
-    {/* Detall plegable */}
-    <details className="aemet-alert-details">
-  <summary className="aemet-alert-summary">
-    <span className="summary-closed">{t("show_details")}</span>
-    <span className="summary-open">{t("hide_details")}</span>
-  </summary>
-
-  <div className="aemet-alert-description">
-    {ai.body}
-  </div>
-</details>
-
-    {/* Peu – font oficial */}
-    <div className="aemet-alert-source">
-      {(alert.sender_name || "").toLowerCase().includes("aemet") ||
-      (alert.event || "").toLowerCase().includes("aemet")
-        ? "AEMET · Agencia Estatal de Meteorología"
-        : alert.sender_name || t("official_source") || "Font oficial"}
-    </div>
-  </div>
-);
-    })}
-  </div>
-)}
-
-{/* ============================================================
-   ✅ RECOMANACIONS PRINCIPALS
-   Ara les governa directament el component Recommendations
-   ============================================================ */}
-<Recommendations
-    temp={hi ?? data?.main?.temp ?? 0}
-    lang={i18n.resolvedLanguage || i18n.language || "ca"}
-    isDay={day}
-    activity={preventiveActivity}
-    humidity={data?.main?.humidity ?? undefined}
-    aemetActive={aemetActive}
-    aemetSoon={aemetSoon}
-    alertType={activeAlertEvent}
-    uvi={uvi}
-    weatherMain={data?.weather?.[0]?.main ?? ""}
-    weatherDescription={data?.weather?.[0]?.description ?? ""}
-    cloudiness={data?.clouds?.all ?? null}
-    windKmh={windKmh}
-    currentHour={new Date().getHours()}
-    
-  />
-
-<div className={`work-window-card work-window-${workWindow}`}>
-  <div className="work-window-header">
-    <span className={`work-window-dot work-window-dot-${workWindow}`}></span>
-    <h3 className="work-window-title">{workWindowTitle}</h3>
-  </div>
-
-  <p className="work-window-text">{workWindowText}</p>
-</div>
-
 
 {/* ✅ ACCIONS RÀPIDES */}
 <SafetyActions
