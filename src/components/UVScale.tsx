@@ -14,27 +14,27 @@ interface UVScaleProps {
 /* ─── Traduccions generals ─────────────────────────── */
 const ui = {
   ca: {
-    toggle: 'ℹ️ Mostra/Oculta escala UV',
+    toggle: 'ℹ️ Escala UV',
     heading: '🔆 Escala oficial de l’índex UV',
     night: '🌙 Ara és de nit. L’índex UV no és rellevant.',
   },
   es: {
-    toggle: 'ℹ️ Mostrar/Ocultar escala UV',
+    toggle: 'ℹ️ Escala UV',
     heading: '🔆 Escala oficial del índice UV',
     night: '🌙 Ahora es de noche. El índice UV no es relevante.',
   },
   eu: {
-    toggle: 'ℹ️ Erakutsi/Ezkutatu UV eskala',
+    toggle: 'ℹ️ UV eskala',
     heading: '🔆 UV indizearen eskala ofiziala',
     night: '🌙 Gaua da. UV indizea ez da garrantzitsua.',
   },
   gl: {
-    toggle: 'ℹ️ Amosar/Ocultar escala UV',
+    toggle: 'ℹ️ Escala UV',
     heading: '🔆 Escala oficial do índice UV',
     night: '🌙 É de noite. O índice UV non é relevante.',
   },
   en: {
-    toggle: 'ℹ️ Show/Hide UV scale',
+    toggle: 'ℹ️ UV scale',
     heading: '🔆 Official UV Index Scale',
     night: '🌙 It is currently nighttime. The UV Index is not relevant.',
   },

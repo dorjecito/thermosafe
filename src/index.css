@@ -2120,6 +2120,59 @@ body,
   line-height: 1.25;
 }
 
+.uv-block {
+  padding: 0.85rem 0.95rem 0.9rem 1.1rem !important;
+  margin-top: 0.7rem !important;
+}
+
+.uv-block .uv-title {
+  font-size: 1.05rem;
+  margin-bottom: 0.35rem !important;
+  line-height: 1.15;
+}
+
+.uv-block .aemet-alert-details {
+  margin-top: 0.45rem !important;
+}
+
+.uv-block .aemet-alert-summary {
+  padding: 0.32rem 0.55rem !important;
+  font-size: 0.86rem !important;
+}
+
+.uv-integrated-controls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+  align-items: flex-start;
+  margin-top: 0.55rem;
+  padding-top: 0.55rem;
+  border-top: 1px solid rgba(148, 163, 184, 0.22);
+}
+
+.uv-integrated-controls .uv-scale-wrap,
+.uv-skin-toggle-wrap {
+  margin-top: 0 !important;
+}
+
+.uv-integrated-controls .secondary-toggle-btn {
+  padding: 0.4rem 0.62rem;
+  font-size: 0.84rem;
+}
+
+.uv-integrated-controls .uv-scale-toggle {
+  margin-bottom: 0.45rem;
+}
+
+.uv-skin-toggle {
+  margin-bottom: 0.45rem;
+}
+
+.uv-integrated-controls .uv-scale-wrap,
+.uv-skin-toggle-wrap {
+  max-width: 100%;
+}
+
 .quick-summary-card .quick-temp {
   font-size: 2.55rem;
   line-height: 0.9;
@@ -2231,6 +2284,27 @@ body,
   .sky-label {
     font-size: 0.86rem !important;
     line-height: 1.18 !important;
+  }
+
+  .uv-block {
+    padding: 0.68rem 0.75rem 0.75rem 0.92rem !important;
+    margin-top: 0.55rem !important;
+  }
+
+  .uv-block .uv-title {
+    font-size: 0.98rem !important;
+    margin-bottom: 0.28rem !important;
+  }
+
+  .uv-integrated-controls {
+    gap: 0.35rem;
+    margin-top: 0.45rem;
+    padding-top: 0.45rem;
+  }
+
+  .uv-integrated-controls .secondary-toggle-btn {
+    padding: 0.36rem 0.52rem !important;
+    font-size: 0.8rem !important;
   }
 
   .quick-summary-card .quick-meta {

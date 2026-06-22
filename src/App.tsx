@@ -1276,6 +1276,7 @@ const uiLabels = {
     uvMaxToday: "UV màxim avui",
     moreUv: "Veure més informació UV",
     lessUv: "Amagar informació UV",
+    skinType: "Fototip de pell",
   },
   es: {
     viewAllAlerts: "Ver todas las alertas",
@@ -1284,6 +1285,7 @@ const uiLabels = {
     uvMaxToday: "UV máximo hoy",
     moreUv: "Ver más información UV",
     lessUv: "Ocultar información UV",
+    skinType: "Fototipo de piel",
   },
   eu: {
     viewAllAlerts: "Ikusi alerta guztiak",
@@ -1292,6 +1294,7 @@ const uiLabels = {
     uvMaxToday: "Gaurko UV maximoa",
     moreUv: "Ikusi UV informazio gehiago",
     lessUv: "Ezkutatu UV informazioa",
+    skinType: "Azalaren fototipoa",
   },
   gl: {
     viewAllAlerts: "Ver todas as alertas",
@@ -1300,6 +1303,7 @@ const uiLabels = {
     uvMaxToday: "UV máximo hoxe",
     moreUv: "Ver máis información UV",
     lessUv: "Agochar información UV",
+    skinType: "Fototipo de pel",
   },
   en: {
     viewAllAlerts: "View all alerts",
@@ -1308,6 +1312,7 @@ const uiLabels = {
     uvMaxToday: "Today's max UV",
     moreUv: "View more UV information",
     lessUv: "Hide UV information",
+    skinType: "Skin phototype",
   },
 } as const;
 
@@ -1724,14 +1729,16 @@ return (
 )}
 
 {/* ⭐ ESTAT PRINCIPAL */}
-<div className={primaryStatus.className}>
-  <div className="status-card-header">
-    <span className="status-card-icon">{primaryStatus.icon}</span>
-    <h2 className="status-card-title">{primaryStatus.title}</h2>
-  </div>
+{!aemetActive && (
+  <div className={primaryStatus.className}>
+    <div className="status-card-header">
+      <span className="status-card-icon">{primaryStatus.icon}</span>
+      <h2 className="status-card-title">{primaryStatus.title}</h2>
+    </div>
 
-  <p className="status-card-text">{primaryStatus.text}</p>
-</div>
+    <p className="status-card-text">{primaryStatus.text}</p>
+  </div>
+)}
 
    {/* 🛰️ Font de dades (GPS o Cerca manual) */}
 {showSource && currentSource === 'gps' && (
@@ -1954,11 +1961,35 @@ return (
                 "És de nit. No hi ha risc per radiació UV."}
             </p>
           )}
-        </>
-      );
-    })()}
-  </div>
-)}
+	        </>
+	      );
+	    })()}
+
+	    <div className="uv-integrated-controls">
+	      <UVScale
+	        lang={currentLang as any}
+	        uvi={uvi ?? 0}
+	      />
+
+	      <div className="uv-skin-toggle-wrap">
+	        <button
+	          className="secondary-toggle-btn uv-skin-toggle"
+	          onClick={() => setShowSkinInfo(v => !v)}
+	        >
+	          🧴 {localUi.skinType}
+	        </button>
+
+	        {showSkinInfo && (
+	          <SkinTypeInfo
+	            lang={currentLang as "ca" | "es" | "eu" | "gl" | "en"}
+	            value={skinType}
+	            onChange={setSkinType}
+	          />
+	        )}
+	      </div>
+	    </div>
+	  </div>
+	)}
 
 {/* ✅ ACCIONS RÀPIDES */}
 <SafetyActions
@@ -1969,39 +2000,7 @@ return (
   city={realCity || city || ""}
 />
 
- {/* 🟩 ESCALA-UV */}
-{['ca', 'es', 'eu', 'gl', 'gl'].includes(i18n.language) ? (
-  <UVScale 
-    lang={i18n.language as any} 
-    uvi={uvi ?? 0}
-/>
-) : (
-  !err && <p>{t('loading')}</p>
-)}
-{/* 🧴 FOTOTIP INFO (separat, estil UVScale) */}
-<div style={{ marginTop: "1rem" }}>
-  <button
-  className="secondary-toggle-btn"
-  onClick={() => setShowSkinInfo(v => !v)}
->
-  🧴 {t("skin.toggle")}
-</button>
-
-  {showSkinInfo && (
-    <SkinTypeInfo
-      lang={
-        (["ca", "es", "eu", "gl", "en"].includes(
-          (i18n.resolvedLanguage || i18n.language || "ca").split("-")[0]
-        )
-          ? (i18n.resolvedLanguage || i18n.language || "ca").split("-")[0]
-          : "ca") as "ca" | "es" | "eu" | "gl" | "en"
-      }
-      value={skinType}
-      onChange={setSkinType}
-    />
-  )}
-</div>
-  </>
+	  </>
 ) : (
   !err && (
     <div className={`loading-weather-card ${loading ? "is-loading" : ""}`} aria-busy={loading}>
