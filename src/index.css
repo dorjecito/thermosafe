@@ -1780,7 +1780,7 @@ body,
   margin-right: 0.2rem;
 }
 
-.aemet-alert-details[open] .aemet-alert-summary::before {
+.aemet-alert-details[open] > .aemet-alert-summary::before {
   content: "▼ ";
 }
 
@@ -1788,11 +1788,11 @@ body,
   display: none;
 }
 
-.aemet-alert-details[open] .summary-closed {
+.aemet-alert-details[open] > .aemet-alert-summary > .summary-closed {
   display: none;
 }
 
-.aemet-alert-details[open] .summary-open {
+.aemet-alert-details[open] > .aemet-alert-summary > .summary-open {
   display: inline;
 }
 
