@@ -61,6 +61,7 @@
   "safe_conditions": "Baldintza seguruak",
   "safe_conditions_text_day": "Ez da neurri berezirik behar une honetan.",
   "safe_conditions_text_night": "Gaueko baldintzak parametro normalen barruan.",
+  "top_alert_weather_active": "Alerta meteorologiko aktiboa",
   "official_alert": "Abisu meteorologiko ofizial aktiboa dago",
   "follow_official_alerts": "Jarraitu agintari ofizialen jarraibideak eta areagotu arreta.",
   "official_alert_soon": "Laster abisu meteorologiko ofiziala",

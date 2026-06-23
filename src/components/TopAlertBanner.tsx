@@ -38,7 +38,7 @@ export default function TopAlertBanner({
       return {
         severity: 3,
         key: "aemet-active",
-        content: "🚨 ALERTA METEOROLÒGICA ACTIVA",
+        content: `🚨 ${t("top_alert_weather_active") || "Active weather alert"}`,
         pulse: true,
         visualClass: "alert-banner-aemet-active",
       };

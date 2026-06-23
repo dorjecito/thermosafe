@@ -45,6 +45,7 @@
   "safe_conditions": "Safe conditions",
   "safe_conditions_text_day": "No special measures are required at the moment.",
   "safe_conditions_text_night": "Night-time conditions within normal parameters.",
+  "top_alert_weather_active": "Active weather alert",
   "official_alert": "Official weather alert active",
   "follow_official_alerts": "Follow official guidance and take extra precautions.",
   "official_alert_soon": "Upcoming official weather alert",

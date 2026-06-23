@@ -38,6 +38,7 @@
   "safe_conditions": "Condicions segures",
   "safe_conditions_text_day": "No es requereixen mesures especials en aquest moment.",
   "safe_conditions_text_night": "Condicions nocturnes dins paràmetres normals.",
+  "top_alert_weather_active": "Alerta meteorològica activa",
   "official_alert": "Avís meteorològic oficial actiu",
   "follow_official_alerts": "Segueix les indicacions oficials i extrema la precaució.",
   "official_alert_soon": "Avís meteorològic oficial proper",
