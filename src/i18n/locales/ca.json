@@ -310,7 +310,12 @@
     "intense": "Esforç intens",
     "extra": "Extra",
     "adjusts_risk": "ajust preventiu actiu",
-    "no_impact": "sense impacte en el risc actual"
+    "no_impact": "sense impacte en el risc actual",
+    "info_label": "Informació sobre la detecció de moviment",
+    "info_title": "Detecció de moviment",
+    "info_body": "ThermoSafe utilitza els sensors del dispositiu per estimar el nivell d’activitat física i ajustar les recomanacions preventives.",
+    "info_privacy": "Les dades es processen localment al dispositiu i no s’envien a cap servidor.",
+    "info_close": "Entesos"
   },
 
   "official_links": "Enllaços oficials",

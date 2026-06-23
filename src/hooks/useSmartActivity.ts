@@ -20,6 +20,12 @@ const DELTAS: Record<ActivityLevel, number> = {
   intense: 12,
 };
 
+const logActivity = (...args: unknown[]) => {
+  if (import.meta.env.DEV) {
+    console.log(...args);
+  }
+};
+
 export function useSmartActivity(): SmartActivityState {
   const [enabled, setEnabled] = useState(false);
   const [requesting, setRequesting] = useState(false);
@@ -34,17 +40,19 @@ export function useSmartActivity(): SmartActivityState {
   // HISTÈRESI TEMPORAL (evita canvis nerviosos)
   const stableSince = useRef(Date.now());
 
-  console.log("[ACTIVITY] Support devicemotion:", "ondevicemotion" in window);
+  useEffect(() => {
+    logActivity("[ACTIVITY] Support devicemotion:", "ondevicemotion" in window);
+  }, []);
 
   useEffect(() => {
-    console.log("[ACTIVITY] useEffect fired. enabled =", enabled);
+    logActivity("[ACTIVITY] useEffect fired. enabled =", enabled);
 
     if (!enabled) {
-      console.log("[ACTIVITY] ❌ Detecció NO activada → no registrem listener");
+      logActivity("[ACTIVITY] ❌ Detecció NO activada → no registrem listener");
       return;
     }
 
-    console.log("[ACTIVITY] 🔄 Registrant listener devicemotion…");
+    logActivity("[ACTIVITY] 🔄 Registrant listener devicemotion…");
 
     const handleMotion = (event: DeviceMotionEvent) => {
       if (!event.accelerationIncludingGravity) return;
@@ -75,7 +83,7 @@ export function useSmartActivity(): SmartActivityState {
 
       if (newLevel !== lastLevelRef.current) {
         if (now - stableSince.current > 1000) {
-          console.log(
+          logActivity(
             `[ACTIVITY] 🆕 Canvi confirmat: ${lastLevelRef.current} → ${newLevel}`
           );
           lastLevelRef.current = newLevel;
@@ -88,31 +96,40 @@ export function useSmartActivity(): SmartActivityState {
     };
 
     window.addEventListener("devicemotion", handleMotion);
-    console.log("[ACTIVITY] ✔ Listener devicemotion ACTIVAT");
+    logActivity("[ACTIVITY] ✔ Listener devicemotion ACTIVAT");
 
     return () => {
       window.removeEventListener("devicemotion", handleMotion);
-      console.log("[ACTIVITY] ✖ Listener devicemotion DESACTIVAT");
+      logActivity("[ACTIVITY] ✖ Listener devicemotion DESACTIVAT");
     };
   }, [enabled]);
 
+  const resetActivityState = () => {
+    lastLevelRef.current = "rest";
+    smoothDyn.current = 0;
+    stableSince.current = Date.now();
+    setLevel("rest");
+  };
+
   const deactivate = () => {
-    console.log("[ACTIVITY] 🔴 Detecció desactivada manualment");
+    logActivity("[ACTIVITY] 🔴 Detecció desactivada manualment");
+    resetActivityState();
     setEnabled(false);
   };
 
   const activate = async () => {
     setError(null);
     setRequesting(true);
-    console.log("[ACTIVITY] 🔵 Intentant activar detecció…");
+    resetActivityState();
+    logActivity("[ACTIVITY] 🔵 Intentant activar detecció…");
 
     try {
       const anyDevMotion = DeviceMotionEvent as any;
 
       if (typeof anyDevMotion?.requestPermission === "function") {
-        console.log("[ACTIVITY] iOS → Necessita requestPermission()");
+        logActivity("[ACTIVITY] iOS → Necessita requestPermission()");
         const res = await anyDevMotion.requestPermission();
-        console.log("[ACTIVITY] Resultat requestPermission:", res);
+        logActivity("[ACTIVITY] Resultat requestPermission:", res);
 
         if (res !== "granted") {
           setError("Permís de moviment denegat");
@@ -122,10 +139,10 @@ export function useSmartActivity(): SmartActivityState {
         }
       }
 
-      console.log("[ACTIVITY] ✔ Permís concedit → ACTIVAT");
+      logActivity("[ACTIVITY] ✔ Permís concedit → ACTIVAT");
       setEnabled(true);
     } catch (e: any) {
-      console.log("[ACTIVITY] ❌ ERROR activant:", e);
+      logActivity("[ACTIVITY] ❌ ERROR activant:", e);
       setError(e?.message || "No s'ha pogut activar la detecció de moviment");
       setEnabled(false);
     } finally {

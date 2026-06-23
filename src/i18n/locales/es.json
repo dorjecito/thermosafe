@@ -334,7 +334,12 @@
     "intense": "Esfuerzo intenso",
     "extra": "extra",
     "adjusts_risk": "ajuste preventivo activo",
-    "no_impact": "sin impacto en el riesgo actual"
+    "no_impact": "sin impacto en el riesgo actual",
+    "info_label": "Información sobre la detección de movimiento",
+    "info_title": "Detección de movimiento",
+    "info_body": "ThermoSafe utiliza los sensores del dispositivo para estimar el nivel de actividad física y ajustar las recomendaciones preventivas.",
+    "info_privacy": "Los datos se procesan localmente en el dispositivo y no se envían a ningún servidor.",
+    "info_close": "Entendido"
   },
 
   "officialAdviceDynamic": {

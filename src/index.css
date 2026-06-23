@@ -2014,12 +2014,28 @@ body,
    📱 Botons d'acció superiors
    ========================= */
 
+.top-action-grid {
+  display: grid !important;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) 44px;
+  align-items: center !important;
+}
+
+.push-control-wrap,
+.activity-control-wrap {
+  width: 100%;
+}
+
 .btn-activity {
   max-width: 100%;
   white-space: normal;
   word-break: break-word;
   justify-content: center;
   text-align: center;
+}
+
+.activity-control-wrap {
+  margin-top: 12px;
+  margin-bottom: 12px;
 }
 
 .activity-impact-note {
@@ -2030,11 +2046,102 @@ body,
   opacity: 0.86;
 }
 
+.activity-info-icon {
+  flex: 0 0 44px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  border: 1px solid rgba(75, 85, 99, 0.24);
+  border-radius: 999px;
+  background: #ffffff;
+  color: #374151;
+  font-size: 1rem;
+  line-height: 1;
+  cursor: pointer;
+  box-shadow: 0 1px 4px rgba(15, 23, 42, 0.08);
+}
+
+.activity-info-icon:focus-visible {
+  outline: 2px solid #2563eb;
+  outline-offset: 2px;
+}
+
+.activity-info-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+  background: rgba(15, 23, 42, 0.38);
+}
+
+.activity-info-dialog {
+  width: min(92vw, 380px);
+  padding: 1rem;
+  border-radius: 12px;
+  background: #ffffff;
+  color: #1f2937;
+  box-shadow: 0 16px 38px rgba(15, 23, 42, 0.22);
+}
+
+.activity-info-dialog h3 {
+  margin: 0 0 0.55rem;
+  font-size: 1rem;
+}
+
+.activity-info-dialog p {
+  margin: 0.45rem 0;
+  font-size: 0.9rem;
+  line-height: 1.45;
+}
+
+.activity-info-close {
+  margin-top: 0.75rem;
+  padding: 0.45rem 0.75rem;
+  border: 0;
+  border-radius: 8px;
+  background: #2563eb;
+  color: #fff;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+@media (prefers-color-scheme: dark) {
+  .activity-info-icon {
+    border-color: rgba(255, 255, 255, 0.18);
+    background: #1f2937;
+    color: #f9fafb;
+  }
+
+  .activity-info-dialog {
+    background: #111827;
+    color: #f9fafb;
+  }
+}
+
 @media (max-width: 640px) {
+  .top-action-grid {
+    grid-template-columns: minmax(0, 1fr) 44px;
+  }
+
+  .push-control-wrap {
+    grid-column: 1 / -1;
+  }
+
+  .activity-control-wrap {
+    grid-column: 1 / -1;
+    display: grid !important;
+    grid-template-columns: minmax(0, 1fr) 44px;
+  }
+
   .btn-activity {
     width: 100% !important;
-    min-height: 52px !important;
-    padding: 0.75rem 0.9rem !important;
+    min-height: 44px !important;
+    padding: 8px 14px !important;
     font-size: 0.95rem !important;
     line-height: 1.25 !important;
   }

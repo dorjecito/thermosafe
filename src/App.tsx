@@ -207,6 +207,7 @@ const [enableUvAlerts, setEnableUvAlerts] = useState<boolean>(() => {
 const [pushEnabled, setPushEnabled] = useState(false);
 const [pushToken, setPushToken] = useState<string | null>(null);
 const [busy, setBusy] = useState(false);
+const [showActivityInfo, setShowActivityInfo] = useState(false);
 
 // Guarda automàticament totes les preferències quan canvien
 useEffect(() => {
@@ -1582,6 +1583,7 @@ return (
 
 {/* 🔔 Interruptor per activar/desactivar avisos meteorològics */}
 <div
+  className="top-action-grid"
   style={{
     display: "flex",
     alignItems: "stretch",
@@ -1595,13 +1597,15 @@ return (
 >
   {/* 🔔 Botó REAL: activar/desactivar PUSH (FCM + Firestore) */}
   <div
+    className="push-control-wrap"
     style={{
       display: "flex",
       alignItems: "center",
       gap: "10px",
       marginTop: "12px",
       marginBottom: "12px",
-      flex: "1 1 220px",
+      flex: "1 1 0",
+      minWidth: "0",
       maxWidth: "100%",
     }}
   >
@@ -1643,67 +1647,118 @@ return (
     </p>
   )}
 
-  <button
-    onClick={() => {
-      if (activityEnabled) deactivate();
-      else activate();
-    }}
-    disabled={activityRequesting}
-    className="btn-activity"
+  <div
+    className="activity-control-wrap"
     style={{
-      backgroundColor: activityEnabled
-        ? activityAffectsHeatRisk
-          ? ACTIVITY_COLORS[displayedActivityLevel]
-          : "#4b5563"
-        : "#555",
-      color: "white",
-      padding: "0.75rem 0.9rem",
-      borderRadius: "6px",
-      border: "none",
-      cursor: activityRequesting ? "progress" : "pointer",
-      opacity: activityRequesting ? 0.82 : 1,
-      fontWeight: 600,
       display: "flex",
       alignItems: "center",
-      justifyContent: "center",
-      flexWrap: "wrap",
-      gap: "0.4rem",
-      flex: "1 1 220px",
+      gap: "8px",
+      flex: "1 1 0",
+      minWidth: "0",
       maxWidth: "100%",
-      whiteSpace: "normal",
-      textAlign: "center",
-      lineHeight: 1.25,
-      minHeight: "52px",
-      width:"100%",
     }}
   >
-    {activityRequesting ? (
-      <>
-        ⏳ {t("activity.requesting")}
-      </>
-    ) : activityEnabled ? (
-      <>
-        {ACTIVITY_ICONS[displayedActivityLevel]}
-        <span>
-          {t("activity.active_label")}: {t(`activity.${displayedActivityLevel}`)}
-        </span>
-        <span className="activity-impact-note">
-          {activityAffectsHeatRisk
-            ? t("activity.adjusts_risk")
-            : t("activity.no_impact")}
-        </span>
-      </>
-    ) : (
-      <>
-        💤 {t("activity.inactive")}
-      </>
-    )}
-  </button>
+    <button
+      onClick={() => {
+        if (activityEnabled) deactivate();
+        else activate();
+      }}
+      disabled={activityRequesting}
+      className="btn-activity"
+      style={{
+        backgroundColor: activityEnabled
+          ? activityAffectsHeatRisk
+            ? ACTIVITY_COLORS[displayedActivityLevel]
+            : "#4b5563"
+          : "#555",
+        color: "white",
+        padding: "8px 14px",
+        borderRadius: "8px",
+        border: "none",
+        cursor: activityRequesting ? "progress" : "pointer",
+        opacity: activityRequesting ? 0.82 : 1,
+        fontWeight: 600,
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        flexWrap: "wrap",
+        gap: "0.4rem",
+        flex: 1,
+        minWidth: "0",
+        maxWidth: "100%",
+        whiteSpace: "normal",
+        textAlign: "center",
+        lineHeight: 1.25,
+        minHeight: "44px",
+        width: "100%",
+      }}
+    >
+      {activityRequesting ? (
+        <>
+          ⏳ {t("activity.requesting")}
+        </>
+      ) : activityEnabled ? (
+        <>
+          {ACTIVITY_ICONS[displayedActivityLevel]}
+          <span>
+            {t("activity.active_label")}: {t(`activity.${displayedActivityLevel}`)}
+          </span>
+          <span className="activity-impact-note">
+            {activityAffectsHeatRisk
+              ? t("activity.adjusts_risk")
+              : t("activity.no_impact")}
+          </span>
+        </>
+      ) : (
+        <>
+          💤 {t("activity.inactive")}
+        </>
+      )}
+    </button>
+
+    <button
+      type="button"
+      className="activity-info-icon"
+      aria-label={t("activity.info_label")}
+      onClick={(event) => {
+        event.stopPropagation();
+        setShowActivityInfo(true);
+      }}
+    >
+      ⓘ
+    </button>
+  </div>
 
   {activityError && (
     <p style={{ color: "salmon", marginTop: "0.25rem", width: "100%" }}>
       ⚠ {activityError}
     </p>
+  )}
+
+  {showActivityInfo && (
+    <div
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="activity-info-title"
+      className="activity-info-overlay"
+      onClick={() => setShowActivityInfo(false)}
+    >
+      <div
+        className="activity-info-dialog"
+        onClick={(event) => event.stopPropagation()}
+      >
+        <h3 id="activity-info-title">{t("activity.info_title")}</h3>
+        <p>{t("activity.info_body")}</p>
+        <p>{t("activity.info_privacy")}</p>
+        <button
+          type="button"
+          className="activity-info-close"
+          onClick={() => setShowActivityInfo(false)}
+        >
+          {t("activity.info_close")}
+        </button>
+      </div>
+    </div>
   )}
 </div>
 

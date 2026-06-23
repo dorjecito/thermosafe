@@ -286,7 +286,12 @@
   "intense": "Esfortzu bizia",
   "extra": "gehigarri",
   "adjusts_risk": "prebentzio-doikuntza aktibo",
-  "no_impact": "ez du eraginik uneko arriskuan"
+  "no_impact": "ez du eraginik uneko arriskuan",
+  "info_label": "Mugimendu-detekzioari buruzko informazioa",
+  "info_title": "Mugimendu-detekzioa",
+  "info_body": "ThermoSafe-k gailuaren sentsoreak erabiltzen ditu jarduera fisikoaren maila estimatzeko eta prebentzio-gomendioak doitzeko.",
+  "info_privacy": "Datuak gailuan bertan prozesatzen dira eta ez dira zerbitzarietara bidaltzen.",
+  "info_close": "Ulertuta"
 },
 
 "insst_heat": "INSST: estres termikoa eta beroa",

@@ -275,7 +275,12 @@
     "walk": "Camiñando",
     "moderate": "Esforzo moderado",
     "intense": "Esforzo intenso",
-    "extra": "{{x}} °C extra"
+    "extra": "{{x}} °C extra",
+    "info_label": "Información sobre a detección de movemento",
+    "info_title": "Detección de movemento",
+    "info_body": "ThermoSafe utiliza os sensores do dispositivo para estimar o nivel de actividade física e axustar as recomendacións preventivas.",
+    "info_privacy": "Os datos procésanse localmente no dispositivo e non se envían a ningún servidor.",
+    "info_close": "Entendido"
   },
 
   "activity_button": {
@@ -327,7 +332,12 @@
   "intense": "Esforzo intenso",
   "extra": "extra",
   "adjusts_risk": "axuste preventivo activo",
-  "no_impact": "sen impacto no risco actual"
+  "no_impact": "sen impacto no risco actual",
+  "info_label": "Información sobre a detección de movemento",
+  "info_title": "Detección de movemento",
+  "info_body": "ThermoSafe utiliza os sensores do dispositivo para estimar o nivel de actividade física e axustar as recomendacións preventivas.",
+  "info_privacy": "Os datos procésanse localmente no dispositivo e non se envían a ningún servidor.",
+  "info_close": "Entendido"
 },
 
 "insst_heat": "INSST: estrés térmico e calor",

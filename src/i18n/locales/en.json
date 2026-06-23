@@ -310,7 +310,12 @@
     "intense": "Intense effort",
     "extra": "extra",
     "adjusts_risk": "preventive adjustment active",
-    "no_impact": "no impact on current risk"
+    "no_impact": "no impact on current risk",
+    "info_label": "Information about motion detection",
+    "info_title": "Motion detection",
+    "info_body": "ThermoSafe uses device sensors to estimate physical activity level and adjust preventive recommendations.",
+    "info_privacy": "Data is processed locally on the device and is not sent to any server.",
+    "info_close": "Got it"
   },
 
   "official_links": "Official links",
