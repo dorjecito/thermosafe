@@ -44,7 +44,7 @@ import { getUVDetailFromOpenUV, getUVFromOpenUV } from "./services/openUV";
    import { formatLastUpdate } from "./utils/formatLastUpdate";
 	   import { getRemainingTime } from "./utils/getRemainingTime";
 	   import { normalizeLang } from "./utils/normalizeLang";
-	   import { getUvAdvice, getUvText } from "./utils/uv";
+	   import { getUvAdvice, getUvText, normalizeUviForDisplay } from "./utils/uv";
    import { safeUVFetch } from "./utils/safeUVFetch";
    import { fetchSolarIrr } from "./utils/fetchSolarIrr";
    import UVContextCard from "./components/UVContextCard";
@@ -1383,12 +1383,9 @@ const renderAlertCard = ({ alert, ai, i }: (typeof alertCards)[number]) => (
   </div>
 );
 
-const uvSummaryValue =
-  typeof uvi === "number" && Number.isFinite(uvi) ? Math.max(0, uvi) : null;
+const uvSummaryValue = normalizeUviForDisplay(uvi);
 const uvMaxSummaryValue =
-  typeof uvMaxToday === "number" && Number.isFinite(uvMaxToday)
-    ? Math.max(0, uvMaxToday)
-    : uvSummaryValue;
+  normalizeUviForDisplay(uvMaxToday) ?? uvSummaryValue;
 const uvSummaryText = getUvText(uvSummaryValue, currentLang);
 const uvSummaryAdvice = getUvAdvice(uvSummaryValue, currentLang);
 const isRiskRenderReady = Boolean(data && isInitialRiskReady && !loading);

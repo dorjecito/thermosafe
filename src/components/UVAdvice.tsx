@@ -1,5 +1,5 @@
 import React from "react";
-import { getUvLevelIndex } from "../utils/uv";
+import { getUvLevelIndex, normalizeUviForDisplay } from "../utils/uv";
 
 type Lang = "ca" | "es" | "eu" | "gl" | "en";
 
@@ -126,12 +126,6 @@ const normalizeLang = (lang: string): Lang => {
   return (["ca", "es", "eu", "gl", "en"] as const).includes(primary) ? primary : "ca";
 };
 
-const safeUvi = (uvi: number) => Math.max(0, uvi);
-
-const band = (uviRounded1: number): 0 | 1 | 2 | 3 | 4 => {
-  return getUvLevelIndex(uviRounded1);
-};
-
 const isRainyWeather = (weatherMain?: string | null): boolean => {
   return (
     weatherMain === "Rain" ||
@@ -153,7 +147,9 @@ const UVAdvice: React.FC<UVAdviceProps> = ({
   const lng = normalizeLang(lang);
   const L = texts[lng];
 
-  if (uvi === null || !Number.isFinite(uvi)) {
+  const u = normalizeUviForDisplay(uvi);
+
+  if (u === null) {
     return (
       <div
         style={{
@@ -170,8 +166,7 @@ const UVAdvice: React.FC<UVAdviceProps> = ({
     );
   }
 
-  const u = Number(safeUvi(uvi).toFixed(1));
-  const b = band(safeUvi(uvi));
+  const b = getUvLevelIndex(u);
 
   const rainy = isRainyWeather(weatherMain);
   const veryCloudy = isVeryCloudy(cloudiness);

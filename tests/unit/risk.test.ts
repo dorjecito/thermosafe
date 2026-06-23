@@ -10,6 +10,7 @@ import {
   getUvLevel,
   getUvLevelIndex,
   getUvText,
+  normalizeUviForDisplay,
 } from "../../src/utils/uv";
 import { isDayAtLocation, isLateDayAtLocation } from "../../src/utils/isDayAtLocation";
 import { getPrimaryStatusBlock } from "../../src/utils/getPrimaryStatusBlock";
@@ -152,7 +153,24 @@ test("UV level, text and advice are classified consistently", () => {
   assert.match(getUvAdvice(6, "ca"), /Protecció extra/);
 });
 
-test("primary UV status title is translated and follows raw bands", () => {
+test("UV classification follows the visible one-decimal value", () => {
+  assert.equal(normalizeUviForDisplay(2.94), 2.9);
+  assert.equal(getUvLevel(2.94), "low");
+  assert.equal(getUvText(2.94, "ca"), "Baix (0–2.9)");
+
+  assert.equal(normalizeUviForDisplay(2.95), 3);
+  assert.equal(getUvLevel(2.95), "moderate");
+  assert.equal(getUvText(2.95, "ca"), "Moderat (3–5.9)");
+
+  assert.equal(getUvLevel(3), "moderate");
+  assert.equal(getUvText(3, "ca"), "Moderat (3–5.9)");
+
+  assert.equal(normalizeUviForDisplay(7.95), 8);
+  assert.equal(getUvLevel(7.95), "very-high");
+  assert.equal(getUvText(7.95, "ca"), "Molt alt (8–10.9)");
+});
+
+test("primary UV status title is translated and follows displayed bands", () => {
   const translations: Record<string, string> = {
     "primaryStatus.uv.high": "High UV radiation",
     "primaryStatus.uv.veryHigh": "Very high UV radiation",

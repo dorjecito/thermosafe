@@ -10,11 +10,15 @@ export function getRoundedUvi(uvi: number | null | undefined): number {
   return Math.max(0, Math.round(uvi));
 }
 
+export function normalizeUviForDisplay(
+  uvi: number | null | undefined
+): number | null {
+  if (typeof uvi !== "number" || !Number.isFinite(uvi)) return null;
+  return Number(Math.max(0, uvi).toFixed(1));
+}
+
 export function getUvLevelIndex(uvi: number | null | undefined): UvLevelIndex {
-  const u =
-    typeof uvi === "number" && Number.isFinite(uvi)
-      ? Math.max(0, uvi)
-      : 0;
+  const u = normalizeUviForDisplay(uvi) ?? 0;
   if (u < 3) return 0;
   if (u < 6) return 1;
   if (u < 8) return 2;
