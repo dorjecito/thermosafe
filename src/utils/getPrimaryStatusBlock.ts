@@ -27,6 +27,7 @@ type PrimaryStatusBlockArgs = {
   day: boolean;
   isLateDay?: boolean;
   heatDayPhase?: HeatDayPhase;
+  nocturnalHeat?: boolean;
   primaryAdvice: string | null;
   contextualUVMessage: string;
   t: TFunctionLike;
@@ -49,6 +50,7 @@ export function getPrimaryStatusBlock({
   day,
   isLateDay = false,
   heatDayPhase,
+  nocturnalHeat = false,
   primaryAdvice,
   contextualUVMessage,
   t,
@@ -111,17 +113,24 @@ export function getPrimaryStatusBlock({
     if (heatRisk?.isExtreme) {
       return {
         icon: "⛔",
-        title: day
-          ? tr("primaryStatus.heat.extreme", "Risc extrem per calor")
-          : tr("primaryStatus.heat.extremeNight", "Calor nocturna extrema"),
-        text: day
+        title: phase === "night"
+          ? tr("primaryStatus.heat.hotNight", "Nit calorosa")
+          : phase === "evening"
+            ? tr("primaryStatus.heat.mildLateDay", "Temperatura encara elevada")
+            : tr("primaryStatus.heat.extreme", "Risc extrem per calor"),
+        text: phase === "night"
           ? tr(
+              "primaryStatus.heat.hotNightText",
+              "La temperatura continua elevada malgrat que és de nit. Hidrata’t i evita esforços físics intensos fins que refresqui."
+            )
+          : phase === "evening"
+            ? tr(
+                "primaryStatus.heat.mildEveningText",
+                "Tot i que el sol ja s'ha post, la calor acumulada encara pot provocar cansament. Hidrata't i evita esforços intensos si notes fatiga."
+              )
+            : tr(
               "officialAdviceDynamic.heat.extreme",
               "Evita completament l’exposició i interromp l’activitat física."
-            )
-          : tr(
-              "officialAdviceDynamic.heat.extreme_night",
-              "Temperatura nocturna extrema. Evita esforços, hidrata’t i prioritza espais frescos o climatitzats."
             ),
         className: "status-card status-danger",
       };
@@ -130,17 +139,24 @@ export function getPrimaryStatusBlock({
     if (heatRisk?.isHigh) {
       return {
         icon: "🔴",
-        title: day
-          ? tr("primaryStatus.heat.high", "Risc alt per calor")
-          : tr("primaryStatus.heat.highNight", "Temperatura nocturna molt elevada"),
-        text: day
+        title: phase === "night"
+          ? tr("primaryStatus.heat.hotNight", "Nit calorosa")
+          : phase === "evening"
+            ? tr("primaryStatus.heat.mildLateDay", "Temperatura encara elevada")
+            : tr("primaryStatus.heat.high", "Risc alt per calor"),
+        text: phase === "night"
           ? tr(
+              "primaryStatus.heat.hotNightText",
+              "La temperatura continua elevada malgrat que és de nit. Hidrata’t i evita esforços físics intensos fins que refresqui."
+            )
+          : phase === "evening"
+            ? tr(
+                "primaryStatus.heat.mildEveningText",
+                "Tot i que el sol ja s'ha post, la calor acumulada encara pot provocar cansament. Hidrata't i evita esforços intensos si notes fatiga."
+              )
+            : tr(
               "officialAdviceDynamic.heat.high",
               "Limita l’activitat exterior, hidrata’t sovint i cerca ombra."
-            )
-          : tr(
-              "officialAdviceDynamic.heat.high_night",
-              "La calor continua elevada durant la nit. Redueix esforços, hidrata’t i afavoreix la ventilació."
             ),
         className: "status-card status-danger",
       };
@@ -296,6 +312,19 @@ export function getPrimaryStatusBlock({
         t("highUVIWarning") ||
         "Utilitza protecció solar i redueix l’exposició directa.",
       className: "status-card status-uv",
+    };
+  }
+
+  // 🌙 CALOR NOCTURNA SUAU
+  if (nocturnalHeat) {
+    return {
+      icon: "🟡",
+      title: tr("primaryStatus.heat.hotNight", "Nit calorosa"),
+      text: tr(
+        "primaryStatus.heat.hotNightText",
+        "La temperatura continua elevada malgrat que és de nit. Hidrata’t i evita esforços físics intensos fins que refresqui."
+      ),
+      className: "status-card status-warning",
     };
   }
 

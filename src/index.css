@@ -260,6 +260,29 @@ color: #111827;
   .recommendation-box {
     background-color: #333;
     border-left: 4px solid var(--primary-color);
+    color: #f8fafc;
+  }
+
+  .recommendation-box.nightHeat,
+  .recommendation-box.tropicalNight {
+    background: #3b2618 !important;
+    border-left-color: #fb923c !important;
+    color: #ffedd5 !important;
+  }
+
+  .recommendation-box p,
+  .recommendation-box span,
+  .recommendation-box li {
+    color: #f8fafc !important;
+  }
+
+  .recommendation-box.nightHeat p,
+  .recommendation-box.nightHeat span,
+  .recommendation-box.nightHeat li,
+  .recommendation-box.tropicalNight p,
+  .recommendation-box.tropicalNight span,
+  .recommendation-box.tropicalNight li {
+    color: #ffedd5 !important;
   }
 }
 
@@ -876,6 +899,32 @@ color: #111827;
 
   .recommendations-text {
     color: #fff;
+  }
+}
+
+@media (prefers-color-scheme: dark) {
+  .block-conditions {
+    background: rgba(255, 255, 255, 0.06) !important;
+    border-color: rgba(255, 255, 255, 0.16) !important;
+    color: #f8fafc !important;
+  }
+
+  .block-conditions strong,
+  .conditions-compact-title,
+  .conditions-inline,
+  .condition-item {
+    color: #f8fafc !important;
+  }
+
+  .sky-card {
+    background: rgba(255, 255, 255, 0.07) !important;
+    border-color: rgba(255, 255, 255, 0.16) !important;
+    color: #f8fafc !important;
+  }
+
+  .sky-card h3,
+  .sky-label {
+    color: #f8fafc !important;
   }
 }
 .aemet-alert-time {

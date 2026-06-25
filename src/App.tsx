@@ -1199,6 +1199,9 @@ const activeAlertDescription =
 
 const activeAlertEvent = `${activeAlert?.event || ""} ${activeAlertDescription || ""}`.trim();
 
+const currentFeelTemp = hi ?? temp ?? 99;
+const nocturnalHeat = !day && currentFeelTemp >= 25;
+
 const workWindow = getWorkWindow({
   heatRisk,
   heatIndex: hi,
@@ -1208,11 +1211,12 @@ const workWindow = getWorkWindow({
   aemetActive: aemetActive || aemetSoon,
   weatherMain,
   activity: preventiveActivity,
+  nocturnalHeat,
 });
 
 const workWindowLang = currentLang;
 const workWindowTitle = getWorkWindowTitle(workWindowLang);
-const workWindowText = getWorkWindowText(workWindow, workWindowLang, aemetActive);
+const workWindowText = getWorkWindowText(workWindow, workWindowLang, aemetActive, nocturnalHeat);
 
 const primary = pickPrimaryRisk({
   hi,
@@ -1240,7 +1244,6 @@ const isRainy =
 
 const isVeryCloudy = (clouds ?? 0) >= 85;
 
-const currentFeelTemp = hi ?? temp ?? 99;
 const isClearlyColdNow = currentFeelTemp < 8;
 
 const isColdRisk = typeof risk === "string" && risk.startsWith("cold_");
@@ -1265,6 +1268,7 @@ const primaryStatus = getPrimaryStatusBlock({
   day,
   isLateDay,
   heatDayPhase,
+  nocturnalHeat,
   primaryAdvice,
   contextualUVMessage,
   t,

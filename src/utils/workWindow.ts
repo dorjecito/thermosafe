@@ -25,6 +25,7 @@ type Params = {
   aemetActive?: boolean;
   weatherMain?: string | null;
   activity?: ActivityLevel;
+  nocturnalHeat?: boolean;
 };
 
 export function getWorkWindow({
@@ -36,6 +37,7 @@ export function getWorkWindow({
   aemetActive = false,
   weatherMain = null,
   activity = "rest",
+  nocturnalHeat = false,
 }: Params): WorkWindow {
   const uvLevel = getUvLevelIndex(uvi);
   const hi =
@@ -103,6 +105,7 @@ export function getWorkWindow({
 
   /* 4) Situacions de precaució */
   if (aemetActive) return "caution";
+  if (nocturnalHeat) return "caution";
   if (windRisk === "moderate") return "caution";
   if (uvLevel >= 2) return "caution";
   if (rainy) return "caution";
@@ -127,13 +130,15 @@ export function getWorkWindowTitle(lang: WorkWindowLang): string {
 export function getWorkWindowText(
   level: WorkWindow,
   lang: WorkWindowLang,
-  aemetActive = false
+  aemetActive = false,
+  nocturnalHeat = false
 ): string {
   const txt = {
     ca: {
       optimal: "Situació adequada per a activitats a l’aire lliure.",
       optimalAlert: "Condicions actuals adequades, però hi ha avisos oficials actius. Mantén la precaució.",
       caution: "Es poden realitzar activitats a l’aire lliure amb precaucions bàsiques.",
+      nightHeat: "Es poden realitzar activitats suaus, però convé evitar esforços físics innecessaris.",
       limited: "Convé limitar les activitats exigents o adaptar-les a les condicions actuals.",
       avoid: "No es recomana fer activitats exigents a l’aire lliure en aquests moments.",
     },
@@ -141,6 +146,7 @@ export function getWorkWindowText(
       optimal: "Situación adecuada para actividades al aire libre.",
       optimalAlert: "Condiciones actuales adecuadas, pero hay avisos oficiales activos. Mantén la precaución.",
       caution: "Se pueden realizar actividades al aire libre con precauciones básicas.",
+      nightHeat: "Se pueden realizar actividades suaves, pero conviene evitar esfuerzos físicos innecesarios.",
       limited: "Conviene limitar las actividades exigentes o adaptarlas a las condiciones actuales.",
       avoid: "No se recomienda realizar actividades exigentes al aire libre en estos momentos.",
     },
@@ -148,6 +154,7 @@ export function getWorkWindowText(
       optimal: "Kanpoko jardueretarako egoera egokia.",
       optimalAlert: "Uneko baldintzak egokiak dira, baina abisu ofizialak aktibo daude. Mantendu arreta.",
       caution: "Kanpoko jarduerak egin daitezke oinarrizko neurriak hartuta.",
+      nightHeat: "Jarduera arinak egin daitezke, baina komeni da beharrezkoak ez diren ahalegin fisikoak saihestea.",
       limited: "Komeni da jarduera zorrotzak mugatzea edo uneko baldintzetara egokitzea.",
       avoid: "Ez da gomendatzen une honetan kanpoko jarduera zorrotzak egitea.",
     },
@@ -155,6 +162,7 @@ export function getWorkWindowText(
       optimal: "Situación axeitada para actividades ao aire libre.",
       optimalAlert: "As condicións actuais son adecuadas, pero hai avisos oficiais activos. Mantén a precaución.",
       caution: "Pódense realizar actividades ao aire libre con precaucións básicas.",
+      nightHeat: "Pódense realizar actividades suaves, pero convén evitar esforzos físicos innecesarios.",
       limited: "Convén limitar as actividades esixentes ou adaptalas ás condicións actuais.",
       avoid: "Non se recomenda realizar actividades esixentes ao aire libre nestes momentos.",
     },
@@ -162,6 +170,7 @@ export function getWorkWindowText(
       optimal: "Suitable conditions for outdoor activities.",
       optimalAlert: "Current conditions are suitable, but official alerts are active. Stay cautious.",
       caution: "Outdoor activities are possible with basic precautions.",
+      nightHeat: "Light outdoor activities are possible, but unnecessary physical effort should be avoided.",
       limited: "It is advisable to limit demanding activities or adapt them to current conditions.",
       avoid: "Demanding outdoor activities are not recommended at this time.",
     },
@@ -170,6 +179,10 @@ export function getWorkWindowText(
   if (level === "optimal" && aemetActive) {
     return txt[lang]?.optimalAlert || txt.ca.optimalAlert;
   }
+
+  if (level === "caution" && nocturnalHeat) {
+    return txt[lang]?.nightHeat || txt.ca.nightHeat;
+  }
 
   return txt[lang]?.[level] || txt.ca[level];
 }
