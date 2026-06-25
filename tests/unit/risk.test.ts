@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import { readFileSync } from "node:fs";
 import test from "node:test";
 
 import { getBaseHeatRisk, getHeatRisk } from "../../src/utils/heatRisk";
@@ -341,6 +342,18 @@ test("tropical night outdoor activity keeps a mild caution nuance", () => {
   assert.equal(level, "caution");
   assert.match(text, /activitats suaus/i);
   assert.doesNotMatch(text, /Situació adequada/i);
+});
+
+test("dark theme keeps recommendation variants readable", () => {
+  const css = readFileSync(`${process.cwd()}/src/index.css`, "utf8");
+  const darkModeBlock = css.slice(css.indexOf("@media (prefers-color-scheme: dark)"));
+
+  for (const variant of ["nightCool", "nightSafe", "nightHeat", "tropicalNight", "cold_low"]) {
+    assert.ok(darkModeBlock.includes(`.recommendation-box.${variant}`));
+  }
+
+  assert.match(darkModeBlock, /color:\s*#e0f2fe\s*!important/);
+  assert.match(darkModeBlock, /color:\s*#ffedd5\s*!important/);
 });
 
 const seasonalTranslations: Record<string, string> = {

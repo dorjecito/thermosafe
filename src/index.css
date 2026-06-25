@@ -263,6 +263,14 @@ color: #111827;
     color: #f8fafc;
   }
 
+  .recommendation-box.nightCool,
+  .recommendation-box.nightSafe,
+  .recommendation-box.cold_low {
+    background: #1f2937 !important;
+    border-left-color: #60a5fa !important;
+    color: #e0f2fe !important;
+  }
+
   .recommendation-box.nightHeat,
   .recommendation-box.tropicalNight {
     background: #3b2618 !important;
@@ -274,6 +282,18 @@ color: #111827;
   .recommendation-box span,
   .recommendation-box li {
     color: #f8fafc !important;
+  }
+
+  .recommendation-box.nightCool p,
+  .recommendation-box.nightCool span,
+  .recommendation-box.nightCool li,
+  .recommendation-box.nightSafe p,
+  .recommendation-box.nightSafe span,
+  .recommendation-box.nightSafe li,
+  .recommendation-box.cold_low p,
+  .recommendation-box.cold_low span,
+  .recommendation-box.cold_low li {
+    color: #e0f2fe !important;
   }
 
   .recommendation-box.nightHeat p,
