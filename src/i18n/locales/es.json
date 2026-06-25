@@ -75,10 +75,13 @@
       "mild": "Precaución leve por calor",
       "mildLateDay": "Temperatura todavía elevada",
       "night": "Temperatura nocturna elevada",
+      "hotNight": "Noche calurosa",
       "moderate": "Riesgo moderado por calor",
       "moderateLateDay": "Calor todavía elevado",
       "mildText": "La sensación térmica es moderadamente elevada. Hidrátate y adapta la actividad si mantienes esfuerzo físico.",
-      "mildLateDayText": "El sol ya baja, pero la sensación térmica todavía puede cansar. Hidrátate y evita esfuerzos innecesarios.",
+      "mildLateDayText": "Aunque el sol ya baja, la sensación térmica todavía puede provocar cansancio. Hidrátate y evita esfuerzos innecesarios.",
+      "mildEveningText": "Aunque el sol ya se ha puesto, el calor acumulado todavía puede provocar cansancio. Hidrátate y evita esfuerzos intensos si notas fatiga.",
+      "hotNightText": "La temperatura continúa elevada aunque es de noche. Hidrátate y evita esfuerzos físicos intensos hasta que refresque.",
       "moderateLateDayText": "Aunque ya sea tarde, la sensación térmica continúa elevada. Reduce esfuerzos intensos, hidrátate y haz pausas en lugares frescos."
     },
     "cold": {

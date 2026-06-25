@@ -1,4 +1,5 @@
 import { getUvLevelIndex } from "./uv";
+import type { HeatDayPhase } from "./isDayAtLocation";
 
 type TFunctionLike = (key: string) => string;
 
@@ -25,6 +26,7 @@ type PrimaryStatusBlockArgs = {
   uvi: number | null;
   day: boolean;
   isLateDay?: boolean;
+  heatDayPhase?: HeatDayPhase;
   primaryAdvice: string | null;
   contextualUVMessage: string;
   t: TFunctionLike;
@@ -46,6 +48,7 @@ export function getPrimaryStatusBlock({
   uvi,
   day,
   isLateDay = false,
+  heatDayPhase,
   primaryAdvice,
   contextualUVMessage,
   t,
@@ -102,6 +105,8 @@ export function getPrimaryStatusBlock({
   // 🔥 CALOR
   if (primary.kind === "heat") {
     const isLowHeat = primary.severity <= 1;
+    const phase: HeatDayPhase =
+      heatDayPhase ?? (day ? (isLateDay ? "late_day" : "day") : "night");
 
     if (heatRisk?.isExtreme) {
       return {
@@ -144,38 +149,54 @@ export function getPrimaryStatusBlock({
     if (isLowHeat) {
       return {
         icon: "🟡",
-        title: day
-          ? isLateDay
+        title: phase === "night"
+          ? tr("primaryStatus.heat.hotNight", "Nit calorosa")
+          : phase === "late_day" || phase === "evening"
             ? tr("primaryStatus.heat.mildLateDay", "Temperatura encara elevada")
-            : tr("primaryStatus.heat.mild", "Precaució lleu per calor")
-          : tr("primaryStatus.heat.night", "Temperatura nocturna elevada"),
-        text: day
-          ? isLateDay
+            : tr("primaryStatus.heat.mild", "Precaució lleu per calor"),
+        text: phase === "night"
+          ? tr(
+              "primaryStatus.heat.hotNightText",
+              "La temperatura continua elevada malgrat que és de nit. Hidrata’t i evita esforços físics intensos fins que refresqui."
+            )
+          : phase === "evening"
+            ? tr(
+                "primaryStatus.heat.mildEveningText",
+                "Tot i que el sol ja s'ha post, la calor acumulada encara pot provocar cansament. Hidrata't i evita esforços intensos si notes fatiga."
+              )
+            : phase === "late_day"
             ? tr(
                 "primaryStatus.heat.mildLateDayText",
-                "El sol ja baixa, però la sensació tèrmica encara pot cansar. Hidrata’t i evita esforços innecessaris."
+                "Tot i que el sol ja baixa, la sensació tèrmica encara pot provocar cansament. Hidrata’t i evita esforços innecessaris."
               )
             : tr(
                 "primaryStatus.heat.mildText",
                 "La sensació tèrmica és moderadament elevada. Hidrata’t i adapta l’activitat si mantens esforç físic."
-              )
-          : tr(
-              "officialAdviceDynamic.heat.moderate_night",
-              "La temperatura es manté elevada durant la nit. Hidrata’t, ventila els espais i evita esforços innecessaris."
-            ),
+              ),
         className: "status-card status-warning",
       };
     }
 
     return {
       icon: "🟠",
-      title: day
-        ? isLateDay
+      title: phase === "night"
+        ? tr("primaryStatus.heat.hotNight", "Nit calorosa")
+        : phase === "evening"
+          ? tr("primaryStatus.heat.mildLateDay", "Temperatura encara elevada")
+          : phase === "late_day"
           ? tr("primaryStatus.heat.moderateLateDay", "Calor encara elevada")
-          : tr("primaryStatus.heat.moderate", "Risc moderat per calor")
-        : tr("primaryStatus.heat.night", "Temperatura nocturna elevada"),
-      text: day
-        ? isLateDay
+          : tr("primaryStatus.heat.moderate", "Risc moderat per calor"),
+      text: phase === "night"
+        ? tr(
+            "primaryStatus.heat.hotNightText",
+            "La temperatura continua elevada malgrat que és de nit. Hidrata’t i evita esforços físics intensos fins que refresqui."
+          )
+        : phase === "evening"
+          ? tr(
+              "primaryStatus.heat.mildEveningText",
+              "Tot i que el sol ja s'ha post, la calor acumulada encara pot provocar cansament. Hidrata't i evita esforços intensos si notes fatiga."
+            )
+          : phase === "late_day"
           ? tr(
               "primaryStatus.heat.moderateLateDayText",
               "Tot i ser capvespre, la sensació tèrmica continua elevada. Redueix esforços intensos, hidrata’t i fes pauses en llocs frescos."
@@ -183,11 +204,7 @@ export function getPrimaryStatusBlock({
           : tr(
               "officialAdviceDynamic.heat.moderate",
               "Evita esforços intensos i fes pauses en llocs frescos."
-            )
-        : tr(
-            "officialAdviceDynamic.heat.moderate_night",
-            "La temperatura es manté elevada durant la nit. Hidrata’t, ventila els espais i evita esforços innecessaris."
-          ),
+            ),
       className: "status-card status-warning",
     };
   }

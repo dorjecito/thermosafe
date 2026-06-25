@@ -32,3 +32,36 @@ export function isLateDayAtLocation(
 
   return secondsUntilSunset >= 0 && secondsUntilSunset <= windowMinutes * 60;
 }
+
+export type HeatDayPhase = "day" | "late_day" | "evening" | "night";
+
+export function getHeatDayPhase(
+  nowUtcSec: number,
+  timezoneOffsetSec: number,
+  sunriseUtcSec?: number,
+  sunsetUtcSec?: number,
+  lateDayWindowMinutes = 90,
+  eveningWindowMinutes = 120
+): HeatDayPhase {
+  if (!sunriseUtcSec || !sunsetUtcSec) return "day";
+
+  const localNow = nowUtcSec + timezoneOffsetSec;
+  const localSunrise = sunriseUtcSec + timezoneOffsetSec;
+  const localSunset = sunsetUtcSec + timezoneOffsetSec;
+
+  if (localNow >= localSunrise && localNow < localSunset) {
+    const secondsUntilSunset = localSunset - localNow;
+    return secondsUntilSunset <= lateDayWindowMinutes * 60
+      ? "late_day"
+      : "day";
+  }
+
+  if (
+    localNow >= localSunset &&
+    localNow < localSunset + eveningWindowMinutes * 60
+  ) {
+    return "evening";
+  }
+
+  return "night";
+}

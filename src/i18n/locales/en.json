@@ -60,10 +60,13 @@
       "mild": "Mild heat caution",
       "mildLateDay": "Temperature still elevated",
       "night": "Elevated night-time temperature",
+      "hotNight": "Hot night",
       "moderate": "Moderate heat risk",
       "moderateLateDay": "Heat still elevated",
       "mildText": "The apparent temperature is moderately elevated. Stay hydrated and adapt your activity if physical effort continues.",
-      "mildLateDayText": "The sun is lower, but the apparent temperature may still cause fatigue. Stay hydrated and avoid unnecessary effort.",
+      "mildLateDayText": "Even though the sun is lower, the apparent temperature may still cause fatigue. Stay hydrated and avoid unnecessary effort.",
+      "mildEveningText": "Even though the sun has set, accumulated heat may still cause fatigue. Stay hydrated and avoid intense effort if you feel tired.",
+      "hotNightText": "The temperature remains elevated despite it being night. Stay hydrated and avoid intense physical effort until it cools down.",
       "moderateLateDayText": "Although it is later in the day, the apparent temperature remains elevated. Reduce intense effort, stay hydrated and take breaks in cool places."
     },
     "cold": {

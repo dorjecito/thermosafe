@@ -12,7 +12,11 @@ import {
   getUvText,
   normalizeUviForDisplay,
 } from "../../src/utils/uv";
-import { isDayAtLocation, isLateDayAtLocation } from "../../src/utils/isDayAtLocation";
+import {
+  getHeatDayPhase,
+  isDayAtLocation,
+  isLateDayAtLocation,
+} from "../../src/utils/isDayAtLocation";
 import { getPrimaryStatusBlock } from "../../src/utils/getPrimaryStatusBlock";
 import { pickPrimaryRisk } from "../../src/utils/PickPrimaryRisk";
 import { getWorkWindow } from "../../src/utils/workWindow";
@@ -216,6 +220,17 @@ test("late-day detection follows the local sunset window", () => {
   assert.equal(isLateDayAtLocation(sunset, tz, sunrise, sunset), false);
 });
 
+test("heat day phase distinguishes day, evening after sunset and night", () => {
+  const tz = 2 * 60 * 60;
+  const sunrise = 1_800;
+  const sunset = 45_000;
+
+  assert.equal(getHeatDayPhase(sunset - 3 * 60 * 60, tz, sunrise, sunset), "day");
+  assert.equal(getHeatDayPhase(sunset - 60 * 60, tz, sunrise, sunset), "late_day");
+  assert.equal(getHeatDayPhase(sunset + 60 * 60, tz, sunrise, sunset), "evening");
+  assert.equal(getHeatDayPhase(sunset + 3 * 60 * 60, tz, sunrise, sunset), "night");
+});
+
 test("mild heat near sunset avoids moderate-risk and shade wording", () => {
   const result = getPrimaryStatusBlock({
     alerts: [],
@@ -236,11 +251,38 @@ test("mild heat near sunset avoids moderate-risk and shade wording", () => {
   assert.doesNotMatch(result.text, /ombra/i);
 });
 
+test("heat after sunset uses accumulated-heat evening wording", () => {
+  const translations: Record<string, string> = {
+    "primaryStatus.heat.mildLateDay": "Temperatura encara elevada",
+    "primaryStatus.heat.mildEveningText":
+      "Tot i que el sol ja s'ha post, la calor acumulada encara pot provocar cansament. Hidrata't i evita esforços intensos si notes fatiga.",
+  };
+
+  const result = getPrimaryStatusBlock({
+    alerts: [],
+    primary: { kind: "heat", severity: 1, labelKey: "heat_mild" },
+    heatRisk: { isHigh: false, isExtreme: false },
+    coldRisk: "cap",
+    windRisk: "none",
+    uvi: 0,
+    day: false,
+    heatDayPhase: "evening",
+    primaryAdvice: null,
+    contextualUVMessage: "",
+    t: (key) => translations[key] || key,
+  });
+
+  assert.equal(result.title, "Temperatura encara elevada");
+  assert.match(result.text, /sol ja s'ha post/i);
+  assert.doesNotMatch(result.text, /sol ja baixa/i);
+});
+
 test("night heat status avoids daytime shade advice", () => {
   const translations: Record<string, string> = {
     "officialAdviceDynamic.heat.moderate": "Evita esforços intensos i busca ombra regularment.",
-    "officialAdviceDynamic.heat.moderate_night":
-      "La temperatura es manté elevada durant la nit. Hidrata't i evita esforços innecessaris.",
+    "primaryStatus.heat.hotNight": "Nit calorosa",
+    "primaryStatus.heat.hotNightText":
+      "La temperatura continua elevada malgrat que és de nit. Hidrata't i evita esforços físics intensos fins que refresqui.",
   };
 
   const result = getPrimaryStatusBlock({
@@ -251,12 +293,14 @@ test("night heat status avoids daytime shade advice", () => {
     windRisk: "none",
     uvi: 0,
     day: false,
+    heatDayPhase: "night",
     primaryAdvice: null,
     contextualUVMessage: "",
     t: (key) => translations[key] || key,
   });
 
-  assert.equal(result.title, "Temperatura nocturna elevada");
+  assert.equal(result.title, "Nit calorosa");
   assert.match(result.text, /nit/i);
   assert.doesNotMatch(result.text, /ombra/i);
+  assert.doesNotMatch(result.text, /sol/i);
 });

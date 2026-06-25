@@ -53,10 +53,13 @@
       "mild": "Precaució lleu per calor",
       "mildLateDay": "Temperatura encara elevada",
       "night": "Temperatura nocturna elevada",
+      "hotNight": "Nit calorosa",
       "moderate": "Risc moderat per calor",
       "moderateLateDay": "Calor encara elevada",
       "mildText": "La sensació tèrmica és moderadament elevada. Hidrata’t i adapta l’activitat si mantens esforç físic.",
-      "mildLateDayText": "El sol ja baixa, però la sensació tèrmica encara pot cansar. Hidrata’t i evita esforços innecessaris.",
+      "mildLateDayText": "Tot i que el sol ja baixa, la sensació tèrmica encara pot provocar cansament. Hidrata’t i evita esforços innecessaris.",
+      "mildEveningText": "Tot i que el sol ja s'ha post, la calor acumulada encara pot provocar cansament. Hidrata't i evita esforços intensos si notes fatiga.",
+      "hotNightText": "La temperatura continua elevada malgrat que és de nit. Hidrata't i evita esforços físics intensos fins que refresqui.",
       "moderateLateDayText": "Tot i ser capvespre, la sensació tèrmica continua elevada. Redueix esforços intensos, hidrata’t i fes pauses en llocs frescos."
     },
     "cold": {
