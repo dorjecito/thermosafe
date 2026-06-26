@@ -59,11 +59,11 @@ const escalaUV = [
     color: '#F9D648',
     nivell: { ca: 'Moderat', es: 'Moderado', eu: 'Moderatua', gl: 'Moderado', en: 'Moderate' },
     consell: {
-      ca: 'Gorra, ulleres de sol i SPF 30+.',
-      es: 'Gorra, gafas de sol y SPF 30+.',
-      eu: 'Txapela, betaurrekoak eta SPF 30+.',
-      gl: 'Sombreiro, lentes de sol e SPF 30+.',
-      en: 'Hat, sunglasses and SPF 30+ sunscreen.',
+      ca: 'Si l’exposició és prolongada, utilitza protecció solar i cerca ombra a les hores centrals.',
+      es: 'Si la exposición es prolongada, utiliza protección solar y busca sombra en las horas centrales.',
+      eu: 'Esposizioa luzea bada, erabili eguzki-babesa eta bilatu itzala eguneko erdiko orduetan.',
+      gl: 'Se a exposición é prolongada, usa protección solar e busca sombra nas horas centrais.',
+      en: 'Use sun protection for prolonged exposure and seek shade during peak hours.',
     },
   },
   {

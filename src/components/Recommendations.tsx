@@ -100,7 +100,7 @@ const TXT: TxtDict = {
     nightCool:
       "Ambient nocturn fresc. Es recomana roba còmoda i una capa lleugera si passes temps a l’exterior.",
     nightSafe:
-      "Condicions nocturnes agradables i estables. Mantén el confort tèrmic habitual.",
+      "Condicions nocturnes agradables i estables. No calen mesures especials.",
     nightHeat:
       "Temperatura nocturna elevada. Afavoreix la ventilació creuada, hidrata’t i utilitza roba lleugera i transpirable.",
     cold_low:
@@ -120,7 +120,7 @@ const TXT: TxtDict = {
     windModerate:
       "Vent moderat. Vigila eines, materials lleugers i maniobres en zones exposades.",
     windStrong:
-      "Vent destacable. Revalora tasques exposades i extrema la precaució amb objectes, eines i estabilitat.",
+      "Vent fort. Revalora tasques exposades i assegura eines o materials lleugers.",
     safeUvCloudy:
       "Pot existir radiació UV significativa encara que hi hagi núvols o pluja. Si passes temps a l’exterior, mantén protecció solar bàsica i adapta l’activitat segons l’evolució del temps.",
     tropicalNight:
@@ -157,7 +157,7 @@ const TXT: TxtDict = {
     nightCool:
       "Ambiente nocturno fresco. Se recomienda ropa cómoda y una capa ligera si pasas tiempo al aire libre.",
     nightSafe:
-      "Condiciones nocturnas agradables y estables. Mantén un confort térmico habitual.",
+      "Condiciones nocturnas agradables y estables. No se requieren medidas especiales.",
     nightHeat:
       "Temperatura nocturna elevada. Favorece la ventilación cruzada, hidrátate y utiliza ropa ligera y transpirable.",
     cold_low:
@@ -177,7 +177,7 @@ const TXT: TxtDict = {
     windModerate:
       "Viento moderado. Vigila herramientas, materiales ligeros y maniobras en zonas expuestas.",
     windStrong:
-      "Viento destacable. Reevalúa tareas expuestas y extrema la precaución con objetos, herramientas y estabilidad.",
+      "Viento fuerte. Reevalúa tareas expuestas y asegura herramientas o materiales ligeros.",
     safeUvCloudy:
       "Puede existir radiación UV significativa aunque haya nubes o lluvia. Si pasas tiempo al aire libre, mantén protección solar básica y adapta la actividad según la evolución del tiempo.",
     tropicalNight:
@@ -214,7 +214,7 @@ const TXT: TxtDict = {
     nightCool:
       "Gaueko giro freskoa. Erabili arropa erosoa eta geruza arin bat kanpoan denbora pasatuko baduzu.",
     nightSafe:
-      "Gaueko baldintza atsegin eta egonkorrak. Mantendu ohiko erosotasun termikoa.",
+      "Gaueko baldintzak atseginak eta egonkorrak dira. Ez da neurri berezirik behar.",
     nightHeat:
       "Gaueko tenperatura altua. Bultzatu aireztapen gurutzatua, hidratatu eta erabili arropa arina eta transpiragarria.",
     cold_low:
@@ -234,7 +234,7 @@ const TXT: TxtDict = {
     windModerate:
       "Haize moderatua. Zaindu tresnak, material arinak eta eremu irekietan egindako maniobrak.",
     windStrong:
-      "Haize nabarmena. Berrikusi agerian dauden lanak eta arreta handitu objektu, tresna eta egonkortasunarekin.",
+      "Haize handia. Berrikusi kanpoan egiteko lanak eta ziurtatu tresna edo material arinak.",
     safeUvCloudy:
       "Hodeiak edo euria egon arren, UV erradiazio esanguratsua egon daiteke. Kanpoan denbora ematen baduzu, mantendu oinarrizko eguzki-babesa eta egokitu jarduera eguraldiaren bilakaeraren arabera.",
     tropicalNight:
@@ -271,7 +271,7 @@ const TXT: TxtDict = {
     nightCool:
       "Ambiente nocturno fresco. Recoméndase roupa cómoda e unha capa lixeira se pasas tempo ao aire libre.",
     nightSafe:
-      "Condicións nocturnas agradables e estables. Mantén un confort térmico habitual.",
+      "Condicións nocturnas agradables e estables. Non se requiren medidas especiais.",
     nightHeat:
       "Temperatura nocturna elevada. Favorece a ventilación cruzada, hidrátate e emprega roupa lixeira e transpirable.",
     cold_low:
@@ -291,7 +291,7 @@ const TXT: TxtDict = {
     windModerate:
       "Vento moderado. Vixía ferramentas, materiais lixeiros e manobras en zonas expostas.",
     windStrong:
-      "Vento destacable. Reavalia tarefas expostas e extrema a precaución con obxectos, ferramentas e estabilidade.",
+      "Vento forte. Reavalia tarefas expostas e asegura ferramentas ou materiais lixeiros.",
     safeUvCloudy:
       "Pode existir radiación UV significativa aínda que haxa nubes ou choiva. Se permaneces ao aire libre, mantén protección solar básica e adapta a actividade segundo a evolución do tempo.",
     tropicalNight:
@@ -328,7 +328,7 @@ const TXT: TxtDict = {
     nightCool:
       "Cool nighttime conditions. Comfortable clothing and a light extra layer are recommended if you stay outdoors for a while.",
     nightSafe:
-      "Pleasant and stable nighttime conditions. Maintain your usual thermal comfort.",
+      "Night conditions are pleasant and stable. No special measures are needed.",
     nightHeat:
       "Elevated nighttime temperatures. Ensure cross-ventilation, stay hydrated and wear light, breathable clothing.",
     cold_low:
@@ -348,7 +348,7 @@ const TXT: TxtDict = {
     windModerate:
       "Moderate wind. Watch tools, light materials and manoeuvres in exposed areas.",
     windStrong:
-      "Noticeable wind. Reassess exposed tasks and increase caution with objects, tools and stability.",
+      "Strong wind. Reassess exposed tasks and secure light tools or materials.",
     safeUvCloudy:
       "Significant UV radiation may still be present even with clouds or rain. If you stay outdoors, keep basic sun protection and adapt activity according to weather evolution.",
     tropicalNight:

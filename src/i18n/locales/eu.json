@@ -334,11 +334,11 @@
     "moderate_night": "Tenperaturak altu jarraitzen du gauean. Hidratatu, aireztatu espazioak eta saihestu beharrezkoak ez diren ahaleginak.",
     "high": "Arrisku handia: mugatu aire libreko jarduerak eta hidratatu etengabe.",
     "high_night": "Beroak altu jarraitzen du gauean. Murriztu ahalegina, hidratatu eta aireztapena hobetu.",
-    "extreme": "Arrisku larria: saihestu guztiz kanpoaldea. Kolpe beroaren arrisku handia.",
+    "extreme": "Arrisku larria: saihestu guztiz kanpoaldea. Bero-kolpearen arrisku handia.",
     "extreme_night": "Gaueko muturreko beroa. Saihestu ahalegina, hidratatu eta lehenetsi espazio freskoak edo klimatizatuak."
   },
   "cold": {
-    "mild": "Tenperatura baxua: jantzi arin eta babestu eskuak.",
+    "mild": "Tenperatura baxua: jantzi arropa egokia eta babestu eskuak.",
     "moderate": "Tenperatura oso baxua: erabili arropa-geruzak eta saihestu esposizio luzeak.",
     "high": "Arrisku handia: babestu gorputz-adarrak eta mugatu kanpoko jarduerak.",
     "extreme": "Arrisku larria: saihestu kanpoaldea. Izozte-arriskua."

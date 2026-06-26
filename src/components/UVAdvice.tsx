@@ -16,7 +16,7 @@ const texts = {
     levels: ["Baix (0–2.9)", "Moderat (3–5.9)", "Alt (6–7.9)", "Molt alt (8–10.9)", "Extrem (11+)"],
     msgs: [
       "Protecció mínima necessària.",
-      "Evita el sol de 12 h a 16 h. Protecció extra.",
+      "Si l’exposició és prolongada, utilitza protecció solar i cerca ombra a les hores centrals.",
       "Evita el sol de 12 h a 16 h. Protecció extra.",
       "Evita el sol en hores centrals i utilitza protecció màxima.",
       "Evita totalment l’exposició solar. Risc molt elevat.",
@@ -37,7 +37,7 @@ const texts = {
     levels: ["Bajo (0–2.9)", "Moderado (3–5.9)", "Alto (6–7.9)", "Muy alto (8–10.9)", "Extremo (11+)"],
     msgs: [
       "Protección mínima necesaria.",
-      "Evita el sol de 12 h a 16 h. Protección extra.",
+      "Si la exposición es prolongada, utiliza protección solar y busca sombra en las horas centrales.",
       "Evita el sol de 12 h a 16 h. Protección extra.",
       "Evita el sol en horas centrales y usa protección máxima.",
       "Evita totalmente la exposición solar. Riesgo muy elevado.",
@@ -58,7 +58,7 @@ const texts = {
     levels: ["Baxua (0–2.9)", "Moderatua (3–5.9)", "Altua (6–7.9)", "Oso altua (8–10.9)", "Muturrekoa (11+)"],
     msgs: [
       "Babes minimoa behar da.",
-      "12etatik 16etara eguzkia saihestu. Babes gehigarria.",
+      "Esposizioa luzea bada, erabili eguzki-babesa eta bilatu itzala eguneko erdiko orduetan.",
       "12etatik 16etara eguzkia saihestu. Babes gehigarria.",
       "Eguerdiko orduetan eguzkia saihestu eta babes handiena erabili.",
       "Saihestu guztiz eguzki-esposizioa. Arrisku oso handia.",
@@ -79,7 +79,7 @@ const texts = {
     levels: ["Baixo (0–2.9)", "Moderado (3–5.9)", "Alto (6–7.9)", "Moi alto (8–10.9)", "Extremo (11+)"],
     msgs: [
       "Precísase protección mínima.",
-      "Evita o sol de 12 h a 16 h. Protección extra.",
+      "Se a exposición é prolongada, usa protección solar e busca sombra nas horas centrais.",
       "Evita o sol de 12 h a 16 h. Protección extra.",
       "Evita o sol nas horas centrais e usa protección máxima.",
       "Evita totalmente a exposición solar. Risco moi elevado.",
@@ -100,7 +100,7 @@ const texts = {
     levels: ["Low (0–2.9)", "Moderate (3–5.9)", "High (6–7.9)", "Very high (8–10.9)", "Extreme (11+)"],
     msgs: [
       "Minimal protection required.",
-      "Avoid sun from 12:00 to 16:00. Extra protection.",
+      "Use sun protection for prolonged exposure and seek shade during peak hours.",
       "Avoid sun from 12:00 to 16:00. Extra protection.",
       "Avoid peak hours and use maximum protection.",
       "Avoid sun exposure completely. Very high risk.",

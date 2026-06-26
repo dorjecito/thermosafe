@@ -53,28 +53,28 @@ export function getUvAdvice(uvi: number | null, lang: string): string {
   const advice: Record<string, string[]> = {
     ca: [
       "Protecció mínima necessària.",
-      "Gorra, ulleres i SPF 30+.",
+      "Si l’exposició és prolongada, utilitza protecció solar i cerca ombra a les hores centrals.",
       "Evita el sol de 12h a 16h. Protecció extra.",
       "Evita exposició directa. Usa roba i SPF 50+.",
       "Risc greu. Queda’t a l’ombra o dins casa."
     ],
     es: [
       "Protección mínima necesaria.",
-      "Gorra, gafas y SPF 30+.",
+      "Si la exposición es prolongada, utiliza protección solar y busca sombra en las horas centrales.",
       "Evita el sol de 12h a 16h. Protección extra.",
       "Evita la exposición directa. Usa ropa y SPF 50+.",
       "Riesgo extremo. Permanece en sombra o interior."
     ],
     gl: [
       "Protección mínima necesaria.",
-      "Gorra, lentes e SPF 30+.",
+      "Se a exposición é prolongada, usa protección solar e busca sombra nas horas centrais.",
       "Evita o sol de 12h a 16h. Protección extra.",
       "Evita exposición directa. Roupa e SPF 50+.",
       "Risco extremo. Permanece á sombra ou interior."
     ],
     eu: [
       "Gutxieneko babesa beharrezkoa.",
-      "Txanoa, betaurrekoak eta SPF 30+.",
+      "Esposizioa luzea bada, erabili eguzki-babesa eta bilatu itzala eguneko erdiko orduetan.",
       "12:00–16:00 saihestu eguzkia. Babes gehigarria.",
       "Saihestu esposizio zuzena. Arropa eta SPF 50+.",
       "Arrisku handia. Egon itzalean edo barrualdean."

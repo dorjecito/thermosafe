@@ -359,7 +359,7 @@
       "moderate_night": "Temperatures remain elevated overnight. Stay hydrated, ventilate indoor spaces and avoid unnecessary effort.",
       "high": "High risk: limit outdoor activity and hydrate continuously.",
       "high_night": "Heat remains high overnight. Reduce effort, stay hydrated and improve ventilation.",
-      "extreme": "Extreme danger: avoid going outside completely. High heat-stroke risk.",
+      "extreme": "Extreme danger: avoid outdoor exposure. High heat-stroke risk.",
       "extreme_night": "Extreme night-time heat. Avoid effort, stay hydrated and prioritise cool or air-conditioned spaces."
     },
     "cold": {
