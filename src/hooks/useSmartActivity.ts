@@ -20,6 +20,10 @@ const DELTAS: Record<ActivityLevel, number> = {
   intense: 12,
 };
 
+const SAMPLE_INTERVAL_MS = 200; // ~5 Hz: redueix CPU sense perdre lectura de moviment humà.
+const WINDOW_MS = 3000;
+const CANDIDATE_CONFIRM_MS = 1000;
+
 const logActivity = (...args: unknown[]) => {
   if (import.meta.env.DEV) {
     console.log(...args);
@@ -33,12 +37,15 @@ export function useSmartActivity(): SmartActivityState {
   const [level, setLevel] = useState<ActivityLevel>("rest");
 
   const lastLevelRef = useRef<ActivityLevel>("rest");
+  const candidateLevelRef = useRef<ActivityLevel>("rest");
+  const candidateSinceRef = useRef(Date.now());
+  const lastProcessedAt = useRef(0);
+  const windowStartedAt = useRef(Date.now());
+  const windowDynSum = useRef(0);
+  const windowSamples = useRef(0);
 
   // FILTRE SUAVITZAT (low-pass)
   const smoothDyn = useRef(0);
-
-  // HISTÈRESI TEMPORAL (evita canvis nerviosos)
-  const stableSince = useRef(Date.now());
 
   useEffect(() => {
     logActivity("[ACTIVITY] Support devicemotion:", "ondevicemotion" in window);
@@ -54,8 +61,49 @@ export function useSmartActivity(): SmartActivityState {
 
     logActivity("[ACTIVITY] 🔄 Registrant listener devicemotion…");
 
+    const classifyDyn = (dyn: number): ActivityLevel => {
+      if (dyn > 2.0) return "intense";
+      if (dyn > 1.0) return "moderate";
+      if (dyn > 0.25) return "walk";
+      return "rest";
+    };
+
+    const resetWindow = (now: number) => {
+      windowStartedAt.current = now;
+      windowDynSum.current = 0;
+      windowSamples.current = 0;
+    };
+
+    const applyCandidate = (newLevel: ActivityLevel, now: number) => {
+      if (newLevel === lastLevelRef.current) {
+        candidateLevelRef.current = newLevel;
+        candidateSinceRef.current = now;
+        return;
+      }
+
+      if (newLevel !== candidateLevelRef.current) {
+        candidateLevelRef.current = newLevel;
+        candidateSinceRef.current = now;
+        return;
+      }
+
+      if (now - candidateSinceRef.current >= CANDIDATE_CONFIRM_MS) {
+        logActivity(
+          `[ACTIVITY] 🆕 Canvi confirmat: ${lastLevelRef.current} → ${newLevel}`
+        );
+        lastLevelRef.current = newLevel;
+        setLevel(newLevel);
+        candidateSinceRef.current = now;
+      }
+    };
+
     const handleMotion = (event: DeviceMotionEvent) => {
+      if (document.hidden) return;
       if (!event.accelerationIncludingGravity) return;
+
+      const now = Date.now();
+      if (now - lastProcessedAt.current < SAMPLE_INTERVAL_MS) return;
+      lastProcessedAt.current = now;
 
       const ax = event.accelerationIncludingGravity.x ?? 0;
       const ay = event.accelerationIncludingGravity.y ?? 0;
@@ -70,44 +118,48 @@ export function useSmartActivity(): SmartActivityState {
       smoothDyn.current = smoothDyn.current * 0.85 + dynRaw * 0.15;
       const dyn = smoothDyn.current;
 
-      // 🔽 CLASSIFICACIÓ REALISTA
-      let newLevel: ActivityLevel = "rest";
+      windowDynSum.current += dyn;
+      windowSamples.current += 1;
 
-      if (dyn > 2.0) newLevel = "intense";
-      else if (dyn > 1.0) newLevel = "moderate";
-      else if (dyn > 0.25) newLevel = "walk";
-      else newLevel = "rest";
+      if (now - windowStartedAt.current < WINDOW_MS) return;
 
-      // 🕒 HISTÈRESI de 1 segon per evitar canvis nerviosos
+      // Classifiquem per finestra per evitar que pics aïllats canviïn l'estat.
+      const avgDyn =
+        windowSamples.current > 0 ? windowDynSum.current / windowSamples.current : 0;
+      const newLevel = classifyDyn(avgDyn);
+
+      resetWindow(now);
+      applyCandidate(newLevel, now);
+    };
+
+    const handleVisibilityChange = () => {
+      if (!document.hidden) return;
       const now = Date.now();
-
-      if (newLevel !== lastLevelRef.current) {
-        if (now - stableSince.current > 1000) {
-          logActivity(
-            `[ACTIVITY] 🆕 Canvi confirmat: ${lastLevelRef.current} → ${newLevel}`
-          );
-          lastLevelRef.current = newLevel;
-          setLevel(newLevel);
-          stableSince.current = now;
-        }
-      } else {
-        stableSince.current = now;
-      }
+      resetWindow(now);
+      lastProcessedAt.current = now;
     };
 
     window.addEventListener("devicemotion", handleMotion);
+    document.addEventListener("visibilitychange", handleVisibilityChange);
     logActivity("[ACTIVITY] ✔ Listener devicemotion ACTIVAT");
 
     return () => {
       window.removeEventListener("devicemotion", handleMotion);
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
       logActivity("[ACTIVITY] ✖ Listener devicemotion DESACTIVAT");
     };
   }, [enabled]);
 
   const resetActivityState = () => {
+    const now = Date.now();
     lastLevelRef.current = "rest";
+    candidateLevelRef.current = "rest";
+    candidateSinceRef.current = now;
+    lastProcessedAt.current = 0;
+    windowStartedAt.current = now;
+    windowDynSum.current = 0;
+    windowSamples.current = 0;
     smoothDyn.current = 0;
-    stableSince.current = Date.now();
     setLevel("rest");
   };
 
