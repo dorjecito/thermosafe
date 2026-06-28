@@ -324,6 +324,7 @@ async function loadAlertsIfNeeded(
   let prevLon: number | null = null;
   let prevTs = 0;
   let cachedAlerts: any[] = [];
+  let hasCachedAlerts = false;
 
   try {
     const raw = localStorage.getItem(ALERTS_CACHE_KEY);
@@ -332,7 +333,8 @@ async function loadAlertsIfNeeded(
       prevLat = typeof parsed.lat === "number" ? parsed.lat : null;
       prevLon = typeof parsed.lon === "number" ? parsed.lon : null;
       prevTs = typeof parsed.ts === "number" ? parsed.ts : 0;
-      cachedAlerts = Array.isArray(parsed.alerts) ? parsed.alerts : [];
+      hasCachedAlerts = Array.isArray(parsed.alerts);
+      cachedAlerts = hasCachedAlerts ? parsed.alerts : [];
     }
   } catch (err) {
     console.warn("[ALERTS] Error llegint caché local:", err);
@@ -346,7 +348,7 @@ async function loadAlertsIfNeeded(
 
   const tooSoon = now - prevTs < 30 * 60 * 1000;
 
-  if (sameArea && tooSoon && cachedAlerts.length > 0) {
+  if (sameArea && tooSoon && hasCachedAlerts) {
     console.log("[ALERTS] Caché local reutilitzada");
     setAlerts(cachedAlerts);
     return;
@@ -372,7 +374,7 @@ async function loadAlertsIfNeeded(
   } catch (err) {
     console.warn("[ALERTS] Error carregant avisos:", err);
 
-    if (cachedAlerts.length > 0) {
+    if (hasCachedAlerts) {
       console.log("[ALERTS] Error API → reutilitzant caché");
       setAlerts(cachedAlerts);
     } else {

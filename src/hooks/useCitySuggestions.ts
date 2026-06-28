@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 const EU_COUNTRIES = new Set([
   "ES", "PT", "FR", "IT", "DE", "AT", "BE", "NL", "LU", "IE",
@@ -47,54 +47,80 @@ export function useCitySuggestions({ apiKey }: Params = {}) {
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [suggestLoading, setSuggestLoading] = useState(false);
   const [showSearchHelp, setShowSearchHelp] = useState(false);
+  const debounceTimer = useRef<number | null>(null);
+  const requestSeq = useRef(0);
 
-  const fetchCitySuggestions = async (query: string) => {
-    if (query.trim().length < 4) {
+  useEffect(() => {
+    return () => {
+      if (debounceTimer.current !== null) {
+        window.clearTimeout(debounceTimer.current);
+      }
+    };
+  }, []);
+
+  const fetchCitySuggestions = (query: string) => {
+    if (debounceTimer.current !== null) {
+      window.clearTimeout(debounceTimer.current);
+    }
+
+    const trimmedQuery = query.trim();
+
+    if (trimmedQuery.length < 4) {
       setSuggestions([]);
       setShowSuggestions(false);
+      setSuggestLoading(false);
       return;
     }
 
-    try {
-      setSuggestLoading(true);
+    setSuggestLoading(true);
+    const requestId = ++requestSeq.current;
 
-      const res = await fetch(buildGeoDirectUrl(query, apiKey));
+    debounceTimer.current = window.setTimeout(async () => {
+      try {
+        const res = await fetch(buildGeoDirectUrl(trimmedQuery, apiKey));
 
-      const data = await res.json();
-      console.log("[SUGGESTIONS]", data);
+        const data = await res.json();
+        if (requestId !== requestSeq.current) return;
 
-      const unique = (data || []).filter(
-        (item: any, index: number, arr: any[]) =>
-          index ===
-          arr.findIndex(
-            (x: any) =>
-              x.name === item.name &&
-              x.state === item.state &&
-              x.country === item.country
-          )
-      );
+        console.log("[SUGGESTIONS]", data);
 
-      const ordered = [...unique].sort((a, b) => {
-        const aIsES = a.country === "ES";
-        const bIsES = b.country === "ES";
-        if (aIsES && !bIsES) return -1;
-        if (!aIsES && bIsES) return 1;
+        const unique = (data || []).filter(
+          (item: any, index: number, arr: any[]) =>
+            index ===
+            arr.findIndex(
+              (x: any) =>
+                x.name === item.name &&
+                x.state === item.state &&
+                x.country === item.country
+            )
+        );
 
-        const aIsEU = EU_COUNTRIES.has(a.country);
-        const bIsEU = EU_COUNTRIES.has(b.country);
-        if (aIsEU && !bIsEU) return -1;
-        if (!aIsEU && bIsEU) return 1;
+        const ordered = [...unique].sort((a, b) => {
+          const aIsES = a.country === "ES";
+          const bIsES = b.country === "ES";
+          if (aIsES && !bIsES) return -1;
+          if (!aIsES && bIsES) return 1;
 
-        return 0;
-      });
+          const aIsEU = EU_COUNTRIES.has(a.country);
+          const bIsEU = EU_COUNTRIES.has(b.country);
+          if (aIsEU && !bIsEU) return -1;
+          if (!aIsEU && bIsEU) return 1;
 
-      setSuggestions(ordered.slice(0, 5));
-      setShowSuggestions(ordered.length > 0);
-    } catch (e) {
-      console.error("Error suggestions:", e);
-    } finally {
-      setSuggestLoading(false);
-    }
+          return 0;
+        });
+
+        setSuggestions(ordered.slice(0, 5));
+        setShowSuggestions(ordered.length > 0);
+      } catch (e) {
+        if (requestId === requestSeq.current) {
+          console.error("Error suggestions:", e);
+        }
+      } finally {
+        if (requestId === requestSeq.current) {
+          setSuggestLoading(false);
+        }
+      }
+    }, 300);
   };
 
   return {
