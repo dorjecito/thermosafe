@@ -48,17 +48,20 @@ export default async function handler(req, res) {
   res.setHeader("Access-Control-Allow-Origin", "*");
   res.setHeader("Cache-Control", "s-maxage=300, stale-while-revalidate=600");
 
-  const { lat, lon } = req.query;
+  const { endpoint = "uv", lat } = req.query;
+  const lng = req.query.lng || req.query.lon;
 
-  if (!lat || !lon) {
-    return res.status(400).json({ error: "Missing lat/lon" });
+  if (!lat || !lng) {
+    return res.status(400).json({ error: "Missing lat/lng" });
   }
+
+  const path = endpoint === "forecast" ? "forecast" : "uv";
 
   let usageTracked = false;
 
   try {
     const r = await fetch(
-      `https://api.openuv.io/api/v1/uv?lat=${lat}&lng=${lon}`,
+      `https://api.openuv.io/api/v1/${path}?lat=${lat}&lng=${lng}`,
       {
         headers: {
           "x-access-token": process.env.OPENUV_KEY,

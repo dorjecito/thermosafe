@@ -102,21 +102,25 @@ function setCached<T>(
 // 🔹 Helpers interns
 // ==============================
 
-function getApiKey(): string | null {
-  const key = import.meta.env.VITE_OPENUV_KEY;
-  if (!key) {
-    console.error("[OpenUV] Falta VITE_OPENUV_KEY a .env");
-    return null;
+function buildOpenUVProxyUrl(
+  endpoint: "uv" | "forecast",
+  lat: number,
+  lon: number
+) {
+  const params = new URLSearchParams({
+    lat: String(lat),
+    lng: String(lon),
+  });
+
+  if (endpoint !== "uv") {
+    params.set("endpoint", endpoint);
   }
-  return key;
+
+  return `/api/openuv?${params.toString()}`;
 }
 
-async function safeFetch(url: string, key: string) {
-  const response = await fetch(url, {
-    headers: {
-      "x-access-token": key,
-    },
-  });
+async function safeFetch(url: string) {
+  const response = await fetch(url);
 
   if (!response.ok) {
     const txt = await response.text().catch(() => "");
@@ -150,14 +154,11 @@ export async function getUVFromOpenUV(
 
   const request = (async () => {
     try {
-      const API_KEY = getApiKey();
-      if (!API_KEY) return null;
-
-      const url = `https://api.openuv.io/api/v1/uv?lat=${lat}&lng=${lon}`;
+      const url = buildOpenUVProxyUrl("uv", lat, lon);
 
       console.log("[OpenUV] Fetch UV:", url);
 
-      const data = (await safeFetch(url, API_KEY)) as OpenUVCurrentResponse;
+      const data = (await safeFetch(url)) as OpenUVCurrentResponse;
 
       console.log("[OpenUV] UV Response:", data);
 
@@ -187,14 +188,11 @@ export async function getUVForecast(
   lon: number
 ): Promise<OpenUVForecastPoint[]> {
   try {
-    const API_KEY = getApiKey();
-    if (!API_KEY) return [];
-
-    const url = `https://api.openuv.io/api/v1/forecast?lat=${lat}&lng=${lon}`;
+    const url = buildOpenUVProxyUrl("forecast", lat, lon);
 
     console.log("[OpenUV] Fetch Forecast:", url);
 
-    const data = (await safeFetch(url, API_KEY)) as OpenUVForecastResponse;
+    const data = (await safeFetch(url)) as OpenUVForecastResponse;
 
     console.log("[OpenUV] Forecast Response:", data);
 
@@ -256,13 +254,10 @@ export async function getUVDetailFromOpenUV(
 
   const request = (async () => {
     try {
-      const API_KEY = getApiKey();
-      if (!API_KEY) return null;
-
-      const url = `https://api.openuv.io/api/v1/uv?lat=${lat}&lng=${lon}`;
+      const url = buildOpenUVProxyUrl("uv", lat, lon);
       console.log("[OpenUV] Fetch UV Detail:", url);
 
-      const data = (await safeFetch(url, API_KEY)) as OpenUVCurrentResponse;
+      const data = (await safeFetch(url)) as OpenUVCurrentResponse;
 
       const r = data?.result;
       console.log("[OpenUV] UV detail result keys:", Object.keys(r || {}));
