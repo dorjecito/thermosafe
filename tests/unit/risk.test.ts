@@ -21,6 +21,7 @@ import {
 import { getPrimaryStatusBlock } from "../../src/utils/getPrimaryStatusBlock";
 import { pickPrimaryRisk } from "../../src/utils/PickPrimaryRisk";
 import { getWorkWindow, getWorkWindowText } from "../../src/utils/workWindow";
+import { buildRiskTrend } from "../../src/utils/riskTrend";
 
 test("heat risk follows INSST-style threshold boundaries", () => {
   assert.equal(getBaseHeatRisk(26.9).class, "safe");
@@ -198,6 +199,125 @@ test("primary UV status title is translated and follows displayed bands", () => 
 
   assert.equal(makeStatus(7.9).title, "High UV radiation");
   assert.equal(makeStatus(8).title, "Very high UV radiation");
+});
+
+const trendNow = new Date("2026-06-29T10:00:00Z");
+
+function makeTrendForecast(
+  hours: Array<{
+    offsetHours: number;
+    temp: number;
+    feels_like?: number;
+    windKmh?: number;
+    uvi?: number;
+  }>
+) {
+  const nowSeconds = Math.floor(trendNow.getTime() / 1000);
+  return {
+    hourly: hours.map(({ offsetHours, windKmh, ...rest }) => ({
+      dt: nowSeconds + offsetHours * 60 * 60,
+      wind_speed: typeof windKmh === "number" ? windKmh / 3.6 : undefined,
+      ...rest,
+    })),
+  };
+}
+
+test("risk trend detects heat-index rise inside the same risk category", () => {
+  const trend = buildRiskTrend(
+    makeTrendForecast([
+      { offsetHours: 1, temp: 29.8, feels_like: 29.8, windKmh: 5, uvi: 2 },
+      { offsetHours: 2, temp: 31.2, feels_like: 31.2, windKmh: 5, uvi: 2 },
+    ]),
+    { temp: 28, heatIndex: 28, windKmh: 5, uvi: 2 },
+    trendNow
+  );
+
+  assert.equal(trend?.direction, "worsening");
+  assert.deepEqual(trend?.factors, ["heat"]);
+});
+
+test("risk trend detects UV rise inside the same risk category", () => {
+  const trend = buildRiskTrend(
+    makeTrendForecast([
+      { offsetHours: 1, temp: 22, feels_like: 22, windKmh: 5, uvi: 3.8 },
+      { offsetHours: 2, temp: 22, feels_like: 22, windKmh: 5, uvi: 4.8 },
+    ]),
+    { temp: 22, heatIndex: 22, windKmh: 5, uvi: 3.2 },
+    trendNow
+  );
+
+  assert.equal(trend?.direction, "worsening");
+  assert.deepEqual(trend?.factors, ["uv"]);
+});
+
+test("risk trend detects wind rise inside the same risk category", () => {
+  const trend = buildRiskTrend(
+    makeTrendForecast([
+      { offsetHours: 1, temp: 20, feels_like: 20, windKmh: 20, uvi: 1 },
+      { offsetHours: 2, temp: 20, feels_like: 20, windKmh: 24.6, uvi: 1 },
+    ]),
+    { temp: 20, heatIndex: 20, windKmh: 15.5, uvi: 1 },
+    trendNow
+  );
+
+  assert.equal(trend?.direction, "worsening");
+  assert.deepEqual(trend?.factors, ["wind"]);
+});
+
+test("risk trend detects real improvement when no factor worsens", () => {
+  const trend = buildRiskTrend(
+    makeTrendForecast([
+      { offsetHours: 1, temp: 28.4, feels_like: 28.4, windKmh: 5, uvi: 1 },
+      { offsetHours: 2, temp: 28.2, feels_like: 28.2, windKmh: 5, uvi: 1 },
+    ]),
+    { temp: 31.5, heatIndex: 31.5, windKmh: 5, uvi: 1 },
+    trendNow
+  );
+
+  assert.equal(trend?.direction, "improving");
+  assert.deepEqual(trend?.factors, ["heat"]);
+});
+
+test("risk trend remains stable for small ordinary variations", () => {
+  const trend = buildRiskTrend(
+    makeTrendForecast([
+      { offsetHours: 1, temp: 28.8, feels_like: 28.8, windKmh: 12, uvi: 2.2 },
+      { offsetHours: 2, temp: 29.4, feels_like: 29.4, windKmh: 13, uvi: 2.5 },
+    ]),
+    { temp: 28, heatIndex: 28, windKmh: 10, uvi: 2 },
+    trendNow
+  );
+
+  assert.equal(trend?.direction, "stable");
+  assert.deepEqual(trend?.factors, []);
+});
+
+test("risk trend identifies cold as the dominant worsening factor", () => {
+  const trend = buildRiskTrend(
+    makeTrendForecast([
+      { offsetHours: 1, temp: -2, feels_like: -2, windKmh: 20, uvi: 0 },
+      { offsetHours: 2, temp: -6, feels_like: -6, windKmh: 20, uvi: 0 },
+    ]),
+    { temp: 5, heatIndex: 5, windKmh: 5, uvi: 0 },
+    trendNow
+  );
+
+  assert.equal(trend?.direction, "worsening_clearly");
+  assert.deepEqual(trend?.factors, ["cold"]);
+});
+
+test("risk trend keeps at most two similarly weighted factors", () => {
+  const trend = buildRiskTrend(
+    makeTrendForecast([
+      { offsetHours: 1, temp: 31, feels_like: 31, windKmh: 24, uvi: 2 },
+      { offsetHours: 2, temp: 31, feels_like: 31, windKmh: 24, uvi: 2 },
+    ]),
+    { temp: 28, heatIndex: 28, windKmh: 15, uvi: 2 },
+    trendNow
+  );
+
+  assert.equal(trend?.direction, "worsening");
+  assert.deepEqual(trend?.factors, ["heat", "wind"]);
 });
 
 test("day/night detection uses local sunrise and sunset boundaries", () => {

@@ -1477,17 +1477,34 @@ const formatTrendTime = (date: Date | null) =>
   date
     ? date.toLocaleTimeString(currentLang, { hour: "2-digit", minute: "2-digit" })
     : "";
+const formatTrendFactorKey = (factors?: RiskTrendResult["factors"]) => {
+  if (!factors || factors.length === 0) return "generic";
+  const order: RiskTrendResult["factors"] = ["heat", "cold", "wind", "uv"];
+  return [...new Set(factors)]
+    .slice(0, 2)
+    .sort((a, b) => order.indexOf(a) - order.indexOf(b))
+    .join("_");
+};
 const trendStartTime = formatTrendTime(riskTrend?.peakStart ?? null);
 const trendEndTime = formatTrendTime(riskTrend?.peakEnd ?? null);
+const trendFactorKey = formatTrendFactorKey(riskTrend?.factors);
 const baseRiskTrendText = riskTrendLoading
   ? t("riskTrend.loading")
   : !riskTrend
   ? t("riskTrend.unavailable")
-  : riskTrend.direction === "stable" || riskTrend.direction === "improving"
+  : riskTrend.direction === "stable"
   ? t(`riskTrend.${riskTrend.direction}`)
-  : t(`riskTrend.${riskTrend.direction}At`, {
+  : riskTrend.direction === "improving"
+  ? t(`riskTrend.improving_${trendFactorKey}`, {
+      defaultValue: t("riskTrend.improving"),
+    })
+  : t(`riskTrend.${riskTrend.direction}At_${trendFactorKey}`, {
       start: trendStartTime,
       end: trendEndTime,
+      defaultValue: t(`riskTrend.${riskTrend.direction}At`, {
+        start: trendStartTime,
+        end: trendEndTime,
+      }),
     });
 const riskTrendText =
   riskTrend?.partial && !riskTrendLoading
