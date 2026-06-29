@@ -107,6 +107,11 @@ function buildOpenUVProxyUrl(
   lat: number,
   lon: number
 ) {
+  if (import.meta.env.DEV) {
+    const path = endpoint === "forecast" ? "forecast" : "uv";
+    return `https://api.openuv.io/api/v1/${path}?lat=${lat}&lng=${lon}`;
+  }
+
   const params = new URLSearchParams({
     lat: String(lat),
     lng: String(lon),
@@ -120,7 +125,17 @@ function buildOpenUVProxyUrl(
 }
 
 async function safeFetch(url: string) {
-  const response = await fetch(url);
+  const headers: HeadersInit = {};
+
+  if (import.meta.env.DEV) {
+    const key = import.meta.env.VITE_OPENUV_KEY;
+    if (!key) {
+      throw new Error("Falta VITE_OPENUV_KEY a .env");
+    }
+    headers["x-access-token"] = key;
+  }
+
+  const response = await fetch(url, { headers });
 
   if (!response.ok) {
     const txt = await response.text().catch(() => "");

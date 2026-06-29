@@ -11,6 +11,7 @@ import {
   getWeatherByCity,
   getWeatherByCoords,
   getWeatherAlerts,
+  getHourlyForecastByCoords,
 } from "./services/weatherService";
 
 import {
@@ -45,7 +46,8 @@ import { getUVDetailFromOpenUV, getUVFromOpenUV } from "./services/openUV";
 	   import { getRemainingTime } from "./utils/getRemainingTime";
 	   import { normalizeLang } from "./utils/normalizeLang";
 	   import { getUvAdvice, getUvText, normalizeUviForDisplay } from "./utils/uv";
-   import { safeUVFetch } from "./utils/safeUVFetch";
+	   import { buildRiskTrend, type RiskTrendResult } from "./utils/riskTrend";
+	   import { safeUVFetch } from "./utils/safeUVFetch";
    import { fetchSolarIrr } from "./utils/fetchSolarIrr";
    import UVContextCard from "./components/UVContextCard";
    import { resolveSkyDescription } from "./utils/resolveSkyDescription";
@@ -247,12 +249,14 @@ useEffect(() => {
   const [input, setInput] = useState('')
   const [day, setDay] = useState(true);
   const [coldRisk, setColdRisk] = useState<'cap' | 'lleu' | 'moderat' | 'alt' | 'molt alt' | 'extrem'>('cap');
-  const [windDeg, setWindDeg] = useState<number | null>(null);
-  const [windKmh, setWindKmh] = useState<number | null>(null);
-  const [lat, setLat] = useState<number | null>(null);
-  const [lon, setLon] = useState<number | null>(null);
-  const searchBoxRef = useRef<HTMLDivElement | null>(null);
-  const showCompactHeader = useScrollCompactHeader(120);
+	  const [windDeg, setWindDeg] = useState<number | null>(null);
+	  const [windKmh, setWindKmh] = useState<number | null>(null);
+	  const [lat, setLat] = useState<number | null>(null);
+	  const [lon, setLon] = useState<number | null>(null);
+	  const [riskTrend, setRiskTrend] = useState<RiskTrendResult | null>(null);
+	  const [riskTrendLoading, setRiskTrendLoading] = useState(false);
+	  const searchBoxRef = useRef<HTMLDivElement | null>(null);
+	  const showCompactHeader = useScrollCompactHeader(120);
 
  useEffect(() => {
   const handleClickOutside = (event: MouseEvent) => {
@@ -1220,6 +1224,67 @@ const workWindowLang = currentLang;
 const workWindowTitle = getWorkWindowTitle(workWindowLang);
 const workWindowText = getWorkWindowText(workWindow, workWindowLang, aemetActive, nocturnalHeat);
 
+useEffect(() => {
+  if (
+    !data ||
+    !isInitialRiskReady ||
+    loading ||
+    lat == null ||
+    lon == null ||
+    !Number.isFinite(lat) ||
+    !Number.isFinite(lon) ||
+    (typeof document !== "undefined" && document.hidden)
+  ) {
+    setRiskTrend(null);
+    setRiskTrendLoading(false);
+    return;
+  }
+
+  let cancelled = false;
+  setRiskTrendLoading(true);
+
+  const timer = window.setTimeout(async () => {
+    try {
+      const forecast = await getHourlyForecastByCoords(lat, lon, currentLang);
+      if (cancelled) return;
+
+      const trend = buildRiskTrend(forecast, {
+        heatIndex: hi,
+        temp,
+        windKmh,
+        uvi,
+        activity: preventiveActivity,
+      });
+
+      setRiskTrend(trend);
+    } catch (err) {
+      if (!cancelled) {
+        console.warn("[FORECAST] No s'ha pogut calcular la tendència:", err);
+        setRiskTrend(null);
+      }
+    } finally {
+      if (!cancelled) setRiskTrendLoading(false);
+    }
+  }, 500);
+
+  return () => {
+    cancelled = true;
+    window.clearTimeout(timer);
+  };
+}, [
+  data,
+  isInitialRiskReady,
+  loading,
+  lat,
+  lon,
+  currentLang,
+  hi,
+  temp,
+  windKmh,
+  uvi,
+  preventiveActivity,
+]);
+
 const primary = pickPrimaryRisk({
   hi,
   effForCold: wc ?? temp,
@@ -1408,6 +1473,35 @@ const uvMaxSummaryValue =
 const uvSummaryText = getUvText(uvSummaryValue, currentLang);
 const uvSummaryAdvice = getUvAdvice(uvSummaryValue, currentLang);
 const isRiskRenderReady = Boolean(data && isInitialRiskReady && !loading);
+const formatTrendTime = (date: Date | null) =>
+  date
+    ? date.toLocaleTimeString(currentLang, { hour: "2-digit", minute: "2-digit" })
+    : "";
+const trendStartTime = formatTrendTime(riskTrend?.peakStart ?? null);
+const trendEndTime = formatTrendTime(riskTrend?.peakEnd ?? null);
+const baseRiskTrendText = riskTrendLoading
+  ? t("riskTrend.loading")
+  : !riskTrend
+  ? t("riskTrend.unavailable")
+  : riskTrend.direction === "stable" || riskTrend.direction === "improving"
+  ? t(`riskTrend.${riskTrend.direction}`)
+  : t(`riskTrend.${riskTrend.direction}At`, {
+      start: trendStartTime,
+      end: trendEndTime,
+    });
+const riskTrendText =
+  riskTrend?.partial && !riskTrendLoading
+    ? `${baseRiskTrendText} ${t("riskTrend.partialSuffix")}`
+    : baseRiskTrendText;
+const riskTrendIcon = riskTrendLoading
+  ? "…"
+  : !riskTrend
+  ? "·"
+  : riskTrend.direction === "improving"
+  ? "↘"
+  : riskTrend.direction === "stable"
+  ? "→"
+  : "↗";
 
 //Return ok
 
@@ -1859,6 +1953,15 @@ return (
   </div>
 
   <p className="work-window-text">{workWindowText}</p>
+
+  <div
+    className={`risk-trend-card risk-trend-${riskTrend?.direction || "unavailable"}`}
+    data-partial={riskTrend?.partial ? "true" : "false"}
+    data-stale={riskTrend?.stale ? "true" : "false"}
+  >
+    <span className="risk-trend-icon" aria-hidden="true">{riskTrendIcon}</span>
+    <span>{riskTrendText}</span>
+  </div>
 </div>
 
 {/* ============================================================

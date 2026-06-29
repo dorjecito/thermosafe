@@ -25,6 +25,16 @@
   "extremeText": "La combinació actual de condicions meteorològiques exigeix màxima precaució i limitació de l’exposició exterior."
 },
 
+  "riskTrend": {
+    "loading": "S’està calculant la previsió de les pròximes hores…",
+    "unavailable": "La previsió per a les pròximes hores no està disponible.",
+    "stable": "Durant les pròximes hores no s’esperen canvis importants.",
+    "improving": "Durant les pròximes hores les condicions milloraran.",
+    "worseningAt": "Durant les pròximes hores el risc serà més elevat entre les {{start}} i les {{end}}.",
+    "worsening_clearlyAt": "Durant les pròximes hores el risc augmentarà de manera important entre les {{start}} i les {{end}}.",
+    "partialSuffix": "Aquesta previsió es basa en les dades disponibles."
+  },
+
   "loading": "Carregant dades meteorològiques...",
   "errorGPS": "No s'ha pogut obtenir la temperatura per GPS.",
   "errorCity": "No s'han trobat dades per a aquesta ubicació. Es mostren les darreres dades disponibles.",

@@ -18,6 +18,25 @@ type CacheEntry<T> = {
 };
 
 const weatherCache = new Map<string, CacheEntry<any>>();
+const forecastInflight = new Map<string, Promise<HourlyForecastResponse | null>>();
+
+export type HourlyForecastItem = {
+  dt: number;
+  temp?: number;
+  feels_like?: number;
+  humidity?: number;
+  wind_speed?: number;
+  wind_gust?: number;
+  clouds?: number;
+  uvi?: number;
+  weather?: Array<{ main?: string; description?: string; icon?: string }>;
+};
+
+export type HourlyForecastResponse = {
+  hourly: HourlyForecastItem[];
+  timezone_offset?: number;
+  stale?: boolean;
+};
 
 function getCacheKey(prefix: string, ...parts: (string | number)[]) {
   return `${prefix}:${parts.join(":")}`;
@@ -43,6 +62,69 @@ function saveToCache<T>(key: string, data: T) {
     timestamp: Date.now(),
     data,
   });
+}
+
+function getRoundedForecastBlock(now = Date.now()) {
+  return Math.floor(now / (60 * 60 * 1000));
+}
+
+function getForecastStorageKey(lat: number, lon: number, lang: string, block = getRoundedForecastBlock()) {
+  const latKey = Number(lat).toFixed(2);
+  const lonKey = Number(lon).toFixed(2);
+  return getCacheKey("forecast-hourly-v1", latKey, lonKey, block, normLang2(lang));
+}
+
+function getStoredForecast(key: string, ttlMs: number): HourlyForecastResponse | null {
+  if (typeof window === "undefined") return null;
+
+  try {
+    const raw = window.localStorage.getItem(key);
+    if (!raw) return null;
+
+    const parsed = JSON.parse(raw);
+    const timestamp = typeof parsed?.timestamp === "number" ? parsed.timestamp : 0;
+    const data = parsed?.data;
+
+    if (!Array.isArray(data?.hourly)) return null;
+    if (Date.now() - timestamp > ttlMs) return null;
+
+    return data;
+  } catch (err) {
+    console.warn("[FORECAST] Error llegint caché local:", err);
+    return null;
+  }
+}
+
+function getStoredForecastFallback(
+  lat: number,
+  lon: number,
+  lang: string,
+  ttlMs: number
+): HourlyForecastResponse | null {
+  const currentBlock = getRoundedForecastBlock();
+
+  for (let block = currentBlock; block >= currentBlock - 6; block -= 1) {
+    const cached = getStoredForecast(getForecastStorageKey(lat, lon, lang, block), ttlMs);
+    if (cached) return cached;
+  }
+
+  return null;
+}
+
+function saveStoredForecast(key: string, data: HourlyForecastResponse) {
+  if (typeof window === "undefined") return;
+
+  try {
+    window.localStorage.setItem(
+      key,
+      JSON.stringify({
+        timestamp: Date.now(),
+        data,
+      })
+    );
+  } catch (err) {
+    console.warn("[FORECAST] Error guardant caché local:", err);
+  }
 }
 
 function getDirectApiKey(apiKey?: string): string | null {
@@ -235,6 +317,78 @@ export async function getWeatherAlerts(
   } catch (err) {
     console.error("[DEBUG] Error obtenint avisos meteorològics:", err);
     return [];
+  }
+}
+
+export async function getHourlyForecastByCoords(
+  lat: number,
+  lon: number,
+  lang: string = "en",
+  apiKey?: string
+): Promise<HourlyForecastResponse | null> {
+  if (!Number.isFinite(lat) || !Number.isFinite(lon)) return null;
+  if (typeof document !== "undefined" && document.hidden) return null;
+
+  const lang2 = normLang2(lang);
+  const storageKey = getForecastStorageKey(lat, lon, lang2);
+  const freshTtl = 60 * 60 * 1000;
+  const staleTtl = 6 * 60 * 60 * 1000;
+
+  const fresh = getStoredForecast(storageKey, freshTtl);
+  if (fresh) return fresh;
+
+  if (forecastInflight.has(storageKey)) {
+    return forecastInflight.get(storageKey)!;
+  }
+
+  const promise = (async () => {
+    const stale = getStoredForecastFallback(lat, lon, lang2, staleTtl);
+
+    try {
+      const url = buildOpenWeatherUrl(
+        "onecall",
+        {
+          lat,
+          lon,
+          units: "metric",
+          lang: lang2,
+          exclude: "current,minutely,daily,alerts",
+        },
+        apiKey
+      );
+
+      const response = await fetch(url);
+
+      if (!response.ok) {
+        console.error("[FORECAST] Error HTTP:", response.status);
+        return stale ? { ...stale, stale: true } : null;
+      }
+
+      const data = await response.json();
+      const hourly = Array.isArray(data?.hourly) ? data.hourly : [];
+
+      if (!hourly.length) return stale ? { ...stale, stale: true } : null;
+
+      const normalized: HourlyForecastResponse = {
+        hourly,
+        timezone_offset:
+          typeof data?.timezone_offset === "number" ? data.timezone_offset : undefined,
+      };
+
+      saveStoredForecast(storageKey, normalized);
+      return normalized;
+    } catch (err) {
+      console.warn("[FORECAST] Error obtenint previsió horària:", err);
+      return stale ? { ...stale, stale: true } : null;
+    }
+  })();
+
+  forecastInflight.set(storageKey, promise);
+
+  try {
+    return await promise;
+  } finally {
+    forecastInflight.delete(storageKey);
   }
 }
 

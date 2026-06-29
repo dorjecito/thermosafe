@@ -34,6 +34,16 @@
   "extremeText": "A combinación actual de condicións meteorolóxicas esixe máxima precaución e limitación da exposición exterior."
 },
 
+  "riskTrend": {
+    "loading": "Estase a calcular a previsión para as próximas horas…",
+    "unavailable": "A previsión para as próximas horas non está dispoñible.",
+    "stable": "Durante as próximas horas non se esperan cambios importantes.",
+    "improving": "Durante as próximas horas as condicións mellorarán.",
+    "worseningAt": "Durante as próximas horas o risco será máis elevado entre as {{start}} e as {{end}}.",
+    "worsening_clearlyAt": "Durante as próximas horas o risco aumentará de maneira importante entre as {{start}} e as {{end}}.",
+    "partialSuffix": "Esta previsión baséase nos datos dispoñibles."
+  },
+
 
   "caution_outdoors": "Precaución no exterior",
   "take_extreme_caution": "Evita actividades ao aire libre",

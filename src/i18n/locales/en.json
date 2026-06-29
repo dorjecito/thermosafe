@@ -96,6 +96,16 @@
   "extremeText": "The current combination of weather conditions requires maximum caution and limited outdoor exposure."
 },
 
+  "riskTrend": {
+    "loading": "The forecast for the next few hours is being calculated…",
+    "unavailable": "The forecast for the next few hours is not available.",
+    "stable": "No major changes are expected over the next few hours.",
+    "improving": "Conditions are expected to improve over the next few hours.",
+    "worseningAt": "Risk is expected to be higher between {{start}} and {{end}}.",
+    "worsening_clearlyAt": "Risk is expected to increase significantly between {{start}} and {{end}}.",
+    "partialSuffix": "This forecast is based on the available data."
+  },
+
   "push": {
     "label": "Receive alerts when heat risk ≥ moderate",
     "enabled": "Alerts enabled. You will receive notifications when risk is moderate or higher.",

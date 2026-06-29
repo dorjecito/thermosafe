@@ -34,6 +34,16 @@
   "extremeText": "Egungo baldintza meteorologikoen konbinazioak arreta handiena eta kanpoko esposizioa mugatzea eskatzen du."
 }, 
 
+  "riskTrend": {
+    "loading": "Datozen orduetarako iragarpena kalkulatzen ari da…",
+    "unavailable": "Datozen orduetarako iragarpena ez dago erabilgarri.",
+    "stable": "Datozen orduetan ez da aldaketa garrantzitsurik espero.",
+    "improving": "Datozen orduetan baldintzak hobetuko dira.",
+    "worseningAt": "Datozen orduetan arriskua handiagoa izango da {{start}} eta {{end}} artean.",
+    "worsening_clearlyAt": "Datozen orduetan arriskua nabarmen handituko da {{start}} eta {{end}} artean.",
+    "partialSuffix": "Iragarpen hau eskuragarri dauden datuetan oinarrituta dago."
+  },
+
   "caution_outdoors": "Kontuz kanpoan",
   "take_extreme_caution": "Saihestu aire libreko jarduerak",
   "wind_alert_label": "Haize bortitzaren abisuak jaso",
