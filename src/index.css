@@ -1696,9 +1696,25 @@ body,
   overflow-x: hidden;
 }
 
+#root {
+  min-height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+}
+
+@supports (overflow: clip) {
+  html,
+  body,
+  #root {
+    overflow-x: clip;
+  }
+}
+
 .container {
   width: 100%;
   max-width: 680px;
+  min-width: 0;
   margin: 0 auto;
   padding: 12px;
 }
