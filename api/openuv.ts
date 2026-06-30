@@ -1,10 +1,16 @@
 import { getApps, initializeApp } from "firebase/app";
 import {
+  collection,
+  deleteDoc,
   doc,
+  getDocs,
   getFirestore,
   increment,
+  limit,
+  query,
   serverTimestamp,
   setDoc,
+  where,
 } from "firebase/firestore";
 
 const firebaseConfig = {
@@ -18,9 +24,38 @@ const firebaseConfig = {
 
 const firebaseApp = getApps().length > 0 ? getApps()[0] : initializeApp(firebaseConfig);
 const db = getFirestore(firebaseApp);
+const API_USAGE_RETENTION_DAYS = 90;
+const API_USAGE_CLEANUP_LIMIT = 20;
 
 function getUsageDateKey(now = new Date()) {
   return now.toISOString().slice(0, 10);
+}
+
+function getRetentionCutoffDate(provider: "openuv", now = new Date()) {
+  const cutoff = new Date(now);
+  cutoff.setUTCDate(cutoff.getUTCDate() - API_USAGE_RETENTION_DAYS);
+  return {
+    provider,
+    date: getUsageDateKey(cutoff),
+  };
+}
+
+async function cleanupOldApiUsage(provider: "openuv") {
+  const cutoff = getRetentionCutoffDate(provider);
+  try {
+    const snapshot = await getDocs(
+      query(
+        collection(db, "apiUsage"),
+        where("provider", "==", provider),
+        where("date", "<", cutoff.date),
+        limit(API_USAGE_CLEANUP_LIMIT)
+      )
+    );
+
+    await Promise.all(snapshot.docs.map((oldDoc) => deleteDoc(oldDoc.ref)));
+  } catch (error) {
+    console.warn("[apiUsage] No s'ha pogut netejar consum antic OpenUV:", error);
+  }
 }
 
 async function trackExternalApiUsage(provider: "openuv", hasError: boolean) {
@@ -39,6 +74,7 @@ async function trackExternalApiUsage(provider: "openuv", hasError: boolean) {
       },
       { merge: true }
     );
+    await cleanupOldApiUsage(provider);
   } catch (error) {
     console.warn("[apiUsage] No s'ha pogut registrar consum OpenUV:", error);
   }
