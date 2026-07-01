@@ -106,6 +106,42 @@
   "follow_official_alerts": "Jarraitu agintari ofizialen jarraibideak eta areagotu arreta.",
   "official_alert_soon": "Laster abisu meteorologiko ofiziala",
   "follow_official_alerts_soon": "Abisu meteorologiko bat aurreikusita dago. Komeni da aurrea hartzea eta aurreikusitako jarduera berrikustea.",
+  "official_alert_active_prefix": "Abisu ofizial aktiboa",
+  "official_alert_soon_prefix": "Laster abisu ofiziala",
+  "official_alert_active_multiple": "Abisu ofizial aktiboak",
+  "official_alert_soon_multiple": "Laster abisu ofizialak",
+  "official_alert_hazard": {
+    "rain": "euria",
+    "snow": "elurra",
+    "wind": "haizea",
+    "storm": "ekaitzak",
+    "coast": "kostaldea eta olatuak",
+    "fog": "lainoa",
+    "temp_min": "tenperatura baxuak",
+    "temp_max": "muturreko tenperaturak"
+  },
+  "official_alert_active_multiple_text": "Hainbat abisu meteorologiko ofizial aktibo daude. Begiratu xehetasunak eta areagotu arreta.",
+  "official_alert_soon_multiple_text": "Hainbat abisu meteorologiko aurreikusita daude. Begiratu xehetasunak jarduera planifikatu aurretik.",
+  "official_alert_active_hazard": {
+    "rain": "Euri-abisu aktiboa. Jarraitu agintari ofizialen jarraibideak eta areagotu arreta.",
+    "snow": "Elur-abisu aktiboa. Jarraitu agintari ofizialen jarraibideak eta areagotu arreta.",
+    "wind": "Haize-abisu aktiboa. Jarraitu agintari ofizialen jarraibideak eta areagotu arreta.",
+    "storm": "Ekaitz-abisu aktiboak. Jarraitu agintari ofizialen jarraibideak eta areagotu arreta.",
+    "coast": "Kostaldeko eta olatuen abisu aktiboa. Jarraitu agintari ofizialen jarraibideak eta areagotu arreta.",
+    "fog": "Laino-abisu aktiboa. Jarraitu agintari ofizialen jarraibideak eta areagotu arreta.",
+    "temp_min": "Tenperatura baxuen abisu aktiboa. Jarraitu agintari ofizialen jarraibideak eta areagotu arreta.",
+    "temp_max": "Muturreko tenperaturen abisu aktiboa. Jarraitu agintari ofizialen jarraibideak eta areagotu arreta."
+  },
+  "official_alert_soon_hazard": {
+    "rain": "Euria aurreikusita dago. Komeni da aurrea hartzea eta aurreikusitako jarduera berrikustea.",
+    "snow": "Elurra aurreikusita dago. Komeni da aurrea hartzea eta aurreikusitako jarduera berrikustea.",
+    "wind": "Haizea aurreikusita dago. Komeni da aurrea hartzea eta aurreikusitako jarduera berrikustea.",
+    "storm": "Ekaitzak aurreikusita daude. Komeni da aurrea hartzea eta aurreikusitako jarduera berrikustea.",
+    "coast": "Kostaldeari eta olatuei buruzko abisu ofizial bat aurreikusita dago. Komeni da aurrea hartzea eta aurreikusitako jarduera berrikustea.",
+    "fog": "Lainoa aurreikusita dago. Komeni da aurrea hartzea eta aurreikusitako jarduera berrikustea.",
+    "temp_min": "Tenperatura baxuak aurreikusita daude. Komeni da aurrea hartzea eta aurreikusitako jarduera berrikustea.",
+    "temp_max": "Muturreko tenperaturak aurreikusita daude. Komeni da aurrea hartzea eta aurreikusitako jarduera berrikustea."
+  },
   "safe_conditions_text_night_warm": "Gaueko tenperatura altuak. Ziurtatu aireztapen gurutzatua eta erabili arropa arina.",
   "primaryStatus": {
     "heat": {

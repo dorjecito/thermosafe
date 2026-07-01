@@ -105,6 +105,42 @@
   "follow_official_alerts": "Sigue las indicaciones oficiales y extrema la precaución.",
   "official_alert_soon": "Aviso meteorológico oficial próximo",
   "follow_official_alerts_soon": "Hay un aviso meteorológico previsto. Conviene anticiparse y revisar la actividad prevista.",
+  "official_alert_active_prefix": "Aviso oficial activo",
+  "official_alert_soon_prefix": "Próximo aviso oficial",
+  "official_alert_active_multiple": "Avisos oficiales activos",
+  "official_alert_soon_multiple": "Próximos avisos oficiales",
+  "official_alert_hazard": {
+    "rain": "lluvia",
+    "snow": "nieve",
+    "wind": "viento",
+    "storm": "tormentas",
+    "coast": "costa y oleaje",
+    "fog": "niebla",
+    "temp_min": "temperaturas bajas",
+    "temp_max": "temperaturas extremas"
+  },
+  "official_alert_active_multiple_text": "Hay varios avisos meteorológicos activos. Revisa el detalle y extrema la precaución.",
+  "official_alert_soon_multiple_text": "Hay varios avisos meteorológicos previstos. Revisa el detalle antes de planificar la actividad.",
+  "official_alert_active_hazard": {
+    "rain": "Lluvia activa. Sigue las indicaciones oficiales y extrema la precaución.",
+    "snow": "Nieve activa. Sigue las indicaciones oficiales y extrema la precaución.",
+    "wind": "Viento activo. Sigue las indicaciones oficiales y extrema la precaución.",
+    "storm": "Tormentas activas. Sigue las indicaciones oficiales y extrema la precaución.",
+    "coast": "Costa y oleaje activos. Sigue las indicaciones oficiales y extrema la precaución.",
+    "fog": "Niebla activa. Sigue las indicaciones oficiales y extrema la precaución.",
+    "temp_min": "Temperaturas bajas activas. Sigue las indicaciones oficiales y extrema la precaución.",
+    "temp_max": "Temperaturas extremas activas. Sigue las indicaciones oficiales y extrema la precaución."
+  },
+  "official_alert_soon_hazard": {
+    "rain": "Lluvia prevista. Conviene anticiparse y revisar la actividad prevista.",
+    "snow": "Nieve prevista. Conviene anticiparse y revisar la actividad prevista.",
+    "wind": "Viento previsto. Conviene anticiparse y revisar la actividad prevista.",
+    "storm": "Tormentas previstas. Conviene anticiparse y revisar la actividad prevista.",
+    "coast": "Se prevé un aviso oficial por costa y oleaje. Conviene anticiparse y revisar la actividad prevista.",
+    "fog": "Niebla prevista. Conviene anticiparse y revisar la actividad prevista.",
+    "temp_min": "Temperaturas bajas previstas. Conviene anticiparse y revisar la actividad prevista.",
+    "temp_max": "Temperaturas extremas previstas. Conviene anticiparse y revisar la actividad prevista."
+  },
   "safe_conditions_text_night_warm": "Temperaturas nocturnas elevadas. Asegura ventilación cruzada y utiliza ropa ligera.",
   "primaryStatus": {
     "heat": {

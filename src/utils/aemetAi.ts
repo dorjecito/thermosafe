@@ -8,7 +8,7 @@
 // ---------------------------------------------------------
 export type LangKey = "ca" | "es" | "eu" | "gl" | "en";
 
-type HazardId =
+export type HazardId =
   | "rain"
   | "snow"
   | "wind"
@@ -122,6 +122,50 @@ export function normalizeLang(input: string | undefined | null): LangKey {
   const base = String(input || "ca").split("-")[0].toLowerCase();
   if (base === "ca" || base === "es" || base === "eu" || base === "gl" || base === "en") return base;
   return "ca";
+}
+
+function normalizeAlertText(text: string): string {
+  return String(text || "")
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/[_-]+/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+export function detectAemetHazard(
+  rawEvent: string,
+  rawDescription: string = ""
+): HazardId {
+  const text = normalizeAlertText(`${rawEvent || ""} ${rawDescription || ""}`);
+
+  if (text.includes("rain") || text.includes("precipit") || text.includes("pluja") || text.includes("lluvia") || text.includes("chuva") || text.includes("euria")) return "rain";
+  if (text.includes("snow") || text.includes("neu") || text.includes("nieve") || text.includes("neve") || text.includes("elur")) return "snow";
+  if (text.includes("coast") || text.includes("wave") || text.includes("oleaje") || text.includes("onatge") || text.includes("costa") || text.includes("mar") || text.includes("ondada")) return "coast";
+  if (/(^|\s)(wind|vent|viento|vento|haize|haizea|racha|ratxa)(\s|$)/.test(text)) return "wind";
+  if (text.includes("storm") || text.includes("thunder") || text.includes("tempest") || text.includes("torment") || text.includes("treboad") || text.includes("ekaitz")) return "storm";
+  if (text.includes("fog") || text.includes("boira") || text.includes("niebla") || text.includes("neboa") || text.includes("lainoa")) return "fog";
+  if (
+    text.includes("minimum") ||
+    text.includes("low temperature") ||
+    text.includes("low temp") ||
+    text.includes("temperatura minima") ||
+    text.includes("temperaturas minimas") ||
+    text.includes("temperatura baxu")
+  ) return "temp_min";
+  if (
+    text.includes("maximum") ||
+    text.includes("high temperature") ||
+    text.includes("high temp") ||
+    text.includes("heat") ||
+    text.includes("calor") ||
+    text.includes("temperatura maxima") ||
+    text.includes("temperaturas maximas") ||
+    text.includes("tenperatura altu")
+  ) return "temp_max";
+
+  return "other";
 }
 
 // ---------------------------------------------------------
@@ -290,31 +334,11 @@ export function buildAemetAiAlert(
 ): AemetAiAlert {
   const lang = normalizeLang(langInput);
 
-  const ev = (rawEvent || "").toLowerCase();
   const desc = cleanAemetDescription(rawDescription || "");
 
   // ---- Fenomen ----
-  let hazard: HazardId = "other";
-  if (ev.includes("rain") || ev.includes("precipit")) hazard = "rain";
-  else if (ev.includes("snow")) hazard = "snow";
-  else if (ev.includes("wind")) hazard = "wind";
-  else if (ev.includes("coast") || ev.includes("wave") || ev.includes("oleaje")) hazard = "coast";
-  else if (ev.includes("storm") || ev.includes("thunder")) hazard = "storm";
-  else if (ev.includes("fog")) hazard = "fog";
-  else if (
-    ev.includes("minimum") ||
-    ev.includes("low_temperature") ||
-    ev.includes("low temperature") ||
-    ev.includes("low-temperature") ||
-    ev.includes("low temp") ||
-    ev.includes("low")
-  ) hazard = "temp_min";
-  else if (
-    ev.includes("maximum") ||
-    ev.includes("high temp") ||
-    ev.includes("high_temperature") ||
-    ev.includes("heat")
-  ) hazard = "temp_max";
+  const ev = normalizeAlertText(rawEvent || "");
+  const hazard = detectAemetHazard(rawEvent, desc);
 
   // ---- Nivell ----
   let level: LevelId = "info";

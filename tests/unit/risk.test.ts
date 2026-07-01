@@ -19,6 +19,7 @@ import {
   isLateDayAtLocation,
 } from "../../src/utils/isDayAtLocation";
 import { getPrimaryStatusBlock } from "../../src/utils/getPrimaryStatusBlock";
+import { detectAemetHazard } from "../../src/utils/aemetAi";
 import { pickPrimaryRisk } from "../../src/utils/PickPrimaryRisk";
 import { getWorkWindow, getWorkWindowText } from "../../src/utils/workWindow";
 import { buildRiskTrend } from "../../src/utils/riskTrend";
@@ -199,6 +200,73 @@ test("primary UV status title is translated and follows displayed bands", () => 
 
   assert.equal(makeStatus(7.9).title, "High UV radiation");
   assert.equal(makeStatus(8).title, "Very high UV radiation");
+});
+
+test("official alert hazard detection covers common AEMET phenomena", () => {
+  assert.equal(detectAemetHazard("Moderate coastal event warning"), "coast");
+  assert.equal(detectAemetHazard("Wind warning"), "wind");
+  assert.equal(detectAemetHazard("Rain warning"), "rain");
+  assert.equal(detectAemetHazard("Thunderstorm warning"), "storm");
+  assert.equal(detectAemetHazard("High temperature warning"), "temp_max");
+  assert.equal(detectAemetHazard("Unknown advisory"), "other");
+});
+
+test("official alert primary status keeps a generic title and describes the known phenomenon", () => {
+  const originalNow = Date.now;
+  Date.now = () => 1_000_000;
+
+  try {
+    const translations: Record<string, string> = {
+      official_alert_soon: "Avís meteorològic oficial proper",
+      follow_official_alerts_soon: "Hi ha un avís meteorològic previst.",
+      official_alert_soon_prefix: "Pròxim avís oficial",
+      "official_alert_soon_hazard.coast":
+        "Es preveu un avís oficial per costa i onatge. Convé anticipar-se i revisar l’activitat prevista.",
+      official_alert_soon_multiple: "Pròxims avisos oficials",
+      official_alert_soon_multiple_text:
+        "Hi ha diversos avisos meteorològics previstos. Revisa el detall abans de planificar l’activitat.",
+    };
+    const t = (key: string) => translations[key] || key;
+
+    const makeStatus = (alerts: any[]) =>
+      getPrimaryStatusBlock({
+        alerts,
+        primary: { kind: "none", severity: 0, labelKey: "none" },
+        heatRisk: null,
+        coldRisk: "cap",
+        windRisk: "none",
+        uvi: 0,
+        day: true,
+        primaryAdvice: null,
+        contextualUVMessage: "",
+        t,
+      });
+
+    const coastStatus = makeStatus([
+      { event: "Moderate coastal event warning", start: 2_000, end: 3_000 },
+    ]);
+    assert.equal(coastStatus.title, "Pròxim avís oficial");
+    assert.equal(
+      coastStatus.text,
+      "Es preveu un avís oficial per costa i onatge. Convé anticipar-se i revisar l’activitat prevista."
+    );
+
+    const multipleStatus = makeStatus([
+      { event: "Wind warning", start: 2_000, end: 3_000 },
+      { event: "Rain warning", start: 2_000, end: 3_000 },
+    ]);
+    assert.equal(multipleStatus.title, "Pròxims avisos oficials");
+    assert.equal(
+      multipleStatus.text,
+      "Hi ha diversos avisos meteorològics previstos. Revisa el detall abans de planificar l’activitat."
+    );
+    assert.equal(
+      makeStatus([{ event: "Unknown advisory", start: 2_000, end: 3_000 }]).title,
+      "Avís meteorològic oficial proper"
+    );
+  } finally {
+    Date.now = originalNow;
+  }
 });
 
 const trendNow = new Date("2026-06-29T10:00:00Z");

@@ -50,6 +50,42 @@
   "follow_official_alerts": "Follow official guidance and take extra precautions.",
   "official_alert_soon": "Upcoming official weather alert",
   "follow_official_alerts_soon": "A weather alert is expected. It is advisable to anticipate it and review planned activities.",
+  "official_alert_active_prefix": "Active official alert",
+  "official_alert_soon_prefix": "Upcoming official alert",
+  "official_alert_active_multiple": "Active official alerts",
+  "official_alert_soon_multiple": "Upcoming official alerts",
+  "official_alert_hazard": {
+    "rain": "rain",
+    "snow": "snow",
+    "wind": "wind",
+    "storm": "storms",
+    "coast": "coast and waves",
+    "fog": "fog",
+    "temp_min": "low temperatures",
+    "temp_max": "extreme temperatures"
+  },
+  "official_alert_active_multiple_text": "Several official weather alerts are active. Check the details and take extra precautions.",
+  "official_alert_soon_multiple_text": "Several official weather alerts are expected. Check the details before planning outdoor activity.",
+  "official_alert_active_hazard": {
+    "rain": "Rain alert active. Follow official guidance and take extra precautions.",
+    "snow": "Snow alert active. Follow official guidance and take extra precautions.",
+    "wind": "Wind alert active. Follow official guidance and take extra precautions.",
+    "storm": "Storm alerts active. Follow official guidance and take extra precautions.",
+    "coast": "Coastal and wave alert active. Follow official guidance and take extra precautions.",
+    "fog": "Fog alert active. Follow official guidance and take extra precautions.",
+    "temp_min": "Low temperature alert active. Follow official guidance and take extra precautions.",
+    "temp_max": "Extreme temperature alert active. Follow official guidance and take extra precautions."
+  },
+  "official_alert_soon_hazard": {
+    "rain": "Rain is expected. Plan ahead and review the planned activity.",
+    "snow": "Snow is expected. Plan ahead and review the planned activity.",
+    "wind": "Wind is expected. Plan ahead and review the planned activity.",
+    "storm": "Storms are expected. Plan ahead and review the planned activity.",
+    "coast": "An official coastal and wave alert is expected. Plan ahead and review the planned activity.",
+    "fog": "Fog is expected. Plan ahead and review the planned activity.",
+    "temp_min": "Low temperatures are expected. Plan ahead and review the planned activity.",
+    "temp_max": "Extreme temperatures are expected. Plan ahead and review the planned activity."
+  },
   "safe_conditions_text_night_warm": "Elevated night-time temperatures. Ensure cross ventilation and wear light clothing.",
   "primaryStatus": {
     "heat": {

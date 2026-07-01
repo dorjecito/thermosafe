@@ -83,6 +83,42 @@
   "follow_official_alerts": "Segueix les indicacions oficials i extrema la precaució.",
   "official_alert_soon": "Avís meteorològic oficial proper",
   "follow_official_alerts_soon": "Hi ha un avís meteorològic previst. Convé anticipar-se i revisar l’activitat prevista.",
+  "official_alert_active_prefix": "Avís oficial actiu",
+  "official_alert_soon_prefix": "Pròxim avís oficial",
+  "official_alert_active_multiple": "Avisos oficials actius",
+  "official_alert_soon_multiple": "Pròxims avisos oficials",
+  "official_alert_hazard": {
+    "rain": "pluja",
+    "snow": "neu",
+    "wind": "vent",
+    "storm": "tempestes",
+    "coast": "costa i onatge",
+    "fog": "boira",
+    "temp_min": "temperatures baixes",
+    "temp_max": "temperatures extremes"
+  },
+  "official_alert_active_multiple_text": "Hi ha diversos avisos meteorològics actius. Revisa el detall i extrema la precaució.",
+  "official_alert_soon_multiple_text": "Hi ha diversos avisos meteorològics previstos. Revisa el detall abans de planificar l’activitat.",
+  "official_alert_active_hazard": {
+    "rain": "Pluja activa. Segueix les indicacions oficials i extrema la precaució.",
+    "snow": "Neu activa. Segueix les indicacions oficials i extrema la precaució.",
+    "wind": "Vent actiu. Segueix les indicacions oficials i extrema la precaució.",
+    "storm": "Tempestes actives. Segueix les indicacions oficials i extrema la precaució.",
+    "coast": "Costa i onatge actius. Segueix les indicacions oficials i extrema la precaució.",
+    "fog": "Boira activa. Segueix les indicacions oficials i extrema la precaució.",
+    "temp_min": "Temperatures baixes actives. Segueix les indicacions oficials i extrema la precaució.",
+    "temp_max": "Temperatures extremes actives. Segueix les indicacions oficials i extrema la precaució."
+  },
+  "official_alert_soon_hazard": {
+    "rain": "Pluja prevista. Convé anticipar-se i revisar l’activitat prevista.",
+    "snow": "Neu prevista. Convé anticipar-se i revisar l’activitat prevista.",
+    "wind": "Vent previst. Convé anticipar-se i revisar l’activitat prevista.",
+    "storm": "Tempestes previstes. Convé anticipar-se i revisar l’activitat prevista.",
+    "coast": "Es preveu un avís oficial per costa i onatge. Convé anticipar-se i revisar l’activitat prevista.",
+    "fog": "Boira prevista. Convé anticipar-se i revisar l’activitat prevista.",
+    "temp_min": "Temperatures baixes previstes. Convé anticipar-se i revisar l’activitat prevista.",
+    "temp_max": "Temperatures extremes previstes. Convé anticipar-se i revisar l’activitat prevista."
+  },
   "safe_conditions_text_night_warm": "Temperatures nocturnes elevades. Assegura ventilació creuada i utilitza roba lleugera.",
   "primaryStatus": {
     "heat": {

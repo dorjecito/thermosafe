@@ -1,5 +1,6 @@
 import { getUvLevelIndex } from "./uv";
 import type { HeatDayPhase } from "./isDayAtLocation";
+import { detectAemetHazard, type HazardId } from "./aemetAi";
 
 type TFunctionLike = (key: string) => string;
 
@@ -60,6 +61,56 @@ export function getPrimaryStatusBlock({
     return text && text !== key ? text : fallback;
   };
 
+  const translated = (key: string) => {
+    const text = t(key);
+    return text && text !== key ? text : null;
+  };
+
+  const getOfficialAlertSummary = (alertList: any[], phase: "active" | "soon") => {
+    const hazards = [
+      ...new Set(
+        alertList
+          .map((alert) =>
+            detectAemetHazard(
+              String(alert?.event || ""),
+              typeof alert?.description === "string" ? alert.description : ""
+            )
+          )
+          .filter((hazard): hazard is Exclude<HazardId, "other"> => hazard !== "other")
+      ),
+    ];
+
+    if (hazards.length === 0) {
+      return { title: null, text: null };
+    }
+
+    if (hazards.length > 1) {
+      return {
+        title: translated(
+          phase === "active"
+            ? "official_alert_active_multiple"
+            : "official_alert_soon_multiple"
+        ),
+        text: translated(
+          phase === "active"
+            ? "official_alert_active_multiple_text"
+            : "official_alert_soon_multiple_text"
+        ),
+      };
+    }
+
+    return {
+      title: translated(
+        phase === "active"
+          ? "official_alert_active_prefix"
+          : "official_alert_soon_prefix"
+      ),
+      text: translated(
+        `${phase === "active" ? "official_alert_active_hazard" : "official_alert_soon_hazard"}.${hazards[0]}`
+      ),
+    };
+  };
+
   const nowTs = Math.floor(Date.now() / 1000);
 
   const activeAlert =
@@ -72,6 +123,17 @@ export function getPrimaryStatusBlock({
         nowTs <= alert.end
     );
 
+  const activeAlerts =
+    Array.isArray(alerts)
+      ? alerts.filter(
+          (alert) =>
+            typeof alert?.start === "number" &&
+            typeof alert?.end === "number" &&
+            nowTs >= alert.start &&
+            nowTs <= alert.end
+        )
+      : [];
+
   const soonAlert =
     Array.isArray(alerts) &&
     alerts.find(
@@ -80,12 +142,27 @@ export function getPrimaryStatusBlock({
         alert.start > nowTs
     );
 
+  const soonAlerts =
+    Array.isArray(alerts)
+      ? alerts.filter(
+          (alert) =>
+            typeof alert?.start === "number" &&
+            alert.start > nowTs
+        )
+      : [];
+
   // 🔴 AVÍS OFICIAL ACTIU
   if (activeAlert) {
+    const activeSummary = getOfficialAlertSummary(activeAlerts, "active");
+
     return {
       icon: "🚨",
-      title: t("official_alert") || "Avís meteorològic oficial actiu",
+      title:
+        activeSummary.title ||
+        t("official_alert") ||
+        "Avís meteorològic oficial actiu",
       text:
+        activeSummary.text ||
         t("follow_official_alerts") ||
         "Segueix les indicacions oficials i extrema la precaució.",
       className: "status-card status-alert",
@@ -94,10 +171,16 @@ export function getPrimaryStatusBlock({
 
   // 🟠 AVÍS OFICIAL PROPER
   if (soonAlert) {
+    const soonSummary = getOfficialAlertSummary(soonAlerts, "soon");
+
     return {
       icon: "⚠️",
-      title: t("official_alert_soon") || "Avís meteorològic oficial proper",
+      title:
+        soonSummary.title ||
+        t("official_alert_soon") ||
+        "Avís meteorològic oficial proper",
       text:
+        soonSummary.text ||
         t("follow_official_alerts_soon") ||
         "Hi ha un avís meteorològic previst. Revisa el detall i anticipa les mesures de precaució.",
       className: "status-card status-warning",
