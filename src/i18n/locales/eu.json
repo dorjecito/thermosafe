@@ -37,7 +37,7 @@
   "riskTrend": {
     "loading": "Datozen orduetarako iragarpena kalkulatzen ari da…",
     "unavailable": "Datozen orduetarako iragarpena ez dago erabilgarri.",
-    "stable": "Datozen orduetan ez da aldaketa garrantzitsurik espero.",
+    "stable": "Datozen orduetan baldintzak antzekoak izango dira.",
     "improving": "Datozen orduetan baldintzak hobetuko dira.",
     "improving_heat": "Datozen orduetan sentsazio termikoa jaitsiko da.",
     "improving_cold": "Datozen orduetan tenperaturak ez dira hain hotzak izango.",

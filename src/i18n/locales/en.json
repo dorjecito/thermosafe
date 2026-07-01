@@ -135,7 +135,7 @@
   "riskTrend": {
     "loading": "The forecast for the next few hours is being calculated…",
     "unavailable": "The forecast for the next few hours is not available.",
-    "stable": "No major changes are expected over the next few hours.",
+    "stable": "Conditions are expected to remain similar over the next few hours.",
     "improving": "Conditions are expected to improve over the next few hours.",
     "improving_heat": "The apparent temperature is expected to ease over the next few hours.",
     "improving_cold": "Temperatures are expected to be less cold over the next few hours.",

@@ -12,6 +12,7 @@ import * as React from "react";
 import { getHeatRisk } from "../utils/heatRisk";
 import { getColdRisk } from "../utils/getColdRisk";
 import { getUvLevelIndex } from "../utils/uv";
+import type { HeatDayPhase } from "../utils/isDayAtLocation";
 
 type Lang = "ca" | "es" | "eu" | "gl" | "en";
 type ActivityLevel = "rest" | "walk" | "moderate" | "intense";
@@ -25,6 +26,8 @@ type TextKeys =
   | "mild"
   | "moderate"
   | "high"
+  | "highLateDay"
+  | "highEvening"
   | "ext"
   | "uvModerate"
   | "uvHigh"
@@ -65,6 +68,7 @@ interface Props {
   cloudiness?: number | null;
   windKmh?: number | null;
   currentHour?: number;
+  heatDayPhase?: HeatDayPhase;
 }
 
 // ---------------------------------------------------------------
@@ -87,6 +91,10 @@ const TXT: TxtDict = {
       "Risc moderat d’estrès tèrmic. Programa pauses freqüents, redueix la càrrega física i mantén una hidratació constant.",
     high:
       "Risc alt per calor. Limita l’exposició prolongada i evita esforços físics intensos, especialment a les hores centrals del dia.",
+    highLateDay:
+      "Risc alt per calor. Mantén una bona hidratació i evita esforços físics intensos fins que les condicions millorin.",
+    highEvening:
+      "Risc alt per calor. Mantén una bona hidratació i continua limitant els esforços físics mentre persisteixi la calor.",
     ext:
       "Risc extrem per calor. Atura l’activitat immediatament i aplica mesures actives de refredament corporal.",
     uvModerate:
@@ -144,6 +152,10 @@ const TXT: TxtDict = {
       "Riesgo moderado de estrés térmico. Programa pausas frecuentes, reduce la carga física y mantén una hidratación constante.",
     high:
       "Riesgo alto por calor. Limita la exposición prolongada y evita esfuerzos físicos intensos, especialmente en las horas centrales del día.",
+    highLateDay:
+      "Riesgo alto por calor. Mantén una buena hidratación y evita esfuerzos físicos intensos hasta que las condiciones mejoren.",
+    highEvening:
+      "Riesgo alto por calor. Mantén una buena hidratación y sigue limitando los esfuerzos físicos mientras persista el calor.",
     ext:
       "Riesgo extremo por calor. Interrumpe la actividad de inmediato y aplica medidas activas de enfriamiento corporal.",
     uvModerate:
@@ -201,6 +213,10 @@ const TXT: TxtDict = {
       "Bero-estresaren arrisku ertaina. Egin atsedenaldi maizak, murriztu lan-karga fisikoa eta mantendu hidratazio jarraitua.",
     high:
       "Bero-arrisku handia. Mugatu esposizio luzea eta saihestu ahalegin fisiko handiak, bereziki eguneko erdiko orduetan.",
+    highLateDay:
+      "Bero-arrisku handia. Mantendu hidratazio egokia eta saihestu ahalegin fisiko handiak baldintzak hobetu arte.",
+    highEvening:
+      "Bero-arrisku handia. Mantendu hidratazio egokia eta jarraitu ahalegin fisikoak mugatzen beroak irauten duen bitartean.",
     ext:
       "Bero-arrisku muturrekoa. Gelditu jarduera berehala eta aplikatu gorputza hozteko neurri aktiboak.",
     uvModerate:
@@ -258,6 +274,10 @@ const TXT: TxtDict = {
       "Risco moderado de estrés térmico. Programa pausas frecuentes, reduce a carga física e mantén unha hidratación constante.",
     high:
       "Risco alto por calor. Limita a exposición prolongada e evita esforzos físicos intensos, especialmente nas horas centrais do día.",
+    highLateDay:
+      "Risco alto por calor. Mantén unha boa hidratación e evita esforzos físicos intensos ata que as condicións melloren.",
+    highEvening:
+      "Risco alto por calor. Mantén unha boa hidratación e continúa limitando os esforzos físicos mentres persista a calor.",
     ext:
       "Risco extremo por calor. Interrompe a actividade de inmediato e aplica medidas activas de arrefriamento corporal.",
     uvModerate:
@@ -315,6 +335,10 @@ const TXT: TxtDict = {
       "Moderate heat stress risk. Schedule frequent breaks, reduce physical strain and maintain constant hydration.",
     high:
       "High heat risk. Limit prolonged exposure and avoid intense physical effort, especially during the hottest hours of the day.",
+    highLateDay:
+      "High heat risk. Stay well hydrated and avoid intense physical effort until conditions improve.",
+    highEvening:
+      "High heat risk. Stay well hydrated and continue limiting physical effort while the heat persists.",
     ext:
       "Extreme heat risk. Stop activity immediately and apply active body-cooling measures.",
     uvModerate:
@@ -372,6 +396,7 @@ const normalizeLang = (lang: Lang | string): Lang => {
 // Helpers
 // ---------------------------------------------------------------
 type HeatKey = "safe" | "mild" | "moderate" | "high" | "ext";
+type HeatRecommendationKey = HeatKey | "highLateDay" | "highEvening";
 type ColdKey = "cold_low" | "cold_mod" | "cold_high" | "cold_ext";
 type UvKey = "uvModerate" | "uvHigh" | "uvVeryHigh" | "uvExtreme";
 type NightKey = "nightCool" | "nightSafe" | "nightHeat" | "tropicalNight";
@@ -423,6 +448,27 @@ const getNightKey = (effectiveTemp: number): NightKey => {
   if (effectiveTemp < 18) return "nightCool";
   if (effectiveTemp < 25) return "nightSafe";
   return "nightHeat";
+};
+
+const isCentralHeatHour = (hour?: number): boolean =>
+  typeof hour === "number" && Number.isFinite(hour) && hour >= 11 && hour < 17;
+
+const getHeatRecommendationKey = (
+  heatKey: HeatKey,
+  heatDayPhase?: HeatDayPhase,
+  currentHour?: number
+): HeatRecommendationKey => {
+  if (heatKey !== "high") return heatKey;
+
+  if (heatDayPhase === "evening" || heatDayPhase === "night") {
+    return "highEvening";
+  }
+
+  if (heatDayPhase === "late_day" || !isCentralHeatHour(currentHour)) {
+    return "highLateDay";
+  }
+
+  return "high";
 };
 
 const isRainyWeather = (weatherMain?: string): boolean =>
@@ -496,6 +542,7 @@ export default function Recommendations({
   cloudiness,
   windKmh,
   currentHour,
+  heatDayPhase,
 }: Props) {
   const lng = normalizeLang(lang);
 
@@ -560,12 +607,13 @@ export default function Recommendations({
   if (effectiveTemp >= 30 && isDay) {
     const riskObj = getHeatRisk(effectiveTemp, activity || "rest");
     const heatKey = mapHeatLevelToKey(riskObj.level);
+    const heatRecommendationKey = getHeatRecommendationKey(heatKey, heatDayPhase, currentHour);
 
     return (
       <RecommendationBox
         className={`recommendation-box ${heatKey}`}
         title={`${getIcon(heatKey)} ${t.title}`}
-        body={t[heatKey]}
+        body={t[heatRecommendationKey]}
         extra={joinExtras(
           humid && t.humid,
           uvKey === "uvHigh" && t.uvHigh,
@@ -662,11 +710,13 @@ if (isDay && uvKey) {
   const heatKey = mapHeatLevelToKey(riskObj?.level);
 
   if (heatKey !== "safe" && isDay) {
+    const heatRecommendationKey = getHeatRecommendationKey(heatKey, heatDayPhase, currentHour);
+
     return (
       <RecommendationBox
         className={`recommendation-box ${heatKey}`}
         title={`${getIcon(heatKey)} ${t.title}`}
-        body={t[heatKey]}
+        body={t[heatRecommendationKey]}
         extra={joinExtras(
           humid && t.humid,
           windyModerate && t.windModerate,

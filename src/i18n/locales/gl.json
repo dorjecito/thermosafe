@@ -37,7 +37,7 @@
   "riskTrend": {
     "loading": "Estase a calcular a previsión para as próximas horas…",
     "unavailable": "A previsión para as próximas horas non está dispoñible.",
-    "stable": "Durante as próximas horas non se esperan cambios importantes.",
+    "stable": "As condicións manteranse semellantes durante as próximas horas.",
     "improving": "Durante as próximas horas as condicións mellorarán.",
     "improving_heat": "A sensación térmica baixará durante as próximas horas.",
     "improving_cold": "As temperaturas serán menos frías durante as próximas horas.",

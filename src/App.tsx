@@ -2000,6 +2000,7 @@ return (
     cloudiness={data?.clouds?.all ?? null}
     windKmh={windKmh}
     currentHour={new Date().getHours()}
+    heatDayPhase={heatDayPhase}
 
   />
 
