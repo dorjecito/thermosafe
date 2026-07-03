@@ -73,6 +73,13 @@ export type RecommendationItem = {
   factor?: RecommendationFactor;
 };
 
+export type RecommendationFactorState = {
+  hasEngineFactors: boolean;
+  heat: boolean | null;
+  uv: boolean | null;
+  wind: boolean | null;
+};
+
 interface Props {
   temp: number;
   lang: Lang | string;
@@ -658,6 +665,28 @@ const factorItems = (
       }));
 };
 
+export const getRecommendationFactorState = (
+  riskFactors?: FactorRisk[]
+): RecommendationFactorState => {
+  const hasEngineFactors = Array.isArray(riskFactors);
+  const isActive = (factor: "heat" | "uv" | "wind"): boolean | null =>
+    hasEngineFactors
+      ? riskFactors.some(
+          (riskFactor) =>
+            riskFactor.factor === factor &&
+            riskFactor.active !== false &&
+            riskFactor.severity > 0
+        )
+      : null;
+
+  return {
+    hasEngineFactors,
+    heat: isActive("heat"),
+    uv: isActive("uv"),
+    wind: isActive("wind"),
+  };
+};
+
 // ---------------------------------------------------------------
 // ✅ Caixa de recomanació reutilitzable
 // ---------------------------------------------------------------
@@ -739,9 +768,16 @@ export default function Recommendations({
   const humid = typeof humidity === "number" && humidity >= 70 && effectiveTemp >= 24;
   const windyModerate = typeof windKmh === "number" && windKmh >= 25 && windKmh < 45;
   const windyStrong = typeof windKmh === "number" && windKmh >= 45;
+  const factorState = getRecommendationFactorState(riskFactors);
+  const heatActive = factorState.heat ?? true;
+  const uvActive = factorState.uv ?? true;
+  const windActive = factorState.wind ?? true;
+  const showWindModerate = windActive && windyModerate;
+  const showWindStrong = windActive && windyStrong;
   const veryCloudy = typeof cloudiness === "number" && cloudiness >= 75;
   const uvSuppressedByWeather =
   isDay &&
+  uvActive &&
   !!uvKey &&
   (veryCloudy || rainy || stormy);
 
@@ -777,14 +813,14 @@ export default function Recommendations({
         items={factorItems(
           riskFactors,
           { factor: "cold", icon: "🥶", label: t.factorCold, text: t[coldKey] },
-          windyModerate && { factor: "wind", icon: "🌬️", label: t.factorWind, text: t.windModerate },
-          windyStrong && { factor: "wind", icon: "🌬️", label: t.factorWind, text: t.windStrong },
+          showWindModerate && { factor: "wind", icon: "🌬️", label: t.factorWind, text: t.windModerate },
+          showWindStrong && { factor: "wind", icon: "🌬️", label: t.factorWind, text: t.windStrong },
           stormy && { factor: "storm", icon: "⛈️", label: t.factorStorm, text: t.storm },
           rainy && !stormy && { factor: "rain", icon: "🌧️", label: t.factorRain, text: t.rain }
         )}
         extra={joinExtras(
-          windyModerate && t.windModerate,
-          windyStrong && t.windStrong,
+          showWindModerate && t.windModerate,
+          showWindStrong && t.windStrong,
           stormy && t.storm,
           rainy && !stormy && t.rain
         )}
@@ -795,7 +831,7 @@ export default function Recommendations({
   /* =========================================================
      2️⃣ CALOR IMPORTANT — abans que UV moderat
   ========================================================== */
-  if (effectiveTemp >= 30 && isDay) {
+  if (heatActive && effectiveTemp >= 30 && isDay) {
     const riskObj = getHeatRisk(effectiveTemp, activity || "rest");
     const heatKey = mapHeatLevelToKey(riskObj.level);
     const heatRecommendationKey = getHeatRecommendationKey(heatKey, heatDayPhase, currentHour);
@@ -809,19 +845,19 @@ export default function Recommendations({
           riskFactors,
           { factor: "heat", icon: "🌡️", label: t.factorHeat, text: t[heatRecommendationKey] },
           humid && { factor: "humidity", icon: "💧", label: t.factorHumidity, text: t.humid },
-          uvKey === "uvHigh" && { factor: "uv", icon: "☀️", label: t.factorUv, text: t.uvHigh },
-          uvKey === "uvVeryHigh" && { factor: "uv", icon: "☀️", label: t.factorUv, text: t.uvVeryHigh },
-          uvKey === "uvExtreme" && { factor: "uv", icon: "☀️", label: t.factorUv, text: t.uvExtreme },
-          windyModerate && { factor: "wind", icon: "🌬️", label: t.factorWind, text: t.windModerate },
-          windyStrong && { factor: "wind", icon: "🌬️", label: t.factorWind, text: t.windStrong }
+          uvActive && uvKey === "uvHigh" && { factor: "uv", icon: "☀️", label: t.factorUv, text: t.uvHigh },
+          uvActive && uvKey === "uvVeryHigh" && { factor: "uv", icon: "☀️", label: t.factorUv, text: t.uvVeryHigh },
+          uvActive && uvKey === "uvExtreme" && { factor: "uv", icon: "☀️", label: t.factorUv, text: t.uvExtreme },
+          showWindModerate && { factor: "wind", icon: "🌬️", label: t.factorWind, text: t.windModerate },
+          showWindStrong && { factor: "wind", icon: "🌬️", label: t.factorWind, text: t.windStrong }
         )}
         extra={joinExtras(
           humid && t.humid,
-          uvKey === "uvHigh" && t.uvHigh,
-          uvKey === "uvVeryHigh" && t.uvVeryHigh,
-          uvKey === "uvExtreme" && t.uvExtreme,
-          windyModerate && t.windModerate,
-          windyStrong && t.windStrong
+          uvActive && uvKey === "uvHigh" && t.uvHigh,
+          uvActive && uvKey === "uvVeryHigh" && t.uvVeryHigh,
+          uvActive && uvKey === "uvExtreme" && t.uvExtreme,
+          showWindModerate && t.windModerate,
+          showWindStrong && t.windStrong
         )}
       />
     );
@@ -830,7 +866,7 @@ export default function Recommendations({
   /* =========================================================
      2.5️⃣ VENT FORT — prioritat sobre UV i casos suaus
   ========================================================== */
-  if (windyStrong) {
+  if (showWindStrong) {
     return (
       <RecommendationBox
         className="recommendation-box windStrong"
@@ -840,17 +876,17 @@ export default function Recommendations({
           riskFactors,
           { factor: "wind", icon: "🌬️", label: t.factorWind, text: t.windStrong },
           humid && { factor: "humidity", icon: "💧", label: t.factorHumidity, text: t.humid },
-          uvKey === "uvHigh" && { factor: "uv", icon: "☀️", label: t.factorUv, text: t.uvHigh },
-          uvKey === "uvVeryHigh" && { factor: "uv", icon: "☀️", label: t.factorUv, text: t.uvVeryHigh },
-          uvKey === "uvExtreme" && { factor: "uv", icon: "☀️", label: t.factorUv, text: t.uvExtreme },
+          uvActive && uvKey === "uvHigh" && { factor: "uv", icon: "☀️", label: t.factorUv, text: t.uvHigh },
+          uvActive && uvKey === "uvVeryHigh" && { factor: "uv", icon: "☀️", label: t.factorUv, text: t.uvVeryHigh },
+          uvActive && uvKey === "uvExtreme" && { factor: "uv", icon: "☀️", label: t.factorUv, text: t.uvExtreme },
           rainy && !stormy && { factor: "rain", icon: "🌧️", label: t.factorRain, text: t.rain },
           stormy && { factor: "storm", icon: "⛈️", label: t.factorStorm, text: t.storm }
         )}
         extra={joinExtras(
           humid && t.humid,
-          uvKey === "uvHigh" && t.uvHigh,
-          uvKey === "uvVeryHigh" && t.uvVeryHigh,
-          uvKey === "uvExtreme" && t.uvExtreme,
+          uvActive && uvKey === "uvHigh" && t.uvHigh,
+          uvActive && uvKey === "uvVeryHigh" && t.uvVeryHigh,
+          uvActive && uvKey === "uvExtreme" && t.uvExtreme,
           rainy && !stormy && t.rain,
           stormy && t.storm
         )}
@@ -869,13 +905,13 @@ export default function Recommendations({
       body={joinLines(
       stormy ? t.storm : rainy ? t.rain : t.safeUvCloudy,
       humid && t.humid,
-      windyModerate && t.windModerate
+      showWindModerate && t.windModerate
     )}
     />
   );
 } 
 
-if (isDay && uvKey) {
+if (isDay && uvActive && uvKey) {
     return (
       <RecommendationBox
         className={`recommendation-box ${uvKey}`}
@@ -885,15 +921,15 @@ if (isDay && uvKey) {
           riskFactors,
           { factor: "uv", icon: "☀️", label: t.factorUv, text: t[uvKey] },
           humid && { factor: "humidity", icon: "💧", label: t.factorHumidity, text: t.humid },
-          windyModerate && { factor: "wind", icon: "🌬️", label: t.factorWind, text: t.windModerate },
-          windyStrong && { factor: "wind", icon: "🌬️", label: t.factorWind, text: t.windStrong },
+          showWindModerate && { factor: "wind", icon: "🌬️", label: t.factorWind, text: t.windModerate },
+          showWindStrong && { factor: "wind", icon: "🌬️", label: t.factorWind, text: t.windStrong },
           rainy && !stormy && { factor: "rain", icon: "🌧️", label: t.factorRain, text: t.rain },
           stormy && { factor: "storm", icon: "⛈️", label: t.factorStorm, text: t.storm }
         )}
         extra={joinExtras(
           humid && t.humid,
-          windyModerate && t.windModerate,
-          windyStrong && t.windStrong,
+          showWindModerate && t.windModerate,
+          showWindStrong && t.windStrong,
           rainy && !stormy && t.rain,
           stormy && t.storm
         )}
@@ -916,15 +952,15 @@ if (isDay && uvKey) {
           riskFactors,
           { factor: "night", icon: "🌙", label: t.factorNight, text: t[nightKey] },
           humid && { factor: "humidity", icon: "💧", label: t.factorHumidity, text: t.humid },
-          windyModerate && { factor: "wind", icon: "🌬️", label: t.factorWind, text: t.windModerate },
-          windyStrong && { factor: "wind", icon: "🌬️", label: t.factorWind, text: t.windStrong },
+          showWindModerate && { factor: "wind", icon: "🌬️", label: t.factorWind, text: t.windModerate },
+          showWindStrong && { factor: "wind", icon: "🌬️", label: t.factorWind, text: t.windStrong },
           rainy && !stormy && { factor: "rain", icon: "🌧️", label: t.factorRain, text: t.rain },
           stormy && { factor: "storm", icon: "⛈️", label: t.factorStorm, text: t.storm }
         )}
         extra={joinExtras(
           humid && t.humid,
-          windyModerate && t.windModerate,
-          windyStrong && t.windStrong,
+          showWindModerate && t.windModerate,
+          showWindStrong && t.windStrong,
           rainy && !stormy && t.rain,
           stormy && t.storm
         )}
@@ -938,7 +974,7 @@ if (isDay && uvKey) {
   const riskObj = getHeatRisk(effectiveTemp, activity || "rest");
   const heatKey = mapHeatLevelToKey(riskObj?.level);
 
-  if (heatKey !== "safe" && isDay) {
+  if (heatActive && heatKey !== "safe" && isDay) {
     const heatRecommendationKey = getHeatRecommendationKey(heatKey, heatDayPhase, currentHour);
 
     return (
@@ -950,13 +986,13 @@ if (isDay && uvKey) {
           riskFactors,
           { factor: "heat", icon: "🌡️", label: t.factorHeat, text: t[heatRecommendationKey] },
           humid && { factor: "humidity", icon: "💧", label: t.factorHumidity, text: t.humid },
-          windyModerate && { factor: "wind", icon: "🌬️", label: t.factorWind, text: t.windModerate },
-          windyStrong && { factor: "wind", icon: "🌬️", label: t.factorWind, text: t.windStrong }
+          showWindModerate && { factor: "wind", icon: "🌬️", label: t.factorWind, text: t.windModerate },
+          showWindStrong && { factor: "wind", icon: "🌬️", label: t.factorWind, text: t.windStrong }
         )}
         extra={joinExtras(
           humid && t.humid,
-          windyModerate && t.windModerate,
-          windyStrong && t.windStrong
+          showWindModerate && t.windModerate,
+          showWindStrong && t.windStrong
         )}
       />
     );
@@ -965,7 +1001,7 @@ if (isDay && uvKey) {
   /* =========================================================
      6️⃣ CASOS SEGURS / CONTEXTUALS
   ========================================================== */
-  if (isDay && uvKey === "uvModerate") {
+  if (isDay && uvActive && uvKey === "uvModerate") {
     return (
       <RecommendationBox
         className="recommendation-box safe"
@@ -973,13 +1009,13 @@ if (isDay && uvKey) {
         body={joinLines(
           t.safeUvModerate,
           humid && t.humid,
-          windyModerate && t.windModerate
+          showWindModerate && t.windModerate
         )}
       />
     );
   }
 
-  if (windyModerate) {
+  if (showWindModerate) {
     return (
       <RecommendationBox
         className="recommendation-box safe"

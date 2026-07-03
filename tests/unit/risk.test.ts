@@ -28,6 +28,7 @@ import {
   type RiskEngineInput,
 } from "../../src/utils/riskScoreEngine";
 import {
+  getRecommendationFactorState,
   sortItemsByRiskFactors,
   type RecommendationItem,
 } from "../../src/components/Recommendations";
@@ -340,6 +341,100 @@ test("recommendation factor ordering keeps unknown factors stable", () => {
     sortItemsByRiskFactors(items, riskFactors).map((item) => item.factor),
     ["heat", "wind", "humidity", "rain"]
   );
+});
+
+test("recommendation factor state uses RiskScoreEngine factors when available", () => {
+  assert.deepEqual(getRecommendationFactorState(), {
+    hasEngineFactors: false,
+    heat: null,
+    uv: null,
+    wind: null,
+  });
+
+  const heatUvWind = evaluateRiskScore({
+    heatIndex: 35,
+    coldEffectiveTemp: 35,
+    uvi: 8,
+    windKmh: 33,
+  }).activeFactorsSorted;
+
+  assert.deepEqual(getRecommendationFactorState(heatUvWind), {
+    hasEngineFactors: true,
+    heat: true,
+    uv: true,
+    wind: true,
+  });
+
+  const noRisk = evaluateRiskScore({
+    heatIndex: 22,
+    coldEffectiveTemp: 22,
+    uvi: 1,
+    windKmh: 8,
+  }).activeFactorsSorted;
+
+  assert.deepEqual(getRecommendationFactorState(noRisk), {
+    hasEngineFactors: true,
+    heat: false,
+    uv: false,
+    wind: false,
+  });
+});
+
+test("recommendation factor state covers heat uv wind combinations from RiskScoreEngine", () => {
+  const cases: Array<{
+    name: string;
+    input: RiskEngineInput;
+    expected: Pick<
+      ReturnType<typeof getRecommendationFactorState>,
+      "heat" | "uv" | "wind"
+    >;
+  }> = [
+    {
+      name: "heat",
+      input: { heatIndex: 35, coldEffectiveTemp: 35, uvi: 1, windKmh: 8 },
+      expected: { heat: true, uv: false, wind: false },
+    },
+    {
+      name: "uv",
+      input: { heatIndex: 24, coldEffectiveTemp: 24, uvi: 8, windKmh: 8 },
+      expected: { heat: false, uv: true, wind: false },
+    },
+    {
+      name: "wind",
+      input: { heatIndex: 24, coldEffectiveTemp: 24, uvi: 1, windKmh: 33 },
+      expected: { heat: false, uv: false, wind: true },
+    },
+    {
+      name: "heat + wind",
+      input: { heatIndex: 35, coldEffectiveTemp: 35, uvi: 1, windKmh: 33 },
+      expected: { heat: true, uv: false, wind: true },
+    },
+    {
+      name: "heat + uv",
+      input: { heatIndex: 35, coldEffectiveTemp: 35, uvi: 8, windKmh: 8 },
+      expected: { heat: true, uv: true, wind: false },
+    },
+    {
+      name: "uv + wind",
+      input: { heatIndex: 24, coldEffectiveTemp: 24, uvi: 8, windKmh: 33 },
+      expected: { heat: false, uv: true, wind: true },
+    },
+    {
+      name: "heat + uv + wind",
+      input: { heatIndex: 35, coldEffectiveTemp: 35, uvi: 8, windKmh: 33 },
+      expected: { heat: true, uv: true, wind: true },
+    },
+  ];
+
+  for (const scenario of cases) {
+    const state = getRecommendationFactorState(
+      evaluateRiskScore(scenario.input).activeFactorsSorted
+    );
+
+    assert.equal(state.heat, scenario.expected.heat, scenario.name);
+    assert.equal(state.uv, scenario.expected.uv, scenario.name);
+    assert.equal(state.wind, scenario.expected.wind, scenario.name);
+  }
 });
 
 test("risk score engine sorted active factors omit inactive risks", () => {
