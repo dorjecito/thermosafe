@@ -2652,6 +2652,52 @@ body,
   margin-bottom: 0.55rem;
 }
 
+.recommendation-factor-list {
+  display: grid;
+  gap: 0.58rem;
+}
+
+.recommendation-factor-item {
+  display: grid;
+  grid-template-columns: 1.35rem 1fr;
+  gap: 0.48rem;
+  align-items: start;
+  padding-top: 0.58rem;
+  border-top: 1px solid rgba(15, 23, 42, 0.09);
+}
+
+.recommendation-factor-item:first-child {
+  padding-top: 0;
+  border-top: 0;
+}
+
+.recommendation-factor-icon {
+  line-height: 1.35;
+  text-align: center;
+}
+
+.recommendation-factor-content {
+  display: grid;
+  gap: 0.12rem;
+}
+
+.recommendation-factor-label {
+  display: block;
+  font-weight: 800;
+  line-height: 1.2;
+}
+
+.recommendation-factor-text {
+  display: block;
+  line-height: 1.42;
+}
+
+@media (prefers-color-scheme: dark) {
+  .recommendation-factor-item {
+    border-top-color: rgba(255, 255, 255, 0.14);
+  }
+}
+
 @media (max-width: 640px) {
   .work-window-card {
     padding: 0.96rem 1rem !important;
@@ -2666,5 +2712,15 @@ body,
   .recommendation-box {
     padding-top: 0.78rem !important;
     padding-bottom: 0.8rem !important;
+  }
+
+  .recommendation-factor-list {
+    gap: 0.5rem;
+  }
+
+  .recommendation-factor-item {
+    grid-template-columns: 1.2rem 1fr;
+    gap: 0.42rem;
+    padding-top: 0.5rem;
   }
 }

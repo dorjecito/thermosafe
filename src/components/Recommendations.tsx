@@ -23,6 +23,14 @@ type TextKeys =
   | "safeUvModerate"
   | "safeWind"
   | "safeCloudy"
+  | "factorHeat"
+  | "factorCold"
+  | "factorUv"
+  | "factorWind"
+  | "factorHumidity"
+  | "factorRain"
+  | "factorStorm"
+  | "factorNight"
   | "mild"
   | "moderate"
   | "high"
@@ -51,6 +59,7 @@ type TextKeys =
 
 type TextPack = Record<TextKeys, string>;
 type TxtDict = Record<Lang, TextPack>;
+type RecommendationItem = { icon: string; label: string; text: string };
 
 interface Props {
   temp: number;
@@ -85,6 +94,14 @@ const TXT: TxtDict = {
       "Vent moderat. Assegura objectes, evita manipular materials lleugers exposats i augmenta la precaució amb eines o treballs a l’exterior.",
     safeCloudy:
       "Condicions generals favorables. Tot i els núvols, mantén vigilància bàsica si estàs molta estona a l’exterior.",
+    factorHeat: "Calor",
+    factorCold: "Fred",
+    factorUv: "Radiació UV",
+    factorWind: "Vent",
+    factorHumidity: "Humitat",
+    factorRain: "Pluja",
+    factorStorm: "Tempestes",
+    factorNight: "Nit",
     mild:
       "Precaució lleu per calor. Pot aparèixer fatiga tèrmica si mantens esforç físic. Beu aigua amb freqüència i fes pauses en llocs frescos.",
     moderate:
@@ -146,6 +163,14 @@ const TXT: TxtDict = {
       "Viento moderado. Asegura objetos, evita manipular materiales ligeros expuestos y aumenta la precaución con herramientas o trabajos al aire libre.",
     safeCloudy:
       "Condiciones generales favorables. Aunque haya nubes, mantén vigilancia básica si pasas mucho tiempo al aire libre.",
+    factorHeat: "Calor",
+    factorCold: "Frío",
+    factorUv: "Radiación UV",
+    factorWind: "Viento",
+    factorHumidity: "Humedad",
+    factorRain: "Lluvia",
+    factorStorm: "Tormentas",
+    factorNight: "Noche",
     mild:
       "Precaución leve por calor. Puede aparecer fatiga térmica si mantienes esfuerzo físico. Bebe agua con frecuencia y programa pausas en lugares frescos.",
     moderate:
@@ -207,6 +232,14 @@ const TXT: TxtDict = {
       "Haize moderatua. Lotu objektuak, saihestu agerian dauden material arinak manipulatzea eta handitu arreta tresnekin edo kanpoko lanetan.",
     safeCloudy:
       "Baldintza orokorrak onak dira. Hodeiak egon arren, mantendu oinarrizko arreta kanpoan denbora asko ematen baduzu.",
+    factorHeat: "Beroa",
+    factorCold: "Hotza",
+    factorUv: "UV erradiazioa",
+    factorWind: "Haizea",
+    factorHumidity: "Hezetasuna",
+    factorRain: "Euria",
+    factorStorm: "Ekaitzak",
+    factorNight: "Gaua",
     mild:
       "Beroagatik arreta arina. Ahalegin fisikoa mantenduz gero nekea ager daiteke. Edan ura maiz eta egin atsedenaldiak leku freskoetan.",
     moderate:
@@ -268,6 +301,14 @@ const TXT: TxtDict = {
       "Vento moderado. Asegura obxectos, evita manipular materiais lixeiros expostos e aumenta a precaución con ferramentas ou traballos ao aire libre.",
     safeCloudy:
       "Condicións xerais favorables. Aínda con nubes, mantén unha vixilancia básica se pasas moito tempo ao aire libre.",
+    factorHeat: "Calor",
+    factorCold: "Frío",
+    factorUv: "Radiación UV",
+    factorWind: "Vento",
+    factorHumidity: "Humidade",
+    factorRain: "Chuvia",
+    factorStorm: "Treboadas",
+    factorNight: "Noite",
     mild:
       "Precaución leve por calor. Pode aparecer fatiga térmica se mantés esforzo físico. Bebe auga con frecuencia e fai pausas en lugares frescos.",
     moderate:
@@ -329,6 +370,14 @@ const TXT: TxtDict = {
       "Moderate wind. Secure objects, avoid handling exposed light materials and increase caution with tools or outdoor work.",
     safeCloudy:
       "Generally favourable conditions. Even with clouds, maintain basic awareness if you remain outdoors for long periods.",
+    factorHeat: "Heat",
+    factorCold: "Cold",
+    factorUv: "UV radiation",
+    factorWind: "Wind",
+    factorHumidity: "Humidity",
+    factorRain: "Rain",
+    factorStorm: "Storms",
+    factorNight: "Night",
     mild:
       "Mild heat caution. Heat fatigue may occur if physical effort continues. Drink water regularly and take breaks in cool places.",
     moderate:
@@ -496,6 +545,84 @@ const joinLines = (...parts: Array<string | undefined | null | false>): string =
   return clean.join("\n\n");
 };
 
+const ucfirst = (text: string): string =>
+  text.length ? `${text.charAt(0).toLocaleUpperCase()}${text.slice(1)}` : text;
+
+const compactGroupedRecommendationText = (item: RecommendationItem): string => {
+  let text = item.text.trim();
+
+  const replacements: Array<[RegExp, string]> = [
+    [/^Radiació UV\s+/i, ""],
+    [/^Radiación UV\s+/i, ""],
+    [/^UV erradiazio\s+/i, ""],
+    [/^UV radiation\s+/i, ""],
+    [/^(Moderate|High|Very high|Extreme) UV radiation\b/i, "$1"],
+
+    [/^Vent\s+/i, ""],
+    [/^Viento\s+/i, ""],
+    [/^Vento\s+/i, ""],
+    [/^Haize\s+/i, ""],
+    [/^(Moderate|Strong) wind\b/i, "$1"],
+
+    [/^Humitat\s+/i, ""],
+    [/^Humedad\s+/i, ""],
+    [/^Humidade\s+/i, ""],
+    [/^Hezetasun\s+/i, ""],
+    [/^High humidity\b/i, "High"],
+
+    [/^Fred\s+/i, ""],
+    [/^Fr[ií]o\s+/i, ""],
+    [/^Hotz\s+/i, ""],
+    [/^Cold\s+/i, ""],
+
+    [/^Nit\s+/i, ""],
+    [/^Noche\s+/i, ""],
+    [/^Noite\s+/i, ""],
+    [/^Gau\s+/i, ""],
+
+    [/^Precaució lleu per calor\./i, "Precaució lleu."],
+    [/^Risc alt per calor\./i, "Risc alt."],
+    [/^Risc extrem per calor\./i, "Risc extrem."],
+    [/^Precaución leve por calor\./i, "Precaución leve."],
+    [/^Riesgo alto por calor\./i, "Riesgo alto."],
+    [/^Riesgo extremo por calor\./i, "Riesgo extremo."],
+    [/^Precaución leve por calor\./i, "Precaución leve."],
+    [/^Risco alto por calor\./i, "Risco alto."],
+    [/^Risco extremo por calor\./i, "Risco extremo."],
+    [/^Mild heat caution\./i, "Mild caution."],
+    [/^High heat risk\./i, "High risk."],
+    [/^Extreme heat risk\./i, "Extreme risk."],
+    [/^Beroagatik arreta arina\./i, "Arreta arina."],
+    [/^Bero-arrisku handia\./i, "Arrisku handia."],
+    [/^Bero-arrisku muturrekoa\./i, "Arrisku muturrekoa."],
+  ];
+
+  for (const [pattern, replacement] of replacements) {
+    if (pattern.test(text)) {
+      text = text.replace(pattern, replacement).trim();
+      break;
+    }
+  }
+
+  return ucfirst(text);
+};
+
+const factorItems = (
+  ...items: Array<RecommendationItem | undefined | null | false>
+): RecommendationItem[] | undefined => {
+  const clean = items
+    .filter(Boolean)
+    .map((item) => item as RecommendationItem)
+    .filter((item) => item.text.trim().length > 0);
+
+  return clean.length > 1
+    ? clean.map((item) => ({
+        ...item,
+        text: compactGroupedRecommendationText(item),
+      }))
+    : undefined;
+};
+
 // ---------------------------------------------------------------
 // ✅ Caixa de recomanació reutilitzable
 // ---------------------------------------------------------------
@@ -504,21 +631,41 @@ function RecommendationBox({
   title,
   body,
   extra,
+  items,
 }: {
   className: string;
   title: string;
   body: string;
   extra?: string;
+  items?: RecommendationItem[];
 }) {
   return (
     <div className={className}>
       <p className="recommendation-title">{title}</p>
-      <p style={{ whiteSpace: "pre-line" }}>{body}</p>
-      {extra ? (
-        <p style={{ marginTop: "0.6rem", opacity: 0.95, whiteSpace: "pre-line" }}>
-          {extra}
-        </p>
-      ) : null}
+      {items?.length ? (
+        <div className="recommendation-factor-list">
+          {items.map((item, index) => (
+            <div className="recommendation-factor-item" key={`${item.icon}-${index}`}>
+              <span className="recommendation-factor-icon" aria-hidden="true">
+                {item.icon}
+              </span>
+              <span className="recommendation-factor-content">
+                <strong className="recommendation-factor-label">{item.label}</strong>
+                <span className="recommendation-factor-text">{item.text}</span>
+              </span>
+            </div>
+          ))}
+        </div>
+      ) : (
+        <>
+          <p style={{ whiteSpace: "pre-line" }}>{body}</p>
+          {extra ? (
+            <p style={{ marginTop: "0.6rem", opacity: 0.95, whiteSpace: "pre-line" }}>
+              {extra}
+            </p>
+          ) : null}
+        </>
+      )}
     </div>
   );
 }
@@ -591,6 +738,13 @@ export default function Recommendations({
         className={`recommendation-box ${coldKey}`}
         title={`${getIcon(coldKey)} ${t.title}`}
         body={t[coldKey]}
+        items={factorItems(
+          { icon: "🥶", label: t.factorCold, text: t[coldKey] },
+          windyModerate && { icon: "🌬️", label: t.factorWind, text: t.windModerate },
+          windyStrong && { icon: "🌬️", label: t.factorWind, text: t.windStrong },
+          stormy && { icon: "⛈️", label: t.factorStorm, text: t.storm },
+          rainy && !stormy && { icon: "🌧️", label: t.factorRain, text: t.rain }
+        )}
         extra={joinExtras(
           windyModerate && t.windModerate,
           windyStrong && t.windStrong,
@@ -614,6 +768,15 @@ export default function Recommendations({
         className={`recommendation-box ${heatKey}`}
         title={`${getIcon(heatKey)} ${t.title}`}
         body={t[heatRecommendationKey]}
+        items={factorItems(
+          { icon: "🌡️", label: t.factorHeat, text: t[heatRecommendationKey] },
+          humid && { icon: "💧", label: t.factorHumidity, text: t.humid },
+          uvKey === "uvHigh" && { icon: "☀️", label: t.factorUv, text: t.uvHigh },
+          uvKey === "uvVeryHigh" && { icon: "☀️", label: t.factorUv, text: t.uvVeryHigh },
+          uvKey === "uvExtreme" && { icon: "☀️", label: t.factorUv, text: t.uvExtreme },
+          windyModerate && { icon: "🌬️", label: t.factorWind, text: t.windModerate },
+          windyStrong && { icon: "🌬️", label: t.factorWind, text: t.windStrong }
+        )}
         extra={joinExtras(
           humid && t.humid,
           uvKey === "uvHigh" && t.uvHigh,
@@ -635,6 +798,15 @@ export default function Recommendations({
         className="recommendation-box windStrong"
         title={`${getIcon("windStrong")} ${t.title}`}
         body={t.windStrong}
+        items={factorItems(
+          { icon: "🌬️", label: t.factorWind, text: t.windStrong },
+          humid && { icon: "💧", label: t.factorHumidity, text: t.humid },
+          uvKey === "uvHigh" && { icon: "☀️", label: t.factorUv, text: t.uvHigh },
+          uvKey === "uvVeryHigh" && { icon: "☀️", label: t.factorUv, text: t.uvVeryHigh },
+          uvKey === "uvExtreme" && { icon: "☀️", label: t.factorUv, text: t.uvExtreme },
+          rainy && !stormy && { icon: "🌧️", label: t.factorRain, text: t.rain },
+          stormy && { icon: "⛈️", label: t.factorStorm, text: t.storm }
+        )}
         extra={joinExtras(
           humid && t.humid,
           uvKey === "uvHigh" && t.uvHigh,
@@ -670,6 +842,14 @@ if (isDay && uvKey) {
         className={`recommendation-box ${uvKey}`}
         title={`${getIcon(uvKey)} ${t.title}`}
         body={t[uvKey]}
+        items={factorItems(
+          { icon: "☀️", label: t.factorUv, text: t[uvKey] },
+          humid && { icon: "💧", label: t.factorHumidity, text: t.humid },
+          windyModerate && { icon: "🌬️", label: t.factorWind, text: t.windModerate },
+          windyStrong && { icon: "🌬️", label: t.factorWind, text: t.windStrong },
+          rainy && !stormy && { icon: "🌧️", label: t.factorRain, text: t.rain },
+          stormy && { icon: "⛈️", label: t.factorStorm, text: t.storm }
+        )}
         extra={joinExtras(
           humid && t.humid,
           windyModerate && t.windModerate,
@@ -692,6 +872,14 @@ if (isDay && uvKey) {
         className={`recommendation-box ${nightKey}`}
         title={`${getIcon(nightKey)} ${t.title}`}
         body={t[nightKey]}
+        items={factorItems(
+          { icon: "🌙", label: t.factorNight, text: t[nightKey] },
+          humid && { icon: "💧", label: t.factorHumidity, text: t.humid },
+          windyModerate && { icon: "🌬️", label: t.factorWind, text: t.windModerate },
+          windyStrong && { icon: "🌬️", label: t.factorWind, text: t.windStrong },
+          rainy && !stormy && { icon: "🌧️", label: t.factorRain, text: t.rain },
+          stormy && { icon: "⛈️", label: t.factorStorm, text: t.storm }
+        )}
         extra={joinExtras(
           humid && t.humid,
           windyModerate && t.windModerate,
@@ -717,6 +905,12 @@ if (isDay && uvKey) {
         className={`recommendation-box ${heatKey}`}
         title={`${getIcon(heatKey)} ${t.title}`}
         body={t[heatRecommendationKey]}
+        items={factorItems(
+          { icon: "🌡️", label: t.factorHeat, text: t[heatRecommendationKey] },
+          humid && { icon: "💧", label: t.factorHumidity, text: t.humid },
+          windyModerate && { icon: "🌬️", label: t.factorWind, text: t.windModerate },
+          windyStrong && { icon: "🌬️", label: t.factorWind, text: t.windStrong }
+        )}
         extra={joinExtras(
           humid && t.humid,
           windyModerate && t.windModerate,
