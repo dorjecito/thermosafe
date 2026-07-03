@@ -13,6 +13,7 @@ import { getHeatRisk } from "../utils/heatRisk";
 import { getColdRisk } from "../utils/getColdRisk";
 import { getUvLevelIndex } from "../utils/uv";
 import type { HeatDayPhase } from "../utils/isDayAtLocation";
+import type { FactorRisk } from "../utils/riskScoreEngine";
 
 type Lang = "ca" | "es" | "eu" | "gl" | "en";
 type ActivityLevel = "rest" | "walk" | "moderate" | "intense";
@@ -59,7 +60,18 @@ type TextKeys =
 
 type TextPack = Record<TextKeys, string>;
 type TxtDict = Record<Lang, TextPack>;
-type RecommendationItem = { icon: string; label: string; text: string };
+type RecommendationFactor =
+  | FactorRisk["factor"]
+  | "humidity"
+  | "rain"
+  | "storm"
+  | "night";
+export type RecommendationItem = {
+  icon: string;
+  label: string;
+  text: string;
+  factor?: RecommendationFactor;
+};
 
 interface Props {
   temp: number;
@@ -78,6 +90,7 @@ interface Props {
   windKmh?: number | null;
   currentHour?: number;
   heatDayPhase?: HeatDayPhase;
+  riskFactors?: FactorRisk[];
 }
 
 // ---------------------------------------------------------------
@@ -607,7 +620,29 @@ const compactGroupedRecommendationText = (item: RecommendationItem): string => {
   return ucfirst(text);
 };
 
+export const sortItemsByRiskFactors = (
+  items: RecommendationItem[],
+  riskFactors?: FactorRisk[]
+): RecommendationItem[] => {
+  if (!riskFactors?.length) return items;
+
+  const factorOrder = new Map<RecommendationFactor, number>(
+    riskFactors.map((factor, index) => [factor.factor, index])
+  );
+
+  return [...items].sort((a, b) => {
+    const orderA = a.factor ? factorOrder.get(a.factor) : undefined;
+    const orderB = b.factor ? factorOrder.get(b.factor) : undefined;
+
+    if (orderA === undefined && orderB === undefined) return 0;
+    if (orderA === undefined) return 1;
+    if (orderB === undefined) return -1;
+    return orderA - orderB;
+  });
+};
+
 const factorItems = (
+  riskFactors: FactorRisk[] | undefined,
   ...items: Array<RecommendationItem | undefined | null | false>
 ): RecommendationItem[] | undefined => {
   const clean = items
@@ -615,12 +650,12 @@ const factorItems = (
     .map((item) => item as RecommendationItem)
     .filter((item) => item.text.trim().length > 0);
 
-  return clean.length > 1
-    ? clean.map((item) => ({
+  if (clean.length <= 1) return undefined;
+
+  return sortItemsByRiskFactors(clean, riskFactors).map((item) => ({
         ...item,
         text: compactGroupedRecommendationText(item),
-      }))
-    : undefined;
+      }));
 };
 
 // ---------------------------------------------------------------
@@ -690,6 +725,7 @@ export default function Recommendations({
   windKmh,
   currentHour,
   heatDayPhase,
+  riskFactors,
 }: Props) {
   const lng = normalizeLang(lang);
 
@@ -739,11 +775,12 @@ export default function Recommendations({
         title={`${getIcon(coldKey)} ${t.title}`}
         body={t[coldKey]}
         items={factorItems(
-          { icon: "🥶", label: t.factorCold, text: t[coldKey] },
-          windyModerate && { icon: "🌬️", label: t.factorWind, text: t.windModerate },
-          windyStrong && { icon: "🌬️", label: t.factorWind, text: t.windStrong },
-          stormy && { icon: "⛈️", label: t.factorStorm, text: t.storm },
-          rainy && !stormy && { icon: "🌧️", label: t.factorRain, text: t.rain }
+          riskFactors,
+          { factor: "cold", icon: "🥶", label: t.factorCold, text: t[coldKey] },
+          windyModerate && { factor: "wind", icon: "🌬️", label: t.factorWind, text: t.windModerate },
+          windyStrong && { factor: "wind", icon: "🌬️", label: t.factorWind, text: t.windStrong },
+          stormy && { factor: "storm", icon: "⛈️", label: t.factorStorm, text: t.storm },
+          rainy && !stormy && { factor: "rain", icon: "🌧️", label: t.factorRain, text: t.rain }
         )}
         extra={joinExtras(
           windyModerate && t.windModerate,
@@ -769,13 +806,14 @@ export default function Recommendations({
         title={`${getIcon(heatKey)} ${t.title}`}
         body={t[heatRecommendationKey]}
         items={factorItems(
-          { icon: "🌡️", label: t.factorHeat, text: t[heatRecommendationKey] },
-          humid && { icon: "💧", label: t.factorHumidity, text: t.humid },
-          uvKey === "uvHigh" && { icon: "☀️", label: t.factorUv, text: t.uvHigh },
-          uvKey === "uvVeryHigh" && { icon: "☀️", label: t.factorUv, text: t.uvVeryHigh },
-          uvKey === "uvExtreme" && { icon: "☀️", label: t.factorUv, text: t.uvExtreme },
-          windyModerate && { icon: "🌬️", label: t.factorWind, text: t.windModerate },
-          windyStrong && { icon: "🌬️", label: t.factorWind, text: t.windStrong }
+          riskFactors,
+          { factor: "heat", icon: "🌡️", label: t.factorHeat, text: t[heatRecommendationKey] },
+          humid && { factor: "humidity", icon: "💧", label: t.factorHumidity, text: t.humid },
+          uvKey === "uvHigh" && { factor: "uv", icon: "☀️", label: t.factorUv, text: t.uvHigh },
+          uvKey === "uvVeryHigh" && { factor: "uv", icon: "☀️", label: t.factorUv, text: t.uvVeryHigh },
+          uvKey === "uvExtreme" && { factor: "uv", icon: "☀️", label: t.factorUv, text: t.uvExtreme },
+          windyModerate && { factor: "wind", icon: "🌬️", label: t.factorWind, text: t.windModerate },
+          windyStrong && { factor: "wind", icon: "🌬️", label: t.factorWind, text: t.windStrong }
         )}
         extra={joinExtras(
           humid && t.humid,
@@ -799,13 +837,14 @@ export default function Recommendations({
         title={`${getIcon("windStrong")} ${t.title}`}
         body={t.windStrong}
         items={factorItems(
-          { icon: "🌬️", label: t.factorWind, text: t.windStrong },
-          humid && { icon: "💧", label: t.factorHumidity, text: t.humid },
-          uvKey === "uvHigh" && { icon: "☀️", label: t.factorUv, text: t.uvHigh },
-          uvKey === "uvVeryHigh" && { icon: "☀️", label: t.factorUv, text: t.uvVeryHigh },
-          uvKey === "uvExtreme" && { icon: "☀️", label: t.factorUv, text: t.uvExtreme },
-          rainy && !stormy && { icon: "🌧️", label: t.factorRain, text: t.rain },
-          stormy && { icon: "⛈️", label: t.factorStorm, text: t.storm }
+          riskFactors,
+          { factor: "wind", icon: "🌬️", label: t.factorWind, text: t.windStrong },
+          humid && { factor: "humidity", icon: "💧", label: t.factorHumidity, text: t.humid },
+          uvKey === "uvHigh" && { factor: "uv", icon: "☀️", label: t.factorUv, text: t.uvHigh },
+          uvKey === "uvVeryHigh" && { factor: "uv", icon: "☀️", label: t.factorUv, text: t.uvVeryHigh },
+          uvKey === "uvExtreme" && { factor: "uv", icon: "☀️", label: t.factorUv, text: t.uvExtreme },
+          rainy && !stormy && { factor: "rain", icon: "🌧️", label: t.factorRain, text: t.rain },
+          stormy && { factor: "storm", icon: "⛈️", label: t.factorStorm, text: t.storm }
         )}
         extra={joinExtras(
           humid && t.humid,
@@ -843,12 +882,13 @@ if (isDay && uvKey) {
         title={`${getIcon(uvKey)} ${t.title}`}
         body={t[uvKey]}
         items={factorItems(
-          { icon: "☀️", label: t.factorUv, text: t[uvKey] },
-          humid && { icon: "💧", label: t.factorHumidity, text: t.humid },
-          windyModerate && { icon: "🌬️", label: t.factorWind, text: t.windModerate },
-          windyStrong && { icon: "🌬️", label: t.factorWind, text: t.windStrong },
-          rainy && !stormy && { icon: "🌧️", label: t.factorRain, text: t.rain },
-          stormy && { icon: "⛈️", label: t.factorStorm, text: t.storm }
+          riskFactors,
+          { factor: "uv", icon: "☀️", label: t.factorUv, text: t[uvKey] },
+          humid && { factor: "humidity", icon: "💧", label: t.factorHumidity, text: t.humid },
+          windyModerate && { factor: "wind", icon: "🌬️", label: t.factorWind, text: t.windModerate },
+          windyStrong && { factor: "wind", icon: "🌬️", label: t.factorWind, text: t.windStrong },
+          rainy && !stormy && { factor: "rain", icon: "🌧️", label: t.factorRain, text: t.rain },
+          stormy && { factor: "storm", icon: "⛈️", label: t.factorStorm, text: t.storm }
         )}
         extra={joinExtras(
           humid && t.humid,
@@ -873,12 +913,13 @@ if (isDay && uvKey) {
         title={`${getIcon(nightKey)} ${t.title}`}
         body={t[nightKey]}
         items={factorItems(
-          { icon: "🌙", label: t.factorNight, text: t[nightKey] },
-          humid && { icon: "💧", label: t.factorHumidity, text: t.humid },
-          windyModerate && { icon: "🌬️", label: t.factorWind, text: t.windModerate },
-          windyStrong && { icon: "🌬️", label: t.factorWind, text: t.windStrong },
-          rainy && !stormy && { icon: "🌧️", label: t.factorRain, text: t.rain },
-          stormy && { icon: "⛈️", label: t.factorStorm, text: t.storm }
+          riskFactors,
+          { factor: "night", icon: "🌙", label: t.factorNight, text: t[nightKey] },
+          humid && { factor: "humidity", icon: "💧", label: t.factorHumidity, text: t.humid },
+          windyModerate && { factor: "wind", icon: "🌬️", label: t.factorWind, text: t.windModerate },
+          windyStrong && { factor: "wind", icon: "🌬️", label: t.factorWind, text: t.windStrong },
+          rainy && !stormy && { factor: "rain", icon: "🌧️", label: t.factorRain, text: t.rain },
+          stormy && { factor: "storm", icon: "⛈️", label: t.factorStorm, text: t.storm }
         )}
         extra={joinExtras(
           humid && t.humid,
@@ -906,10 +947,11 @@ if (isDay && uvKey) {
         title={`${getIcon(heatKey)} ${t.title}`}
         body={t[heatRecommendationKey]}
         items={factorItems(
-          { icon: "🌡️", label: t.factorHeat, text: t[heatRecommendationKey] },
-          humid && { icon: "💧", label: t.factorHumidity, text: t.humid },
-          windyModerate && { icon: "🌬️", label: t.factorWind, text: t.windModerate },
-          windyStrong && { icon: "🌬️", label: t.factorWind, text: t.windStrong }
+          riskFactors,
+          { factor: "heat", icon: "🌡️", label: t.factorHeat, text: t[heatRecommendationKey] },
+          humid && { factor: "humidity", icon: "💧", label: t.factorHumidity, text: t.humid },
+          windyModerate && { factor: "wind", icon: "🌬️", label: t.factorWind, text: t.windModerate },
+          windyStrong && { factor: "wind", icon: "🌬️", label: t.factorWind, text: t.windStrong }
         )}
         extra={joinExtras(
           humid && t.humid,

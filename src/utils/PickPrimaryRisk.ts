@@ -96,6 +96,7 @@ export function pickPrimaryRisk({
 
   const windSev: Severity = windMap[windRisk] ?? 0;
   const windKey = windSev === 0 ? "wind_none" : `wind_${windRisk}`;
+  const windTie = windSev >= 3 ? 3 : 1;
 
   // --- 4) UV ---
   let uvSev: Severity = 0;
@@ -129,10 +130,10 @@ export function pickPrimaryRisk({
     key: string;
     tie: number;
   }> = [
-    { kind: "heat", sev: heatSev, key: heatKey, tie: 4 },
-    { kind: "cold", sev: coldSev, key: coldKey, tie: 3 },
-    { kind: "wind", sev: windSev, key: windKey, tie: 2 },
-    { kind: "uv", sev: uvSev, key: uvKey, tie: 1 },
+    { kind: "heat", sev: heatSev, key: heatKey, tie: 5 },
+    { kind: "cold", sev: coldSev, key: coldKey, tie: 4 },
+    { kind: "wind", sev: windSev, key: windKey, tie: windTie },
+    { kind: "uv", sev: uvSev, key: uvKey, tie: 2 },
   ];
 
   candidates.sort((a, b) => (b.sev - a.sev) || (b.tie - a.tie));

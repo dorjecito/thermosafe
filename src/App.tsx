@@ -1,7 +1,7 @@
 /* ───────────────────────────────────────────
    src/App.tsx  —  100 % camins relatius
    ─────────────────────────────────────────── */
-   import React, { useEffect, useRef, useState } from 'react';
+   import React, { useEffect, useMemo, useRef, useState } from 'react';
    import { useTranslation } from 'react-i18next';
    import './i18n';
    import "./App.css";
@@ -47,7 +47,9 @@ import { getUVDetailFromOpenUV, getUVFromOpenUV } from "./services/openUV";
 	   import { normalizeLang } from "./utils/normalizeLang";
 	   import { getUvAdvice, getUvText, normalizeUviForDisplay } from "./utils/uv";
 	   import { buildRiskTrend, type RiskTrendResult } from "./utils/riskTrend";
-	   import { safeUVFetch } from "./utils/safeUVFetch";
+   import { safeUVFetch } from "./utils/safeUVFetch";
+   import { evaluateRiskScore } from "./utils/riskScoreEngine";
+   import { primaryRiskFromEngine } from "./utils/primaryRiskFromEngine";
    import { fetchSolarIrr } from "./utils/fetchSolarIrr";
    import UVContextCard from "./components/UVContextCard";
    import { resolveSkyDescription } from "./utils/resolveSkyDescription";
@@ -1285,13 +1287,44 @@ useEffect(() => {
   preventiveActivity,
 ]);
 
-const primary = pickPrimaryRisk({
+const pickPrimaryInput = {
   hi,
   effForCold: wc ?? temp,
   windRisk,
   uvi,
   heatRiskClass: heatRisk?.class,
-});
+};
+
+const legacyPrimary = import.meta.env.DEV
+  ? pickPrimaryRisk(pickPrimaryInput)
+  : null;
+
+const engineRisk = useMemo(() => {
+  if (!data || !isInitialRiskReady || loading) return null;
+
+  return evaluateRiskScore({
+    heatIndex: hi,
+    activity: preventiveActivity,
+    coldEffectiveTemp: wc ?? temp,
+    windKmh,
+    uvi,
+  });
+}, [
+  data,
+  isInitialRiskReady,
+  loading,
+  hi,
+  preventiveActivity,
+  wc,
+  temp,
+  windKmh,
+  uvi,
+]);
+
+const enginePrimary = engineRisk
+  ? primaryRiskFromEngine(engineRisk)
+  : { kind: "none" as const, severity: 0 as const, labelKey: "none" };
+const primary = enginePrimary;
 
 const primaryAdvice = getPrimaryAdviceText({
   primary,
@@ -1325,7 +1358,7 @@ const contextualUVMessage =
     ? getContextualUVMessage(uvi)
     : "";
 
-const primaryStatus = getPrimaryStatusBlock({
+const primaryStatusInput = {
   alerts,
   primary,
   heatRisk,
@@ -1339,7 +1372,36 @@ const primaryStatus = getPrimaryStatusBlock({
   primaryAdvice,
   contextualUVMessage,
   t,
-});
+};
+
+const primaryStatus = getPrimaryStatusBlock(primaryStatusInput);
+
+useEffect(() => {
+  if (!import.meta.env.DEV || !legacyPrimary || !engineRisk) return;
+
+  const engineDiverges =
+    enginePrimary.kind !== legacyPrimary.kind ||
+    enginePrimary.severity !== legacyPrimary.severity ||
+    enginePrimary.labelKey !== legacyPrimary.labelKey;
+
+  if (engineDiverges) {
+    console.warn("[RiskScoreEngine][DEV] Divergència amb legacyPrimary", {
+      legacyPrimary: {
+        input: pickPrimaryInput,
+        output: legacyPrimary,
+      },
+      enginePrimary: {
+        output: enginePrimary,
+        activeFactorsSorted: engineRisk?.activeFactorsSorted,
+      },
+    });
+  }
+}, [
+  engineRisk,
+  enginePrimary,
+  legacyPrimary,
+  pickPrimaryInput,
+]);
 
 const appTitleClass =
   primary.kind === "heat"
@@ -2001,6 +2063,7 @@ return (
     windKmh={windKmh}
     currentHour={new Date().getHours()}
     heatDayPhase={heatDayPhase}
+    riskFactors={engineRisk?.activeFactorsSorted}
 
   />
 

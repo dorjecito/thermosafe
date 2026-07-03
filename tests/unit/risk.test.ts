@@ -23,6 +23,48 @@ import { detectAemetHazard } from "../../src/utils/aemetAi";
 import { pickPrimaryRisk } from "../../src/utils/PickPrimaryRisk";
 import { getWorkWindow, getWorkWindowText } from "../../src/utils/workWindow";
 import { buildRiskTrend } from "../../src/utils/riskTrend";
+import {
+  evaluateRiskScore,
+  type RiskEngineInput,
+} from "../../src/utils/riskScoreEngine";
+import {
+  sortItemsByRiskFactors,
+  type RecommendationItem,
+} from "../../src/components/Recommendations";
+import {
+  primaryRiskFromEngine,
+  type PrimaryRiskFromEngineResult,
+} from "../../src/utils/primaryRiskFromEngine";
+
+function selectPrimaryForUi(
+  enginePrimary: PrimaryRiskFromEngineResult
+): PrimaryRiskFromEngineResult {
+  return enginePrimary;
+}
+
+function compareRiskEngineWithPrimaryPicker(input: RiskEngineInput) {
+  const heatRisk =
+    typeof input.heatIndex === "number"
+      ? getHeatRisk(input.heatIndex, input.activity || "rest")
+      : null;
+  const windRisk =
+    typeof input.windKmh === "number" ? getWindRisk(input.windKmh) : "none";
+
+  const engine = evaluateRiskScore(input);
+  const current = pickPrimaryRisk({
+    hi: input.heatIndex ?? null,
+    effForCold: input.coldEffectiveTemp ?? null,
+    windRisk,
+    uvi: input.uvi ?? null,
+    heatRiskClass: heatRisk?.class,
+  });
+
+  return {
+    engine,
+    current,
+    engineKind: engine.primary?.factor ?? "none",
+  };
+}
 
 test("heat risk follows INSST-style threshold boundaries", () => {
   assert.equal(getBaseHeatRisk(26.9).class, "safe");
@@ -175,6 +217,633 @@ test("UV classification follows the visible one-decimal value", () => {
   assert.equal(normalizeUviForDisplay(7.95), 8);
   assert.equal(getUvLevel(7.95), "very-high");
   assert.equal(getUvText(7.95, "ca"), "Molt alt (8–10.9)");
+});
+
+test("risk score engine mirrors basic heat risk cases", () => {
+  assert.deepEqual(
+    evaluateRiskScore({ heatIndex: 26.9 }).factors.find((f) => f.factor === "heat"),
+    {
+      factor: "heat",
+      active: false,
+      severity: 0,
+      level: "safe",
+      value: 26.9,
+      labelKey: "heat_safe",
+      reasonKey: "riskScore.heat.safe",
+    }
+  );
+
+  const moderate = evaluateRiskScore({ heatIndex: 35 });
+  assert.equal(moderate.primary?.factor, "heat");
+  assert.equal(moderate.primary?.severity, 2);
+  assert.equal(moderate.primary?.level, "moderate");
+
+  const high = evaluateRiskScore({ heatIndex: 45 });
+  assert.equal(high.primary?.factor, "heat");
+  assert.equal(high.primary?.severity, 3);
+  assert.equal(high.primary?.level, "high");
+});
+
+test("risk score engine mirrors UV bands", () => {
+  const moderate = evaluateRiskScore({ uvi: 3 });
+  assert.equal(moderate.primary?.factor, "uv");
+  assert.equal(moderate.primary?.severity, 1);
+
+  const high = evaluateRiskScore({ uvi: 6 });
+  assert.equal(high.primary?.factor, "uv");
+  assert.equal(high.primary?.severity, 2);
+
+  const veryHigh = evaluateRiskScore({ uvi: 8 });
+  assert.equal(veryHigh.primary?.factor, "uv");
+  assert.equal(veryHigh.primary?.severity, 3);
+  assert.equal(veryHigh.primary?.labelKey, "uv_very_high");
+});
+
+test("risk score engine mirrors wind and cold factors", () => {
+  const wind = evaluateRiskScore({ windKmh: 25 });
+  assert.equal(wind.primary?.factor, "wind");
+  assert.equal(wind.primary?.severity, 2);
+  assert.equal(wind.primary?.level, "moderate");
+
+  const cold = evaluateRiskScore({ coldEffectiveTemp: -5, windKmh: 20 });
+  assert.equal(cold.primary?.factor, "cold");
+  assert.equal(cold.primary?.severity, 2);
+  assert.equal(cold.primary?.level, "moderat");
+});
+
+test("risk score engine exposes active factors in combined heat UV wind conditions", () => {
+  const result = evaluateRiskScore({
+    heatIndex: 35,
+    uvi: 8.4,
+    windKmh: 33,
+    coldEffectiveTemp: 30,
+  });
+
+  assert.equal(result.maxSeverity, 3);
+  assert.equal(result.primary?.factor, "uv");
+  assert.deepEqual(
+    result.activeFactors.map((factor) => [factor.factor, factor.severity]),
+    [
+      ["heat", 2],
+      ["wind", 2],
+      ["uv", 3],
+    ]
+  );
+});
+
+test("recommendation factor ordering keeps current order without risk factors", () => {
+  const items: RecommendationItem[] = [
+    { factor: "wind", icon: "🌬️", label: "Vent", text: "Vent moderat." },
+    { factor: "heat", icon: "🌡️", label: "Calor", text: "Calor moderada." },
+    { factor: "uv", icon: "☀️", label: "Radiació UV", text: "UV molt alt." },
+  ];
+
+  assert.deepEqual(
+    sortItemsByRiskFactors(items).map((item) => item.factor),
+    ["wind", "heat", "uv"]
+  );
+});
+
+test("recommendation factor ordering follows RiskScoreEngine active factors", () => {
+  const riskFactors = evaluateRiskScore({
+    heatIndex: 35,
+    uvi: 8,
+    windKmh: 25,
+    coldEffectiveTemp: 30,
+  }).activeFactorsSorted;
+  const items: RecommendationItem[] = [
+    { factor: "wind", icon: "🌬️", label: "Vent", text: "Vent moderat." },
+    { factor: "heat", icon: "🌡️", label: "Calor", text: "Calor moderada." },
+    { factor: "uv", icon: "☀️", label: "Radiació UV", text: "UV molt alt." },
+  ];
+
+  assert.deepEqual(
+    sortItemsByRiskFactors(items, riskFactors).map((item) => item.factor),
+    ["uv", "heat", "wind"]
+  );
+});
+
+test("recommendation factor ordering keeps unknown factors stable", () => {
+  const riskFactors = evaluateRiskScore({
+    heatIndex: 35,
+    windKmh: 25,
+    coldEffectiveTemp: 30,
+  }).activeFactorsSorted;
+  const items: RecommendationItem[] = [
+    { factor: "humidity", icon: "💧", label: "Humitat", text: "Humitat alta." },
+    { factor: "rain", icon: "🌧️", label: "Pluja", text: "Pluja possible." },
+    { factor: "wind", icon: "🌬️", label: "Vent", text: "Vent moderat." },
+    { factor: "heat", icon: "🌡️", label: "Calor", text: "Calor moderada." },
+  ];
+
+  assert.deepEqual(
+    sortItemsByRiskFactors(items, riskFactors).map((item) => item.factor),
+    ["heat", "wind", "humidity", "rain"]
+  );
+});
+
+test("risk score engine sorted active factors omit inactive risks", () => {
+  const result = evaluateRiskScore({
+    heatIndex: 24,
+    coldEffectiveTemp: 24,
+    windKmh: 8,
+    uvi: 8,
+  });
+
+  assert.deepEqual(
+    result.activeFactorsSorted.map((factor) => factor.factor),
+    ["uv"]
+  );
+});
+
+test("risk score engine sorted active factors prioritize severity before factor order", () => {
+  const result = evaluateRiskScore({
+    heatIndex: 35,
+    uvi: 8.4,
+    windKmh: 33,
+    coldEffectiveTemp: 30,
+  });
+
+  assert.deepEqual(
+    result.activeFactorsSorted.map((factor) => [factor.factor, factor.severity]),
+    [
+      ["uv", 3],
+      ["heat", 2],
+      ["wind", 2],
+    ]
+  );
+  assert.equal(result.primary, result.activeFactorsSorted[0]);
+});
+
+test("risk score engine sorted active factors use stable tie order", () => {
+  const result = evaluateRiskScore({
+    heatIndex: 35,
+    coldEffectiveTemp: -5,
+    uvi: 6,
+    windKmh: 25,
+  });
+
+  assert.deepEqual(
+    result.activeFactorsSorted.map((factor) => factor.factor),
+    ["heat", "cold", "uv", "wind"]
+  );
+  assert.equal(result.primary?.factor, "heat");
+});
+
+test("risk score engine primary candidate matches current primary risk picker", () => {
+  const scenarios: Array<{
+    name: string;
+    input: RiskEngineInput;
+    expectedEngineKind: "heat" | "cold" | "wind" | "uv" | "none";
+    expectedCurrentKind?: "heat" | "cold" | "wind" | "uv" | "none";
+    expectedSeverity: number;
+  }> = [
+    {
+      name: "sense risc",
+      input: { heatIndex: 24, coldEffectiveTemp: 24, windKmh: 8, uvi: 2 },
+      expectedEngineKind: "none",
+      expectedSeverity: 0,
+    },
+    {
+      name: "calor moderada",
+      input: { heatIndex: 35 },
+      expectedEngineKind: "heat",
+      expectedSeverity: 2,
+    },
+    {
+      name: "calor alta",
+      input: { heatIndex: 45 },
+      expectedEngineKind: "heat",
+      expectedSeverity: 3,
+    },
+    {
+      name: "UV moderat",
+      input: { uvi: 3 },
+      expectedEngineKind: "uv",
+      expectedSeverity: 1,
+    },
+    {
+      name: "UV alt",
+      input: { uvi: 6 },
+      expectedEngineKind: "uv",
+      expectedSeverity: 2,
+    },
+    {
+      name: "UV molt alt",
+      input: { uvi: 8 },
+      expectedEngineKind: "uv",
+      expectedSeverity: 3,
+    },
+    {
+      name: "vent moderat",
+      input: { windKmh: 25 },
+      expectedEngineKind: "wind",
+      expectedSeverity: 2,
+    },
+    {
+      name: "fred moderat",
+      input: { coldEffectiveTemp: -5, windKmh: 20 },
+      expectedEngineKind: "cold",
+      expectedSeverity: 2,
+    },
+    {
+      name: "calor + UV amb empat de severitat",
+      input: { heatIndex: 35, uvi: 6 },
+      expectedEngineKind: "heat",
+      expectedSeverity: 2,
+    },
+    {
+      name: "UV + vent moderat amb empat de severitat",
+      input: { uvi: 6, windKmh: 25 },
+      expectedEngineKind: "uv",
+      expectedSeverity: 2,
+    },
+    {
+      name: "calor + UV + vent",
+      input: { heatIndex: 35, uvi: 8.4, windKmh: 33, coldEffectiveTemp: 30 },
+      expectedEngineKind: "uv",
+      expectedSeverity: 3,
+    },
+  ];
+
+  for (const scenario of scenarios) {
+    const { engine, current, engineKind } = compareRiskEngineWithPrimaryPicker(
+      scenario.input
+    );
+
+    assert.equal(engineKind, scenario.expectedEngineKind, scenario.name);
+    assert.equal(
+      current.kind,
+      scenario.expectedCurrentKind || scenario.expectedEngineKind,
+      scenario.name
+    );
+    assert.equal(engine.maxSeverity, scenario.expectedSeverity, scenario.name);
+    assert.equal(current.severity, scenario.expectedSeverity, scenario.name);
+  }
+});
+
+test("primaryRiskFromEngine keeps parity with pickPrimaryRisk contract", () => {
+  const scenarios: Array<{
+    name: string;
+    input: RiskEngineInput;
+  }> = [
+    {
+      name: "sense risc",
+      input: { heatIndex: 24, coldEffectiveTemp: 24, windKmh: 8, uvi: 2 },
+    },
+    {
+      name: "calor",
+      input: { heatIndex: 35, coldEffectiveTemp: 35, windKmh: 8, uvi: 2 },
+    },
+    {
+      name: "fred",
+      input: { heatIndex: 4, coldEffectiveTemp: -5, windKmh: 15, uvi: 0 },
+    },
+    {
+      name: "UV",
+      input: { heatIndex: 24, coldEffectiveTemp: 24, windKmh: 8, uvi: 8 },
+    },
+    {
+      name: "vent",
+      input: { heatIndex: 22, coldEffectiveTemp: 22, windKmh: 25, uvi: 2 },
+    },
+    {
+      name: "calor + UV",
+      input: { heatIndex: 35, coldEffectiveTemp: 35, windKmh: 8, uvi: 6 },
+    },
+    {
+      name: "UV + vent moderat",
+      input: { heatIndex: 22, coldEffectiveTemp: 22, windKmh: 25, uvi: 6 },
+    },
+    {
+      name: "UV + vent fort",
+      input: { heatIndex: 22, coldEffectiveTemp: 22, windKmh: 45, uvi: 8 },
+    },
+    {
+      name: "fred molt alt",
+      input: { heatIndex: -25, coldEffectiveTemp: -25, windKmh: 10, uvi: 0 },
+    },
+    {
+      name: "calor + UV + vent",
+      input: { heatIndex: 45, coldEffectiveTemp: 45, windKmh: 33, uvi: 8.4 },
+    },
+  ];
+
+  for (const scenario of scenarios) {
+    const { current, engine } = compareRiskEngineWithPrimaryPicker(scenario.input);
+    const bridged = primaryRiskFromEngine(engine);
+
+    assert.deepEqual(bridged, current, scenario.name);
+  }
+});
+
+test("primary selection uses engine result without legacy fallback", () => {
+  const engine = evaluateRiskScore({
+    heatIndex: 35,
+    coldEffectiveTemp: 35,
+    windKmh: 8,
+    uvi: 2,
+  });
+  const enginePrimary = primaryRiskFromEngine(engine);
+  const legacyPrimary = pickPrimaryRisk({
+    hi: 35,
+    effForCold: 35,
+    windRisk: "none",
+    uvi: 2,
+    heatRiskClass: getHeatRisk(35, "rest").class,
+  });
+  const neutralPrimary: PrimaryRiskFromEngineResult = {
+    kind: "none",
+    severity: 0,
+    labelKey: "none",
+  };
+
+  assert.deepEqual(selectPrimaryForUi(enginePrimary), enginePrimary);
+  assert.deepEqual(enginePrimary, legacyPrimary);
+  assert.deepEqual(selectPrimaryForUi(neutralPrimary), neutralPrimary);
+  assert.deepEqual(Object.keys(enginePrimary).sort(), [
+    "kind",
+    "labelKey",
+    "severity",
+  ]);
+});
+
+test("risk score engine keeps parity for mild heat around 27 degrees with low UV", () => {
+  const input: RiskEngineInput = {
+    heatIndex: 27.34,
+    coldEffectiveTemp: 26.85,
+    windKmh: 8,
+    uvi: 0.029,
+    activity: "rest",
+  };
+  const { current, engine } = compareRiskEngineWithPrimaryPicker(input);
+  const bridged = primaryRiskFromEngine(engine);
+
+  assert.deepEqual(current, {
+    kind: "heat",
+    severity: 1,
+    labelKey: "heat_mild",
+  });
+  assert.deepEqual(bridged, current);
+});
+
+test("risk score engine covers observed ThermoSafe multi-factor scenarios", () => {
+  const scenarios: Array<{
+    name: string;
+    input: RiskEngineInput;
+    expectedSorted: Array<["heat" | "cold" | "uv" | "wind", number]>;
+    expectedPrimary: "heat" | "cold" | "uv" | "wind" | null;
+    expectedMaxSeverity: number;
+  }> = [
+    {
+      name: "UV molt alt + vent moderat",
+      input: { uvi: 8.9, windKmh: 33, heatIndex: 24, coldEffectiveTemp: 24 },
+      expectedSorted: [
+        ["uv", 3],
+        ["wind", 2],
+      ],
+      expectedPrimary: "uv",
+      expectedMaxSeverity: 3,
+    },
+    {
+      name: "calor lleu + UV alt",
+      input: { heatIndex: 30.5, uvi: 7.2, windKmh: 10, coldEffectiveTemp: 30 },
+      expectedSorted: [
+        ["uv", 2],
+        ["heat", 1],
+      ],
+      expectedPrimary: "uv",
+      expectedMaxSeverity: 2,
+    },
+    {
+      name: "calor moderada + UV alt",
+      input: { heatIndex: 35, uvi: 7.2, windKmh: 10, coldEffectiveTemp: 35 },
+      expectedSorted: [
+        ["heat", 2],
+        ["uv", 2],
+      ],
+      expectedPrimary: "heat",
+      expectedMaxSeverity: 2,
+    },
+    {
+      name: "vent moderat sense calor ni UV",
+      input: { heatIndex: 22, coldEffectiveTemp: 22, windKmh: 33, uvi: 2 },
+      expectedSorted: [["wind", 2]],
+      expectedPrimary: "wind",
+      expectedMaxSeverity: 2,
+    },
+    {
+      name: "calor alta + UV molt alt + vent moderat",
+      input: { heatIndex: 45, uvi: 9.7, windKmh: 33, coldEffectiveTemp: 45 },
+      expectedSorted: [
+        ["heat", 3],
+        ["uv", 3],
+        ["wind", 2],
+      ],
+      expectedPrimary: "heat",
+      expectedMaxSeverity: 3,
+    },
+    {
+      name: "fred moderat + vent",
+      input: { coldEffectiveTemp: -5, windKmh: 25, heatIndex: -5, uvi: 0 },
+      expectedSorted: [
+        ["cold", 2],
+        ["wind", 2],
+      ],
+      expectedPrimary: "cold",
+      expectedMaxSeverity: 2,
+    },
+    {
+      name: "sense risc amb vent baix, UV baix i temperatura confortable",
+      input: { heatIndex: 22, coldEffectiveTemp: 22, windKmh: 8, uvi: 2 },
+      expectedSorted: [],
+      expectedPrimary: null,
+      expectedMaxSeverity: 0,
+    },
+  ];
+
+  for (const scenario of scenarios) {
+    const result = evaluateRiskScore(scenario.input);
+
+    assert.deepEqual(
+      result.activeFactorsSorted.map((factor) => [factor.factor, factor.severity]),
+      scenario.expectedSorted,
+      scenario.name
+    );
+    assert.equal(result.primary?.factor ?? null, scenario.expectedPrimary, scenario.name);
+    assert.equal(result.maxSeverity, scenario.expectedMaxSeverity, scenario.name);
+  }
+});
+
+test("primary risk prioritizes UV over moderate wind when severity ties", () => {
+  const { engine, current } = compareRiskEngineWithPrimaryPicker({
+    uvi: 6,
+    windKmh: 25,
+    heatIndex: 22,
+    coldEffectiveTemp: 22,
+  });
+
+  assert.deepEqual(
+    engine.activeFactorsSorted.map((factor) => [factor.factor, factor.severity]),
+    [
+      ["uv", 2],
+      ["wind", 2],
+    ]
+  );
+  assert.equal(engine.primary?.factor, "uv");
+  assert.equal(current.kind, "uv");
+  assert.equal(engine.maxSeverity, current.severity);
+});
+
+test("UV remains primary over moderate wind, but strong wind keeps priority", () => {
+  const uvHighWithModerateWind = compareRiskEngineWithPrimaryPicker({
+    uvi: 6,
+    windKmh: 25,
+    heatIndex: 22,
+    coldEffectiveTemp: 22,
+  });
+  assert.equal(uvHighWithModerateWind.engine.primary?.factor, "uv");
+  assert.equal(uvHighWithModerateWind.current.kind, "uv");
+  assert.equal(uvHighWithModerateWind.engine.maxSeverity, 2);
+  assert.equal(uvHighWithModerateWind.current.severity, 2);
+
+  const uvVeryHighWithModerateWind = compareRiskEngineWithPrimaryPicker({
+    uvi: 8,
+    windKmh: 25,
+    heatIndex: 22,
+    coldEffectiveTemp: 22,
+  });
+  assert.equal(uvVeryHighWithModerateWind.engine.primary?.factor, "uv");
+  assert.equal(uvVeryHighWithModerateWind.current.kind, "uv");
+  assert.equal(uvVeryHighWithModerateWind.engine.maxSeverity, 3);
+  assert.equal(uvVeryHighWithModerateWind.current.severity, 3);
+
+  const uvModerateWithStrongWind = compareRiskEngineWithPrimaryPicker({
+    uvi: 4,
+    windKmh: 45,
+    heatIndex: 22,
+    coldEffectiveTemp: 22,
+  });
+  assert.equal(uvModerateWithStrongWind.engine.primary?.factor, "wind");
+  assert.equal(uvModerateWithStrongWind.current.kind, "wind");
+  assert.equal(uvModerateWithStrongWind.engine.maxSeverity, 3);
+  assert.equal(uvModerateWithStrongWind.current.severity, 3);
+});
+
+test("strong wind keeps priority over very high UV when severity ties", () => {
+  const { engine, current } = compareRiskEngineWithPrimaryPicker({
+    uvi: 8,
+    windKmh: 45,
+    heatIndex: 22,
+    coldEffectiveTemp: 22,
+  });
+
+  assert.equal(engine.primary?.factor, "wind");
+  assert.equal(current.kind, "wind");
+  assert.equal(engine.maxSeverity, 3);
+  assert.equal(current.severity, 3);
+});
+
+test("cold severity comparison keeps risk score engine aligned with current picker", () => {
+  const scenarios: Array<{
+    name: string;
+    effectiveTemp: number;
+    expectedColdRisk: "lleu" | "moderat" | "alt" | "molt alt" | "extrem";
+    expectedCurrentSeverity: number;
+    expectedEngineSeverity: number;
+    expectedCurrentLabel: string;
+    expectedEngineLabel: string;
+  }> = [
+    {
+      name: "fred lleu",
+      effectiveTemp: 0,
+      expectedColdRisk: "lleu",
+      expectedCurrentSeverity: 1,
+      expectedEngineSeverity: 1,
+      expectedCurrentLabel: "cold_mild",
+      expectedEngineLabel: "cold_mild",
+    },
+    {
+      name: "fred moderat",
+      effectiveTemp: -5,
+      expectedColdRisk: "moderat",
+      expectedCurrentSeverity: 2,
+      expectedEngineSeverity: 2,
+      expectedCurrentLabel: "cold_moderate",
+      expectedEngineLabel: "cold_moderate",
+    },
+    {
+      name: "fred alt",
+      effectiveTemp: -15,
+      expectedColdRisk: "alt",
+      expectedCurrentSeverity: 3,
+      expectedEngineSeverity: 3,
+      expectedCurrentLabel: "cold_high",
+      expectedEngineLabel: "cold_high",
+    },
+    {
+      name: "fred molt alt",
+      effectiveTemp: -25,
+      expectedColdRisk: "molt alt",
+      expectedCurrentSeverity: 3,
+      expectedEngineSeverity: 3,
+      expectedCurrentLabel: "cold_very_high",
+      expectedEngineLabel: "cold_very_high",
+    },
+    {
+      name: "fred extrem",
+      effectiveTemp: -40,
+      expectedColdRisk: "extrem",
+      expectedCurrentSeverity: 4,
+      expectedEngineSeverity: 4,
+      expectedCurrentLabel: "cold_extreme",
+      expectedEngineLabel: "cold_extreme",
+    },
+  ];
+
+  for (const scenario of scenarios) {
+    const coldRisk = getColdRisk(scenario.effectiveTemp, 20);
+    const current = pickPrimaryRisk({
+      hi: null,
+      effForCold: scenario.effectiveTemp,
+      windRisk: "none",
+      uvi: null,
+    });
+    const engine = evaluateRiskScore({
+      coldEffectiveTemp: scenario.effectiveTemp,
+      windKmh: 20,
+    });
+
+    assert.equal(coldRisk, scenario.expectedColdRisk, scenario.name);
+    assert.equal(current.kind, "cold", scenario.name);
+    assert.equal(engine.primary?.factor, "cold", scenario.name);
+    assert.equal(current.severity, scenario.expectedCurrentSeverity, scenario.name);
+    assert.equal(engine.maxSeverity, scenario.expectedEngineSeverity, scenario.name);
+    assert.equal(current.labelKey, scenario.expectedCurrentLabel, scenario.name);
+    assert.equal(engine.primary?.labelKey, scenario.expectedEngineLabel, scenario.name);
+  }
+});
+
+test("very-high cold with wind keeps parity with the current picker", () => {
+  const { engine, current } = compareRiskEngineWithPrimaryPicker({
+    coldEffectiveTemp: -25,
+    windKmh: 25,
+    heatIndex: null,
+    uvi: 0,
+  });
+
+  assert.equal(current.kind, "cold");
+  assert.equal(current.severity, 3);
+  assert.equal(current.labelKey, "cold_very_high");
+  assert.equal(engine.primary?.factor, "cold");
+  assert.equal(engine.maxSeverity, 3);
+  assert.deepEqual(
+    engine.activeFactorsSorted.map((factor) => [factor.factor, factor.severity]),
+    [
+      ["cold", 3],
+      ["wind", 2],
+    ]
+  );
 });
 
 test("primary UV status title is translated and follows displayed bands", () => {
