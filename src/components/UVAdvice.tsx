@@ -177,26 +177,6 @@ const UVAdvice: React.FC<UVAdviceProps> = ({
   const legacySuppressUv = rainy || (veryCloudy && u >= 3);
   const suppressUv = weatherContext?.suppressUv ?? legacySuppressUv;
 
-  if (import.meta.env?.DEV && weatherContext && legacyRainy !== weatherContext.rainy) {
-    console.info("[UVAdvice][DEV] rainy mismatch", {
-      legacyRainy,
-      contextRainy: weatherContext.rainy,
-      weatherMain,
-    });
-  }
-
-  if (import.meta.env?.DEV && weatherContext && legacySuppressUv !== weatherContext.suppressUv) {
-    console.info("[UVAdvice][DEV] suppressUv comparison", {
-      legacySuppressUv,
-      contextSuppressUv: weatherContext.suppressUv,
-      weatherMain,
-      cloudiness,
-      uvi: u,
-      note:
-        "Informatiu: UVAdvice conserva el criteri visible legacy de núvols >=85 i UVI >=3.",
-    });
-  }
-
   let extraNote: string | null = null;
 
   if (suppressUv && rainy) {

@@ -114,3 +114,11 @@ Motiu: en aquesta fase la divergencia pot ser una comparacio entre criteri legac
 La integracio de `WeatherContext` esta en bon estat i ja redueix duplicacio en `Recommendations`, amb migracio parcial segura a `workWindow`, `TopAlertBanner` i `UVAdvice`. No hi ha indicis de canvi visible obligat en aquesta fase.
 
 Abans de desplegar, la millora mes prudent es netejar o suavitzar diagnostics DEV per reduir soroll, sense tocar cap decisio funcional.
+
+## Estat final
+
+- WeatherContext queda integrat com a font compartida del context meteorologic observat.
+- La migracio s'ha completat sense regressions funcionals.
+- Les duplicacions principals han estat eliminades o centralitzades.
+- Els diagnostics temporals de desenvolupament s'han reduit als casos amb valor real de manteniment.
+- El bloc WeatherContext es considera finalitzat.

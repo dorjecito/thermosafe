@@ -38,14 +38,6 @@ export default function TopAlertBanner({
   const legacyRainy = ["Rain", "Drizzle", "Thunderstorm"].includes(weatherMain ?? "");
   const rainy = weatherContext?.rainy ?? legacyRainy;
 
-  if (import.meta.env?.DEV && weatherContext && legacyRainy !== weatherContext.rainy) {
-    console.info("[TopAlertBanner][DEV] rainy mismatch", {
-      legacyRainy,
-      contextRainy: weatherContext.rainy,
-      weatherMain,
-    });
-  }
-
   const bannerState = useMemo(() => {
     if (aemetActive) {
       return {

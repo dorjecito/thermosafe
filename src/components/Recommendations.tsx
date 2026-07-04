@@ -877,63 +877,6 @@ export default function Recommendations({
     });
   }
 
-  if (
-    import.meta.env.DEV &&
-    weatherContext &&
-    legacyStormy !== weatherContext.stormy
-  ) {
-    console.info("[Recommendations][DEV] Divergència tempesta legacy vs WeatherContext", {
-      legacyStormy,
-      contextStormy: weatherContext.stormy,
-      weatherMain,
-    });
-  }
-
-  if (
-    import.meta.env.DEV &&
-    weatherContext &&
-    legacyHumid !== weatherContext.humid
-  ) {
-    console.info("[WeatherContext] humid mismatch", {
-      legacyHumid,
-      contextHumid: weatherContext.humid,
-    });
-  }
-
-  if (
-    import.meta.env.DEV &&
-    weatherContext &&
-    legacyVeryCloudy !== weatherContext.veryCloudy
-  ) {
-    console.info("[WeatherContext] veryCloudy mismatch", {
-      legacyVeryCloudy,
-      contextVeryCloudy: weatherContext.veryCloudy,
-      cloudiness,
-    });
-  }
-
-  if (
-    import.meta.env.DEV &&
-    weatherContext &&
-    legacySuppressUv !== weatherContext.suppressUv
-  ) {
-    console.info("[WeatherContext] suppressUv mismatch", {
-      legacySuppressUv,
-      contextSuppressUv: weatherContext.suppressUv,
-    });
-  }
-
-  if (
-    import.meta.env.DEV &&
-    weatherContext &&
-    legacySlipperySurface !== weatherContext.slipperySurface
-  ) {
-    console.info("[WeatherContext] slipperySurface mismatch", {
-      legacySlipperySurface,
-      contextSlipperySurface: weatherContext.slipperySurface,
-    });
-  }
-
   if (!Number.isFinite(effectiveTemp)) {
     return (
       <RecommendationBox
