@@ -30,6 +30,12 @@ import {
 import {
   getRecommendationColdKey,
   getRecommendationFactorState,
+  getRecommendationHumid,
+  getRecommendationRainy,
+  getRecommendationSlipperySurface,
+  getRecommendationStormy,
+  getRecommendationSuppressUv,
+  getRecommendationVeryCloudy,
   mapColdRiskToRecommendationKey,
   sortItemsByRiskFactors,
   type RecommendationItem,
@@ -38,6 +44,11 @@ import {
   primaryRiskFromEngine,
   type PrimaryRiskFromEngineResult,
 } from "../../src/utils/primaryRiskFromEngine";
+import {
+  getWeatherContext,
+  CONTEXT_VERY_CLOUDY_THRESHOLD,
+  UV_BLOCKING_CLOUDINESS_THRESHOLD,
+} from "../../src/utils/weatherContext";
 
 function selectPrimaryForUi(
   enginePrimary: PrimaryRiskFromEngineResult
@@ -257,6 +268,256 @@ test("workWindow uses RiskScoreEngine heat factor when available and keeps legac
 
   assert.equal(getWorkWindow(fallbackInput), "optimal");
   assert.equal(getWorkWindow({ ...fallbackInput, engineRisk }), "caution");
+});
+
+test("workWindow rainy source uses WeatherContext when available and legacy fallback otherwise", () => {
+  const input = {
+    heatRisk: getHeatRisk(24, "rest"),
+    heatIndex: 24,
+    coldRisk: "cap" as const,
+    windRisk: "none" as const,
+    uvi: 0,
+    weatherMain: "Rain",
+  };
+
+  assert.equal(getWorkWindow(input), "caution");
+  assert.equal(
+    getWorkWindow({
+      ...input,
+      weatherMain: "Clear",
+      weatherContext: getWeatherContext({ weatherMain: "Rain" }),
+    }),
+    "caution"
+  );
+  assert.equal(
+    getWorkWindow({
+      ...input,
+      weatherContext: getWeatherContext({ weatherMain: "Clear" }),
+    }),
+    "optimal"
+  );
+});
+
+test("workWindow keeps AEMET plus rainy behavior through WeatherContext", () => {
+  const input = {
+    heatRisk: getHeatRisk(24, "rest"),
+    heatIndex: 24,
+    coldRisk: "cap" as const,
+    windRisk: "none" as const,
+    uvi: 0,
+    aemetActive: true,
+    weatherMain: "Rain",
+  };
+
+  assert.equal(getWorkWindow(input), "limited");
+  assert.equal(
+    getWorkWindow({
+      ...input,
+      weatherMain: "Clear",
+      weatherContext: getWeatherContext({ weatherMain: "Rain" }),
+    }),
+    "limited"
+  );
+  assert.equal(
+    getWorkWindow({
+      ...input,
+      weatherContext: getWeatherContext({ weatherMain: "Clear" }),
+    }),
+    "caution"
+  );
+});
+
+test("workWindow stormy source is wired without adding storm severity", () => {
+  const input = {
+    heatRisk: getHeatRisk(24, "rest"),
+    heatIndex: 24,
+    coldRisk: "cap" as const,
+    windRisk: "none" as const,
+    uvi: 0,
+    weatherMain: "Thunderstorm",
+  };
+
+  assert.equal(getWorkWindow(input), "caution");
+  assert.equal(
+    getWorkWindow({
+      ...input,
+      weatherMain: "Clear",
+      weatherContext: getWeatherContext({ weatherMain: "Thunderstorm" }),
+    }),
+    "caution"
+  );
+  assert.equal(
+    getWorkWindow({
+      ...input,
+      weatherContext: getWeatherContext({ weatherMain: "Clear" }),
+    }),
+    "optimal"
+  );
+});
+
+test("weather context centralizes observed rain and storm interpretation", () => {
+  assert.deepEqual(
+    {
+      rain: getWeatherContext({ weatherMain: "Rain" }).rainy,
+      drizzle: getWeatherContext({ weatherMain: "Drizzle" }).rainy,
+      thunderstormRainy: getWeatherContext({ weatherMain: "Thunderstorm" }).rainy,
+      thunderstormStormy: getWeatherContext({ weatherMain: "Thunderstorm" }).stormy,
+      clearRainy: getWeatherContext({ weatherMain: "Clear" }).rainy,
+    },
+    {
+      rain: true,
+      drizzle: true,
+      thunderstormRainy: true,
+      thunderstormStormy: true,
+      clearRainy: false,
+    }
+  );
+
+  assert.equal(getWeatherContext({ weatherMain: "Rain" }).slipperySurface, true);
+});
+
+test("weather context detects humid warm conditions without treating cool humidity as risk context", () => {
+  assert.equal(
+    getWeatherContext({ humidity: 70, effectiveTemp: 24 }).humid,
+    true
+  );
+  assert.equal(
+    getWeatherContext({ humidity: 84, effectiveTemp: 22.5 }).humid,
+    false
+  );
+  assert.equal(
+    getWeatherContext({ humidity: 69.9, effectiveTemp: 28 }).humid,
+    false
+  );
+});
+
+test("weather context keeps cloudiness thresholds explicit for future migrations", () => {
+  assert.equal(
+    getWeatherContext({
+      cloudiness: CONTEXT_VERY_CLOUDY_THRESHOLD,
+    }).veryCloudy,
+    true
+  );
+  assert.equal(
+    getWeatherContext({
+      cloudiness: UV_BLOCKING_CLOUDINESS_THRESHOLD - 1,
+    }).uvBlockingCloudy,
+    false
+  );
+  assert.equal(
+    getWeatherContext({
+      cloudiness: UV_BLOCKING_CLOUDINESS_THRESHOLD,
+    }).uvBlockingCloudy,
+    true
+  );
+  assert.equal(
+    getWeatherContext({
+      cloudiness: CONTEXT_VERY_CLOUDY_THRESHOLD,
+    }).suppressUv,
+    true
+  );
+});
+
+test("recommendations rainy source uses WeatherContext when available and legacy fallback otherwise", () => {
+  assert.equal(getRecommendationRainy(true), true);
+  assert.equal(getRecommendationRainy(false), false);
+  assert.equal(
+    getRecommendationRainy(false, getWeatherContext({ weatherMain: "Rain" })),
+    true
+  );
+  assert.equal(
+    getRecommendationRainy(true, getWeatherContext({ weatherMain: "Clear" })),
+    false
+  );
+});
+
+test("recommendations stormy source uses WeatherContext when available and legacy fallback otherwise", () => {
+  assert.equal(getRecommendationStormy(true), true);
+  assert.equal(getRecommendationStormy(false), false);
+  assert.equal(
+    getRecommendationStormy(false, getWeatherContext({ weatherMain: "Thunderstorm" })),
+    true
+  );
+  assert.equal(
+    getRecommendationStormy(true, getWeatherContext({ weatherMain: "Clear" })),
+    false
+  );
+});
+
+test("recommendations humid source uses WeatherContext when available and legacy fallback otherwise", () => {
+  assert.equal(getRecommendationHumid(true), true);
+  assert.equal(getRecommendationHumid(false), false);
+  assert.equal(
+    getRecommendationHumid(
+      false,
+      getWeatherContext({ humidity: 70, effectiveTemp: 24 })
+    ),
+    true
+  );
+  assert.equal(
+    getRecommendationHumid(
+      true,
+      getWeatherContext({ humidity: 84, effectiveTemp: 22.5 })
+    ),
+    false
+  );
+});
+
+test("recommendations veryCloudy source uses WeatherContext when available and legacy fallback otherwise", () => {
+  assert.equal(getRecommendationVeryCloudy(true), true);
+  assert.equal(getRecommendationVeryCloudy(false), false);
+  assert.equal(
+    getRecommendationVeryCloudy(
+      false,
+      getWeatherContext({ cloudiness: CONTEXT_VERY_CLOUDY_THRESHOLD })
+    ),
+    true
+  );
+  assert.equal(
+    getRecommendationVeryCloudy(
+      true,
+      getWeatherContext({ cloudiness: CONTEXT_VERY_CLOUDY_THRESHOLD - 1 })
+    ),
+    false
+  );
+});
+
+test("recommendations suppressUv source uses WeatherContext when available and legacy fallback otherwise", () => {
+  assert.equal(getRecommendationSuppressUv(true), true);
+  assert.equal(getRecommendationSuppressUv(false), false);
+  assert.equal(
+    getRecommendationSuppressUv(
+      false,
+      getWeatherContext({ weatherMain: "Rain" })
+    ),
+    true
+  );
+  assert.equal(
+    getRecommendationSuppressUv(
+      true,
+      getWeatherContext({ weatherMain: "Clear", cloudiness: 0 })
+    ),
+    false
+  );
+});
+
+test("recommendations slipperySurface source uses WeatherContext when available and legacy fallback otherwise", () => {
+  assert.equal(getRecommendationSlipperySurface(true), true);
+  assert.equal(getRecommendationSlipperySurface(false), false);
+  assert.equal(
+    getRecommendationSlipperySurface(
+      false,
+      getWeatherContext({ weatherMain: "Rain" })
+    ),
+    true
+  );
+  assert.equal(
+    getRecommendationSlipperySurface(
+      true,
+      getWeatherContext({ weatherMain: "Clear" })
+    ),
+    false
+  );
 });
 
 test("workWindow keeps direct heat-index rules even when engine heat factor is lower", () => {

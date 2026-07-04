@@ -14,6 +14,7 @@ import { getColdRisk, type ColdRisk } from "../utils/getColdRisk";
 import { getUvLevelIndex } from "../utils/uv";
 import type { HeatDayPhase } from "../utils/isDayAtLocation";
 import type { FactorRisk } from "../utils/riskScoreEngine";
+import type { WeatherContext } from "../utils/weatherContext";
 
 type Lang = "ca" | "es" | "eu" | "gl" | "en";
 type ActivityLevel = "rest" | "walk" | "moderate" | "intense";
@@ -80,6 +81,48 @@ export type RecommendationFactorState = {
   wind: boolean | null;
 };
 
+export function getRecommendationRainy(
+  legacyRainy: boolean,
+  weatherContext?: WeatherContext
+): boolean {
+  return weatherContext?.rainy ?? legacyRainy;
+}
+
+export function getRecommendationStormy(
+  legacyStormy: boolean,
+  weatherContext?: WeatherContext
+): boolean {
+  return weatherContext?.stormy ?? legacyStormy;
+}
+
+export function getRecommendationHumid(
+  legacyHumid: boolean,
+  weatherContext?: WeatherContext
+): boolean {
+  return weatherContext?.humid ?? legacyHumid;
+}
+
+export function getRecommendationVeryCloudy(
+  legacyVeryCloudy: boolean,
+  weatherContext?: WeatherContext
+): boolean {
+  return weatherContext?.veryCloudy ?? legacyVeryCloudy;
+}
+
+export function getRecommendationSuppressUv(
+  legacySuppressUv: boolean,
+  weatherContext?: WeatherContext
+): boolean {
+  return weatherContext?.suppressUv ?? legacySuppressUv;
+}
+
+export function getRecommendationSlipperySurface(
+  legacySlipperySurface: boolean,
+  weatherContext?: WeatherContext
+): boolean {
+  return weatherContext?.slipperySurface ?? legacySlipperySurface;
+}
+
 interface Props {
   temp: number;
   lang: Lang | string;
@@ -100,6 +143,7 @@ interface Props {
   coldRisk?: ColdRisk;
   coldEffectiveTemp?: number | null;
   riskFactors?: FactorRisk[];
+  weatherContext?: WeatherContext;
 }
 
 // ---------------------------------------------------------------
@@ -771,6 +815,7 @@ export default function Recommendations({
   coldRisk,
   coldEffectiveTemp,
   riskFactors,
+  weatherContext,
 }: Props) {
   const lng = normalizeLang(lang);
 
@@ -780,9 +825,15 @@ export default function Recommendations({
   const uvKey = getUvKey(uvi);
   const recommendationsColdRisk = getColdRisk(effectiveTemp, null);
   const coldKey = getRecommendationColdKey(coldRisk, effectiveTemp);
-  const rainy = isRainyWeather(weatherMain);
-  const stormy = isStormWeather(weatherMain);
-  const humid = typeof humidity === "number" && humidity >= 70 && effectiveTemp >= 24;
+  const legacyRainy = isRainyWeather(weatherMain);
+  const rainy = getRecommendationRainy(legacyRainy, weatherContext);
+  const legacyStormy = isStormWeather(weatherMain);
+  const stormy = getRecommendationStormy(legacyStormy, weatherContext);
+  const legacyHumid =
+    typeof humidity === "number" &&
+    humidity >= 70 &&
+    effectiveTemp >= 24;
+  const humid = getRecommendationHumid(legacyHumid, weatherContext);
   const windyModerate = typeof windKmh === "number" && windKmh >= 25 && windKmh < 45;
   const windyStrong = typeof windKmh === "number" && windKmh >= 45;
   const factorState = getRecommendationFactorState(riskFactors);
@@ -791,12 +842,26 @@ export default function Recommendations({
   const windActive = factorState.wind ?? true;
   const showWindModerate = windActive && windyModerate;
   const showWindStrong = windActive && windyStrong;
-  const veryCloudy = typeof cloudiness === "number" && cloudiness >= 75;
+  const legacyVeryCloudy = typeof cloudiness === "number" && cloudiness >= 75;
+  const veryCloudy = getRecommendationVeryCloudy(
+    legacyVeryCloudy,
+    weatherContext
+  );
+  const legacySuppressUv = veryCloudy || rainy || stormy;
+  const suppressUv = getRecommendationSuppressUv(
+    legacySuppressUv,
+    weatherContext
+  );
+  const legacySlipperySurface = rainy || stormy;
+  const slipperySurface = getRecommendationSlipperySurface(
+    legacySlipperySurface,
+    weatherContext
+  );
   const uvSuppressedByWeather =
   isDay &&
   uvActive &&
   !!uvKey &&
-  (veryCloudy || rainy || stormy);
+  suppressUv;
 
   if (
     import.meta.env.DEV &&
@@ -809,6 +874,63 @@ export default function Recommendations({
       propsColdEffectiveTemp: coldEffectiveTemp,
       recommendationsEffectiveTemp: effectiveTemp,
       windKmh,
+    });
+  }
+
+  if (
+    import.meta.env.DEV &&
+    weatherContext &&
+    legacyStormy !== weatherContext.stormy
+  ) {
+    console.info("[Recommendations][DEV] Divergència tempesta legacy vs WeatherContext", {
+      legacyStormy,
+      contextStormy: weatherContext.stormy,
+      weatherMain,
+    });
+  }
+
+  if (
+    import.meta.env.DEV &&
+    weatherContext &&
+    legacyHumid !== weatherContext.humid
+  ) {
+    console.info("[WeatherContext] humid mismatch", {
+      legacyHumid,
+      contextHumid: weatherContext.humid,
+    });
+  }
+
+  if (
+    import.meta.env.DEV &&
+    weatherContext &&
+    legacyVeryCloudy !== weatherContext.veryCloudy
+  ) {
+    console.info("[WeatherContext] veryCloudy mismatch", {
+      legacyVeryCloudy,
+      contextVeryCloudy: weatherContext.veryCloudy,
+      cloudiness,
+    });
+  }
+
+  if (
+    import.meta.env.DEV &&
+    weatherContext &&
+    legacySuppressUv !== weatherContext.suppressUv
+  ) {
+    console.info("[WeatherContext] suppressUv mismatch", {
+      legacySuppressUv,
+      contextSuppressUv: weatherContext.suppressUv,
+    });
+  }
+
+  if (
+    import.meta.env.DEV &&
+    weatherContext &&
+    legacySlipperySurface !== weatherContext.slipperySurface
+  ) {
+    console.info("[WeatherContext] slipperySurface mismatch", {
+      legacySlipperySurface,
+      contextSlipperySurface: weatherContext.slipperySurface,
     });
   }
 
@@ -1059,7 +1181,7 @@ if (isDay && uvActive && uvKey) {
     );
   }
 
-  if (rainy || stormy) {
+  if (slipperySurface) {
     return (
       <RecommendationBox
         className="recommendation-box safe"

@@ -1,4 +1,5 @@
 import React from "react";
+import type { WeatherContext } from "../utils/weatherContext";
 import { getUvLevelIndex, normalizeUviForDisplay } from "../utils/uv";
 
 type Lang = "ca" | "es" | "eu" | "gl" | "en";
@@ -8,6 +9,7 @@ interface UVAdviceProps {
   lang: string; // pot venir com "ca-ES", etc.
   weatherMain?: string | null;
   cloudiness?: number | null;
+  weatherContext?: WeatherContext | null;
 }
 
 const texts = {
@@ -143,6 +145,7 @@ const UVAdvice: React.FC<UVAdviceProps> = ({
   lang,
   weatherMain,
   cloudiness,
+  weatherContext,
 }) => {
   const lng = normalizeLang(lang);
   const L = texts[lng];
@@ -168,19 +171,42 @@ const UVAdvice: React.FC<UVAdviceProps> = ({
 
   const b = getUvLevelIndex(u);
 
-  const rainy = isRainyWeather(weatherMain);
+  const legacyRainy = isRainyWeather(weatherMain);
+  const rainy = weatherContext?.rainy ?? legacyRainy;
   const veryCloudy = isVeryCloudy(cloudiness);
+  const legacySuppressUv = rainy || (veryCloudy && u >= 3);
+  const suppressUv = weatherContext?.suppressUv ?? legacySuppressUv;
+
+  if (import.meta.env?.DEV && weatherContext && legacyRainy !== weatherContext.rainy) {
+    console.info("[UVAdvice][DEV] rainy mismatch", {
+      legacyRainy,
+      contextRainy: weatherContext.rainy,
+      weatherMain,
+    });
+  }
+
+  if (import.meta.env?.DEV && weatherContext && legacySuppressUv !== weatherContext.suppressUv) {
+    console.info("[UVAdvice][DEV] suppressUv comparison", {
+      legacySuppressUv,
+      contextSuppressUv: weatherContext.suppressUv,
+      weatherMain,
+      cloudiness,
+      uvi: u,
+      note:
+        "Informatiu: UVAdvice conserva el criteri visible legacy de núvols >=85 i UVI >=3.",
+    });
+  }
 
   let extraNote: string | null = null;
 
-  if (rainy) {
+  if (suppressUv && rainy) {
     extraNote = L.rainyNote;
-  } else if (veryCloudy && u >= 3) {
+  } else if (suppressUv && veryCloudy && u >= 3) {
     extraNote = L.cloudyNote;
   }
 
   const mainMsg =
-    veryCloudy && u >= 3 && !rainy
+    suppressUv && veryCloudy && u >= 3 && !rainy
       ? L.cloudyMsgs[b]
       : L.msgs[b];
 

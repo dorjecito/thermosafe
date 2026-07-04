@@ -1,5 +1,6 @@
 // src/components/TopAlertBanner.tsx
 import React, { useEffect, useMemo, useState } from "react";
+import type { WeatherContext } from "../utils/weatherContext";
 
 type Props = {
   primary: any;
@@ -11,6 +12,7 @@ type Props = {
   irr: number | null;
   aemetActive?: boolean;
   aemetSoon?: boolean;
+  weatherContext?: WeatherContext | null;
   t: (key: string) => string;
   UV_HIGH: number;
   UV_EXTREME: number;
@@ -26,12 +28,23 @@ export default function TopAlertBanner({
   irr,
   aemetActive,
   aemetSoon,
+  weatherContext,
   t,
   UV_HIGH,
   UV_EXTREME,
 }: Props) {
   const [bannerAnimKey, setBannerAnimKey] = useState(0);
   const [prevBannerSeverity, setPrevBannerSeverity] = useState(0);
+  const legacyRainy = ["Rain", "Drizzle", "Thunderstorm"].includes(weatherMain ?? "");
+  const rainy = weatherContext?.rainy ?? legacyRainy;
+
+  if (import.meta.env?.DEV && weatherContext && legacyRainy !== weatherContext.rainy) {
+    console.info("[TopAlertBanner][DEV] rainy mismatch", {
+      legacyRainy,
+      contextRainy: weatherContext.rainy,
+      weatherMain,
+    });
+  }
 
   const bannerState = useMemo(() => {
     if (aemetActive) {
@@ -75,7 +88,7 @@ export default function TopAlertBanner({
       normalizedUvi < UV_EXTREME &&
       primary.kind === "uv" &&
       day &&
-      !["Rain", "Drizzle", "Thunderstorm"].includes(weatherMain ?? "") &&
+      !rainy &&
       (clouds ?? 0) < 85
     ) {
       return {
@@ -101,7 +114,7 @@ export default function TopAlertBanner({
     }
 
     return null;
-  }, [aemetActive, primary, heatRisk, uvi, day, weatherMain, clouds, irr, t, UV_HIGH, UV_EXTREME]);
+  }, [aemetActive, primary, heatRisk, uvi, day, rainy, clouds, irr, t, UV_HIGH, UV_EXTREME]);
 
   useEffect(() => {
     const nextSeverity = bannerState?.severity ?? 0;

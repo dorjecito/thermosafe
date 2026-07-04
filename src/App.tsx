@@ -50,6 +50,7 @@ import { getUVDetailFromOpenUV, getUVFromOpenUV } from "./services/openUV";
    import { safeUVFetch } from "./utils/safeUVFetch";
    import { evaluateRiskScore } from "./utils/riskScoreEngine";
    import { primaryRiskFromEngine } from "./utils/primaryRiskFromEngine";
+   import { getWeatherContext } from "./utils/weatherContext";
    import { fetchSolarIrr } from "./utils/fetchSolarIrr";
    import UVContextCard from "./components/UVContextCard";
    import { resolveSkyDescription } from "./utils/resolveSkyDescription";
@@ -1210,6 +1211,17 @@ const activeAlertEvent = `${activeAlert?.event || ""} ${activeAlertDescription |
 const currentFeelTemp = hi ?? temp ?? 99;
 const nocturnalHeat = !day && currentFeelTemp >= 25;
 
+const weatherContext = useMemo(
+  () =>
+    getWeatherContext({
+      weatherMain,
+      humidity: data?.main?.humidity ?? null,
+      effectiveTemp: currentFeelTemp,
+      cloudiness: data?.clouds?.all ?? null,
+    }),
+  [weatherMain, data?.main?.humidity, currentFeelTemp, data?.clouds?.all]
+);
+
 const engineRisk = useMemo(() => {
   if (!data || !isInitialRiskReady || loading) return null;
 
@@ -1243,6 +1255,7 @@ const workWindow = getWorkWindow({
   activity: preventiveActivity,
   nocturnalHeat,
   engineRisk,
+  weatherContext,
 });
 
 const workWindowLang = currentLang;
@@ -1965,6 +1978,7 @@ return (
     irr={irr}
     aemetActive={aemetActive}
     aemetSoon={aemetSoon}
+    weatherContext={weatherContext}
     t={t}
     UV_HIGH={UV_HIGH}
     UV_EXTREME={UV_EXTREME}
@@ -2067,6 +2081,7 @@ return (
     coldRisk={coldRisk ?? undefined}
     coldEffectiveTemp={wc ?? temp}
     riskFactors={engineRisk?.activeFactorsSorted}
+    weatherContext={weatherContext}
 
   />
 
@@ -2186,6 +2201,7 @@ return (
 	                  lang={i18n.resolvedLanguage || i18n.language || "ca"}
 	                  weatherMain={data?.weather?.[0]?.main ?? null}
 	                  cloudiness={data?.clouds?.all}
+	                  weatherContext={weatherContext}
 	                />
 
 	                <UVContextCard

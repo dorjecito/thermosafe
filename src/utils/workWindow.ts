@@ -1,5 +1,6 @@
 import type { WindRisk } from "./windRisk";
 import type { FactorRisk, RiskScoreResult } from "./riskScoreEngine";
+import type { WeatherContext } from "./weatherContext";
 import { getUvLevelIndex } from "./uv";
 
 export type WorkWindow = "optimal" | "caution" | "limited" | "avoid";
@@ -16,6 +17,7 @@ type HeatRiskLike =
   | undefined;
 
 type ColdRiskLike = "cap" | "lleu" | "moderat" | "alt" | "molt alt" | "extrem";
+type DiagnosticSeverity = 0 | 1 | 2 | 3 | 4;
 
 type Params = {
   heatRisk?: HeatRiskLike;
@@ -28,6 +30,7 @@ type Params = {
   activity?: ActivityLevel;
   nocturnalHeat?: boolean;
   engineRisk?: RiskScoreResult | null;
+  weatherContext?: WeatherContext | null;
 };
 
 function getEngineFactor(
@@ -92,18 +95,94 @@ function getHeatRiskFromEngine(
     : null;
 }
 
+function isRainyWeather(weatherMain: string | null | undefined): boolean {
+  return (
+    weatherMain === "Rain" ||
+    weatherMain === "Drizzle" ||
+    weatherMain === "Thunderstorm"
+  );
+}
+
+function isStormyWeather(weatherMain: string | null | undefined): boolean {
+  return weatherMain === "Thunderstorm";
+}
+
+function getDiagnosticHeatSeverity(level: HeatRiskLike["class"]): DiagnosticSeverity {
+  switch (level) {
+    case "mild":
+      return 1;
+    case "moderate":
+      return 2;
+    case "high":
+      return 3;
+    case "ext":
+      return 4;
+    case "safe":
+    default:
+      return 0;
+  }
+}
+
+function getDiagnosticColdSeverity(level: ColdRiskLike): DiagnosticSeverity {
+  switch (level) {
+    case "lleu":
+      return 1;
+    case "moderat":
+      return 2;
+    case "alt":
+    case "molt alt":
+      return 3;
+    case "extrem":
+      return 4;
+    case "cap":
+    default:
+      return 0;
+  }
+}
+
+function getDiagnosticWindSeverity(level: WindRisk): DiagnosticSeverity {
+  switch (level) {
+    case "breezy":
+      return 1;
+    case "moderate":
+      return 2;
+    case "strong":
+      return 3;
+    case "very_strong":
+      return 4;
+    case "none":
+    default:
+      return 0;
+  }
+}
+
 function warnIfEngineDiverges(
   params: {
     heatRisk?: HeatRiskLike;
+    heatIndex: number | null;
     coldRisk: ColdRiskLike;
     windRisk: WindRisk;
+    uvi: number | null;
     legacyUvLevel: number;
+    aemetActive: boolean;
+    weatherMain: string | null;
+    activity: ActivityLevel;
+    nocturnalHeat: boolean;
     engineRisk: RiskScoreResult | null | undefined;
   }
 ): void {
   if (!import.meta.env?.DEV || !params.engineRisk) return;
 
-  const divergences: string[] = [];
+  const divergences: Array<{
+    factor: "heat" | "cold" | "wind" | "uv";
+    legacy: string | number;
+    engine: string | number;
+    severityLegacy: number;
+    severityEngine: number;
+    classification: "expected_engine_override";
+    legacySource: string;
+    engineSource: string;
+  }> = [];
   const heat = getEngineFactor(params.engineRisk, "heat");
   const cold = getEngineFactor(params.engineRisk, "cold");
   const wind = getEngineFactor(params.engineRisk, "wind");
@@ -111,32 +190,84 @@ function warnIfEngineDiverges(
 
   const expectedHeatLevel = params.heatRisk?.class || "safe";
   if (heat && heat.level !== expectedHeatLevel) {
-    divergences.push(`heat:${expectedHeatLevel}->${heat.level}`);
+    divergences.push({
+      factor: "heat",
+      legacy: expectedHeatLevel,
+      engine: heat.level,
+      severityLegacy: getDiagnosticHeatSeverity(expectedHeatLevel),
+      severityEngine: heat.severity,
+      classification: "expected_engine_override",
+      legacySource: "workWindow heatRisk.class",
+      engineSource: "RiskScoreEngine heat factor level",
+    });
   }
 
   if (cold && cold.level !== params.coldRisk) {
-    divergences.push(`cold:${params.coldRisk}->${cold.level}`);
+    divergences.push({
+      factor: "cold",
+      legacy: params.coldRisk,
+      engine: cold.level,
+      severityLegacy: getDiagnosticColdSeverity(params.coldRisk),
+      severityEngine: cold.severity,
+      classification: "expected_engine_override",
+      legacySource: "workWindow coldRisk prop",
+      engineSource: "RiskScoreEngine cold factor level",
+    });
   }
 
   if (wind && wind.level !== params.windRisk) {
-    divergences.push(`wind:${params.windRisk}->${wind.level}`);
+    divergences.push({
+      factor: "wind",
+      legacy: params.windRisk,
+      engine: wind.level,
+      severityLegacy: getDiagnosticWindSeverity(params.windRisk),
+      severityEngine: wind.severity,
+      classification: "expected_engine_override",
+      legacySource: "workWindow windRisk prop",
+      engineSource: "RiskScoreEngine wind factor level",
+    });
   }
 
   if (uv && uv.severity !== params.legacyUvLevel) {
-    divergences.push(`uv:${params.legacyUvLevel}->${uv.severity}`);
+    divergences.push({
+      factor: "uv",
+      legacy: params.legacyUvLevel,
+      engine: uv.severity,
+      severityLegacy: params.legacyUvLevel,
+      severityEngine: uv.severity,
+      classification: "expected_engine_override",
+      legacySource: "getUvLevelIndex(uvi) inside workWindow",
+      engineSource: "RiskScoreEngine uv factor severity",
+    });
   }
 
   if (divergences.length === 0) return;
 
-  console.warn("[workWindow][DEV] Divergencia amb RiskScoreEngine", {
+  console.info("[workWindow][DEV] Comparacio legacy/engine de factors", {
     divergences,
+    note:
+      "Informatiu: workWindow usa el factor del RiskScoreEngine quan existeix; aquestes diferencies no impliquen canvi visible per si soles.",
     workWindowInput: {
       heatClass: expectedHeatLevel,
+      heatIndex: params.heatIndex,
+      heatRisk: params.heatRisk,
       coldRisk: params.coldRisk,
       windRisk: params.windRisk,
+      uvi: params.uvi,
       uvLevel: params.legacyUvLevel,
+      aemetActive: params.aemetActive,
+      weatherMain: params.weatherMain,
+      activity: params.activity,
+      nocturnalHeat: params.nocturnalHeat,
     },
-    engineFactors: params.engineRisk.factors,
+    engineFactors: {
+      heat,
+      cold,
+      wind,
+      uv,
+    },
+    enginePrimary: params.engineRisk.primary,
+    engineMaxSeverity: params.engineRisk.maxSeverity,
   });
 }
 
@@ -151,6 +282,7 @@ export function getWorkWindow({
   activity = "rest",
   nocturnalHeat = false,
   engineRisk = null,
+  weatherContext = null,
 }: Params): WorkWindow {
   const legacyUvLevel = getUvLevelIndex(uvi);
   const uvLevel = getUvLevelFromEngine(engineRisk) ?? legacyUvLevel;
@@ -160,17 +292,46 @@ export function getWorkWindow({
   const effectiveColdRisk = getColdRiskFromEngine(engineRisk) ?? legacyColdRisk;
   const legacyHeatRisk = heatRisk;
   const effectiveHeatRisk = getHeatRiskFromEngine(engineRisk) ?? legacyHeatRisk;
-  warnIfEngineDiverges({ heatRisk, coldRisk, windRisk, legacyUvLevel, engineRisk });
+  warnIfEngineDiverges({
+    heatRisk,
+    heatIndex,
+    coldRisk,
+    windRisk,
+    uvi,
+    legacyUvLevel,
+    aemetActive,
+    weatherMain,
+    activity,
+    nocturnalHeat,
+    engineRisk,
+  });
 
   const hi =
   typeof heatIndex === "number" && Number.isFinite(heatIndex)
     ? heatIndex
     : null;
 
-  const rainy =
-    weatherMain === "Rain" ||
-    weatherMain === "Drizzle" ||
-    weatherMain === "Thunderstorm";
+  const legacyRainy = isRainyWeather(weatherMain);
+  const rainy = weatherContext?.rainy ?? legacyRainy;
+  const legacyStormy = isStormyWeather(weatherMain);
+  const stormy = weatherContext?.stormy ?? legacyStormy;
+  void stormy;
+
+  if (import.meta.env?.DEV && weatherContext && legacyRainy !== weatherContext.rainy) {
+    console.info("[workWindow][DEV] rainy mismatch", {
+      legacyRainy,
+      contextRainy: weatherContext.rainy,
+      weatherMain,
+    });
+  }
+
+  if (import.meta.env?.DEV && weatherContext && legacyStormy !== weatherContext.stormy) {
+    console.info("[workWindow][DEV] stormy mismatch", {
+      legacyStormy,
+      contextStormy: weatherContext.stormy,
+      weatherMain,
+    });
+  }
 
   const hasRelevantWindForCold =
     effectiveWindRisk === "moderate" ||
