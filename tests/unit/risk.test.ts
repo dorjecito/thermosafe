@@ -4,7 +4,7 @@ import test from "node:test";
 
 import { getBaseHeatRisk, getHeatRisk } from "../../src/utils/heatRisk";
 import { calcHI } from "../../src/utils/calcHI";
-import { getColdRisk } from "../../src/utils/getColdRisk";
+import { getColdRisk, type ColdRisk } from "../../src/utils/getColdRisk";
 import { getWindRisk } from "../../src/utils/windRisk";
 import {
   getUvAdvice,
@@ -28,7 +28,9 @@ import {
   type RiskEngineInput,
 } from "../../src/utils/riskScoreEngine";
 import {
+  getRecommendationColdKey,
   getRecommendationFactorState,
+  mapColdRiskToRecommendationKey,
   sortItemsByRiskFactors,
   type RecommendationItem,
 } from "../../src/components/Recommendations";
@@ -153,6 +155,34 @@ test("cold risk follows effective-temperature thresholds", () => {
   assert.equal(getColdRisk(-15, 20), "alt");
   assert.equal(getColdRisk(-25, 20), "molt alt");
   assert.equal(getColdRisk(-40, 20), "extrem");
+});
+
+test("recommendation cold key maps current cold risk labels without changing visible buckets", () => {
+  const cases: Array<[ColdRisk, string | null]> = [
+    ["cap", null],
+    ["lleu", "cold_low"],
+    ["moderat", "cold_mod"],
+    ["alt", "cold_high"],
+    ["molt alt", "cold_high"],
+    ["extrem", "cold_ext"],
+  ];
+
+  for (const [coldRisk, expectedKey] of cases) {
+    assert.equal(
+      mapColdRiskToRecommendationKey(coldRisk),
+      expectedKey,
+      coldRisk
+    );
+  }
+});
+
+test("recommendation cold key uses coldRisk when available and falls back to effective temperature", () => {
+  assert.equal(getRecommendationColdKey(undefined, -5), "cold_mod");
+  assert.equal(getRecommendationColdKey(null, -15), "cold_high");
+  assert.equal(getRecommendationColdKey("moderat", 8), "cold_mod");
+  assert.equal(getRecommendationColdKey("cap", -5), null);
+  assert.equal(getRecommendationColdKey("molt alt", -40), "cold_high");
+  assert.equal(getRecommendationColdKey("extrem", 10), "cold_ext");
 });
 
 test("mild cold status is not presented as moderate", () => {

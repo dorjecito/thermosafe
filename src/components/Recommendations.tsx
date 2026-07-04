@@ -10,7 +10,7 @@
 
 import * as React from "react";
 import { getHeatRisk } from "../utils/heatRisk";
-import { getColdRisk } from "../utils/getColdRisk";
+import { getColdRisk, type ColdRisk } from "../utils/getColdRisk";
 import { getUvLevelIndex } from "../utils/uv";
 import type { HeatDayPhase } from "../utils/isDayAtLocation";
 import type { FactorRisk } from "../utils/riskScoreEngine";
@@ -97,6 +97,8 @@ interface Props {
   windKmh?: number | null;
   currentHour?: number;
   heatDayPhase?: HeatDayPhase;
+  coldRisk?: ColdRisk;
+  coldEffectiveTemp?: number | null;
   riskFactors?: FactorRisk[];
 }
 
@@ -495,12 +497,24 @@ const mapHeatLevelToKey = (levelRaw: unknown): HeatKey => {
 
 const getColdKey = (effectiveTemp: number): ColdKey | null => {
   const coldRisk = getColdRisk(effectiveTemp, null);
-  if (coldRisk === "extrem") return "cold_ext";
-  if (coldRisk === "alt" || coldRisk === "molt alt") return "cold_high";
-  if (coldRisk === "moderat") return "cold_mod";
-  if (coldRisk === "lleu") return "cold_low";
-  return null;
+  return mapColdRiskToRecommendationKey(coldRisk);
 };
+
+export const mapColdRiskToRecommendationKey = (
+  coldRisk: ColdRisk | null | undefined
+): ColdKey | null => {
+  if (coldRisk === "extrem") return "cold_ext";
+  if (coldRisk === "alt" || coldRisk === "molt alt") return "cold_high";
+  if (coldRisk === "moderat") return "cold_mod";
+  if (coldRisk === "lleu") return "cold_low";
+  return null;
+};
+
+export const getRecommendationColdKey = (
+  coldRisk: ColdRisk | null | undefined,
+  effectiveTemp: number
+): ColdKey | null =>
+  coldRisk ? mapColdRiskToRecommendationKey(coldRisk) : getColdKey(effectiveTemp);
 
 const getUvKey = (uvi: number | null | undefined): UvKey | null => {
   if (typeof uvi !== "number" || !Number.isFinite(uvi)) return null;
@@ -754,6 +768,8 @@ export default function Recommendations({
   windKmh,
   currentHour,
   heatDayPhase,
+  coldRisk,
+  coldEffectiveTemp,
   riskFactors,
 }: Props) {
   const lng = normalizeLang(lang);
@@ -762,7 +778,8 @@ export default function Recommendations({
 
   const effectiveTemp = Number(temp);
   const uvKey = getUvKey(uvi);
-  const coldKey = getColdKey(effectiveTemp);
+  const recommendationsColdRisk = getColdRisk(effectiveTemp, null);
+  const coldKey = getRecommendationColdKey(coldRisk, effectiveTemp);
   const rainy = isRainyWeather(weatherMain);
   const stormy = isStormWeather(weatherMain);
   const humid = typeof humidity === "number" && humidity >= 70 && effectiveTemp >= 24;
@@ -780,6 +797,20 @@ export default function Recommendations({
   uvActive &&
   !!uvKey &&
   (veryCloudy || rainy || stormy);
+
+  if (
+    import.meta.env.DEV &&
+    coldRisk &&
+    coldRisk !== recommendationsColdRisk
+  ) {
+    console.warn("[Recommendations][DEV] Divergència fred props vs intern", {
+      propsColdRisk: coldRisk,
+      recommendationsColdRisk,
+      propsColdEffectiveTemp: coldEffectiveTemp,
+      recommendationsEffectiveTemp: effectiveTemp,
+      windKmh,
+    });
+  }
 
   if (!Number.isFinite(effectiveTemp)) {
     return (

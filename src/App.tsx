@@ -2063,6 +2063,8 @@ return (
     windKmh={windKmh}
     currentHour={new Date().getHours()}
     heatDayPhase={heatDayPhase}
+    coldRisk={coldRisk ?? undefined}
+    coldEffectiveTemp={wc ?? temp}
     riskFactors={engineRisk?.activeFactorsSorted}
 
   />
