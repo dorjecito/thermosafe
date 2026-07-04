@@ -57,6 +57,41 @@ function getWindRiskFromEngine(
     : null;
 }
 
+function getColdRiskFromEngine(
+  engineRisk: RiskScoreResult | null | undefined
+): ColdRiskLike | null {
+  const cold = engineRisk ? getEngineFactor(engineRisk, "cold") : undefined;
+  const level = cold?.level;
+
+  return level === "cap" ||
+    level === "lleu" ||
+    level === "moderat" ||
+    level === "alt" ||
+    level === "molt alt" ||
+    level === "extrem"
+    ? level
+    : null;
+}
+
+function getHeatRiskFromEngine(
+  engineRisk: RiskScoreResult | null | undefined
+): HeatRiskLike | null {
+  const heat = engineRisk ? getEngineFactor(engineRisk, "heat") : undefined;
+  const level = heat?.level;
+
+  return level === "safe" ||
+    level === "mild" ||
+    level === "moderate" ||
+    level === "high" ||
+    level === "ext"
+    ? {
+        class: level,
+        isHigh: level === "high" || level === "ext",
+        isExtreme: level === "ext",
+      }
+    : null;
+}
+
 function warnIfEngineDiverges(
   params: {
     heatRisk?: HeatRiskLike;
@@ -121,6 +156,10 @@ export function getWorkWindow({
   const uvLevel = getUvLevelFromEngine(engineRisk) ?? legacyUvLevel;
   const legacyWindRisk = windRisk;
   const effectiveWindRisk = getWindRiskFromEngine(engineRisk) ?? legacyWindRisk;
+  const legacyColdRisk = coldRisk;
+  const effectiveColdRisk = getColdRiskFromEngine(engineRisk) ?? legacyColdRisk;
+  const legacyHeatRisk = heatRisk;
+  const effectiveHeatRisk = getHeatRiskFromEngine(engineRisk) ?? legacyHeatRisk;
   warnIfEngineDiverges({ heatRisk, coldRisk, windRisk, legacyUvLevel, engineRisk });
 
   const hi =
@@ -140,23 +179,25 @@ export function getWorkWindow({
 
   /* 1) Situacions extremes */
   if (aemetActive && (effectiveWindRisk === "strong" || effectiveWindRisk === "very_strong")) return "avoid";
-  if (coldRisk === "extrem") return "avoid";
-  if (heatRisk?.isExtreme) return "avoid";
+  if (effectiveColdRisk === "extrem") return "avoid";
+  if (effectiveHeatRisk?.isExtreme) return "avoid";
   if (effectiveWindRisk === "very_strong") return "avoid";
   if (uvLevel === 4) return "avoid";
 
   /* 2) Fred + vent combinats */
   if (
-    (coldRisk === "moderat" || coldRisk === "alt" || coldRisk === "molt alt") &&
+    (effectiveColdRisk === "moderat" ||
+      effectiveColdRisk === "alt" ||
+      effectiveColdRisk === "molt alt") &&
     hasRelevantWindForCold
   ) {
-    return coldRisk === "moderat" ? "limited" : "avoid";
+    return effectiveColdRisk === "moderat" ? "limited" : "avoid";
   }
 
   /* 2b) Calor segons sensació tèrmica directa */
   if (hi !== null && hi >= 41) return "avoid";
   if (hi !== null && hi >= 32) return "limited";
-  if (heatRisk?.isHigh) return "limited";
+  if (effectiveHeatRisk?.isHigh) return "limited";
   if (hi !== null && hi >= 27) return "caution";
 
   /* 2c) L'esforç físic pot exigir precaució abans del llindar tèrmic oficial */
@@ -164,22 +205,22 @@ export function getWorkWindow({
     hi !== null &&
     hi >= 24 &&
     activity !== "rest" &&
-    heatRisk?.class !== "safe"
+    effectiveHeatRisk?.class !== "safe"
   ) {
     return "caution";
   }
 
   /* 3) Situacions altes */
-  if (coldRisk === "alt" || coldRisk === "molt alt") return "limited";
-  if (coldRisk === "moderat") return "limited";
+  if (effectiveColdRisk === "alt" || effectiveColdRisk === "molt alt") return "limited";
+  if (effectiveColdRisk === "moderat") return "limited";
   if (effectiveWindRisk === "strong") return "limited";
   if (uvLevel >= 3) return "limited";
 
   /* 3b) Avís oficial + situació ja delicada */
   if (
     aemetActive &&
-    (
-	      coldRisk === "lleu" ||
+	    (
+	      effectiveColdRisk === "lleu" ||
 	      effectiveWindRisk === "moderate" ||
 	      uvLevel >= 2 ||
 	      rainy
@@ -194,7 +235,7 @@ export function getWorkWindow({
   if (effectiveWindRisk === "moderate") return "caution";
   if (uvLevel >= 2) return "caution";
   if (rainy) return "caution";
-  if (coldRisk === "lleu") return "caution";
+  if (effectiveColdRisk === "lleu") return "caution";
 
   /* 5) Situació segura */
   return "optimal";

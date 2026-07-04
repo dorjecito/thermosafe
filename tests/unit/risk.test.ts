@@ -200,6 +200,83 @@ test("workWindow uses RiskScoreEngine wind factor when available and keeps legac
   assert.equal(getWorkWindow({ ...fallbackInput, engineRisk }), "optimal");
 });
 
+test("workWindow uses RiskScoreEngine cold factor when available and keeps legacy fallback", () => {
+  const fallbackInput = {
+    heatRisk: getHeatRisk(4, "rest"),
+    heatIndex: 4,
+    coldRisk: "moderat" as const,
+    windRisk: "none" as const,
+    uvi: 0,
+  };
+  const engineRisk = evaluateRiskScore({
+    heatIndex: fallbackInput.heatIndex,
+    coldEffectiveTemp: 4,
+    windKmh: 0,
+    uvi: fallbackInput.uvi,
+  });
+
+  assert.equal(getWorkWindow(fallbackInput), "limited");
+  assert.equal(getWorkWindow({ ...fallbackInput, engineRisk }), "optimal");
+});
+
+test("workWindow keeps cold and wind combined rules when both factors come from RiskScoreEngine", () => {
+  const input = {
+    heatRisk: getHeatRisk(-16, "rest"),
+    heatIndex: -16,
+    coldRisk: "cap" as const,
+    windRisk: "none" as const,
+    uvi: 0,
+  };
+  const engineRisk = evaluateRiskScore({
+    heatIndex: input.heatIndex,
+    coldEffectiveTemp: -16,
+    windKmh: 28,
+    uvi: input.uvi,
+  });
+
+  assert.equal(getWorkWindow(input), "optimal");
+  assert.equal(getWorkWindow({ ...input, engineRisk }), "avoid");
+});
+
+test("workWindow uses RiskScoreEngine heat factor when available and keeps legacy fallback", () => {
+  const fallbackInput = {
+    heatRisk: { class: "safe", isHigh: false, isExtreme: false } as const,
+    heatIndex: 26,
+    coldRisk: "cap" as const,
+    windRisk: "none" as const,
+    uvi: 0,
+    activity: "intense" as const,
+  };
+  const engineRisk = evaluateRiskScore({
+    heatIndex: fallbackInput.heatIndex,
+    activity: fallbackInput.activity,
+    coldEffectiveTemp: fallbackInput.heatIndex,
+    windKmh: 0,
+    uvi: fallbackInput.uvi,
+  });
+
+  assert.equal(getWorkWindow(fallbackInput), "optimal");
+  assert.equal(getWorkWindow({ ...fallbackInput, engineRisk }), "caution");
+});
+
+test("workWindow keeps direct heat-index rules even when engine heat factor is lower", () => {
+  const input = {
+    heatRisk: { class: "safe", isHigh: false, isExtreme: false } as const,
+    heatIndex: 41,
+    coldRisk: "cap" as const,
+    windRisk: "none" as const,
+    uvi: 0,
+  };
+  const engineRisk = evaluateRiskScore({
+    heatIndex: 24,
+    coldEffectiveTemp: input.heatIndex,
+    windKmh: 0,
+    uvi: input.uvi,
+  });
+
+  assert.equal(getWorkWindow({ ...input, engineRisk }), "avoid");
+});
+
 test("heat index calculation is stable for representative warm and humid conditions", () => {
   assert.equal(calcHI(30, 70), 35);
 });
