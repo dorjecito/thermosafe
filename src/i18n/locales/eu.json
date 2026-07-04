@@ -71,7 +71,8 @@
     "worsening_clearlyAt_cold_wind": "{{start}} eta {{end}} artean batez ere hotz biziagoa eta haize askoz indartsuagoa espero dira.",
     "worsening_clearlyAt_cold_uv": "{{start}} eta {{end}} artean batez ere hotz biziagoa eta UV erradiazio oso handia espero dira.",
     "worsening_clearlyAt_wind_uv": "{{start}} eta {{end}} artean batez ere haize askoz indartsuagoa eta UV erradiazio oso handia espero dira.",
-    "partialSuffix": "Iragarpen hau eskuragarri dauden datuetan oinarrituta dago."
+    "partialSuffix": "Iragarpen hau eskuragarri dauden datuetan oinarrituta dago.",
+    "localTimeSuffix": "(tokiko ordua)"
   },
 
   "caution_outdoors": "Kontuz kanpoan",

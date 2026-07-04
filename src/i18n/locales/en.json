@@ -169,7 +169,8 @@
     "worsening_clearlyAt_cold_wind": "More intense cold and much stronger wind are expected mainly between {{start}} and {{end}}.",
     "worsening_clearlyAt_cold_uv": "More intense cold and very high UV radiation are expected mainly between {{start}} and {{end}}.",
     "worsening_clearlyAt_wind_uv": "Much stronger wind and very high UV radiation are expected mainly between {{start}} and {{end}}.",
-    "partialSuffix": "This forecast is based on the available data."
+    "partialSuffix": "This forecast is based on the available data.",
+    "localTimeSuffix": "(local time)"
   },
 
   "push": {

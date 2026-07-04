@@ -13,11 +13,6 @@ body {
   color: #222;
 }
 
-/* Quan feim scroll, amagarem només el títol gran */
-.top-sticky-ui.compact-mode .app-header {
-  display: none;
-}
-
 /* Si vols amagar també les banderes en scroll, activa això */
 /*
 .top-sticky-ui.compact-mode .language-switcher,
@@ -63,6 +58,110 @@ body {
   backdrop-filter: blur(10px);
   -webkit-backdrop-filter: blur(10px);
   background: rgba(255,255,255,0.92);
+}
+
+.search-panel-lang-row {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: 0.35rem;
+}
+
+.search-panel {
+  position: relative;
+}
+
+.search-panel-form {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  margin-bottom: 0.45rem;
+  width: 100%;
+}
+
+.search-panel-input {
+  flex: 1;
+  min-width: 0;
+  padding: 0.42rem 0.5rem;
+  border-radius: 8px;
+  border: 1px solid #ccc;
+}
+
+.search-panel-help-btn {
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  font-size: 0.95rem;
+  line-height: 1;
+  padding: 3px;
+  flex-shrink: 0;
+  width: 32px;
+  height: 32px;
+  position: relative;
+  z-index: 10;
+}
+
+.search-panel-submit {
+  padding: 0.42rem 0.8rem;
+  border-radius: 8px;
+  border: none;
+  color: white;
+  transition: all 0.2s ease;
+  flex-shrink: 0;
+  white-space: nowrap;
+}
+
+.search-panel-help {
+  margin-top: -2px;
+  margin-bottom: 6px;
+  font-size: 0.82rem;
+  color: #ddd;
+  background: #1e1e1e;
+  padding: 8px 10px;
+  border-radius: 8px;
+  border: 1px solid rgba(255,255,255,0.12);
+  line-height: 1.35;
+  position: relative;
+  z-index: 30;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.search-panel-suggestions {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  margin-top: 4px;
+  background: white;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+  overflow: hidden;
+  z-index: 20;
+}
+
+.search-panel-gps-row {
+  margin-top: 0.25rem;
+  margin-bottom: 0.45rem;
+}
+
+.search-panel-gps-row .gps-button {
+  padding: 0.55rem 0.9rem;
+  border-radius: 8px;
+}
+
+@media (max-width: 520px) {
+  .search-panel-form {
+    gap: 0.35rem;
+  }
+
+  .search-panel-submit {
+    padding-inline: 0.65rem;
+  }
+
+  .search-panel-gps-row .gps-button {
+    padding: 0.5rem 0.75rem;
+  }
 }
 /* 🌙🔥 Nit tropical — avís suau nocturn */
 .recommendation-box.tropicalNight {

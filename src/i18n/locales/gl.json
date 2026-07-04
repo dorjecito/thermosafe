@@ -71,7 +71,8 @@
     "worsening_clearlyAt_cold_wind": "Entre as {{start}} e as {{end}} prevese sobre todo frío máis intenso e vento moito máis forte.",
     "worsening_clearlyAt_cold_uv": "Entre as {{start}} e as {{end}} prevese sobre todo frío máis intenso e radiación UV moi elevada.",
     "worsening_clearlyAt_wind_uv": "Entre as {{start}} e as {{end}} prevese sobre todo vento moito máis forte e radiación UV moi elevada.",
-    "partialSuffix": "Esta previsión baséase nos datos dispoñibles."
+    "partialSuffix": "Esta previsión baséase nos datos dispoñibles.",
+    "localTimeSuffix": "(hora local)"
   },
 
 

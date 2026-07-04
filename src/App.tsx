@@ -434,6 +434,12 @@ const {
   fetchCitySuggestions,
 } = useCitySuggestions();
 
+const closeSearchPanel = () => {
+  setShowSuggestions(false);
+  setShowSearchHelp(false);
+  searchInputRef.current?.blur();
+};
+
 const activityLevelStable = useStableValue(activityLevel, 800);
 // ⏱️ Manté activitat uns minuts encara que l’usuari s’aturi
 const ACTIVITY_HOLD_MS = 3 * 60 * 1000;
@@ -670,16 +676,17 @@ const fetchWeather = async (cityName: string) => {
         newLon,
         lang,
         isDayHere
-      );
-	    } else {
-	      setUvi(null);
-	      setUvMaxToday(null);
-	      setAlerts([]);
-	    }
-  } catch (err) {
-    console.error("[DEBUG] Error obtenint dades:", err);
-    setErr("Error obtenint dades de ciutat");
-  } finally {
+	      );
+		    } else {
+		      setUvi(null);
+		      setUvMaxToday(null);
+		      setAlerts([]);
+		    }
+    closeSearchPanel();
+	  } catch (err) {
+	    console.error("[DEBUG] Error obtenint dades:", err);
+	    setErr("Error obtenint dades de ciutat");
+	  } finally {
     if (!isStaleRequest("search", requestId)) {
       setIsInitialRiskReady(true);
       setLoading(false);
@@ -992,16 +999,17 @@ if (!isStaleRequest("gps", requestId)) {
 await maybeNotifyHeat(d.main.feels_like);
 await maybeNotifyCold(effForCold, wKmH);
 await maybeNotifyWind(wKmH);
-await maybeNotifyUV(uv);
-}
+	await maybeNotifyUV(uv);
+	}
 
-if (isStaleRequest("gps", requestId)) return;
-    // ✅ Tot correcte
-    if (!silent) setErr("");
+	if (isStaleRequest("gps", requestId)) return;
+	    // ✅ Tot correcte
+	    if (!silent) setErr("");
+    if (!silent) closeSearchPanel();
 
-  } catch (error) {
-  console.error("[DEBUG] Error obtenint dades per GPS:", error);
-  if (!silent) setErr(t("errorGPS"));
+	  } catch (error) {
+	  console.error("[DEBUG] Error obtenint dades per GPS:", error);
+	  if (!silent) setErr(t("errorGPS"));
 } finally {
   if (!silent && !isStaleRequest("gps", requestId)) {
     setIsInitialRiskReady(true);
@@ -1049,12 +1057,11 @@ const handleSuggestionSelect = async (s: any) => {
     setDay(isDayHere);
 
     setCity(label);
-    setRealCity(label);
+	    setRealCity(label);
 
-    setInput("");
-    setTimeout(() => searchInputRef.current?.focus(), 0);
+	    setInput("");
 
-    const tempReal = data.main.temp;
+	    const tempReal = data.main.temp;
     setTemp(tempReal);
     setHi(data.main.feels_like);
     setHum(data.main.humidity);
@@ -1093,15 +1100,16 @@ const handleSuggestionSelect = async (s: any) => {
 	    setUvi(uv);
 	    await loadUvMaxToday(s.lat, s.lon);
 
-    await loadAlertsIfNeeded(
-      s.lat,
-      s.lon,
-      lang,
-      isDayHere
-    );
-  } catch (err) {
-    console.error("[DEBUG] Error obtenint dades del suggeriment:", err);
-    setErr(t("errorCity"));
+	    await loadAlertsIfNeeded(
+	      s.lat,
+	      s.lon,
+	      lang,
+	      isDayHere
+	    );
+    closeSearchPanel();
+	  } catch (err) {
+	    console.error("[DEBUG] Error obtenint dades del suggeriment:", err);
+	    setErr(t("errorCity"));
   } finally {
     setIsInitialRiskReady(true);
     setLoading(false);
@@ -1549,10 +1557,26 @@ const uvMaxSummaryValue =
 const uvSummaryText = getUvText(uvSummaryValue, currentLang);
 const uvSummaryAdvice = getUvAdvice(uvSummaryValue, currentLang);
 const isRiskRenderReady = Boolean(data && isInitialRiskReady && !loading);
-const formatTrendTime = (date: Date | null) =>
-  date
-    ? date.toLocaleTimeString(currentLang, { hour: "2-digit", minute: "2-digit" })
-    : "";
+const locationTimezoneOffsetSec =
+  typeof data?.timezone === "number" ? data.timezone : null;
+const browserTimezoneOffsetSec = -new Date().getTimezoneOffset() * 60;
+const trendUsesDifferentTimezone =
+  locationTimezoneOffsetSec !== null &&
+  Math.abs(locationTimezoneOffsetSec - browserTimezoneOffsetSec) >= 30 * 60;
+const formatTrendTime = (date: Date | null) => {
+  if (!date) return "";
+
+  if (locationTimezoneOffsetSec === null) {
+    return date.toLocaleTimeString(currentLang, { hour: "2-digit", minute: "2-digit" });
+  }
+
+  const locationDate = new Date(date.getTime() + locationTimezoneOffsetSec * 1000);
+  return locationDate.toLocaleTimeString(currentLang, {
+    hour: "2-digit",
+    minute: "2-digit",
+    timeZone: "UTC",
+  });
+};
 const formatTrendFactorKey = (factors?: RiskTrendResult["factors"]) => {
   if (!factors || factors.length === 0) return "generic";
   const order: RiskTrendResult["factors"] = ["heat", "cold", "wind", "uv"];
@@ -1582,10 +1606,20 @@ const baseRiskTrendText = riskTrendLoading
         end: trendEndTime,
       }),
     });
-const riskTrendText =
-  riskTrend?.partial && !riskTrendLoading
-    ? `${baseRiskTrendText} ${t("riskTrend.partialSuffix")}`
-    : baseRiskTrendText;
+const shouldShowTrendLocalTime =
+  Boolean(riskTrend) &&
+  !riskTrendLoading &&
+  trendUsesDifferentTimezone &&
+  Boolean(trendStartTime && trendEndTime) &&
+  riskTrend?.direction !== "stable" &&
+  riskTrend?.direction !== "improving";
+const riskTrendText = [
+  baseRiskTrendText,
+  shouldShowTrendLocalTime ? t("riskTrend.localTimeSuffix") : "",
+  riskTrend?.partial && !riskTrendLoading ? t("riskTrend.partialSuffix") : "",
+]
+  .filter(Boolean)
+  .join(" ");
 const riskTrendIcon = riskTrendLoading
   ? "…"
   : !riskTrend
@@ -1607,7 +1641,7 @@ return (
     />
     <div className={`top-sticky-ui ${showCompactHeader ? "compact-mode" : ""}`}>
       {/* 🔄 Selector d’idioma */}
-      <div style={{ display: "flex", justifyContent: "flex-end", marginBottom: "0.6rem" }}>
+      <div className="search-panel-lang-row">
         <LanguageSwitcher />
       </div>
 
@@ -1617,8 +1651,8 @@ return (
 </h1>
       </div>
 
-      <div ref={searchBoxRef} style={{ position: "relative" }}>
-  <form
+	      <div ref={searchBoxRef} className="search-panel">
+	  <form
     onSubmit={(e) => {
       e.preventDefault();
       const q = input.trim();
@@ -1627,14 +1661,8 @@ return (
       setErr("");
       fetchWeather(q);
     }}
-    style={{
-      display: "flex",
-      alignItems: "center",
-      gap: "0.5rem",
-      marginBottom: "0.8rem",
-      width: "100%",
-    }}
-  >
+	    className="search-panel-form"
+	  >
     <input
       type="text"
       value={input}
@@ -1645,14 +1673,8 @@ return (
         fetchCitySuggestions(value);
       }}
       placeholder={t("search_placeholder")}
-      style={{
-        flex: 1,
-        minWidth: 0,
-        padding: "0.5rem",
-        borderRadius: "8px",
-        border: "1px solid #ccc",
-      }}
-    />
+	      className="search-panel-input"
+	    />
 
     <button
       type="button"
@@ -1663,39 +1685,20 @@ return (
       }}
       aria-label={t("search_help_title") || "Ajuda de cerca"}
       title={t("search_help_title") || "Ajuda de cerca"}
-      style={{
-        marginLeft: "6px",
-        border: "none",
-        background: "transparent",
-        cursor: "pointer",
-        fontSize: "1rem",
-        lineHeight: 1,
-        padding: "4px",
-        flexShrink: 0,
-        width: "36px",
-        height: "36px",
-        position: "relative",
-        zIndex: 10,
-      }}
-    >
+	      className="search-panel-help-btn"
+	    >
       ℹ️
     </button>
 
     <button
       type="submit"
       disabled={!input.trim()}
-      style={{
-        padding: "0.5rem 1rem",
-        borderRadius: "8px",
-        border: "none",
-        backgroundColor: input.trim() ? "#1e90ff" : "#999",
-        color: "white",
-        cursor: input.trim() ? "pointer" : "not-allowed",
-        opacity: input.trim() ? 1 : 0.6,
-        transition: "all 0.2s ease",
-        flexShrink: 0,
-        whiteSpace: "nowrap",
-      }}
+	      className="search-panel-submit"
+	      style={{
+	        backgroundColor: input.trim() ? "#1e90ff" : "#999",
+	        cursor: input.trim() ? "pointer" : "not-allowed",
+	        opacity: input.trim() ? 1 : 0.6,
+	      }}
     >
       {t("search_button")}
     </button>
@@ -1704,22 +1707,8 @@ return (
   {showSearchHelp && (
     <div
       onClick={(e) => e.stopPropagation()}
-      style={{
-        marginTop: "-4px",
-        marginBottom: "8px",
-        fontSize: "0.85rem",
-        color: "#ddd",
-        background: "#1e1e1e",
-        padding: "10px 12px",
-        borderRadius: "8px",
-        border: "1px solid rgba(255,255,255,0.12)",
-        lineHeight: 1.4,
-        position: "relative",
-        zIndex: 30,
-        width: "100%",
-        boxSizing: "border-box",
-      }}
-    >
+	      className="search-panel-help"
+	    >
       {t("search_help") ||
         "Escriu almenys 4 lletres. Els suggeriments poden requerir gairebé el nom complet de la ciutat."}
     </div>
@@ -1727,20 +1716,8 @@ return (
 
   {!showSearchHelp && showSuggestions && suggestions.length > 0 && (
     <div
-      style={{
-        position: "absolute",
-        top: "100%",
-        left: 0,
-        right: 0,
-        marginTop: "6px",
-        background: "white",
-        border: "1px solid #ccc",
-        borderRadius: "8px",
-        boxShadow: "0 4px 12px rgba(0,0,0,0.15)",
-        overflow: "hidden",
-        zIndex: 20,
-      }}
-    >
+	      className="search-panel-suggestions"
+	    >
       {suggestions.map((s, i) => {
         const label = [s.name, s.state, s.country].filter(Boolean).join(", ");
 
@@ -1775,8 +1752,8 @@ return (
     </div>
   )}
 
-  <div style={{ marginTop: "0.4rem", marginBottom: "0.8rem" }}>
-    <button className="gps-btn gps-button" onClick={() => locate(false)}>
+	  <div className="search-panel-gps-row">
+	    <button className="gps-btn gps-button" onClick={() => locate(false)}>
       {t("gps_button")}
     </button>
   </div>

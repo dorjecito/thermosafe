@@ -62,7 +62,8 @@
     "worsening_clearlyAt_cold_wind": "Entre les {{start}} i les {{end}} es preveuen sobretot fred més intens i vent molt més fort.",
     "worsening_clearlyAt_cold_uv": "Entre les {{start}} i les {{end}} es preveuen sobretot fred més intens i radiació UV molt elevada.",
     "worsening_clearlyAt_wind_uv": "Entre les {{start}} i les {{end}} es preveuen sobretot vent molt més fort i radiació UV molt elevada.",
-    "partialSuffix": "Aquesta previsió es basa en les dades disponibles."
+    "partialSuffix": "Aquesta previsió es basa en les dades disponibles.",
+    "localTimeSuffix": "(hora local)"
   },
 
   "loading": "Carregant dades meteorològiques...",
