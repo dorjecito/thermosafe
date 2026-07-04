@@ -256,10 +256,11 @@ useEffect(() => {
 	  const [windKmh, setWindKmh] = useState<number | null>(null);
 	  const [lat, setLat] = useState<number | null>(null);
 	  const [lon, setLon] = useState<number | null>(null);
-	  const [riskTrend, setRiskTrend] = useState<RiskTrendResult | null>(null);
-	  const [riskTrendLoading, setRiskTrendLoading] = useState(false);
-	  const searchBoxRef = useRef<HTMLDivElement | null>(null);
-	  const showCompactHeader = useScrollCompactHeader(120);
+		  const [riskTrend, setRiskTrend] = useState<RiskTrendResult | null>(null);
+		  const [riskTrendLoading, setRiskTrendLoading] = useState(false);
+		  const [searchPanelCollapsed, setSearchPanelCollapsed] = useState(false);
+		  const searchBoxRef = useRef<HTMLDivElement | null>(null);
+		  const showCompactHeader = useScrollCompactHeader(120);
 
  useEffect(() => {
   const handleClickOutside = (event: MouseEvent) => {
@@ -434,9 +435,15 @@ const {
   fetchCitySuggestions,
 } = useCitySuggestions();
 
-const closeSearchPanel = () => {
+const expandSearchPanel = () => {
+  setSearchPanelCollapsed(false);
+  window.setTimeout(() => searchInputRef.current?.focus(), 0);
+};
+
+const collapseSearchPanel = () => {
   setShowSuggestions(false);
   setShowSearchHelp(false);
+  setSearchPanelCollapsed(true);
   searchInputRef.current?.blur();
 };
 
@@ -682,7 +689,7 @@ const fetchWeather = async (cityName: string) => {
 		      setUvMaxToday(null);
 		      setAlerts([]);
 		    }
-    closeSearchPanel();
+    collapseSearchPanel();
 	  } catch (err) {
 	    console.error("[DEBUG] Error obtenint dades:", err);
 	    setErr("Error obtenint dades de ciutat");
@@ -1005,7 +1012,7 @@ await maybeNotifyWind(wKmH);
 	if (isStaleRequest("gps", requestId)) return;
 	    // ✅ Tot correcte
 	    if (!silent) setErr("");
-    if (!silent) closeSearchPanel();
+    if (!silent) collapseSearchPanel();
 
 	  } catch (error) {
 	  console.error("[DEBUG] Error obtenint dades per GPS:", error);
@@ -1106,7 +1113,7 @@ const handleSuggestionSelect = async (s: any) => {
 	      lang,
 	      isDayHere
 	    );
-    closeSearchPanel();
+    collapseSearchPanel();
 	  } catch (err) {
 	    console.error("[DEBUG] Error obtenint dades del suggeriment:", err);
 	    setErr(t("errorCity"));
@@ -1651,7 +1658,21 @@ return (
 </h1>
       </div>
 
-	      <div ref={searchBoxRef} className="search-panel">
+		      <div
+            ref={searchBoxRef}
+            className={`search-panel ${searchPanelCollapsed ? "search-panel--collapsed" : ""}`}
+          >
+  {searchPanelCollapsed ? (
+    <button
+      type="button"
+      className="search-panel-reopen"
+      onClick={expandSearchPanel}
+      aria-label={t("search_placeholder")}
+    >
+      🔍 {t("search_placeholder")}
+    </button>
+  ) : (
+    <>
 	  <form
     onSubmit={(e) => {
       e.preventDefault();
@@ -1757,6 +1778,8 @@ return (
       {t("gps_button")}
     </button>
   </div>
+    </>
+  )}
 </div>
 </div>
 
