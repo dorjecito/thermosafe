@@ -42,6 +42,21 @@ function getUvLevelFromEngine(engineRisk: RiskScoreResult | null | undefined): n
   return typeof uv?.severity === "number" ? uv.severity : null;
 }
 
+function getWindRiskFromEngine(
+  engineRisk: RiskScoreResult | null | undefined
+): WindRisk | null {
+  const wind = engineRisk ? getEngineFactor(engineRisk, "wind") : undefined;
+  const level = wind?.level;
+
+  return level === "none" ||
+    level === "breezy" ||
+    level === "moderate" ||
+    level === "strong" ||
+    level === "very_strong"
+    ? level
+    : null;
+}
+
 function warnIfEngineDiverges(
   params: {
     heatRisk?: HeatRiskLike;
@@ -104,6 +119,8 @@ export function getWorkWindow({
 }: Params): WorkWindow {
   const legacyUvLevel = getUvLevelIndex(uvi);
   const uvLevel = getUvLevelFromEngine(engineRisk) ?? legacyUvLevel;
+  const legacyWindRisk = windRisk;
+  const effectiveWindRisk = getWindRiskFromEngine(engineRisk) ?? legacyWindRisk;
   warnIfEngineDiverges({ heatRisk, coldRisk, windRisk, legacyUvLevel, engineRisk });
 
   const hi =
@@ -117,13 +134,15 @@ export function getWorkWindow({
     weatherMain === "Thunderstorm";
 
   const hasRelevantWindForCold =
-    windRisk === "moderate" || windRisk === "strong" || windRisk === "very_strong";
+    effectiveWindRisk === "moderate" ||
+    effectiveWindRisk === "strong" ||
+    effectiveWindRisk === "very_strong";
 
   /* 1) Situacions extremes */
-  if (aemetActive && (windRisk === "strong" || windRisk === "very_strong")) return "avoid";
+  if (aemetActive && (effectiveWindRisk === "strong" || effectiveWindRisk === "very_strong")) return "avoid";
   if (coldRisk === "extrem") return "avoid";
   if (heatRisk?.isExtreme) return "avoid";
-  if (windRisk === "very_strong") return "avoid";
+  if (effectiveWindRisk === "very_strong") return "avoid";
   if (uvLevel === 4) return "avoid";
 
   /* 2) Fred + vent combinats */
@@ -153,17 +172,17 @@ export function getWorkWindow({
   /* 3) Situacions altes */
   if (coldRisk === "alt" || coldRisk === "molt alt") return "limited";
   if (coldRisk === "moderat") return "limited";
-  if (windRisk === "strong") return "limited";
+  if (effectiveWindRisk === "strong") return "limited";
   if (uvLevel >= 3) return "limited";
 
   /* 3b) Avís oficial + situació ja delicada */
   if (
     aemetActive &&
     (
-      coldRisk === "lleu" ||
-      windRisk === "moderate" ||
-      uvLevel >= 2 ||
-      rainy
+	      coldRisk === "lleu" ||
+	      effectiveWindRisk === "moderate" ||
+	      uvLevel >= 2 ||
+	      rainy
     )
   ) {
     return "limited";
@@ -172,7 +191,7 @@ export function getWorkWindow({
   /* 4) Situacions de precaució */
   if (aemetActive) return "caution";
   if (nocturnalHeat) return "caution";
-  if (windRisk === "moderate") return "caution";
+  if (effectiveWindRisk === "moderate") return "caution";
   if (uvLevel >= 2) return "caution";
   if (rainy) return "caution";
   if (coldRisk === "lleu") return "caution";

@@ -181,6 +181,25 @@ test("workWindow uses RiskScoreEngine UV factor when available and keeps legacy 
   assert.equal(getWorkWindow({ ...fallbackInput, engineRisk }), "optimal");
 });
 
+test("workWindow uses RiskScoreEngine wind factor when available and keeps legacy fallback", () => {
+  const fallbackInput = {
+    heatRisk: getHeatRisk(24, "rest"),
+    heatIndex: 24,
+    coldRisk: "cap" as const,
+    windRisk: "moderate" as const,
+    uvi: 0,
+  };
+  const engineRisk = evaluateRiskScore({
+    heatIndex: fallbackInput.heatIndex,
+    coldEffectiveTemp: fallbackInput.heatIndex,
+    windKmh: 0,
+    uvi: fallbackInput.uvi,
+  });
+
+  assert.equal(getWorkWindow(fallbackInput), "caution");
+  assert.equal(getWorkWindow({ ...fallbackInput, engineRisk }), "optimal");
+});
+
 test("heat index calculation is stable for representative warm and humid conditions", () => {
   assert.equal(calcHI(30, 70), 35);
 });
