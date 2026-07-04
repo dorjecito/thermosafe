@@ -143,6 +143,44 @@ test("outdoor activity conditions do not hide high heat risk behind caution", ()
   );
 });
 
+test("workWindow accepts RiskScoreEngine input passively without changing decisions", () => {
+  const input = {
+    heatRisk: getHeatRisk(31, "rest"),
+    heatIndex: 31,
+    coldRisk: "cap" as const,
+    windRisk: "moderate" as const,
+    uvi: 6.2,
+  };
+  const engineRisk = evaluateRiskScore({
+    heatIndex: input.heatIndex,
+    coldEffectiveTemp: input.heatIndex,
+    windKmh: 26,
+    uvi: input.uvi,
+  });
+
+  assert.equal(getWorkWindow(input), "caution");
+  assert.equal(getWorkWindow({ ...input, engineRisk }), getWorkWindow(input));
+});
+
+test("workWindow uses RiskScoreEngine UV factor when available and keeps legacy fallback", () => {
+  const fallbackInput = {
+    heatRisk: getHeatRisk(24, "rest"),
+    heatIndex: 24,
+    coldRisk: "cap" as const,
+    windRisk: "none" as const,
+    uvi: 8.2,
+  };
+  const engineRisk = evaluateRiskScore({
+    heatIndex: fallbackInput.heatIndex,
+    coldEffectiveTemp: fallbackInput.heatIndex,
+    windKmh: 0,
+    uvi: 0,
+  });
+
+  assert.equal(getWorkWindow(fallbackInput), "limited");
+  assert.equal(getWorkWindow({ ...fallbackInput, engineRisk }), "optimal");
+});
+
 test("heat index calculation is stable for representative warm and humid conditions", () => {
   assert.equal(calcHI(30, 70), 35);
 });

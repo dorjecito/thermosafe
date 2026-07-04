@@ -1,4 +1,5 @@
 import type { WindRisk } from "./windRisk";
+import type { FactorRisk, RiskScoreResult } from "./riskScoreEngine";
 import { getUvLevelIndex } from "./uv";
 
 export type WorkWindow = "optimal" | "caution" | "limited" | "avoid";
@@ -26,7 +27,68 @@ type Params = {
   weatherMain?: string | null;
   activity?: ActivityLevel;
   nocturnalHeat?: boolean;
+  engineRisk?: RiskScoreResult | null;
 };
+
+function getEngineFactor(
+  engineRisk: RiskScoreResult,
+  factor: "heat" | "cold" | "uv" | "wind"
+): FactorRisk | undefined {
+  return engineRisk.factors.find((item) => item.factor === factor);
+}
+
+function getUvLevelFromEngine(engineRisk: RiskScoreResult | null | undefined): number | null {
+  const uv = engineRisk ? getEngineFactor(engineRisk, "uv") : undefined;
+  return typeof uv?.severity === "number" ? uv.severity : null;
+}
+
+function warnIfEngineDiverges(
+  params: {
+    heatRisk?: HeatRiskLike;
+    coldRisk: ColdRiskLike;
+    windRisk: WindRisk;
+    legacyUvLevel: number;
+    engineRisk: RiskScoreResult | null | undefined;
+  }
+): void {
+  if (!import.meta.env?.DEV || !params.engineRisk) return;
+
+  const divergences: string[] = [];
+  const heat = getEngineFactor(params.engineRisk, "heat");
+  const cold = getEngineFactor(params.engineRisk, "cold");
+  const wind = getEngineFactor(params.engineRisk, "wind");
+  const uv = getEngineFactor(params.engineRisk, "uv");
+
+  const expectedHeatLevel = params.heatRisk?.class || "safe";
+  if (heat && heat.level !== expectedHeatLevel) {
+    divergences.push(`heat:${expectedHeatLevel}->${heat.level}`);
+  }
+
+  if (cold && cold.level !== params.coldRisk) {
+    divergences.push(`cold:${params.coldRisk}->${cold.level}`);
+  }
+
+  if (wind && wind.level !== params.windRisk) {
+    divergences.push(`wind:${params.windRisk}->${wind.level}`);
+  }
+
+  if (uv && uv.severity !== params.legacyUvLevel) {
+    divergences.push(`uv:${params.legacyUvLevel}->${uv.severity}`);
+  }
+
+  if (divergences.length === 0) return;
+
+  console.warn("[workWindow][DEV] Divergencia amb RiskScoreEngine", {
+    divergences,
+    workWindowInput: {
+      heatClass: expectedHeatLevel,
+      coldRisk: params.coldRisk,
+      windRisk: params.windRisk,
+      uvLevel: params.legacyUvLevel,
+    },
+    engineFactors: params.engineRisk.factors,
+  });
+}
 
 export function getWorkWindow({
   heatRisk,
@@ -38,8 +100,12 @@ export function getWorkWindow({
   weatherMain = null,
   activity = "rest",
   nocturnalHeat = false,
+  engineRisk = null,
 }: Params): WorkWindow {
-  const uvLevel = getUvLevelIndex(uvi);
+  const legacyUvLevel = getUvLevelIndex(uvi);
+  const uvLevel = getUvLevelFromEngine(engineRisk) ?? legacyUvLevel;
+  warnIfEngineDiverges({ heatRisk, coldRisk, windRisk, legacyUvLevel, engineRisk });
+
   const hi =
   typeof heatIndex === "number" && Number.isFinite(heatIndex)
     ? heatIndex

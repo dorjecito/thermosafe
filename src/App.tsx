@@ -1210,6 +1210,28 @@ const activeAlertEvent = `${activeAlert?.event || ""} ${activeAlertDescription |
 const currentFeelTemp = hi ?? temp ?? 99;
 const nocturnalHeat = !day && currentFeelTemp >= 25;
 
+const engineRisk = useMemo(() => {
+  if (!data || !isInitialRiskReady || loading) return null;
+
+  return evaluateRiskScore({
+    heatIndex: hi,
+    activity: preventiveActivity,
+    coldEffectiveTemp: wc ?? temp,
+    windKmh,
+    uvi,
+  });
+}, [
+  data,
+  isInitialRiskReady,
+  loading,
+  hi,
+  preventiveActivity,
+  wc,
+  temp,
+  windKmh,
+  uvi,
+]);
+
 const workWindow = getWorkWindow({
   heatRisk,
   heatIndex: hi,
@@ -1220,6 +1242,7 @@ const workWindow = getWorkWindow({
   weatherMain,
   activity: preventiveActivity,
   nocturnalHeat,
+  engineRisk,
 });
 
 const workWindowLang = currentLang;
@@ -1298,28 +1321,6 @@ const pickPrimaryInput = {
 const legacyPrimary = import.meta.env.DEV
   ? pickPrimaryRisk(pickPrimaryInput)
   : null;
-
-const engineRisk = useMemo(() => {
-  if (!data || !isInitialRiskReady || loading) return null;
-
-  return evaluateRiskScore({
-    heatIndex: hi,
-    activity: preventiveActivity,
-    coldEffectiveTemp: wc ?? temp,
-    windKmh,
-    uvi,
-  });
-}, [
-  data,
-  isInitialRiskReady,
-  loading,
-  hi,
-  preventiveActivity,
-  wc,
-  temp,
-  windKmh,
-  uvi,
-]);
 
 const enginePrimary = engineRisk
   ? primaryRiskFromEngine(engineRisk)
