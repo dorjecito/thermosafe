@@ -537,6 +537,7 @@ async function onTogglePush(next: boolean) {
       const token = await enableRiskAlerts({
         threshold: "moderate",
         lang: normalizeLang(i18n.resolvedLanguage || i18n.language || "ca"),
+        place: realCity || city || undefined,
       });
       setPushEnabled(true);
       setPushToken(token);
@@ -684,6 +685,17 @@ const fetchWeather = async (cityName: string) => {
         lang,
         isDayHere
 	      );
+
+      if (localStorage.getItem("fcmToken")) {
+        updateRiskAlertLocation({
+          lat: newLat,
+          lon: newLon,
+          place: resolvedName,
+          lang,
+        }).catch((e) =>
+          console.warn("[PUSH] No s'ha pogut actualitzar la ubicació del token:", e)
+        );
+      }
 		    } else {
 		      setUvi(null);
 		      setUvMaxToday(null);
@@ -852,14 +864,6 @@ const lon = position.coords.longitude;
 setLat(lat);
 setLon(lon);
 
-// 🔔 Si les notificacions estan activades, actualitza la ubicació del token.
-// Si la nova ubicació és a 15 km o més de l'anterior, subscribe.ts reiniciarà els nivells a 0.
-if (localStorage.getItem("fcmToken")) {
-  updateRiskAlertLocation({ lat, lon, lang }).catch((e) =>
-    console.warn("[PUSH] No s'ha pogut actualitzar la ubicació del token:", e)
-  );
-}
-
 console.log(`[DEBUG] Coordenades GPS obtingudes: ${lat}, ${lon}`);
 
 // 🌦️ // 2. Obté dades del temps per coordenades
@@ -923,6 +927,14 @@ nm = nm || d.name || "Ubicació desconeguda";
 setCity(nm);
 setRealCity(nm);
 setDataSource("gps");
+
+// 🔔 Si les notificacions estan activades, actualitza la ubicació i el nom visible del token.
+// Si la nova ubicació és a 15 km o més de l'anterior, subscribe.ts reiniciarà els nivells a 0.
+if (localStorage.getItem("fcmToken")) {
+  updateRiskAlertLocation({ lat, lon, place: nm, lang }).catch((e) =>
+    console.warn("[PUSH] No s'ha pogut actualitzar la ubicació del token:", e)
+  );
+}
 
 function normalizeSky(desc: string): string {
   return desc
@@ -1113,6 +1125,17 @@ const handleSuggestionSelect = async (s: any) => {
 	      lang,
 	      isDayHere
 	    );
+
+    if (localStorage.getItem("fcmToken")) {
+      updateRiskAlertLocation({
+        lat: s.lat,
+        lon: s.lon,
+        place: label,
+        lang,
+      }).catch((e) =>
+        console.warn("[PUSH] No s'ha pogut actualitzar la ubicació del token:", e)
+      );
+    }
     collapseSearchPanel();
 	  } catch (err) {
 	    console.error("[DEBUG] Error obtenint dades del suggeriment:", err);

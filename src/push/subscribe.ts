@@ -73,6 +73,11 @@ function normalizeLangValue(lang: string | undefined, fallback: Lang = "ca"): La
     : fallback;
 }
 
+function normalizePlaceValue(place: string | undefined): string | undefined {
+  const normalized = place?.trim();
+  return normalized ? normalized : undefined;
+}
+
 function haversineKm(
   lat1: number,
   lon1: number,
@@ -175,13 +180,16 @@ export async function updateRiskAlertLocation({
     let distanceKm = 0;
     let mustResetLevels = false;
     let prevLang: Lang | undefined;
+    let prevPlace: string | undefined;
     const langNorm = lang ? normalizeLangValue(lang) : undefined;
+    const placeNorm = normalizePlaceValue(place);
 
     if (snap.exists()) {
       const prev = snap.data() as SubDoc;
       const prevLat = Number(prev.lat);
       const prevLon = Number(prev.lon);
       prevLang = prev.lang;
+      prevPlace = normalizePlaceValue(prev.place);
 
       distanceKm =
         Number.isFinite(prevLat) && Number.isFinite(prevLon)
@@ -193,13 +201,19 @@ export async function updateRiskAlertLocation({
 
     const roundedDistanceKm = Math.round(distanceKm * 100) / 100;
     const langChanged = Boolean(langNorm && langNorm !== prevLang);
+    const placeChanged = Boolean(placeNorm && placeNorm !== prevPlace);
 
-    if (snap.exists() && distanceKm < MIN_UPDATE_DISTANCE_KM && !langChanged) {
+    if (
+      snap.exists() &&
+      distanceKm < MIN_UPDATE_DISTANCE_KM &&
+      !langChanged &&
+      !placeChanged
+    ) {
       console.log("📍 Ubicació de notificacions sense canvis rellevants:", {
         tokenPreview: token.slice(0, 20),
         lat,
         lon,
-        place: place || "",
+        place: placeNorm || "",
         distanceKm: roundedDistanceKm,
         minUpdateKm: MIN_UPDATE_DISTANCE_KM,
         mustResetLevels: false,
@@ -212,7 +226,7 @@ export async function updateRiskAlertLocation({
       token,
       lat,
       lon,
-      ...(place ? { place } : {}),
+      ...(placeNorm ? { place: placeNorm } : {}),
       ...(langNorm ? { lang: langNorm } : {}),
       updatedAt: now,
       ...(mustResetLevels ? resetRiskLevelsPayload() : {}),
@@ -224,7 +238,7 @@ export async function updateRiskAlertLocation({
       tokenPreview: token.slice(0, 20),
       lat,
       lon,
-      place: place || "",
+      place: placeNorm || "",
       distanceKm: roundedDistanceKm,
       mustResetLevels,
     });
@@ -290,7 +304,8 @@ export async function updateRiskAlertLocationFromGps(
 export async function enableRiskAlerts({
   threshold = "moderate" as Level,
   lang,
-}: { threshold?: Level; lang?: Lang } = {}) {
+  place,
+}: { threshold?: Level; lang?: Lang; place?: string } = {}) {
   console.log("🟢 Iniciant activació de notificacions push...");
 
   const ok = await askNotifPerm();
@@ -317,6 +332,7 @@ export async function enableRiskAlerts({
   }
 
   const langNorm = lang ? normalizeLangValue(lang) : normalizeLang("ca");
+  const placeNorm = normalizePlaceValue(place);
   const ref = doc(db, "subs", token);
   const snap = await getDoc(ref);
   const now = Date.now();
@@ -330,6 +346,7 @@ export async function enableRiskAlerts({
         lon: loc.lon,
         threshold,
         lang: langNorm,
+        ...(placeNorm ? { place: placeNorm } : {}),
         createdAt: now,
         updatedAt: now,
         ...resetRiskLevelsPayload(),
@@ -359,6 +376,7 @@ export async function enableRiskAlerts({
         lon: loc.lon,
         threshold,
         lang: langNorm,
+        ...(placeNorm ? { place: placeNorm } : {}),
         updatedAt: now,
         ...(mustResetLevels ? resetRiskLevelsPayload() : {}),
       },
