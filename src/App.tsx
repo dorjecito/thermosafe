@@ -62,6 +62,9 @@ import { getUVDetailFromOpenUV, getUVFromOpenUV } from "./services/openUV";
    import type { SkinType } from "./components/SkinTypeInfo";
    import TopAlertBanner from "./components/TopAlertBanner";
    import CompactHeader from "./components/CompactHeader";
+   import CurrentConditions from "./components/CurrentConditions";
+   import CurrentWeatherSummary from "./components/CurrentWeatherSummary";
+   import SkyConditionCard from "./components/SkyConditionCard";
    import { useScrollCompactHeader } from "./hooks/useScrollCompactHeader";
    
    /* —— analítica (opcional) ———————————— */
@@ -1778,6 +1781,13 @@ const riskTrendDisplay = useMemo(() => {
 }, [riskTrend, riskTrendLoading, trendUsesDifferentTimezone, locationTimezoneOffsetSec, currentLang, t]);
 const riskTrendText = riskTrendDisplay.text;
 const riskTrendIcon = riskTrendDisplay.icon;
+const skyLabel = useMemo(() => {
+  if (!sky) return "";
+
+  const key = `weather_desc.${sky.toLowerCase()}`;
+  const translated = t(key);
+  return translated !== key ? translated : sky;
+}, [sky, t]);
 
 //Return ok
 
@@ -2228,40 +2238,28 @@ return (
   />
 
 {/* 🌡️ RESUM RÀPID */}
-<div className={`quick-summary-card quick-summary-${risk}`}>
-  <div className={`quick-temp ${quickTempToneClass}`}>
-    {temp !== null ? `${temp.toFixed(1)}°C` : "—"}
-  </div>
-
-  <div className="quick-meta quick-meta-inline">
-    <span>{hi !== null ? `${t("feels_like")}: ${hi.toFixed(1)}°C` : "—"}</span>
-    <span>💨 {windKmh !== null ? `${windKmh.toFixed(1)} km/h` : "—"}</span>
-    <span>☀️ {uvi !== null ? uvi.toFixed(1) : "—"}</span>
-  </div>
-</div>
+<CurrentWeatherSummary
+  risk={risk}
+  quickTempToneClass={quickTempToneClass}
+  temp={temp}
+  feelsLikeLabel={t("feels_like")}
+  hi={hi}
+  windKmh={windKmh}
+  uvi={uvi}
+/>
 
   {/* 🌡️ CONDICIONS ACTUALS */}
-<div className="block-conditions block-conditions-compact">
-  <h3 className="conditions-compact-title">{t("current_conditions")}</h3>
-
-  <div className="conditions-inline">
-    <span className="condition-item">
-      <strong>{t("humidity")}:</strong>{" "}
-      {hum !== null ? `${hum}%` : "—"}
-    </span>
-    <span className="condition-item">
-      <strong>{t("wind_direction")}:</strong>{" "}
-      {windDeg !== null
-        ? `${windText16} (${windDeg.toFixed(0)}°)`
-        : "—"}
-    </span>
-    <span className="condition-item">
-      <strong>{t("cloudiness")}:</strong>{" "}
-      {typeof clouds === "number" ? `${clouds}%` :
-      `${data?.clouds?.all ?? "—"}${typeof data?.clouds?.all === "number" ? "%" : ""}`}
-    </span>
-  </div>
-</div>
+<CurrentConditions
+  title={t("current_conditions")}
+  humidityLabel={t("humidity")}
+  humidity={hum}
+  windDirectionLabel={t("wind_direction")}
+  windDeg={windDeg}
+  windText={windText16}
+  cloudinessLabel={t("cloudiness")}
+  clouds={clouds}
+  fallbackClouds={data?.clouds?.all}
+/>
 
 {/* 🕒 Targeta d'actualització */}
 {data?.dt && (
@@ -2275,26 +2273,12 @@ return (
 
           {/* 🌤️ ESTAT DEL CEL */}
 {sky && (
-  <div className="card sky-card sky-card-compact">
-    <div className="sky-inline">
-      <h3>{t("sky_state")}:</h3>
-      {icon && (
-        <img
-          src={`https://openweathermap.org/img/wn/${icon}@2x.png`}
-          alt={sky}
-          className="sky-icon"
-          width="28"
-          height="28"
-        />
-      )}
-      <span className="sky-label">
-        {t(`weather_desc.${sky.toLowerCase()}`) !==
-        `weather_desc.${sky.toLowerCase()}`
-          ? t(`weather_desc.${sky.toLowerCase()}`)
-          : sky}
-      </span>
-    </div>
-  </div>
+  <SkyConditionCard
+    title={t("sky_state")}
+    sky={sky}
+    icon={icon}
+    label={skyLabel}
+  />
 )}
 
 {/* 🌞 INFORMACIÓ SOLAR */}
