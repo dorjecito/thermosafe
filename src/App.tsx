@@ -138,6 +138,54 @@ const getQuickTempToneClass = (value: number | null): string => {
   return "quick-temp-heat-high";
 };
 
+const UI_LABELS = {
+  ca: {
+    viewAllAlerts: "Veure totes les alertes",
+    hideAlerts: "Amagar alertes",
+    currentUv: "Índex UV actual",
+    uvMaxToday: "UV màxim avui",
+    moreUv: "Veure més informació UV",
+    lessUv: "Amagar informació UV",
+    skinType: "Fototip de pell",
+  },
+  es: {
+    viewAllAlerts: "Ver todas las alertas",
+    hideAlerts: "Ocultar alertas",
+    currentUv: "Índice UV actual",
+    uvMaxToday: "UV máximo hoy",
+    moreUv: "Ver más información UV",
+    lessUv: "Ocultar información UV",
+    skinType: "Fototipo de piel",
+  },
+  eu: {
+    viewAllAlerts: "Ikusi alerta guztiak",
+    hideAlerts: "Ezkutatu alertak",
+    currentUv: "Uneko UV indizea",
+    uvMaxToday: "Gaurko UV maximoa",
+    moreUv: "Ikusi UV informazio gehiago",
+    lessUv: "Ezkutatu UV informazioa",
+    skinType: "Azalaren fototipoa",
+  },
+  gl: {
+    viewAllAlerts: "Ver todas as alertas",
+    hideAlerts: "Agochar alertas",
+    currentUv: "Índice UV actual",
+    uvMaxToday: "UV máximo hoxe",
+    moreUv: "Ver máis información UV",
+    lessUv: "Agochar información UV",
+    skinType: "Fototipo de pel",
+  },
+  en: {
+    viewAllAlerts: "View all alerts",
+    hideAlerts: "Hide alerts",
+    currentUv: "Current UV index",
+    uvMaxToday: "Today's max UV",
+    moreUv: "View more UV information",
+    lessUv: "Hide UV information",
+    skinType: "Skin phototype",
+  },
+} as const;
+
 /* ──────── component ──────── */
 export default function App() {
   /* i18next */
@@ -1175,91 +1223,117 @@ useEffect(() => {
 (window as any).maybeNotifyUV = maybeNotifyUV;
 
 // Text de la direcció del vent en 16 punts, localitzat
-const windText16 =
-  windDeg !== null ? windDegreesToCardinal16(windDeg, i18n.language) : "";
+const windText16 = useMemo(
+  () => (windDeg !== null ? windDegreesToCardinal16(windDeg, i18n.language) : ""),
+  [windDeg, i18n.language]
+);
 
 /* === RISC TÈRMIC GENERAL (fora del map i fora d'avisos) === */
-const risk = temp != null ? getThermalRisk(temp) : "cap";
-const quickTempToneClass = getQuickTempToneClass(hi ?? temp);
+const risk = useMemo(() => (temp != null ? getThermalRisk(temp) : "cap"), [temp]);
+const quickTempToneClass = useMemo(() => getQuickTempToneClass(hi ?? temp), [hi, temp]);
 
 // 🔥 Calcular risc de calor ajustat per activitat (rest, walk, moderate, intense)
-const baseHeatRisk =
-  hi !== null ? getHeatRisk(hi, "rest") : null;
+const baseHeatRisk = useMemo(() => (hi !== null ? getHeatRisk(hi, "rest") : null), [hi]);
 
 const preventiveActivity: ActivityLevel = activityEnabled ? heldActivityLevel : "rest";
 
-const heatRisk =
-  hi !== null ? getHeatRisk(hi, preventiveActivity) : null;
+const heatRisk = useMemo(
+  () => (hi !== null ? getHeatRisk(hi, preventiveActivity) : null),
+  [hi, preventiveActivity]
+);
 
-const activityAffectsHeatRisk =
-  activityEnabled &&
-  baseHeatRisk !== null &&
-  heatRisk !== null &&
-  baseHeatRisk.class !== heatRisk.class;
+const activityAffectsHeatRisk = useMemo(
+  () =>
+    activityEnabled &&
+    baseHeatRisk !== null &&
+    heatRisk !== null &&
+    baseHeatRisk.class !== heatRisk.class,
+  [activityEnabled, baseHeatRisk, heatRisk]
+);
 
 const displayedActivityLevel = activityEnabled ? heldActivityLevel : activityLevelStable;
 
 const nowTs = Math.floor(Date.now() / 1000);
-const isLateDay = data
-  ? isLateDayAtLocation(
-      nowTs,
-      data.timezone ?? 0,
-      data.sys?.sunrise,
-      data.sys?.sunset
-    )
-  : false;
+const isLateDay = useMemo(
+  () =>
+    data
+      ? isLateDayAtLocation(
+          nowTs,
+          data.timezone ?? 0,
+          data.sys?.sunrise,
+          data.sys?.sunset
+        )
+      : false,
+  [data, nowTs]
+);
 
-const heatDayPhase = data
-  ? getHeatDayPhase(
-      nowTs,
-      data.timezone ?? 0,
-      data.sys?.sunrise,
-      data.sys?.sunset
-    )
-  : day
-  ? "day"
-  : "night";
+const heatDayPhase = useMemo(
+  () =>
+    data
+      ? getHeatDayPhase(
+          nowTs,
+          data.timezone ?? 0,
+          data.sys?.sunrise,
+          data.sys?.sunset
+        )
+      : day
+      ? "day"
+      : "night",
+  [data, day, nowTs]
+);
 
-const aemetActive =
-  Array.isArray(alerts) &&
-  alerts.some(
-    (alert) =>
-      typeof alert?.start === "number" &&
-      typeof alert?.end === "number" &&
-      nowTs >= alert.start &&
-      nowTs <= alert.end
-  );
+const {
+  aemetActive,
+  aemetSoon,
+  activeAlert,
+} = useMemo(() => {
+  if (!Array.isArray(alerts)) {
+    return {
+      aemetActive: false,
+      aemetSoon: false,
+      activeAlert: undefined as any,
+    };
+  }
 
-const aemetSoon =
-  Array.isArray(alerts) &&
-  alerts.some(
-    (alert) =>
-      typeof alert?.start === "number" &&
-      alert.start > nowTs
-  );
+  let nextAemetActive = false;
+  let nextAemetSoon = false;
+  let nextActiveAlert: any;
 
-const activeAlert =
-  Array.isArray(alerts) &&
-  alerts.find(
-    (alert) =>
-      typeof alert?.start === "number" &&
-      typeof alert?.end === "number" &&
-      nowTs >= alert.start &&
-      nowTs <= alert.end
-  );
+  for (const alert of alerts) {
+    const hasStart = typeof alert?.start === "number";
+    const hasEnd = typeof alert?.end === "number";
+
+    if (hasStart && hasEnd && nowTs >= alert.start && nowTs <= alert.end) {
+      nextAemetActive = true;
+      if (!nextActiveAlert) nextActiveAlert = alert;
+    }
+
+    if (hasStart && alert.start > nowTs) {
+      nextAemetSoon = true;
+    }
+  }
+
+  return {
+    aemetActive: nextAemetActive,
+    aemetSoon: nextAemetSoon,
+    activeAlert: nextActiveAlert,
+  };
+}, [alerts, nowTs]);
 
 const currentLang = normalizeLang(i18n.resolvedLanguage || i18n.language || "ca");
 
-const activeAlertDescription =
-  typeof activeAlert?.description === "string"
-    ? activeAlert.description
-    : activeAlert?.description?.[currentLang] ||
-      activeAlert?.description?.es ||
-      Object.values(activeAlert?.description || {})
-        .filter((v) => typeof v === "string" && v.trim().length > 0)
-        .join(". ");
+const activeAlertEvent = useMemo(() => {
+  const activeAlertDescription =
+    typeof activeAlert?.description === "string"
+      ? activeAlert.description
+      : activeAlert?.description?.[currentLang] ||
+        activeAlert?.description?.es ||
+        Object.values(activeAlert?.description || {})
+          .filter((v) => typeof v === "string" && v.trim().length > 0)
+          .join(". ");
 
-const activeAlertEvent = `${activeAlert?.event || ""} ${activeAlertDescription || ""}`.trim();
+  return `${activeAlert?.event || ""} ${activeAlertDescription || ""}`.trim();
+}, [activeAlert, currentLang]);
 
 const currentFeelTemp = hi ?? temp ?? 99;
 const nocturnalHeat = !day && currentFeelTemp >= 25;
@@ -1297,23 +1371,43 @@ const engineRisk = useMemo(() => {
   uvi,
 ]);
 
-const workWindow = getWorkWindow({
-  heatRisk,
-  heatIndex: hi,
-  coldRisk,
-  windRisk,
-  uvi,
-  aemetActive: aemetActive || aemetSoon,
-  weatherMain,
-  activity: preventiveActivity,
-  nocturnalHeat,
-  engineRisk,
-  weatherContext,
-});
+const workWindow = useMemo(
+  () =>
+    getWorkWindow({
+      heatRisk,
+      heatIndex: hi,
+      coldRisk,
+      windRisk,
+      uvi,
+      aemetActive: aemetActive || aemetSoon,
+      weatherMain,
+      activity: preventiveActivity,
+      nocturnalHeat,
+      engineRisk,
+      weatherContext,
+    }),
+  [
+    heatRisk,
+    hi,
+    coldRisk,
+    windRisk,
+    uvi,
+    aemetActive,
+    aemetSoon,
+    weatherMain,
+    preventiveActivity,
+    nocturnalHeat,
+    engineRisk,
+    weatherContext,
+  ]
+);
 
 const workWindowLang = currentLang;
-const workWindowTitle = getWorkWindowTitle(workWindowLang);
-const workWindowText = getWorkWindowText(workWindow, workWindowLang, aemetActive, nocturnalHeat);
+const workWindowTitle = useMemo(() => getWorkWindowTitle(workWindowLang), [workWindowLang]);
+const workWindowText = useMemo(
+  () => getWorkWindowText(workWindow, workWindowLang, aemetActive, nocturnalHeat),
+  [workWindow, workWindowLang, aemetActive, nocturnalHeat]
+);
 
 useEffect(() => {
   if (
@@ -1376,72 +1470,110 @@ useEffect(() => {
   preventiveActivity,
 ]);
 
-const pickPrimaryInput = {
-  hi,
-  effForCold: wc ?? temp,
-  windRisk,
-  uvi,
-  heatRiskClass: heatRisk?.class,
-};
+const pickPrimaryInput = useMemo(
+  () => ({
+    hi,
+    effForCold: wc ?? temp,
+    windRisk,
+    uvi,
+    heatRiskClass: heatRisk?.class,
+  }),
+  [hi, wc, temp, windRisk, uvi, heatRisk?.class]
+);
 
-const legacyPrimary = import.meta.env.DEV
-  ? pickPrimaryRisk(pickPrimaryInput)
-  : null;
+const legacyPrimary = useMemo(
+  () => (import.meta.env.DEV ? pickPrimaryRisk(pickPrimaryInput) : null),
+  [pickPrimaryInput]
+);
 
-const enginePrimary = engineRisk
-  ? primaryRiskFromEngine(engineRisk)
-  : { kind: "none" as const, severity: 0 as const, labelKey: "none" };
+const enginePrimary = useMemo(
+  () =>
+    engineRisk
+      ? primaryRiskFromEngine(engineRisk)
+      : { kind: "none" as const, severity: 0 as const, labelKey: "none" },
+  [engineRisk]
+);
 const primary = enginePrimary;
 
-const primaryAdvice = getPrimaryAdviceText({
-  primary,
-  coldRisk,
-  heatRisk,
-  hi,
-  temp,
-  uvi,
-  windRisk,
-  t,
-});
+const primaryAdvice = useMemo(
+  () =>
+    getPrimaryAdviceText({
+      primary,
+      coldRisk,
+      heatRisk,
+      hi,
+      temp,
+      uvi,
+      windRisk,
+      t,
+    }),
+  [primary, coldRisk, heatRisk, hi, temp, uvi, windRisk, t]
+);
 
-const isRainy =
-  weatherMain === "Rain" ||
-  weatherMain === "Drizzle" ||
-  weatherMain === "Thunderstorm";
+const isRainy = useMemo(
+  () =>
+    weatherMain === "Rain" ||
+    weatherMain === "Drizzle" ||
+    weatherMain === "Thunderstorm",
+  [weatherMain]
+);
 
-const isVeryCloudy = (clouds ?? 0) >= 85;
+const isVeryCloudy = useMemo(() => (clouds ?? 0) >= 85, [clouds]);
 
 const isClearlyColdNow = currentFeelTemp < 8;
 
 const isColdRisk = typeof risk === "string" && risk.startsWith("cold_");
 
-const shouldHideUVBlock =
-  isRainy ||
-  (isVeryCloudy && isClearlyColdNow) ||
-  isColdRisk;
+const shouldHideUVBlock = useMemo(
+  () => isRainy || (isVeryCloudy && isClearlyColdNow) || isColdRisk,
+  [isRainy, isVeryCloudy, isClearlyColdNow, isColdRisk]
+);
 
-const contextualUVMessage =
-  typeof uvi === "number" && Number.isFinite(uvi)
-    ? getContextualUVMessage(uvi)
-    : "";
+const contextualUVMessage = useMemo(
+  () =>
+    typeof uvi === "number" && Number.isFinite(uvi)
+      ? getContextualUVMessage(uvi)
+      : "",
+  [uvi]
+);
 
-const primaryStatusInput = {
-  alerts,
-  primary,
-  heatRisk,
-  coldRisk,
-  windRisk,
-  uvi,
-  day,
-  isLateDay,
-  heatDayPhase,
-  nocturnalHeat,
-  primaryAdvice,
-  contextualUVMessage,
-  t,
-};
+const primaryStatusInput = useMemo(
+  () => ({
+    alerts,
+    primary,
+    heatRisk,
+    coldRisk,
+    windRisk,
+    uvi,
+    day,
+    isLateDay,
+    heatDayPhase,
+    nocturnalHeat,
+    primaryAdvice,
+    contextualUVMessage,
+    t,
+  }),
+  [
+    alerts,
+    primary,
+    heatRisk,
+    coldRisk,
+    windRisk,
+    uvi,
+    day,
+    isLateDay,
+    heatDayPhase,
+    nocturnalHeat,
+    primaryAdvice,
+    contextualUVMessage,
+    t,
+  ]
+);
 
-const primaryStatus = getPrimaryStatusBlock(primaryStatusInput);
+const primaryStatus = useMemo(
+  () => getPrimaryStatusBlock(primaryStatusInput),
+  [primaryStatusInput]
+);
 
 useEffect(() => {
   if (!import.meta.env.DEV || !legacyPrimary || !engineRisk) return;
@@ -1490,73 +1622,29 @@ const riskIcons = getRiskIcons(
   uvi
 );
 
-const uiLabels = {
-  ca: {
-    viewAllAlerts: "Veure totes les alertes",
-    hideAlerts: "Amagar alertes",
-    currentUv: "Índex UV actual",
-    uvMaxToday: "UV màxim avui",
-    moreUv: "Veure més informació UV",
-    lessUv: "Amagar informació UV",
-    skinType: "Fototip de pell",
-  },
-  es: {
-    viewAllAlerts: "Ver todas las alertas",
-    hideAlerts: "Ocultar alertas",
-    currentUv: "Índice UV actual",
-    uvMaxToday: "UV máximo hoy",
-    moreUv: "Ver más información UV",
-    lessUv: "Ocultar información UV",
-    skinType: "Fototipo de piel",
-  },
-  eu: {
-    viewAllAlerts: "Ikusi alerta guztiak",
-    hideAlerts: "Ezkutatu alertak",
-    currentUv: "Uneko UV indizea",
-    uvMaxToday: "Gaurko UV maximoa",
-    moreUv: "Ikusi UV informazio gehiago",
-    lessUv: "Ezkutatu UV informazioa",
-    skinType: "Azalaren fototipoa",
-  },
-  gl: {
-    viewAllAlerts: "Ver todas as alertas",
-    hideAlerts: "Agochar alertas",
-    currentUv: "Índice UV actual",
-    uvMaxToday: "UV máximo hoxe",
-    moreUv: "Ver máis información UV",
-    lessUv: "Agochar información UV",
-    skinType: "Fototipo de pel",
-  },
-  en: {
-    viewAllAlerts: "View all alerts",
-    hideAlerts: "Hide alerts",
-    currentUv: "Current UV index",
-    uvMaxToday: "Today's max UV",
-    moreUv: "View more UV information",
-    lessUv: "Hide UV information",
-    skinType: "Skin phototype",
-  },
-} as const;
+const localUi = useMemo(() => UI_LABELS[currentLang] || UI_LABELS.ca, [currentLang]);
+const alertCards = useMemo(
+  () =>
+    alerts.map((alert, i) => {
+      const desc =
+        typeof alert.description === "string"
+          ? alert.description
+          : alert.description?.[i18n.language] ||
+            alert.description?.es ||
+            Object.values(alert.description || {})
+              .filter((v) => typeof v === "string" && v.trim().length > 0)
+              .join(". ");
 
-const localUi = uiLabels[currentLang] || uiLabels.ca;
-const alertCards = alerts.map((alert, i) => {
-  const desc =
-    typeof alert.description === "string"
-      ? alert.description
-      : alert.description?.[i18n.language] ||
-        alert.description?.es ||
-        Object.values(alert.description || {})
-          .filter((v) => typeof v === "string" && v.trim().length > 0)
-          .join(". ");
+      const ai = buildAemetAiAlert(
+        alert.event || "",
+        desc,
+        i18n.language as LangKey
+      );
 
-  const ai = buildAemetAiAlert(
-    alert.event || "",
-    desc,
-    i18n.language as LangKey
-  );
-
-  return { alert, ai, i };
-});
+      return { alert, ai, i };
+    }),
+  [alerts, i18n.language]
+);
 
 const renderAlertCard = ({ alert, ai, i }: (typeof alertCards)[number]) => (
   <div
@@ -1596,11 +1684,19 @@ const renderAlertCard = ({ alert, ai, i }: (typeof alertCards)[number]) => (
   </div>
 );
 
-const uvSummaryValue = normalizeUviForDisplay(uvi);
-const uvMaxSummaryValue =
-  normalizeUviForDisplay(uvMaxToday) ?? uvSummaryValue;
-const uvSummaryText = getUvText(uvSummaryValue, currentLang);
-const uvSummaryAdvice = getUvAdvice(uvSummaryValue, currentLang);
+const uvSummaryValue = useMemo(() => normalizeUviForDisplay(uvi), [uvi]);
+const uvMaxSummaryValue = useMemo(
+  () => normalizeUviForDisplay(uvMaxToday) ?? uvSummaryValue,
+  [uvMaxToday, uvSummaryValue]
+);
+const uvSummaryText = useMemo(
+  () => getUvText(uvSummaryValue, currentLang),
+  [uvSummaryValue, currentLang]
+);
+const uvSummaryAdvice = useMemo(
+  () => getUvAdvice(uvSummaryValue, currentLang),
+  [uvSummaryValue, currentLang]
+);
 const isRiskRenderReady = Boolean(data && isInitialRiskReady && !loading);
 const locationTimezoneOffsetSec =
   typeof data?.timezone === "number" ? data.timezone : null;
@@ -1608,72 +1704,80 @@ const browserTimezoneOffsetSec = -new Date().getTimezoneOffset() * 60;
 const trendUsesDifferentTimezone =
   locationTimezoneOffsetSec !== null &&
   Math.abs(locationTimezoneOffsetSec - browserTimezoneOffsetSec) >= 30 * 60;
-const formatTrendTime = (date: Date | null) => {
-  if (!date) return "";
+const riskTrendDisplay = useMemo(() => {
+  const formatTrendTime = (date: Date | null) => {
+    if (!date) return "";
 
-  if (locationTimezoneOffsetSec === null) {
-    return date.toLocaleTimeString(currentLang, { hour: "2-digit", minute: "2-digit" });
-  }
+    if (locationTimezoneOffsetSec === null) {
+      return date.toLocaleTimeString(currentLang, { hour: "2-digit", minute: "2-digit" });
+    }
 
-  const locationDate = new Date(date.getTime() + locationTimezoneOffsetSec * 1000);
-  return locationDate.toLocaleTimeString(currentLang, {
-    hour: "2-digit",
-    minute: "2-digit",
-    timeZone: "UTC",
-  });
-};
-const formatTrendFactorKey = (factors?: RiskTrendResult["factors"]) => {
-  if (!factors || factors.length === 0) return "generic";
-  const order: RiskTrendResult["factors"] = ["heat", "cold", "wind", "uv"];
-  return [...new Set(factors)]
-    .slice(0, 2)
-    .sort((a, b) => order.indexOf(a) - order.indexOf(b))
-    .join("_");
-};
-const trendStartTime = formatTrendTime(riskTrend?.peakStart ?? null);
-const trendEndTime = formatTrendTime(riskTrend?.peakEnd ?? null);
-const trendFactorKey = formatTrendFactorKey(riskTrend?.factors);
-const baseRiskTrendText = riskTrendLoading
-  ? t("riskTrend.loading")
-  : !riskTrend
-  ? t("riskTrend.unavailable")
-  : riskTrend.direction === "stable"
-  ? t(`riskTrend.${riskTrend.direction}`)
-  : riskTrend.direction === "improving"
-  ? t(`riskTrend.improving_${trendFactorKey}`, {
-      defaultValue: t("riskTrend.improving"),
-    })
-  : t(`riskTrend.${riskTrend.direction}At_${trendFactorKey}`, {
-      start: trendStartTime,
-      end: trendEndTime,
-      defaultValue: t(`riskTrend.${riskTrend.direction}At`, {
+    const locationDate = new Date(date.getTime() + locationTimezoneOffsetSec * 1000);
+    return locationDate.toLocaleTimeString(currentLang, {
+      hour: "2-digit",
+      minute: "2-digit",
+      timeZone: "UTC",
+    });
+  };
+
+  const formatTrendFactorKey = (factors?: RiskTrendResult["factors"]) => {
+    if (!factors || factors.length === 0) return "generic";
+    const order: RiskTrendResult["factors"] = ["heat", "cold", "wind", "uv"];
+    return [...new Set(factors)]
+      .slice(0, 2)
+      .sort((a, b) => order.indexOf(a) - order.indexOf(b))
+      .join("_");
+  };
+
+  const trendStartTime = formatTrendTime(riskTrend?.peakStart ?? null);
+  const trendEndTime = formatTrendTime(riskTrend?.peakEnd ?? null);
+  const trendFactorKey = formatTrendFactorKey(riskTrend?.factors);
+  const baseRiskTrendText = riskTrendLoading
+    ? t("riskTrend.loading")
+    : !riskTrend
+    ? t("riskTrend.unavailable")
+    : riskTrend.direction === "stable"
+    ? t(`riskTrend.${riskTrend.direction}`)
+    : riskTrend.direction === "improving"
+    ? t(`riskTrend.improving_${trendFactorKey}`, {
+        defaultValue: t("riskTrend.improving"),
+      })
+    : t(`riskTrend.${riskTrend.direction}At_${trendFactorKey}`, {
         start: trendStartTime,
         end: trendEndTime,
-      }),
-    });
-const shouldShowTrendLocalTime =
-  Boolean(riskTrend) &&
-  !riskTrendLoading &&
-  trendUsesDifferentTimezone &&
-  Boolean(trendStartTime && trendEndTime) &&
-  riskTrend?.direction !== "stable" &&
-  riskTrend?.direction !== "improving";
-const riskTrendText = [
-  baseRiskTrendText,
-  shouldShowTrendLocalTime ? t("riskTrend.localTimeSuffix") : "",
-  riskTrend?.partial && !riskTrendLoading ? t("riskTrend.partialSuffix") : "",
-]
-  .filter(Boolean)
-  .join(" ");
-const riskTrendIcon = riskTrendLoading
-  ? "…"
-  : !riskTrend
-  ? "·"
-  : riskTrend.direction === "improving"
-  ? "↘"
-  : riskTrend.direction === "stable"
-  ? "→"
-  : "↗";
+        defaultValue: t(`riskTrend.${riskTrend.direction}At`, {
+          start: trendStartTime,
+          end: trendEndTime,
+        }),
+      });
+  const shouldShowTrendLocalTime =
+    Boolean(riskTrend) &&
+    !riskTrendLoading &&
+    trendUsesDifferentTimezone &&
+    Boolean(trendStartTime && trendEndTime) &&
+    riskTrend?.direction !== "stable" &&
+    riskTrend?.direction !== "improving";
+  const text = [
+    baseRiskTrendText,
+    shouldShowTrendLocalTime ? t("riskTrend.localTimeSuffix") : "",
+    riskTrend?.partial && !riskTrendLoading ? t("riskTrend.partialSuffix") : "",
+  ]
+    .filter(Boolean)
+    .join(" ");
+  const icon = riskTrendLoading
+    ? "…"
+    : !riskTrend
+    ? "·"
+    : riskTrend.direction === "improving"
+    ? "↘"
+    : riskTrend.direction === "stable"
+    ? "→"
+    : "↗";
+
+  return { text, icon };
+}, [riskTrend, riskTrendLoading, trendUsesDifferentTimezone, locationTimezoneOffsetSec, currentLang, t]);
+const riskTrendText = riskTrendDisplay.text;
+const riskTrendIcon = riskTrendDisplay.icon;
 
 //Return ok
 
