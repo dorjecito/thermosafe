@@ -1,6 +1,5 @@
 import React from "react";
 import { useTranslation } from "react-i18next";
-import { updateRiskAlertLanguage } from "../push/subscribe";
 
 type Lang = "ca" | "es" | "eu" | "gl" | "en";
 
@@ -33,6 +32,11 @@ function safeSetStoredLang(lng: Lang) {
   }
 }
 
+async function updateRiskAlertLanguageLazy(lng: Lang) {
+  const { updateRiskAlertLanguage } = await import("../push/subscribe");
+  return updateRiskAlertLanguage(lng);
+}
+
 export default function LanguageSwitcher() {
   const { i18n } = useTranslation();
 
@@ -44,7 +48,7 @@ export default function LanguageSwitcher() {
     i18n.changeLanguage(lng);
     safeSetStoredLang(lng);
     document.documentElement.lang = lng;
-    updateRiskAlertLanguage(lng).catch((e) =>
+    updateRiskAlertLanguageLazy(lng).catch((e) =>
       console.warn("No s’ha pogut actualitzar l’idioma de notificacions:", e)
     );
   };

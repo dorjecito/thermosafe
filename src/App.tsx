@@ -52,24 +52,14 @@ import { getUVDetailFromOpenUV, getUVFromOpenUV } from "./services/openUV";
    import { primaryRiskFromEngine } from "./utils/primaryRiskFromEngine";
    import { getWeatherContext } from "./utils/weatherContext";
    import { fetchSolarIrr } from "./utils/fetchSolarIrr";
-   import UVContextCard from "./components/UVContextCard";
    import { resolveSkyDescription } from "./utils/resolveSkyDescription";
-   import {
-  enableRiskAlerts,
-  disableRiskAlerts,
-  updateRiskAlertLocation,
-  updateRiskAlertLocationFromGps,
-} from "./push/subscribe";
    
    /* —— components ————————————————————————— */
    import Recommendations     from './components/Recommendations';
-   import UVAdvice            from './components/UVAdvice';
    import UVScale             from './components/UVScale';
    import LocationCard from "./components/LocationCard";
    import SafetyActions from "./components/SafetyActions";
-   import UVSafeTime from "./components/UVSafeTime";
-   import UVDetailPanel from "./components/UVDetailPanel";
-   import SkinTypeInfo, { type SkinType } from "./components/SkinTypeInfo";
+   import type { SkinType } from "./components/SkinTypeInfo";
    import TopAlertBanner from "./components/TopAlertBanner";
    import CompactHeader from "./components/CompactHeader";
    import { useScrollCompactHeader } from "./hooks/useScrollCompactHeader";
@@ -85,6 +75,30 @@ import { getUVDetailFromOpenUV, getUVFromOpenUV } from "./services/openUV";
    import { useRiskNotifications } from "./hooks/useRiskNotifications";
    import { useCitySuggestions } from "./hooks/useCitySuggestions";
    import { useSmartActivity, type ActivityLevel } from "./hooks/useSmartActivity";
+
+const UVAdvice = React.lazy(() => import("./components/UVAdvice"));
+const UVContextCard = React.lazy(() => import("./components/UVContextCard"));
+const UVSafeTime = React.lazy(() => import("./components/UVSafeTime"));
+const UVDetailPanel = React.lazy(() => import("./components/UVDetailPanel"));
+const SkinTypeInfo = React.lazy(() => import("./components/SkinTypeInfo"));
+
+type EnableRiskAlertsOptions = Parameters<typeof import("./push/subscribe").enableRiskAlerts>[0];
+type UpdateRiskAlertLocationPayload = Parameters<typeof import("./push/subscribe").updateRiskAlertLocation>[0];
+
+async function enableRiskAlertsLazy(options: EnableRiskAlertsOptions) {
+  const { enableRiskAlerts } = await import("./push/subscribe");
+  return enableRiskAlerts(options);
+}
+
+async function disableRiskAlertsLazy(token: string | null) {
+  const { disableRiskAlerts } = await import("./push/subscribe");
+  return disableRiskAlerts(token);
+}
+
+async function updateRiskAlertLocationLazy(payload: UpdateRiskAlertLocationPayload) {
+  const { updateRiskAlertLocation } = await import("./push/subscribe");
+  return updateRiskAlertLocation(payload);
+}
 
 function useStableValue<T>(value: T, delay = 800): T {
   const [stable, setStable] = useState(value);
@@ -139,6 +153,7 @@ export default function App() {
       : 3;
   });
   const [showSkinInfo, setShowSkinInfo] = useState(false);
+  const [uvDetailsOpen, setUvDetailsOpen] = useState(false);
    const searchInputRef = useRef<HTMLInputElement | null>(null);
   
 
@@ -534,7 +549,7 @@ async function onTogglePush(next: boolean) {
 
     try {
     if (next) {
-      const token = await enableRiskAlerts({
+      const token = await enableRiskAlertsLazy({
         threshold: "moderate",
         lang: normalizeLang(i18n.resolvedLanguage || i18n.language || "ca"),
         place: realCity || city || undefined,
@@ -543,7 +558,7 @@ async function onTogglePush(next: boolean) {
       setPushToken(token);
       // ❌ eliminat: setMsgHeat(t("push.enabled"));
     } else {
-      await disableRiskAlerts(pushToken);
+      await disableRiskAlertsLazy(pushToken);
       setPushEnabled(false);
       setPushToken(null);
       // ❌ eliminat: setMsgHeat(t("push.disabled"));
@@ -687,7 +702,7 @@ const fetchWeather = async (cityName: string) => {
 	      );
 
       if (localStorage.getItem("fcmToken")) {
-        updateRiskAlertLocation({
+        updateRiskAlertLocationLazy({
           lat: newLat,
           lon: newLon,
           place: resolvedName,
@@ -931,7 +946,7 @@ setDataSource("gps");
 // 🔔 Si les notificacions estan activades, actualitza la ubicació i el nom visible del token.
 // Si la nova ubicació és a 15 km o més de l'anterior, subscribe.ts reiniciarà els nivells a 0.
 if (localStorage.getItem("fcmToken")) {
-  updateRiskAlertLocation({ lat, lon, place: nm, lang }).catch((e) =>
+  updateRiskAlertLocationLazy({ lat, lon, place: nm, lang }).catch((e) =>
     console.warn("[PUSH] No s'ha pogut actualitzar la ubicació del token:", e)
   );
 }
@@ -1127,7 +1142,7 @@ const handleSuggestionSelect = async (s: any) => {
 	    );
 
     if (localStorage.getItem("fcmToken")) {
-      updateRiskAlertLocation({
+      updateRiskAlertLocationLazy({
         lat: s.lat,
         lon: s.lon,
         place: label,
@@ -2208,12 +2223,18 @@ return (
 		                </span>
 		              </div>
 
-		              <details className="aemet-alert-details" style={{ marginTop: "0.75rem" }}>
+		              <details
+                    className="aemet-alert-details"
+                    style={{ marginTop: "0.75rem" }}
+                    onToggle={(event) => setUvDetailsOpen(event.currentTarget.open)}
+                  >
 	                <summary className="aemet-alert-summary">
 	                  <span className="summary-closed">{localUi.moreUv}</span>
 		                  <span className="summary-open">{localUi.lessUv}</span>
 		                </summary>
 
+                    {uvDetailsOpen && (
+                      <React.Suspense fallback={null}>
 		                <p className="uv-max-detail">
 		                  <strong>{localUi.uvMaxToday}:</strong>{" "}
 		                  {uvMaxSummaryValue != null ? uvMaxSummaryValue.toFixed(1) : "—"}
@@ -2256,6 +2277,8 @@ return (
 	                    lang={lang}
 	                  />
 	                )}
+                      </React.Suspense>
+                    )}
 	              </details>
 	            </>
 	          )}
@@ -2286,11 +2309,13 @@ return (
 	        </button>
 
 	        {showSkinInfo && (
-	          <SkinTypeInfo
-	            lang={currentLang as "ca" | "es" | "eu" | "gl" | "en"}
-	            value={skinType}
-	            onChange={setSkinType}
-	          />
+            <React.Suspense fallback={null}>
+	            <SkinTypeInfo
+	              lang={currentLang as "ca" | "es" | "eu" | "gl" | "en"}
+	              value={skinType}
+	              onChange={setSkinType}
+	            />
+            </React.Suspense>
 	        )}
 	      </div>
 	    </div>
