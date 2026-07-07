@@ -471,6 +471,12 @@ async function loadUvMaxToday(nextLat: number, nextLon: number) {
   }
 }
 
+function loadUvMaxTodayInBackground(nextLat: number, nextLon: number) {
+  loadUvMaxToday(nextLat, nextLon).catch((err) => {
+    console.warn("[UV] Error carregant UV màxim en segon pla:", err);
+  });
+}
+
 /* === CONFIGURACIÓ GENERAL === */
 const lang = i18n.resolvedLanguage?.slice(0,2) || "ca";
 
@@ -783,9 +789,6 @@ const fetchWeather = async (cityName: string) => {
 useEffect(() => {
   const initLocate = async () => {
     try {
-      // Espera que React i i18n estiguin inicialitzats
-      await new Promise((res) => setTimeout(res, 500));
-
       if (!("geolocation" in navigator)) {
         console.warn("[WARN] Geolocalització no disponible al navegador.");
         return;
@@ -800,7 +803,7 @@ useEffect(() => {
       } else if (perm.state === "prompt") {
         console.log("[DEBUG] Demanant permís de GPS a l'usuari...");
         navigator.geolocation.getCurrentPosition(
-          async () => await locate(),
+          async (position) => await locate(false, position),
           (err) => console.warn("[WARN] Permís de geolocalització rebutjat:", err)
         );
       } else {
@@ -903,7 +906,7 @@ setIrr(ir ?? null);
 };
 
 /* 📍 LOCALITZACIÓ ACTUAL */
-const locate = async (silent = false) => {
+const locate = async (silent = false, initialPosition?: GeolocationPosition) => {
 
   const requestId = startRequest("gps");
 
@@ -917,9 +920,11 @@ const locate = async (silent = false) => {
     setInput('');
 
     // 📍 1. Obté coordenades del dispositiu
-    const position = await new Promise<GeolocationPosition>((resolve, reject) => {
-    navigator.geolocation.getCurrentPosition(resolve, reject);
-    });
+    const position =
+      initialPosition ??
+      (await new Promise<GeolocationPosition>((resolve, reject) => {
+        navigator.geolocation.getCurrentPosition(resolve, reject);
+      }));
 
     if (isStaleRequest("gps", requestId)) return;
 
@@ -954,7 +959,7 @@ const uv = await safeUVFetch(lat, lon, isDayHere);
 if (isStaleRequest("gps", requestId)) return;
 
 setUvi(uv);
-await loadUvMaxToday(lat, lon);
+loadUvMaxTodayInBackground(lat, lon);
 console.log("[DEBUG] UVI actual (nou):", uv);
 console.log("[TEST] Tipus UV (nou):", typeof uv, "Valor:", uv);
 
