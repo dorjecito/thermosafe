@@ -209,7 +209,7 @@ export function getPrimaryStatusBlock({
           : phase === "evening"
             ? tr(
                 "primaryStatus.heat.mildEveningText",
-                "Tot i que el sol ja s'ha post, la calor acumulada encara pot provocar cansament. Hidrata't i evita esforços intensos si notes fatiga."
+                "La temperatura encara es manté elevada després de la posta de sol. Tot i que el risc disminueix respecte al dia, la calor acumulada pot fer menys confortable l’activitat a l’exterior."
               )
             : tr(
               "officialAdviceDynamic.heat.extreme",
@@ -235,7 +235,7 @@ export function getPrimaryStatusBlock({
           : phase === "evening"
             ? tr(
                 "primaryStatus.heat.mildEveningText",
-                "Tot i que el sol ja s'ha post, la calor acumulada encara pot provocar cansament. Hidrata't i evita esforços intensos si notes fatiga."
+                "La temperatura encara es manté elevada després de la posta de sol. Tot i que el risc disminueix respecte al dia, la calor acumulada pot fer menys confortable l’activitat a l’exterior."
               )
             : tr(
               "officialAdviceDynamic.heat.high",
@@ -261,7 +261,7 @@ export function getPrimaryStatusBlock({
           : phase === "evening"
             ? tr(
                 "primaryStatus.heat.mildEveningText",
-                "Tot i que el sol ja s'ha post, la calor acumulada encara pot provocar cansament. Hidrata't i evita esforços intensos si notes fatiga."
+                "La temperatura encara es manté elevada després de la posta de sol. Tot i que el risc disminueix respecte al dia, la calor acumulada pot fer menys confortable l’activitat a l’exterior."
               )
             : phase === "late_day"
             ? tr(
@@ -293,7 +293,7 @@ export function getPrimaryStatusBlock({
         : phase === "evening"
           ? tr(
               "primaryStatus.heat.mildEveningText",
-              "Tot i que el sol ja s'ha post, la calor acumulada encara pot provocar cansament. Hidrata't i evita esforços intensos si notes fatiga."
+              "La temperatura encara es manté elevada després de la posta de sol. Tot i que el risc disminueix respecte al dia, la calor acumulada pot fer menys confortable l’activitat a l’exterior."
             )
           : phase === "late_day"
           ? tr(

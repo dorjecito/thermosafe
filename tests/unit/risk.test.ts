@@ -1633,7 +1633,7 @@ test("heat after sunset uses accumulated-heat evening wording", () => {
   const translations: Record<string, string> = {
     "primaryStatus.heat.mildLateDay": "Temperatura encara elevada",
     "primaryStatus.heat.mildEveningText":
-      "Tot i que el sol ja s'ha post, la calor acumulada encara pot provocar cansament. Hidrata't i evita esforços intensos si notes fatiga.",
+      "La temperatura encara es manté elevada després de la posta de sol. Tot i que el risc disminueix respecte al dia, la calor acumulada pot fer menys confortable l'activitat a l'exterior.",
   };
 
   const result = getPrimaryStatusBlock({
@@ -1651,7 +1651,7 @@ test("heat after sunset uses accumulated-heat evening wording", () => {
   });
 
   assert.equal(result.title, "Temperatura encara elevada");
-  assert.match(result.text, /sol ja s'ha post/i);
+  assert.match(result.text, /temperatura encara es manté elevada|calor acumulada/i);
   assert.doesNotMatch(result.text, /sol ja baixa/i);
 });
 
@@ -1748,7 +1748,7 @@ const seasonalTranslations: Record<string, string> = {
   "primaryStatus.heat.mildLateDayText":
     "Tot i que el sol ja baixa, la sensació tèrmica encara pot provocar cansament. Hidrata't i evita esforços innecessaris.",
   "primaryStatus.heat.mildEveningText":
-    "Tot i que el sol ja s'ha post, la calor acumulada encara pot provocar cansament. Hidrata't i evita esforços intensos si notes fatiga.",
+    "La temperatura encara es manté elevada després de la posta de sol. Tot i que el risc disminueix respecte al dia, la calor acumulada pot fer menys confortable l'activitat a l'exterior.",
   "primaryStatus.heat.hotNightText":
     "La temperatura continua elevada malgrat que és de nit. Hidrata't i evita esforços físics intensos fins que refresqui.",
   "primaryStatus.heat.moderateLateDayText":
@@ -1891,7 +1891,7 @@ test("seasonal validation matrix keeps risk, day phase and messages coherent", a
       }
 
       if (phase === "evening" && primary.kind === "heat") {
-        assert.match(status.text, /sol ja s'ha post|calor acumulada/i);
+        assert.match(status.text, /temperatura encara es manté elevada|calor acumulada/i);
         assert.doesNotMatch(status.text, /sol ja baixa/i);
       }
 

@@ -135,7 +135,7 @@
       "moderateLateDay": "Calor encara elevada",
       "mildText": "La sensació tèrmica és moderadament elevada. Hidrata’t i adapta l’activitat si mantens esforç físic.",
       "mildLateDayText": "Tot i que el sol ja baixa, la sensació tèrmica encara pot provocar cansament. Hidrata’t i evita esforços innecessaris.",
-      "mildEveningText": "Tot i que el sol ja s'ha post, la calor acumulada encara pot provocar cansament. Hidrata't i evita esforços intensos si notes fatiga.",
+      "mildEveningText": "La temperatura encara es manté elevada després de la posta de sol. Tot i que el risc disminueix respecte al dia, la calor acumulada pot fer menys confortable l’activitat a l’exterior.",
       "hotNightText": "La temperatura continua elevada malgrat que és de nit. Hidrata't i evita esforços físics intensos fins que refresqui.",
       "moderateLateDayText": "Tot i ser capvespre, la sensació tèrmica continua elevada. Redueix esforços intensos, hidrata’t i fes pauses en llocs frescos."
     },
