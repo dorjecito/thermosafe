@@ -28,7 +28,7 @@
   "riskTrend": {
     "loading": "S’està calculant la previsió de les pròximes hores…",
     "unavailable": "La previsió per a les pròximes hores no està disponible.",
-    "stable": "Les condicions es mantindran semblants durant les pròximes hores.",
+    "stable": "Les condicions continuaran estables durant les pròximes hores.",
     "improving": "Durant les pròximes hores les condicions milloraran.",
     "improving_heat": "La sensació tèrmica baixarà durant les pròximes hores.",
     "improving_cold": "Les temperatures seran menys fredes durant les pròximes hores.",
@@ -77,7 +77,7 @@
   "toggleLegend": "ℹ️ Mostra/Amaga escala UV",
   
   "safe_conditions": "Condicions segures",
-  "safe_conditions_text_day": "No es requereixen mesures especials en aquest moment.",
+  "safe_conditions_text_day": "No s'observen riscos destacables en aquest moment.",
   "safe_conditions_text_night": "Condicions nocturnes dins paràmetres normals.",
   "top_alert_weather_active": "Alerta meteorològica activa",
   "official_alert": "Avís meteorològic oficial actiu",
@@ -136,7 +136,7 @@
       "mildText": "La sensació tèrmica és moderadament elevada. Hidrata’t i adapta l’activitat si mantens esforç físic.",
       "mildLateDayText": "Tot i que el sol ja baixa, la sensació tèrmica encara pot provocar cansament. Hidrata’t i evita esforços innecessaris.",
       "mildEveningText": "La temperatura encara es manté elevada després de la posta de sol. Tot i que el risc disminueix respecte al dia, la calor acumulada pot fer menys confortable l’activitat a l’exterior.",
-      "hotNightText": "La temperatura continua elevada malgrat que és de nit. Hidrata't i evita esforços físics intensos fins que refresqui.",
+      "hotNightText": "La calor acumulada durant la nit pot dificultar el descans i la recuperació tèrmica. Hidrata't i evita esforços físics intensos fins que refresqui.",
       "moderateLateDayText": "Tot i ser capvespre, la sensació tèrmica continua elevada. Redueix esforços intensos, hidrata’t i fes pauses en llocs frescos."
     },
     "cold": {

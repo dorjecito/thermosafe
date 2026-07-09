@@ -204,7 +204,7 @@ export function getPrimaryStatusBlock({
         text: phase === "night"
           ? tr(
               "primaryStatus.heat.hotNightText",
-              "La temperatura continua elevada malgrat que és de nit. Hidrata’t i evita esforços físics intensos fins que refresqui."
+              "La calor acumulada durant la nit pot dificultar el descans i la recuperació tèrmica. Hidrata’t i evita esforços físics intensos fins que refresqui."
             )
           : phase === "evening"
             ? tr(
@@ -230,7 +230,7 @@ export function getPrimaryStatusBlock({
         text: phase === "night"
           ? tr(
               "primaryStatus.heat.hotNightText",
-              "La temperatura continua elevada malgrat que és de nit. Hidrata’t i evita esforços físics intensos fins que refresqui."
+              "La calor acumulada durant la nit pot dificultar el descans i la recuperació tèrmica. Hidrata’t i evita esforços físics intensos fins que refresqui."
             )
           : phase === "evening"
             ? tr(
@@ -256,7 +256,7 @@ export function getPrimaryStatusBlock({
         text: phase === "night"
           ? tr(
               "primaryStatus.heat.hotNightText",
-              "La temperatura continua elevada malgrat que és de nit. Hidrata’t i evita esforços físics intensos fins que refresqui."
+              "La calor acumulada durant la nit pot dificultar el descans i la recuperació tèrmica. Hidrata’t i evita esforços físics intensos fins que refresqui."
             )
           : phase === "evening"
             ? tr(
@@ -288,7 +288,7 @@ export function getPrimaryStatusBlock({
       text: phase === "night"
         ? tr(
             "primaryStatus.heat.hotNightText",
-            "La temperatura continua elevada malgrat que és de nit. Hidrata’t i evita esforços físics intensos fins que refresqui."
+            "La calor acumulada durant la nit pot dificultar el descans i la recuperació tèrmica. Hidrata’t i evita esforços físics intensos fins que refresqui."
           )
         : phase === "evening"
           ? tr(
@@ -405,7 +405,7 @@ export function getPrimaryStatusBlock({
       title: tr("primaryStatus.heat.hotNight", "Nit calorosa"),
       text: tr(
         "primaryStatus.heat.hotNightText",
-        "La temperatura continua elevada malgrat que és de nit. Hidrata’t i evita esforços físics intensos fins que refresqui."
+        "La calor acumulada durant la nit pot dificultar el descans i la recuperació tèrmica. Hidrata’t i evita esforços físics intensos fins que refresqui."
       ),
       className: "status-card status-warning",
     };

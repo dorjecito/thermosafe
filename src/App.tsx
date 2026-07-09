@@ -1350,12 +1350,20 @@ const weatherContext = useMemo(
   () =>
     getWeatherContext({
       weatherMain,
+      weatherCode: data?.weather?.[0]?.id ?? null,
       humidity: data?.main?.humidity ?? null,
       effectiveTemp: currentFeelTemp,
       cloudiness: data?.clouds?.all ?? null,
     }),
-  [weatherMain, data?.main?.humidity, currentFeelTemp, data?.clouds?.all]
+  [weatherMain, data?.weather?.[0]?.id, data?.main?.humidity, currentFeelTemp, data?.clouds?.all]
 );
+
+const locationCurrentHour = useMemo(() => {
+  const timezoneOffset = data?.timezone;
+  if (typeof timezoneOffset !== "number") return new Date().getHours();
+
+  return new Date(Date.now() + timezoneOffset * 1000).getUTCHours();
+}, [data?.timezone]);
 
 const engineRisk = useMemo(() => {
   if (!data || !isInitialRiskReady || loading) return null;
@@ -2233,7 +2241,7 @@ return (
     weatherDescription={data?.weather?.[0]?.description ?? ""}
     cloudiness={data?.clouds?.all ?? null}
     windKmh={windKmh}
-    currentHour={new Date().getHours()}
+    currentHour={locationCurrentHour}
     heatDayPhase={heatDayPhase}
     coldRisk={coldRisk ?? undefined}
     coldEffectiveTemp={wc ?? temp}

@@ -1,5 +1,6 @@
 export interface WeatherContextInput {
   weatherMain?: string | null;
+  weatherCode?: number | null;
   humidity?: number | null;
   effectiveTemp?: number | null;
   cloudiness?: number | null;
@@ -13,6 +14,12 @@ export interface WeatherContext {
   uvBlockingCloudy: boolean;
   suppressUv: boolean;
   slipperySurface: boolean;
+  snowy: boolean;
+  foggy: boolean;
+  icySurface: boolean;
+  hail: boolean;
+  dusty: boolean;
+  smoky: boolean;
 }
 
 export const CONTEXT_VERY_CLOUDY_THRESHOLD = 75;
@@ -24,12 +31,30 @@ const RAINY_WEATHER_MAIN = new Set(["Rain", "Drizzle", "Thunderstorm"]);
 
 export function getWeatherContext({
   weatherMain,
+  weatherCode,
   humidity,
   effectiveTemp,
   cloudiness,
 }: WeatherContextInput): WeatherContext {
+  const code =
+    typeof weatherCode === "number" && Number.isFinite(weatherCode)
+      ? weatherCode
+      : null;
   const rainy = RAINY_WEATHER_MAIN.has(weatherMain ?? "");
   const stormy = weatherMain === "Thunderstorm";
+  const snowy = weatherMain === "Snow" || (code !== null && code >= 600 && code < 700);
+  const foggy = code === 741 || weatherMain === "Fog";
+  const hail = code === 906 || weatherMain === "Hail";
+  const dusty = code === 731 || code === 761 || weatherMain === "Dust";
+  const smoky = code === 711 || weatherMain === "Smoke";
+  const freezingPrecipitation = code === 511;
+  const icySurface =
+    snowy ||
+    freezingPrecipitation ||
+    ((rainy || hail) &&
+      typeof effectiveTemp === "number" &&
+      Number.isFinite(effectiveTemp) &&
+      effectiveTemp <= 0);
   const humid =
     typeof humidity === "number" &&
     Number.isFinite(humidity) &&
@@ -54,5 +79,11 @@ export function getWeatherContext({
     uvBlockingCloudy,
     suppressUv: rainy || stormy || veryCloudy,
     slipperySurface: rainy,
+    snowy,
+    foggy,
+    icySurface,
+    hail,
+    dusty,
+    smoky,
   };
 }

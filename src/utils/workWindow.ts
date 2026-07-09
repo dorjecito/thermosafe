@@ -220,7 +220,7 @@ export function getWorkWindowText(
 ): string {
   const txt = {
     ca: {
-      optimal: "Situació adequada per a activitats a l’aire lliure.",
+      optimal: "Les condicions són adequades per a activitats a l’aire lliure.",
       optimalAlert: "Condicions actuals adequades, però hi ha avisos oficials actius. Mantén la precaució.",
       caution: "Es poden realitzar activitats a l’aire lliure amb precaucions bàsiques.",
       nightHeat: "Es poden realitzar activitats suaus, però convé evitar esforços físics innecessaris.",
@@ -228,7 +228,7 @@ export function getWorkWindowText(
       avoid: "No es recomana fer activitats exigents a l’aire lliure en aquests moments.",
     },
     es: {
-      optimal: "Situación adecuada para actividades al aire libre.",
+      optimal: "Las condiciones son adecuadas para actividades al aire libre.",
       optimalAlert: "Condiciones actuales adecuadas, pero hay avisos oficiales activos. Mantén la precaución.",
       caution: "Se pueden realizar actividades al aire libre con precauciones básicas.",
       nightHeat: "Se pueden realizar actividades suaves, pero conviene evitar esfuerzos físicos innecesarios.",
@@ -236,7 +236,7 @@ export function getWorkWindowText(
       avoid: "No se recomienda realizar actividades exigentes al aire libre en estos momentos.",
     },
     eu: {
-      optimal: "Kanpoko jardueretarako egoera egokia.",
+      optimal: "Baldintzak egokiak dira kanpoko jardueretarako.",
       optimalAlert: "Uneko baldintzak egokiak dira, baina abisu ofizialak aktibo daude. Mantendu arreta.",
       caution: "Kanpoko jarduerak egin daitezke oinarrizko neurriak hartuta.",
       nightHeat: "Jarduera arinak egin daitezke, baina komeni da beharrezkoak ez diren ahalegin fisikoak saihestea.",
@@ -244,7 +244,7 @@ export function getWorkWindowText(
       avoid: "Ez da gomendatzen une honetan kanpoko jarduera zorrotzak egitea.",
     },
     gl: {
-      optimal: "Situación axeitada para actividades ao aire libre.",
+      optimal: "As condicións son axeitadas para actividades ao aire libre.",
       optimalAlert: "As condicións actuais son adecuadas, pero hai avisos oficiais activos. Mantén a precaución.",
       caution: "Pódense realizar actividades ao aire libre con precaucións básicas.",
       nightHeat: "Pódense realizar actividades suaves, pero convén evitar esforzos físicos innecesarios.",
@@ -252,7 +252,7 @@ export function getWorkWindowText(
       avoid: "Non se recomenda realizar actividades esixentes ao aire libre nestes momentos.",
     },
     en: {
-      optimal: "Suitable conditions for outdoor activities.",
+      optimal: "Conditions are suitable for outdoor activities.",
       optimalAlert: "Current conditions are suitable, but official alerts are active. Stay cautious.",
       caution: "Outdoor activities are possible with basic precautions.",
       nightHeat: "Light outdoor activities are possible, but unnecessary physical effort should be avoided.",

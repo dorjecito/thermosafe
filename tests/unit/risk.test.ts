@@ -376,6 +376,50 @@ test("weather context centralizes observed rain and storm interpretation", () =>
   assert.equal(getWeatherContext({ weatherMain: "Rain" }).slipperySurface, true);
 });
 
+test("weather context interprets observed OpenWeather phenomena", () => {
+  const snow = getWeatherContext({
+    weatherMain: "Snow",
+    weatherCode: 601,
+    effectiveTemp: -2,
+  });
+  assert.equal(snow.snowy, true);
+  assert.equal(snow.icySurface, true);
+  assert.equal(snow.slipperySurface, false);
+
+  assert.equal(getWeatherContext({ weatherCode: 741 }).foggy, true);
+  assert.equal(getWeatherContext({ weatherCode: 906 }).hail, true);
+  assert.equal(getWeatherContext({ weatherCode: 731 }).dusty, true);
+  assert.equal(getWeatherContext({ weatherCode: 761 }).dusty, true);
+  assert.equal(getWeatherContext({ weatherCode: 711 }).smoky, true);
+});
+
+test("weather context only infers ice with compatible precipitation and temperature", () => {
+  assert.equal(
+    getWeatherContext({
+      weatherMain: "Rain",
+      weatherCode: 500,
+      effectiveTemp: -0.5,
+    }).icySurface,
+    true
+  );
+  assert.equal(
+    getWeatherContext({
+      weatherMain: "Rain",
+      weatherCode: 500,
+      effectiveTemp: 4,
+    }).icySurface,
+    false
+  );
+  assert.equal(
+    getWeatherContext({
+      weatherMain: "Clear",
+      weatherCode: 800,
+      effectiveTemp: -2,
+    }).icySurface,
+    false
+  );
+});
+
 test("weather context detects humid warm conditions without treating cool humidity as risk context", () => {
   assert.equal(
     getWeatherContext({ humidity: 70, effectiveTemp: 24 }).humid,
@@ -1660,7 +1704,7 @@ test("night heat status avoids daytime shade advice", () => {
     "officialAdviceDynamic.heat.moderate": "Evita esforços intensos i busca ombra regularment.",
     "primaryStatus.heat.hotNight": "Nit calorosa",
     "primaryStatus.heat.hotNightText":
-      "La temperatura continua elevada malgrat que és de nit. Hidrata't i evita esforços físics intensos fins que refresqui.",
+      "La calor acumulada durant la nit pot dificultar el descans i la recuperació tèrmica. Hidrata't i evita esforços físics intensos fins que refresqui.",
   };
 
   const result = getPrimaryStatusBlock({
@@ -1702,7 +1746,7 @@ test("tropical night is not presented as safe primary status", () => {
   assert.equal(result.title, "Nit calorosa");
   assert.notEqual(result.title, "Condicions segures");
   assert.match(result.text, /nit/i);
-  assert.match(result.text, /temperatura|elevada/i);
+  assert.match(result.text, /calor|nit|recuperació/i);
 });
 
 test("tropical night outdoor activity keeps a mild caution nuance", () => {
@@ -1735,7 +1779,12 @@ test("dark theme keeps recommendation variants readable", () => {
 
 const seasonalTranslations: Record<string, string> = {
   "safe_conditions": "Condicions segures",
-  "safe_conditions_text_day": "No es requereixen mesures especials en aquest moment.",
+  "safe_conditions_text_day": "No s'observen riscos destacables en aquest moment.",
+  "official_alert": "Avís meteorològic oficial actiu",
+  "follow_official_alerts": "Segueix les indicacions oficials i extrema la precaució.",
+  "official_alert_active_prefix": "Avís meteorològic oficial actiu",
+  "official_alert_active_hazard.coastal": "Avís oficial per costa i onatge. Segueix les indicacions oficials.",
+  "official_alert_active_hazard.storm": "Avís oficial per tempestes. Segueix les indicacions oficials.",
   "primaryStatus.heat.mild": "Precaució lleu per calor",
   "primaryStatus.heat.mildLateDay": "Temperatura encara elevada",
   "primaryStatus.heat.hotNight": "Nit calorosa",
@@ -1750,7 +1799,7 @@ const seasonalTranslations: Record<string, string> = {
   "primaryStatus.heat.mildEveningText":
     "La temperatura encara es manté elevada després de la posta de sol. Tot i que el risc disminueix respecte al dia, la calor acumulada pot fer menys confortable l'activitat a l'exterior.",
   "primaryStatus.heat.hotNightText":
-    "La temperatura continua elevada malgrat que és de nit. Hidrata't i evita esforços físics intensos fins que refresqui.",
+    "La calor acumulada durant la nit pot dificultar el descans i la recuperació tèrmica. Hidrata't i evita esforços físics intensos fins que refresqui.",
   "primaryStatus.heat.moderateLateDayText":
     "Tot i ser capvespre, la sensació tèrmica continua elevada. Redueix esforços intensos, hidrata't i fes pauses en llocs frescos.",
   "officialAdviceDynamic.heat.moderate":
@@ -1916,4 +1965,340 @@ test("seasonal validation matrix keeps risk, day phase and messages coherent", a
       }
     });
   }
+});
+
+type CityScenario = {
+  name: string;
+  heatIndex: number;
+  coldEffectiveTemp: number;
+  windKmh: number;
+  uvi: number;
+  day: boolean;
+  heatDayPhase: ReturnType<typeof getHeatDayPhase>;
+  weatherMain?: string;
+  weatherCode?: number;
+  humidity?: number;
+  cloudiness?: number;
+  aemetAlerts?: any[];
+  aemetActive?: boolean;
+  nocturnalHeat?: boolean;
+  expectedPrimary: "heat" | "cold" | "wind" | "uv" | "none";
+  expectedWorkWindow: ReturnType<typeof getWorkWindow>;
+  expectedSignals: string[];
+  forbiddenStatus?: RegExp[];
+  expectedStatus?: RegExp;
+};
+
+function evaluateCityScenario(scenario: CityScenario) {
+  const heatRisk = getHeatRisk(scenario.heatIndex, "rest");
+  const coldRisk = getColdRisk(scenario.coldEffectiveTemp, scenario.windKmh);
+  const windRisk = getWindRisk(scenario.windKmh);
+  const weatherContext = getWeatherContext({
+    weatherMain: scenario.weatherMain,
+    weatherCode: scenario.weatherCode,
+    humidity: scenario.humidity,
+    effectiveTemp: scenario.coldEffectiveTemp,
+    cloudiness: scenario.cloudiness,
+  });
+  const engineRisk = evaluateRiskScore({
+    heatIndex: scenario.heatIndex,
+    coldEffectiveTemp: scenario.coldEffectiveTemp,
+    windKmh: scenario.windKmh,
+    uvi: scenario.uvi,
+    activity: "rest",
+  });
+  const primary = primaryRiskFromEngine(engineRisk);
+  const status = getPrimaryStatusBlock({
+    alerts: scenario.aemetAlerts ?? [],
+    primary,
+    heatRisk,
+    coldRisk,
+    windRisk,
+    uvi: scenario.uvi,
+    day: scenario.day,
+    heatDayPhase: scenario.heatDayPhase,
+    nocturnalHeat: scenario.nocturnalHeat,
+    primaryAdvice: null,
+    contextualUVMessage: "",
+    t: (key) => seasonalTranslations[key] || key,
+  });
+  const workWindow = getWorkWindow({
+    heatRisk,
+    heatIndex: scenario.heatIndex,
+    coldRisk,
+    windRisk,
+    uvi: scenario.uvi,
+    aemetActive: scenario.aemetActive ?? false,
+    weatherMain: scenario.weatherMain,
+    nocturnalHeat: scenario.nocturnalHeat,
+    engineRisk,
+    weatherContext,
+  });
+  const workText = getWorkWindowText(
+    workWindow,
+    "ca",
+    scenario.aemetActive ?? false,
+    scenario.nocturnalHeat ?? false
+  );
+
+  const recommendationSignals = new Set<string>();
+  const factorState = getRecommendationFactorState(engineRisk.activeFactorsSorted);
+  if (factorState.heat) recommendationSignals.add("calor");
+  if (factorState.uv) recommendationSignals.add("uv");
+  if (factorState.wind) recommendationSignals.add("vent");
+  if (coldRisk !== "cap") recommendationSignals.add("fred");
+  if (weatherContext.rainy || weatherContext.slipperySurface) recommendationSignals.add("pluja");
+  if (weatherContext.snowy) recommendationSignals.add("neu");
+  if (weatherContext.foggy) recommendationSignals.add("boira");
+  if (weatherContext.hail) recommendationSignals.add("calamarsa");
+  if (weatherContext.humid) recommendationSignals.add("humitat");
+  if (scenario.aemetAlerts?.length) recommendationSignals.add("avís");
+
+  return {
+    primary,
+    status,
+    workWindow,
+    workText,
+    recommendationSignals,
+    weatherContext,
+    engineRisk,
+  };
+}
+
+function makeActiveAemetAlert(event: string) {
+  const now = Math.floor(Date.now() / 1000);
+  return {
+    event,
+    description: event,
+    start: now - 60,
+    end: now + 3600,
+  };
+}
+
+const cityScenarios: CityScenario[] = [
+  {
+    name: "Llucmajor - calor moderada i UV alt sense pluja",
+    heatIndex: 34,
+    coldEffectiveTemp: 34,
+    windKmh: 12,
+    uvi: 6.5,
+    day: true,
+    heatDayPhase: "day",
+    expectedPrimary: "heat",
+    expectedWorkWindow: "limited",
+    expectedSignals: ["calor", "uv"],
+    expectedStatus: /calor/i,
+  },
+  {
+    name: "Sevilla - calor alta amb UV alt",
+    heatIndex: 42,
+    coldEffectiveTemp: 42,
+    windKmh: 10,
+    uvi: 7.2,
+    day: true,
+    heatDayPhase: "day",
+    expectedPrimary: "heat",
+    expectedWorkWindow: "avoid",
+    expectedSignals: ["calor", "uv"],
+    expectedStatus: /calor/i,
+  },
+  {
+    name: "Dubai - nit tropical amb humitat i UV nocturn zero",
+    heatIndex: 31,
+    coldEffectiveTemp: 31,
+    windKmh: 8,
+    uvi: 0,
+    day: false,
+    heatDayPhase: "night",
+    humidity: 76,
+    nocturnalHeat: true,
+    expectedPrimary: "heat",
+    expectedWorkWindow: "caution",
+    expectedSignals: ["calor", "humitat"],
+    expectedStatus: /nit|calor/i,
+    forbiddenStatus: [/UV/i],
+  },
+  {
+    name: "Oulu - condicions segures amb UV baix",
+    heatIndex: 9,
+    coldEffectiveTemp: 9,
+    windKmh: 8,
+    uvi: 1,
+    day: true,
+    heatDayPhase: "day",
+    expectedPrimary: "none",
+    expectedWorkWindow: "optimal",
+    expectedSignals: [],
+    expectedStatus: /Condicions segures/i,
+    forbiddenStatus: [/calor/i, /fred/i, /UV/i],
+  },
+  {
+    name: "Bergen - condicions segures i cel ennuvolat sense alarmisme",
+    heatIndex: 13,
+    coldEffectiveTemp: 13,
+    windKmh: 10,
+    uvi: 1,
+    day: true,
+    heatDayPhase: "day",
+    weatherMain: "Clouds",
+    cloudiness: 70,
+    expectedPrimary: "none",
+    expectedWorkWindow: "optimal",
+    expectedSignals: [],
+    expectedStatus: /Condicions segures/i,
+    forbiddenStatus: [/alerta/i],
+  },
+  {
+    name: "Ushuaia - fred moderat amb neu contextual",
+    heatIndex: 1,
+    coldEffectiveTemp: -6,
+    windKmh: 18,
+    uvi: 1,
+    day: true,
+    heatDayPhase: "day",
+    weatherMain: "Snow",
+    weatherCode: 601,
+    expectedPrimary: "cold",
+    expectedWorkWindow: "limited",
+    expectedSignals: ["fred", "neu"],
+    expectedStatus: /fred/i,
+    forbiddenStatus: [/Condicions segures/i],
+  },
+  {
+    name: "Oymyakon - fred intens sense classificar-se com segur",
+    heatIndex: -20,
+    coldEffectiveTemp: -28,
+    windKmh: 12,
+    uvi: 0,
+    day: true,
+    heatDayPhase: "day",
+    weatherMain: "Snow",
+    weatherCode: 600,
+    expectedPrimary: "cold",
+    expectedWorkWindow: "limited",
+    expectedSignals: ["fred", "neu"],
+    expectedStatus: /fred/i,
+    forbiddenStatus: [/Condicions segures/i],
+  },
+  {
+    name: "Tampere - pluja i superfícies humides",
+    heatIndex: 12,
+    coldEffectiveTemp: 12,
+    windKmh: 10,
+    uvi: 1,
+    day: true,
+    heatDayPhase: "day",
+    weatherMain: "Rain",
+    weatherCode: 500,
+    expectedPrimary: "none",
+    expectedWorkWindow: "caution",
+    expectedSignals: ["pluja"],
+  },
+  {
+    name: "Londres - plugim i recomanació de relliscades",
+    heatIndex: 15,
+    coldEffectiveTemp: 15,
+    windKmh: 11,
+    uvi: 1,
+    day: true,
+    heatDayPhase: "day",
+    weatherMain: "Drizzle",
+    weatherCode: 300,
+    expectedPrimary: "none",
+    expectedWorkWindow: "caution",
+    expectedSignals: ["pluja"],
+  },
+  {
+    name: "Cadis - avís oficial amb risc local baix",
+    heatIndex: 22,
+    coldEffectiveTemp: 22,
+    windKmh: 8,
+    uvi: 1,
+    day: true,
+    heatDayPhase: "day",
+    aemetAlerts: [makeActiveAemetAlert("Fenòmens costaners")],
+    aemetActive: true,
+    expectedPrimary: "none",
+    expectedWorkWindow: "caution",
+    expectedSignals: ["avís"],
+    expectedStatus: /Avís|oficial|alerta/i,
+    forbiddenStatus: [/Condicions segures/i],
+  },
+  {
+    name: "Kíiv - avís oficial simulat no desapareix amb risc local baix",
+    heatIndex: 18,
+    coldEffectiveTemp: 18,
+    windKmh: 9,
+    uvi: 1,
+    day: true,
+    heatDayPhase: "day",
+    aemetAlerts: [makeActiveAemetAlert("Tempestes")],
+    aemetActive: true,
+    expectedPrimary: "none",
+    expectedWorkWindow: "caution",
+    expectedSignals: ["avís"],
+    expectedStatus: /Avís|oficial|alerta/i,
+    forbiddenStatus: [/Condicions segures/i],
+  },
+];
+
+test("city fixture matrix keeps primary risk, activity and recommendation signals coherent", async (t) => {
+  for (const scenario of cityScenarios) {
+    await t.test(scenario.name, () => {
+      const result = evaluateCityScenario(scenario);
+      const statusText = `${result.status.title} ${result.status.text}`;
+
+      assert.equal(result.primary.kind, scenario.expectedPrimary);
+      assert.equal(result.workWindow, scenario.expectedWorkWindow);
+
+      for (const signal of scenario.expectedSignals) {
+        assert.ok(
+          result.recommendationSignals.has(signal),
+          `${scenario.name} should include recommendation signal ${signal}`
+        );
+      }
+
+      if (scenario.expectedStatus) {
+        assert.match(statusText, scenario.expectedStatus);
+      }
+
+      for (const forbidden of scenario.forbiddenStatus ?? []) {
+        assert.doesNotMatch(statusText, forbidden);
+      }
+
+      if (scenario.uvi === 0) {
+        assert.equal(result.engineRisk.factors.find((factor) => factor.factor === "uv")?.active, false);
+      }
+
+      assertNoDuplicateSentences(`${statusText}. ${result.workText}`);
+    });
+  }
+});
+
+test("Tokyo fixture marks future trend times as local time when timezone differs", () => {
+  const now = new Date("2026-07-09T00:00:00.000Z");
+  const forecast = {
+    hourly: [
+      { dt: Math.floor(now.getTime() / 1000) + 60 * 60, temp: 29, feels_like: 30, wind_speed: 3, uvi: 4 },
+      { dt: Math.floor(now.getTime() / 1000) + 2 * 60 * 60, temp: 30, feels_like: 31, wind_speed: 3, uvi: 6.5 },
+      { dt: Math.floor(now.getTime() / 1000) + 3 * 60 * 60, temp: 31, feels_like: 32, wind_speed: 3, uvi: 7.5 },
+    ],
+  };
+
+  const trend = buildRiskTrend(
+    forecast,
+    { temp: 28, heatIndex: 28, windKmh: 10, uvi: 2, activity: "rest" },
+    now
+  );
+  const trendUsesDifferentTimezone = true;
+  const shouldShowTrendLocalTime =
+    Boolean(trend) &&
+    trendUsesDifferentTimezone &&
+    trend?.direction !== "stable" &&
+    trend?.direction !== "improving";
+
+  assert.ok(trend);
+  assert.notEqual(trend.direction, "stable");
+  assert.equal(shouldShowTrendLocalTime, true);
+  assert.equal(seasonalTranslations["riskTrend.localTimeSuffix"] || "(hora local)", "(hora local)");
 });

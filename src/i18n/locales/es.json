@@ -37,7 +37,7 @@
   "riskTrend": {
     "loading": "Se está calculando la previsión para las próximas horas…",
     "unavailable": "La previsión para las próximas horas no está disponible.",
-    "stable": "Las condiciones seguirán siendo similares durante las próximas horas.",
+    "stable": "Las condiciones continuarán estables durante las próximas horas.",
     "improving": "Durante las próximas horas las condiciones mejorarán.",
     "improving_heat": "La sensación térmica bajará durante las próximas horas.",
     "improving_cold": "Las temperaturas serán menos frías durante las próximas horas.",
@@ -99,7 +99,7 @@
   "toggleLegend": "ℹ️ Mostrar/Ocultar escala UV",
 
   "safe_conditions": "Condiciones seguras",
-  "safe_conditions_text_day": "No se requieren medidas especiales en este momento.",
+  "safe_conditions_text_day": "No se observan riesgos destacables en este momento.",
   "safe_conditions_text_night": "Condiciones nocturnas dentro de parámetros normales.",
   "top_alert_weather_active": "Alerta meteorológica activa",
   "official_alert": "Aviso meteorológico oficial activo",
@@ -158,7 +158,7 @@
       "mildText": "La sensación térmica es moderadamente elevada. Hidrátate y adapta la actividad si mantienes esfuerzo físico.",
       "mildLateDayText": "Aunque el sol ya baja, la sensación térmica todavía puede provocar cansancio. Hidrátate y evita esfuerzos innecesarios.",
       "mildEveningText": "La temperatura aún se mantiene elevada después de la puesta de sol. Aunque el riesgo disminuye respecto al día, el calor acumulado puede hacer menos confortable la actividad al aire libre.",
-      "hotNightText": "La temperatura continúa elevada aunque es de noche. Hidrátate y evita esfuerzos físicos intensos hasta que refresque.",
+      "hotNightText": "El calor acumulado durante la noche puede dificultar el descanso y la recuperación térmica. Hidrátate y evita esfuerzos físicos intensos hasta que refresque.",
       "moderateLateDayText": "Aunque ya sea tarde, la sensación térmica continúa elevada. Reduce esfuerzos intensos, hidrátate y haz pausas en lugares frescos."
     },
     "cold": {

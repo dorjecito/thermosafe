@@ -37,7 +37,7 @@
   "riskTrend": {
     "loading": "Estase a calcular a previsión para as próximas horas…",
     "unavailable": "A previsión para as próximas horas non está dispoñible.",
-    "stable": "As condicións manteranse semellantes durante as próximas horas.",
+    "stable": "As condicións continuarán estables durante as próximas horas.",
     "improving": "Durante as próximas horas as condicións mellorarán.",
     "improving_heat": "A sensación térmica baixará durante as próximas horas.",
     "improving_cold": "As temperaturas serán menos frías durante as próximas horas.",
@@ -100,7 +100,7 @@
   "toggleLegend": "ℹ️ Mostrar/agochar escala UV",
 
   "safe_conditions": "Condicións seguras",
-  "safe_conditions_text_day": "Non se requiren medidas especiais neste momento.",
+  "safe_conditions_text_day": "Non se observan riscos destacables neste momento.",
   "safe_conditions_text_night": "Condicións nocturnas dentro de parámetros normais.",
   "top_alert_weather_active": "Alerta meteorolóxica activa",
   "official_alert": "Aviso meteorolóxico oficial activo",
@@ -159,7 +159,7 @@
       "mildText": "A sensación térmica é moderadamente elevada. Hidrátate e adapta a actividade se mantés esforzo físico.",
       "mildLateDayText": "Aínda que o sol xa baixa, a sensación térmica aínda pode provocar cansazo. Hidrátate e evita esforzos innecesarios.",
       "mildEveningText": "A temperatura aínda se mantén elevada despois da posta do sol. Aínda que o risco diminúe respecto ao día, a calor acumulada pode facer menos confortable a actividade ao aire libre.",
-      "hotNightText": "A temperatura continúa elevada malia que é de noite. Hidrátate e evita esforzos físicos intensos ata que refresque.",
+      "hotNightText": "A calor acumulada durante a noite pode dificultar o descanso e a recuperación térmica. Hidrátate e evita esforzos físicos intensos ata que refresque.",
       "moderateLateDayText": "Aínda que xa sexa tarde, a sensación térmica continúa elevada. Reduce esforzos intensos, hidrátate e fai pausas en lugares frescos."
     },
     "cold": {
