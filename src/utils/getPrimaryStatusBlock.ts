@@ -79,7 +79,7 @@ export function getPrimaryStatusBlock({
         title: tr("primaryStatus.heat.torridNight", "Nit tòrrida"),
         text: tr(
           "primaryStatus.heat.torridNightText",
-          "La temperatura es manté molt elevada durant la nit i pot dificultar notablement el descans i la recuperació tèrmica. Refresca i ventila els espais, hidrata’t amb regularitat i evita esforços físics."
+          "La temperatura es manté molt elevada durant la nit i pot dificultar notablement el descans i la recuperació tèrmica."
         ),
       };
     }
@@ -88,7 +88,7 @@ export function getPrimaryStatusBlock({
       title: tr("primaryStatus.heat.tropicalNight", "Nit tropical"),
       text: tr(
         "primaryStatus.heat.tropicalNightText",
-        "La temperatura continua elevada durant la nit, fet que pot dificultar el descans i la recuperació tèrmica. Ventila els espais, hidrata’t i evita esforços físics innecessaris."
+        "La temperatura continua elevada durant la nit, fet que pot dificultar el descans i la recuperació tèrmica."
       ),
     };
   };

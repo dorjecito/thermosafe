@@ -162,8 +162,8 @@
       "mildLateDayText": "Eguzkia jaisten ari bada ere, sentsazio termikoak oraindik nekea eragin dezake. Hidratatu eta saihestu beharrezkoak ez diren ahaleginak.",
       "mildEveningText": "Tenperaturak altu jarraitzen du eguzkia sartu ondoren. Egunean baino arriskua txikiagoa bada ere, pilatutako beroak kanpoko jarduera ez hain erosoa bihur dezake.",
       "hotNightText": "Gauean pilatutako beroak atsedena eta berreskuratze termikoa zaildu ditzake. Hidratatu eta saihestu ahalegin fisiko biziak freskatu arte.",
-      "tropicalNightText": "Tenperaturak altu jarraitzen du gauez, eta horrek atsedena eta berreskuratze termikoa zaildu ditzake. Aireztatu espazioak, hidratatu eta saihestu alferrikako ahalegin fisikoak.",
-      "torridNightText": "Tenperatura oso altu mantentzen da gauez, eta horrek nabarmen zaildu ditzake atsedena eta berreskuratze termikoa. Freskatu eta aireztatu espazioak, hidratatu erregularki eta saihestu ahalegin fisikoak.",
+      "tropicalNightText": "Tenperaturak altu jarraitzen du gauez, eta horrek atsedena eta berreskuratze termikoa zaildu ditzake.",
+      "torridNightText": "Tenperatura oso altu mantentzen da gauez, eta horrek nabarmen zaildu ditzake atsedena eta berreskuratze termikoa.",
       "moderateLateDayText": "Arratsaldea izan arren, sentsazio termikoa altua da oraindik. Murriztu ahalegin biziak, hidratatu eta egin atsedenaldiak leku freskoetan."
     },
     "cold": {

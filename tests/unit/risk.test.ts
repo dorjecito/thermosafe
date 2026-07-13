@@ -1760,7 +1760,7 @@ test("night heat status avoids daytime shade advice", () => {
     "officialAdviceDynamic.heat.moderate": "Evita esforços intensos i busca ombra regularment.",
     "primaryStatus.heat.tropicalNight": "Nit tropical",
     "primaryStatus.heat.tropicalNightText":
-      "La temperatura continua elevada durant la nit, fet que pot dificultar el descans i la recuperació tèrmica. Ventila els espais, hidrata't i evita esforços físics innecessaris.",
+      "La temperatura continua elevada durant la nit, fet que pot dificultar el descans i la recuperació tèrmica.",
   };
 
   const result = getPrimaryStatusBlock({
@@ -1842,6 +1842,28 @@ test("night heat thresholds are not recalculated inside visual consumers", () =>
   assert.doesNotMatch(recommendationsSource, /effectiveTemp\s*>=\s*25/);
 });
 
+test("night recommendations are action-focused and do not repeat primary description", () => {
+  const recommendationsSource = readFileSync(
+    `${process.cwd()}/src/components/Recommendations.tsx`,
+    "utf8"
+  );
+
+  assert.match(recommendationsSource, /Ventila els espais abans d.anar a dormir/);
+  assert.match(recommendationsSource, /Refresca i ventila els espais/);
+  assert.match(recommendationsSource, /factorTropicalNight:\s*"Nit tropical"/);
+  assert.match(recommendationsSource, /factorTorridNight:\s*"Nit tòrrida"/);
+  assert.match(recommendationsSource, /label:\s*nightLabel/);
+  assert.match(recommendationsSource, /items=\{visibleFactorItems\(/);
+  assert.doesNotMatch(
+    recommendationsSource,
+    /tropicalNight:\s*["']La temperatura continua elevada durant la nit/
+  );
+  assert.doesNotMatch(
+    recommendationsSource,
+    /torridNight:\s*["']La temperatura es manté molt elevada durant la nit/
+  );
+});
+
 test("tropical night outdoor activity keeps a mild caution nuance", () => {
   const level = getWorkWindow({
     heatRisk: { class: "safe", isHigh: false, isExtreme: false },
@@ -1896,9 +1918,9 @@ const seasonalTranslations: Record<string, string> = {
   "primaryStatus.heat.hotNightText":
     "La calor acumulada durant la nit pot dificultar el descans i la recuperació tèrmica. Hidrata't i evita esforços físics intensos fins que refresqui.",
   "primaryStatus.heat.tropicalNightText":
-    "La temperatura continua elevada durant la nit, fet que pot dificultar el descans i la recuperació tèrmica. Ventila els espais, hidrata't i evita esforços físics innecessaris.",
+    "La temperatura continua elevada durant la nit, fet que pot dificultar el descans i la recuperació tèrmica.",
   "primaryStatus.heat.torridNightText":
-    "La temperatura es manté molt elevada durant la nit i pot dificultar notablement el descans i la recuperació tèrmica. Refresca i ventila els espais, hidrata't amb regularitat i evita esforços físics.",
+    "La temperatura es manté molt elevada durant la nit i pot dificultar notablement el descans i la recuperació tèrmica.",
   "primaryStatus.heat.moderateLateDayText":
     "Tot i ser capvespre, la sensació tèrmica continua elevada. Redueix esforços intensos, hidrata't i fes pauses en llocs frescos.",
   "officialAdviceDynamic.heat.moderate":

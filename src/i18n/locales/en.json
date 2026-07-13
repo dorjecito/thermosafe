@@ -105,8 +105,8 @@
       "mildLateDayText": "Even though the sun is lower, the apparent temperature may still cause fatigue. Stay hydrated and avoid unnecessary effort.",
       "mildEveningText": "The temperature remains elevated after sunset. Although the risk is lower than during the day, accumulated heat can make outdoor activity less comfortable.",
       "hotNightText": "Accumulated overnight heat may make rest and thermal recovery more difficult. Stay hydrated and avoid intense physical effort until it cools down.",
-      "tropicalNightText": "Temperatures remain elevated overnight, which may hinder rest and thermal recovery. Ventilate indoor spaces, stay hydrated and avoid unnecessary physical effort.",
-      "torridNightText": "Temperatures remain very high overnight and may significantly hinder rest and thermal recovery. Cool and ventilate indoor spaces, hydrate regularly and avoid physical effort.",
+      "tropicalNightText": "Temperatures remain elevated overnight, which may hinder rest and thermal recovery.",
+      "torridNightText": "Temperatures remain very high overnight and may significantly hinder rest and thermal recovery.",
       "moderateLateDayText": "Although it is later in the day, the apparent temperature remains elevated. Reduce intense effort, stay hydrated and take breaks in cool places."
     },
     "cold": {

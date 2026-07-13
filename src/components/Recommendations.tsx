@@ -204,31 +204,31 @@ const TXT: TxtDict = {
     factorSmoke: "Fum",
     factorIce: "Gel",
     mild:
-      "Precaució lleu per calor. Pot aparèixer fatiga tèrmica si mantens esforç físic. Beu aigua amb freqüència i fes pauses en llocs frescos.",
+      "Mantén una hidratació adequada i evita esforços prolongats. Fes pauses si notes fatiga.",
     mildMorning:
-      "Precaució lleu per calor. Planifica les activitats més exigents abans del migdia, beu aigua amb freqüència i fes pauses en llocs frescos.",
+      "Planifica les activitats més exigents abans del migdia, beu aigua amb freqüència i fes pauses en llocs frescos.",
     moderate:
-      "Risc moderat d’estrès tèrmic. Programa pauses freqüents, redueix la càrrega física i procura hidratar-te de manera regular.",
+      "Programa pauses freqüents, redueix la càrrega física i procura hidratar-te de manera regular.",
     moderateMorning:
-      "Risc moderat d’estrès tèrmic. Prioritza les activitats més exigents abans del migdia i preveu pauses i hidratació regulars.",
+      "Prioritza les activitats més exigents abans del migdia i preveu pauses i hidratació regulars.",
     moderateLateDay:
-      "Risc moderat d’estrès tèrmic. Tot i que la temperatura pot començar a disminuir, encara pot persistir estrès tèrmic.",
+      "Redueix els esforços sostinguts i mantén pauses regulars mentre persisteixi l’estrès tèrmic.",
     high:
-      "Risc alt per calor. Limita l’exposició prolongada i evita esforços físics intensos, especialment a les hores centrals del dia.",
+      "Limita l’exposició prolongada, redueix la càrrega física i fes pauses freqüents en llocs frescos.",
     highLateDay:
-      "Risc alt per calor. Prioritza una bona hidratació i evita esforços físics intensos fins que les condicions millorin.",
+      "Prioritza una bona hidratació i evita esforços físics intensos fins que les condicions millorin.",
     highEvening:
-      "Risc alt per calor. Continua hidratant-te bé i limita els esforços físics mentre persisteixi la calor.",
+      "Continua hidratant-te bé i limita els esforços físics mentre persisteixi la calor.",
     ext:
-      "Risc extrem per calor. Atura l’activitat immediatament i aplica mesures actives de refredament corporal.",
+      "Atura l’activitat exigent i prioritza espais frescos o ombrívols. Aplica mesures actives de refredament corporal.",
     uvModerate:
-      "Radiació UV moderada. Utilitza protecció solar si l’exposició és prolongada i evita confiar-te durant les hores centrals.",
+      "Utilitza protecció solar si l’exposició és prolongada i evita confiar-te durant les hores centrals.",
     uvHigh:
-      "Radiació UV alta. Utilitza protecció solar, gorra i ulleres, i redueix l’exposició directa al sol.",
+      "Utilitza protecció solar, gorra i ulleres, i redueix l’exposició directa al sol.",
     uvVeryHigh:
-      "Radiació UV molt alta. Evita el sol en hores centrals i reforça totes les mesures de protecció solar.",
+      "Prioritza l’ombra, utilitza gorra, ulleres i protector solar SPF 50+.",
     uvExtreme:
-      "Radiació UV extrema. Evita l’exposició directa al sol i prioritza ombra, roba protectora i protecció ocular.",
+      "Evita l’exposició directa i prioritza ombra, roba protectora i protecció ocular.",
     uvLateDay:
       "La radiació UV encara és elevada. Reforça la protecció solar i limita les exposicions prolongades.",
     uvEvening:
@@ -240,29 +240,29 @@ const TXT: TxtDict = {
     nightHeat:
       "Temperatura nocturna elevada. Afavoreix la ventilació creuada, hidrata’t i utilitza roba lleugera i transpirable.",
     cold_low:
-      "Frescor o fred lleu. És recomanable vestir per capes lleugeres, sobretot si estàs quiet o fa vent.",
+      "Vesteix per capes lleugeres, sobretot si estàs quiet o fa vent.",
     cold_mod:
-      "Fred moderat. Limita l’exposició a l’exterior i protegeix mans, peus i vies respiratòries.",
+      "Limita l’exposició a l’exterior i protegeix mans, peus i vies respiratòries.",
     cold_high:
-      "Risc alt per fred. Evita exposicions prolongades a l’exterior i reforça la protecció tèrmica.",
+      "Evita exposicions prolongades a l’exterior i reforça la protecció tèrmica.",
     cold_ext:
-      "Risc extrem per fred. Hi ha perill d’hipotèrmia. Roman en un espai interior i conserva la calor corporal.",
+      "Roman en un espai interior, protegeix extremitats i conserva la calor corporal.",
     rain:
-      "Pluja o superfícies humides. Augmenta la precaució davant possibles relliscades, pèrdua d’adherència i menor confort.",
+      "Augmenta la precaució davant possibles relliscades, pèrdua d’adherència i menor confort.",
     storm:
       "Situació potencialment adversa per precipitació o tempesta. Limita l’activitat exterior si no és imprescindible.",
     humid:
-      "Humitat elevada. Pot augmentar la sensació de xafogor o empitjorar el confort tèrmic.",
+      "Pot augmentar la sensació de xafogor i empitjorar el confort tèrmic. Adapta el ritme de l’activitat.",
     windModerate:
-      "Vent moderat. Vigila eines, materials lleugers i maniobres en zones exposades.",
+      "Vigila eines, materials lleugers i maniobres en zones exposades.",
     windStrong:
-      "Vent fort. Revalora tasques exposades i assegura eines o materials lleugers.",
+      "Revalora tasques exposades i assegura eines o materials lleugers.",
     safeUvCloudy:
       "Pot existir radiació UV significativa encara que hi hagi núvols o pluja. Si passes temps a l’exterior, utilitza protecció solar bàsica i adapta l’activitat segons l’evolució del temps.",
     tropicalNight:
-      "La temperatura continua elevada durant la nit, fet que pot dificultar el descans i la recuperació tèrmica. Ventila els espais, hidrata’t i evita esforços físics innecessaris.",
+      "Ventila els espais abans d’anar a dormir, hidrata’t amb regularitat i evita esforços físics innecessaris durant la nit.",
     torridNight:
-      "La temperatura es manté molt elevada durant la nit i pot dificultar notablement el descans i la recuperació tèrmica. Refresca i ventila els espais, hidrata’t amb regularitat i evita esforços físics.",
+      "Refresca i ventila els espais, hidrata’t amb freqüència i procura dormir en l’entorn més fresc possible.",
     snow: "La neu pot reduir la visibilitat i fer relliscoses les superfícies.",
     fog: "La boira redueix la visibilitat. Incrementa la precaució durant els desplaçaments.",
     hail: "Hi pot haver calamarsa puntual. Evita les zones exposades mentre duri el fenomen.",
@@ -299,31 +299,31 @@ const TXT: TxtDict = {
     factorSmoke: "Humo",
     factorIce: "Hielo",
     mild:
-      "Precaución leve por calor. Puede aparecer fatiga térmica si mantienes esfuerzo físico. Bebe agua con frecuencia y programa pausas en lugares frescos.",
+      "Mantén una hidratación adecuada y evita esfuerzos prolongados. Haz pausas si notas fatiga.",
     mildMorning:
-      "Precaución leve por calor. Planifica las actividades más exigentes antes del mediodía, bebe agua con frecuencia y haz pausas en lugares frescos.",
+      "Planifica las actividades más exigentes antes del mediodía, bebe agua con frecuencia y haz pausas en lugares frescos.",
     moderate:
-      "Riesgo moderado de estrés térmico. Programa pausas frecuentes, reduce la carga física y procura hidratarte de forma regular.",
+      "Programa pausas frecuentes, reduce la carga física y procura hidratarte de forma regular.",
     moderateMorning:
-      "Riesgo moderado de estrés térmico. Prioriza las actividades más exigentes antes del mediodía y prevé pausas e hidratación regulares.",
+      "Prioriza las actividades más exigentes antes del mediodía y prevé pausas e hidratación regulares.",
     moderateLateDay:
-      "Riesgo moderado de estrés térmico. Aunque la temperatura pueda empezar a bajar, todavía puede persistir el estrés térmico.",
+      "Reduce los esfuerzos sostenidos y mantén pausas regulares mientras persista el estrés térmico.",
     high:
-      "Riesgo alto por calor. Limita la exposición prolongada y evita esfuerzos físicos intensos, especialmente en las horas centrales del día.",
+      "Limita la exposición prolongada, reduce la carga física y haz pausas frecuentes en lugares frescos.",
     highLateDay:
-      "Riesgo alto por calor. Prioriza una buena hidratación y evita esfuerzos físicos intensos hasta que las condiciones mejoren.",
+      "Prioriza una buena hidratación y evita esfuerzos físicos intensos hasta que las condiciones mejoren.",
     highEvening:
-      "Riesgo alto por calor. Sigue hidratándote bien y limita los esfuerzos físicos mientras persista el calor.",
+      "Sigue hidratándote bien y limita los esfuerzos físicos mientras persista el calor.",
     ext:
-      "Riesgo extremo por calor. Interrumpe la actividad de inmediato y aplica medidas activas de enfriamiento corporal.",
+      "Interrumpe la actividad exigente y prioriza espacios frescos o sombreados. Aplica medidas activas de enfriamiento corporal.",
     uvModerate:
-      "Radiación UV moderada. Utiliza protección solar si la exposición es prolongada y evita confiarte en las horas centrales.",
+      "Utiliza protección solar si la exposición es prolongada y evita confiarte en las horas centrales.",
     uvHigh:
-      "Radiación UV alta. Usa protección solar, gorra y gafas, y reduce la exposición directa al sol.",
+      "Usa protección solar, gorra y gafas, y reduce la exposición directa al sol.",
     uvVeryHigh:
-      "Radiación UV muy alta. Evita el sol en horas centrales y refuerza todas las medidas de protección solar.",
+      "Prioriza la sombra, usa gorra, gafas y protector solar SPF 50+.",
     uvExtreme:
-      "Radiación UV extrema. Evita la exposición directa al sol y prioriza sombra, ropa protectora y protección ocular.",
+      "Evita la exposición directa y prioriza sombra, ropa protectora y protección ocular.",
     uvLateDay:
       "La radiación UV todavía es elevada. Refuerza la protección solar y limita las exposiciones prolongadas.",
     uvEvening:
@@ -335,29 +335,29 @@ const TXT: TxtDict = {
     nightHeat:
       "Temperatura nocturna elevada. Favorece la ventilación cruzada, hidrátate y utiliza ropa ligera y transpirable.",
     cold_low:
-      "Frescor o frío leve. Se recomienda vestir por capas ligeras, sobre todo si permaneces quieto o hace viento.",
+      "Viste por capas ligeras, sobre todo si permaneces quieto o hace viento.",
     cold_mod:
-      "Frío moderado. Limita la exposición al exterior y protege manos, pies y vías respiratorias.",
+      "Limita la exposición al exterior y protege manos, pies y vías respiratorias.",
     cold_high:
-      "Riesgo alto por frío. Evita exposiciones prolongadas al aire libre y refuerza la protección térmica.",
+      "Evita exposiciones prolongadas al aire libre y refuerza la protección térmica.",
     cold_ext:
-      "Riesgo extremo por frío. Existe peligro de hipotermia. Permanece en interiores y conserva el calor corporal.",
+      "Permanece en interiores, protege las extremidades y conserva el calor corporal.",
     rain:
-      "Lluvia o superficies húmedas. Aumenta la precaución ante posibles resbalones, pérdida de adherencia y menor confort.",
+      "Aumenta la precaución ante posibles resbalones, pérdida de adherencia y menor confort.",
     storm:
       "Situación potencialmente adversa por precipitación o tormenta. Limita la actividad exterior si no es imprescindible.",
     humid:
-      "Humedad elevada. Puede aumentar la sensación de bochorno o empeorar el confort térmico.",
+      "Puede aumentar la sensación de bochorno y empeorar el confort térmico. Adapta el ritmo de la actividad.",
     windModerate:
-      "Viento moderado. Vigila herramientas, materiales ligeros y maniobras en zonas expuestas.",
+      "Vigila herramientas, materiales ligeros y maniobras en zonas expuestas.",
     windStrong:
-      "Viento fuerte. Reevalúa tareas expuestas y asegura herramientas o materiales ligeros.",
+      "Reevalúa tareas expuestas y asegura herramientas o materiales ligeros.",
     safeUvCloudy:
       "Puede existir radiación UV significativa aunque haya nubes o lluvia. Si pasas tiempo al aire libre, utiliza protección solar básica y adapta la actividad según la evolución del tiempo.",
     tropicalNight:
-      "La temperatura continúa elevada durante la noche, lo que puede dificultar el descanso y la recuperación térmica. Ventila los espacios, hidrátate y evita esfuerzos físicos innecesarios.",
+      "Ventila los espacios antes de dormir, hidrátate con regularidad y evita esfuerzos físicos innecesarios durante la noche.",
     torridNight:
-      "La temperatura se mantiene muy elevada durante la noche y puede dificultar notablemente el descanso y la recuperación térmica. Refresca y ventila los espacios, hidrátate con regularidad y evita esfuerzos físicos.",
+      "Refresca y ventila los espacios, hidrátate con frecuencia y procura dormir en el entorno más fresco posible.",
     snow: "La nieve puede reducir la visibilidad y hacer que las superficies sean resbaladizas.",
     fog: "La niebla reduce la visibilidad. Aumenta la precaución durante los desplazamientos.",
     hail: "Puede producirse granizo de forma puntual. Evita las zonas expuestas mientras dure el fenómeno.",
@@ -394,31 +394,31 @@ const TXT: TxtDict = {
     factorSmoke: "Kea",
     factorIce: "Izotza",
     mild:
-      "Beroagatik arreta arina. Ahalegin fisikoa mantenduz gero nekea ager daiteke. Edan ura maiz eta egin atsedenaldiak leku freskoetan.",
+      "Mantendu hidratazio egokia eta saihestu ahalegin luzeak. Egin atsedenaldiak nekea sumatzen baduzu.",
     mildMorning:
-      "Beroagatik arreta arina. Planifikatu jarduera zorrotzenak eguerdia baino lehen, edan ura maiz eta egin atsedenaldiak leku freskoetan.",
+      "Planifikatu jarduera zorrotzenak eguerdia baino lehen, edan ura maiz eta egin atsedenaldiak leku freskoetan.",
     moderate:
-      "Bero-estresaren arrisku ertaina. Egin atsedenaldi maizak, murriztu lan-karga fisikoa eta saiatu hidratazio erregularra mantentzen.",
+      "Egin atsedenaldi maizak, murriztu lan-karga fisikoa eta saiatu hidratazio erregularra mantentzen.",
     moderateMorning:
-      "Bero-estresaren arrisku ertaina. Lehenetsi jarduera zorrotzenak eguerdia baino lehen, eta aurreikusi atsedenaldiak eta hidratazio erregularra.",
+      "Lehenetsi jarduera zorrotzenak eguerdia baino lehen, eta aurreikusi atsedenaldiak eta hidratazio erregularra.",
     moderateLateDay:
-      "Bero-estresaren arrisku ertaina. Tenperatura jaisten hasi arren, bero-estresak iraun dezake.",
+      "Murriztu ahalegin jarraituak eta mantendu atsedenaldi erregularrak bero-estresak iraun bitartean.",
     high:
-      "Bero-arrisku handia. Mugatu esposizio luzea eta saihestu ahalegin fisiko handiak, bereziki eguneko erdiko orduetan.",
+      "Mugatu esposizio luzea, murriztu lan-karga fisikoa eta egin atsedenaldi maizak leku freskoetan.",
     highLateDay:
-      "Bero-arrisku handia. Lehenetsi hidratazio egokia eta saihestu ahalegin fisiko handiak baldintzak hobetu arte.",
+      "Lehenetsi hidratazio egokia eta saihestu ahalegin fisiko handiak baldintzak hobetu arte.",
     highEvening:
-      "Bero-arrisku handia. Jarraitu ondo hidratatzen eta mugatu ahalegin fisikoak beroak irauten duen bitartean.",
+      "Jarraitu ondo hidratatzen eta mugatu ahalegin fisikoak beroak irauten duen bitartean.",
     ext:
-      "Bero-arrisku muturrekoa. Gelditu jarduera berehala eta aplikatu gorputza hozteko neurri aktiboak.",
+      "Eten jarduera zorrotza eta lehenetsi espazio freskoak edo itzalpekoak. Aplikatu gorputza hozteko neurri aktiboak.",
     uvModerate:
-      "UV erradiazio moderatua. Erabili eguzki-babesa esposizioa luzea bada eta ez fidatu eguerdiko orduetan.",
+      "Erabili eguzki-babesa esposizioa luzea bada eta ez fidatu eguerdiko orduetan.",
     uvHigh:
-      "UV erradiazio handia. Erabili eguzki-babesa, txapela eta betaurrekoak, eta murriztu eguzki zuzeneko esposizioa.",
+      "Erabili eguzki-babesa, txapela eta betaurrekoak, eta murriztu eguzki zuzeneko esposizioa.",
     uvVeryHigh:
-      "UV erradiazio oso handia. Saihestu eguzkia erdiko orduetan eta indartu eguzki-babes neurri guztiak.",
+      "Lehenetsi itzala, erabili txapela, betaurrekoak eta SPF 50+ eguzki-babesa.",
     uvExtreme:
-      "UV erradiazio muturrekoa. Saihestu eguzki zuzena eta lehenetsi itzala, arropa babeslea eta begi-babesa.",
+      "Saihestu eguzki zuzeneko esposizioa eta lehenetsi itzala, arropa babeslea eta begi-babesa.",
     uvLateDay:
       "UV erradiazioa handia da oraindik. Indartu eguzki-babesa eta mugatu esposizio luzeak.",
     uvEvening:
@@ -430,29 +430,29 @@ const TXT: TxtDict = {
     nightHeat:
       "Gaueko tenperatura altua. Bultzatu aireztapen gurutzatua, hidratatu eta erabili arropa arina eta transpiragarria.",
     cold_low:
-      "Freskura edo hotz arina. Geruza arinez janztea gomendatzen da, batez ere geldirik bazaude edo haizea badabil.",
+      "Jantzi geruza arinak, batez ere geldirik bazaude edo haizea badabil.",
     cold_mod:
-      "Hotz ertaina. Mugatu kanpoko esposizioa eta babestu eskuak, oinak eta arnasbideak.",
+      "Mugatu kanpoko esposizioa eta babestu eskuak, oinak eta arnasbideak.",
     cold_high:
-      "Hotz-arrisku handia. Saihestu kanpoan denbora luzez egotea eta indartu babes termikoa.",
+      "Saihestu kanpoan denbora luzez egotea eta indartu babes termikoa.",
     cold_ext:
-      "Hotz-arrisku muturrekoa. Hipotermia izateko arriskua dago. Egon barruan eta mantendu gorputz-berotasuna.",
+      "Egon barruan, babestu gorputz-adarrak eta mantendu gorputz-berotasuna.",
     rain:
-      "Euria edo gainazal bustiak. Handitu arreta balizko labainketen, atxikidura-galeraren eta erosotasun txikiagoaren aurrean.",
+      "Handitu arreta balizko labainketen, atxikidura-galeraren eta erosotasun txikiagoaren aurrean.",
     storm:
       "Prezipitazio edo ekaitz egoera kaltegarria izan daiteke. Mugatu kanpoko jarduera beharrezkoa ez bada.",
     humid:
-      "Hezetasun handia. Sargoria handitu edo erosotasun termikoa okertu dezake.",
+      "Sargoria handitu eta erosotasun termikoa okertu dezake. Egokitu jardueraren erritmoa.",
     windModerate:
-      "Haize moderatua. Zaindu tresnak, material arinak eta eremu irekietan egindako maniobrak.",
+      "Zaindu tresnak, material arinak eta eremu irekietan egindako maniobrak.",
     windStrong:
-      "Haize handia. Berrikusi kanpoan egiteko lanak eta ziurtatu tresna edo material arinak.",
+      "Berrikusi kanpoan egiteko lanak eta ziurtatu tresna edo material arinak.",
     safeUvCloudy:
       "Hodeiak edo euria egon arren, UV erradiazio esanguratsua egon daiteke. Kanpoan denbora ematen baduzu, erabili oinarrizko eguzki-babesa eta egokitu jarduera eguraldiaren bilakaeraren arabera.",
     tropicalNight:
-      "Tenperaturak altu jarraitzen du gauez, eta horrek atsedena eta berreskuratze termikoa zaildu ditzake. Aireztatu espazioak, hidratatu eta saihestu alferrikako ahalegin fisikoak.",
+      "Aireztatu espazioak lo egin aurretik, hidratatu erregularki eta saihestu gauean beharrezkoak ez diren ahalegin fisikoak.",
     torridNight:
-      "Tenperatura oso altu mantentzen da gauez, eta horrek nabarmen zaildu ditzake atsedena eta berreskuratze termikoa. Freskatu eta aireztatu espazioak, hidratatu erregularki eta saihestu ahalegin fisikoak.",
+      "Freskatu eta aireztatu espazioak, hidratatu maiz eta saiatu ahalik eta ingurunerik freskoenean lo egiten.",
     snow: "Elurrak ikuspena murriztu eta gainazalak irristakor bihur ditzake.",
     fog: "Lainoak ikuspena murrizten du. Handitu arreta joan-etorrietan.",
     hail: "Txingorra egin dezake tarteka. Saihestu ageriko eremuak fenomenoak irauten duen bitartean.",
@@ -489,31 +489,31 @@ const TXT: TxtDict = {
     factorSmoke: "Fume",
     factorIce: "Xeo",
     mild:
-      "Precaución leve por calor. Pode aparecer fatiga térmica se mantés esforzo físico. Bebe auga con frecuencia e fai pausas en lugares frescos.",
+      "Mantén unha hidratación adecuada e evita esforzos prolongados. Fai pausas se notas fatiga.",
     mildMorning:
-      "Precaución leve por calor. Planifica as actividades máis esixentes antes do mediodía, bebe auga con frecuencia e fai pausas en lugares frescos.",
+      "Planifica as actividades máis esixentes antes do mediodía, bebe auga con frecuencia e fai pausas en lugares frescos.",
     moderate:
-      "Risco moderado de estrés térmico. Programa pausas frecuentes, reduce a carga física e procura hidratarte de forma regular.",
+      "Programa pausas frecuentes, reduce a carga física e procura hidratarte de forma regular.",
     moderateMorning:
-      "Risco moderado de estrés térmico. Prioriza as actividades máis esixentes antes do mediodía e prevé pausas e hidratación regulares.",
+      "Prioriza as actividades máis esixentes antes do mediodía e prevé pausas e hidratación regulares.",
     moderateLateDay:
-      "Risco moderado de estrés térmico. Aínda que a temperatura poida comezar a baixar, o estrés térmico pode persistir.",
+      "Reduce os esforzos sostidos e mantén pausas regulares mentres persista o estrés térmico.",
     high:
-      "Risco alto por calor. Limita a exposición prolongada e evita esforzos físicos intensos, especialmente nas horas centrais do día.",
+      "Limita a exposición prolongada, reduce a carga física e fai pausas frecuentes en lugares frescos.",
     highLateDay:
-      "Risco alto por calor. Prioriza unha boa hidratación e evita esforzos físicos intensos ata que as condicións melloren.",
+      "Prioriza unha boa hidratación e evita esforzos físicos intensos ata que as condicións melloren.",
     highEvening:
-      "Risco alto por calor. Continúa hidratándote ben e limita os esforzos físicos mentres persista a calor.",
+      "Continúa hidratándote ben e limita os esforzos físicos mentres persista a calor.",
     ext:
-      "Risco extremo por calor. Interrompe a actividade de inmediato e aplica medidas activas de arrefriamento corporal.",
+      "Interrompe a actividade esixente e prioriza espazos frescos ou con sombra. Aplica medidas activas de arrefriamento corporal.",
     uvModerate:
-      "Radiación UV moderada. Emprega protección solar se a exposición é prolongada e evita confiarte nas horas centrais.",
+      "Emprega protección solar se a exposición é prolongada e evita confiarte nas horas centrais.",
     uvHigh:
-      "Radiación UV alta. Emprega protección solar, gorra e lentes, e reduce a exposición directa ao sol.",
+      "Emprega protección solar, gorra e lentes, e reduce a exposición directa ao sol.",
     uvVeryHigh:
-      "Radiación UV moi alta. Evita o sol nas horas centrais e reforza todas as medidas de protección solar.",
+      "Prioriza a sombra, usa gorra, lentes e protector solar SPF 50+.",
     uvExtreme:
-      "Radiación UV extrema. Evita a exposición directa ao sol e prioriza sombra, roupa protectora e protección ocular.",
+      "Evita a exposición directa e prioriza sombra, roupa protectora e protección ocular.",
     uvLateDay:
       "A radiación UV aínda é elevada. Reforza a protección solar e limita as exposicións prolongadas.",
     uvEvening:
@@ -525,29 +525,29 @@ const TXT: TxtDict = {
     nightHeat:
       "Temperatura nocturna elevada. Favorece a ventilación cruzada, hidrátate e emprega roupa lixeira e transpirable.",
     cold_low:
-      "Frescura ou frío leve. Recoméndase vestir por capas lixeiras, sobre todo se permaneces quieto ou hai vento.",
+      "Viste por capas lixeiras, sobre todo se permaneces quieto ou hai vento.",
     cold_mod:
-      "Frío moderado. Limita a exposición ao exterior e protexe mans, pés e vías respiratorias.",
+      "Limita a exposición ao exterior e protexe mans, pés e vías respiratorias.",
     cold_high:
-      "Alto risco por frío. Evita exposicións prolongadas ao aire libre e reforza a protección térmica.",
+      "Evita exposicións prolongadas ao aire libre e reforza a protección térmica.",
     cold_ext:
-      "Risco extremo por frío. Hai perigo de hipotermia. Permanece en interiores e conserva a calor corporal.",
+      "Permanece en interiores, protexe as extremidades e conserva a calor corporal.",
     rain:
-      "Chuvia ou superficies húmidas. Aumenta a precaución ante posibles esvaróns, perda de adherencia e menor confort.",
+      "Aumenta a precaución ante posibles esvaróns, perda de adherencia e menor confort.",
     storm:
       "Situación potencialmente adversa por precipitación ou treboada. Limita a actividade exterior se non é imprescindible.",
     humid:
-      "Humidade elevada. Pode aumentar a sensación de abafamento ou empeorar o confort térmico.",
+      "Pode aumentar a sensación de abafamento e empeorar o confort térmico. Adapta o ritmo da actividade.",
     windModerate:
-      "Vento moderado. Vixía ferramentas, materiais lixeiros e manobras en zonas expostas.",
+      "Vixía ferramentas, materiais lixeiros e manobras en zonas expostas.",
     windStrong:
-      "Vento forte. Reavalia tarefas expostas e asegura ferramentas ou materiais lixeiros.",
+      "Reavalia tarefas expostas e asegura ferramentas ou materiais lixeiros.",
     safeUvCloudy:
       "Pode existir radiación UV significativa aínda que haxa nubes ou choiva. Se permaneces ao aire libre, usa protección solar básica e adapta a actividade segundo a evolución do tempo.",
     tropicalNight:
-      "A temperatura continúa elevada durante a noite, o que pode dificultar o descanso e a recuperación térmica. Ventila os espazos, hidrátate e evita esforzos físicos innecesarios.",
+      "Ventila os espazos antes de durmir, hidrátate con regularidade e evita esforzos físicos innecesarios durante a noite.",
     torridNight:
-      "A temperatura mantense moi elevada durante a noite e pode dificultar notablemente o descanso e a recuperación térmica. Refresca e ventila os espazos, hidrátate con regularidade e evita esforzos físicos.",
+      "Refresca e ventila os espazos, hidrátate con frecuencia e procura durmir no ambiente máis fresco posible.",
     snow: "A neve pode reducir a visibilidade e facer esvaradías as superficies.",
     fog: "A néboa reduce a visibilidade. Aumenta a precaución durante os desprazamentos.",
     hail: "Pode producirse sarabia de forma puntual. Evita as zonas expostas mentres dure o fenómeno.",
@@ -584,31 +584,31 @@ const TXT: TxtDict = {
     factorSmoke: "Smoke",
     factorIce: "Ice",
     mild:
-      "Mild heat caution. Heat fatigue may occur if physical effort continues. Drink water regularly and take breaks in cool places.",
+      "Keep hydrated and avoid prolonged effort. Take breaks if fatigue appears.",
     mildMorning:
-      "Mild heat caution. Plan the most demanding activities before midday, drink water regularly and take breaks in cool places.",
+      "Plan the most demanding activities before midday, drink water regularly and take breaks in cool places.",
     moderate:
-      "Moderate heat stress risk. Schedule frequent breaks, reduce physical strain and keep hydration regular.",
+      "Schedule frequent breaks, reduce physical strain and keep hydration regular.",
     moderateMorning:
-      "Moderate heat stress risk. Prioritise the most demanding activities before midday and plan regular breaks and hydration.",
+      "Prioritise the most demanding activities before midday and plan regular breaks and hydration.",
     moderateLateDay:
-      "Moderate heat stress risk. Although temperatures may begin to fall, heat stress can still persist.",
+      "Reduce sustained effort and keep regular breaks while heat stress persists.",
     high:
-      "High heat risk. Limit prolonged exposure and avoid intense physical effort, especially during the hottest hours of the day.",
+      "Limit prolonged exposure, reduce physical strain and take frequent breaks in cool places.",
     highLateDay:
-      "High heat risk. Stay well hydrated and avoid intense physical effort until conditions improve.",
+      "Stay well hydrated and avoid intense physical effort until conditions improve.",
     highEvening:
-      "High heat risk. Stay well hydrated and continue limiting physical effort while the heat persists.",
+      "Stay well hydrated and continue limiting physical effort while the heat persists.",
     ext:
-      "Extreme heat risk. Stop activity immediately and apply active body-cooling measures.",
+      "Stop demanding activity and prioritise cool or shaded places. Apply active body-cooling measures.",
     uvModerate:
-      "Moderate UV radiation. Use sun protection if exposure is prolonged and avoid underestimating midday sun.",
+      "Use sun protection if exposure is prolonged and avoid underestimating midday sun.",
     uvHigh:
-      "High UV radiation. Use sunscreen, hat and eyewear, and reduce direct sun exposure.",
+      "Use sunscreen, hat and eyewear, and reduce direct sun exposure.",
     uvVeryHigh:
-      "Very high UV radiation. Avoid midday sun and reinforce all sun-protection measures.",
+      "Prioritise shade, wear a hat and eyewear, and use SPF 50+ sunscreen.",
     uvExtreme:
-      "Extreme UV radiation. Avoid direct sun exposure and prioritise shade, protective clothing and eye protection.",
+      "Avoid direct exposure and prioritise shade, protective clothing and eye protection.",
     uvLateDay:
       "UV radiation remains elevated. Reinforce sun protection and limit prolonged exposure.",
     uvEvening:
@@ -620,29 +620,29 @@ const TXT: TxtDict = {
     nightHeat:
       "Elevated nighttime temperatures. Ensure cross-ventilation, stay hydrated and wear light, breathable clothing.",
     cold_low:
-      "Cool or mildly cold conditions. Light layers are recommended, especially if you remain still or it is windy.",
+      "Wear light layers, especially if you remain still or it is windy.",
     cold_mod:
-      "Moderate cold. Limit outdoor exposure and protect hands, feet and airways.",
+      "Limit outdoor exposure and protect hands, feet and airways.",
     cold_high:
-      "High cold risk. Avoid prolonged time outdoors and reinforce thermal protection.",
+      "Avoid prolonged time outdoors and reinforce thermal protection.",
     cold_ext:
-      "Extreme cold risk. There is a risk of hypothermia. Stay indoors and preserve body heat.",
+      "Stay indoors, protect extremities and preserve body heat.",
     rain:
-      "Rain or wet surfaces. Increase caution due to possible slips, loss of traction and lower comfort.",
+      "Increase caution due to possible slips, loss of traction and lower comfort.",
     storm:
       "Potentially adverse weather due to precipitation or storm activity. Limit outdoor activity if not essential.",
     humid:
-      "High humidity. It may increase mugginess or worsen thermal comfort.",
+      "It may increase mugginess and worsen thermal comfort. Adapt the pace of activity.",
     windModerate:
-      "Moderate wind. Watch tools, light materials and manoeuvres in exposed areas.",
+      "Watch tools, light materials and manoeuvres in exposed areas.",
     windStrong:
-      "Strong wind. Reassess exposed tasks and secure light tools or materials.",
+      "Reassess exposed tasks and secure light tools or materials.",
     safeUvCloudy:
       "Significant UV radiation may still be present even with clouds or rain. If you stay outdoors, use basic sun protection and adapt activity as the weather evolves.",
     tropicalNight:
-      "Temperatures remain elevated overnight, which may hinder rest and thermal recovery. Ventilate indoor spaces, stay hydrated and avoid unnecessary physical effort.",
+      "Ventilate indoor spaces before going to sleep, hydrate regularly and avoid unnecessary physical effort overnight.",
     torridNight:
-      "Temperatures remain very high overnight and may significantly hinder rest and thermal recovery. Cool and ventilate indoor spaces, hydrate regularly and avoid physical effort.",
+      "Cool and ventilate indoor spaces, hydrate often and try to sleep in the coolest environment available.",
     snow: "Snow may reduce visibility and make surfaces slippery.",
     fog: "Fog reduces visibility. Take extra care when travelling.",
     hail: "Localised hail is possible. Avoid exposed areas while it persists.",
@@ -904,6 +904,21 @@ const factorItems = (
         ...item,
         text: compactGroupedRecommendationText(item),
       }));
+};
+
+const visibleFactorItems = (
+  riskFactors: FactorRisk[] | undefined,
+  ...items: Array<RecommendationItem | undefined | null | false>
+): RecommendationItem[] => {
+  const clean = items
+    .filter(Boolean)
+    .map((item) => item as RecommendationItem)
+    .filter((item) => item.text.trim().length > 0);
+
+  return sortItemsByRiskFactors(clean, riskFactors).map((item) => ({
+    ...item,
+    text: compactGroupedRecommendationText(item),
+  }));
 };
 
 export const getRecommendationFactorState = (
@@ -1290,7 +1305,7 @@ if (isDay && uvActive && uvKey) {
         className={`recommendation-box ${nightClassKey}`}
         title={`${getIcon(nightKey)} ${t.title}`}
         body={t[nightKey]}
-        items={factorItems(
+        items={visibleFactorItems(
           riskFactors,
           { factor: "night", icon: "🌙", label: nightLabel, text: t[nightKey] },
           humid && { factor: "humidity", icon: "💧", label: t.factorHumidity, text: t.humid },

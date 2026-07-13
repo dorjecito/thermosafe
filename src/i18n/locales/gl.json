@@ -162,8 +162,8 @@
       "mildLateDayText": "Aínda que o sol xa baixa, a sensación térmica aínda pode provocar cansazo. Hidrátate e evita esforzos innecesarios.",
       "mildEveningText": "A temperatura aínda se mantén elevada despois da posta do sol. Aínda que o risco diminúe respecto ao día, a calor acumulada pode facer menos confortable a actividade ao aire libre.",
       "hotNightText": "A calor acumulada durante a noite pode dificultar o descanso e a recuperación térmica. Hidrátate e evita esforzos físicos intensos ata que refresque.",
-      "tropicalNightText": "A temperatura continúa elevada durante a noite, o que pode dificultar o descanso e a recuperación térmica. Ventila os espazos, hidrátate e evita esforzos físicos innecesarios.",
-      "torridNightText": "A temperatura mantense moi elevada durante a noite e pode dificultar notablemente o descanso e a recuperación térmica. Refresca e ventila os espazos, hidrátate con regularidade e evita esforzos físicos.",
+      "tropicalNightText": "A temperatura continúa elevada durante a noite, o que pode dificultar o descanso e a recuperación térmica.",
+      "torridNightText": "A temperatura mantense moi elevada durante a noite e pode dificultar notablemente o descanso e a recuperación térmica.",
       "moderateLateDayText": "Aínda que xa sexa tarde, a sensación térmica continúa elevada. Reduce esforzos intensos, hidrátate e fai pausas en lugares frescos."
     },
     "cold": {
