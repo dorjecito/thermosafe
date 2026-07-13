@@ -889,24 +889,7 @@ export const sortItemsByRiskFactors = (
   });
 };
 
-const factorItems = (
-  riskFactors: FactorRisk[] | undefined,
-  ...items: Array<RecommendationItem | undefined | null | false>
-): RecommendationItem[] | undefined => {
-  const clean = items
-    .filter(Boolean)
-    .map((item) => item as RecommendationItem)
-    .filter((item) => item.text.trim().length > 0);
-
-  if (clean.length <= 1) return undefined;
-
-  return sortItemsByRiskFactors(clean, riskFactors).map((item) => ({
-        ...item,
-        text: compactGroupedRecommendationText(item),
-      }));
-};
-
-const visibleFactorItems = (
+export const factorItems = (
   riskFactors: FactorRisk[] | undefined,
   ...items: Array<RecommendationItem | undefined | null | false>
 ): RecommendationItem[] => {
@@ -1305,7 +1288,7 @@ if (isDay && uvActive && uvKey) {
         className={`recommendation-box ${nightClassKey}`}
         title={`${getIcon(nightKey)} ${t.title}`}
         body={t[nightKey]}
-        items={visibleFactorItems(
+        items={factorItems(
           riskFactors,
           { factor: "night", icon: "🌙", label: nightLabel, text: t[nightKey] },
           humid && { factor: "humidity", icon: "💧", label: t.factorHumidity, text: t.humid },

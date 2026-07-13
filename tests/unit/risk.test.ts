@@ -28,6 +28,7 @@ import {
   type RiskEngineInput,
 } from "../../src/utils/riskScoreEngine";
 import {
+  factorItems,
   getRecommendationColdKey,
   getRecommendationFactorState,
   getRecommendationHumid,
@@ -865,6 +866,88 @@ test("recommendation factor ordering keeps unknown factors stable", () => {
   assert.deepEqual(
     sortItemsByRiskFactors(items, riskFactors).map((item) => item.factor),
     ["heat", "wind", "humidity", "rain"]
+  );
+});
+
+test("single recommendation factors keep their visible subtitle", () => {
+  const cases: RecommendationItem[] = [
+    {
+      factor: "heat",
+      icon: "🌡️",
+      label: "Calor",
+      text: "Programa pauses freqüents.",
+    },
+    {
+      factor: "uv",
+      icon: "☀️",
+      label: "Radiació UV",
+      text: "Utilitza protecció solar.",
+    },
+    {
+      factor: "cold",
+      icon: "🥶",
+      label: "Fred",
+      text: "Protegeix mans, peus i vies respiratòries.",
+    },
+    {
+      factor: "night",
+      icon: "🌙",
+      label: "Nit",
+      text: "Condicions nocturnes agradables i estables.",
+    },
+    {
+      factor: "night",
+      icon: "🌙",
+      label: "Nit tropical",
+      text: "Ventila els espais abans d’anar a dormir.",
+    },
+    {
+      factor: "night",
+      icon: "🌙",
+      label: "Nit tòrrida",
+      text: "Refresca i ventila els espais.",
+    },
+  ];
+
+  for (const item of cases) {
+    const [rendered] = factorItems(undefined, item);
+
+    assert.equal(rendered.icon, item.icon);
+    assert.equal(rendered.label, item.label);
+    assert.equal(rendered.text, item.text);
+  }
+});
+
+test("multiple recommendation factors keep every visible subtitle", () => {
+  const rendered = factorItems(
+    undefined,
+    {
+      factor: "uv",
+      icon: "☀️",
+      label: "Radiació UV",
+      text: "Utilitza protecció solar.",
+    },
+    {
+      factor: "heat",
+      icon: "🌡️",
+      label: "Calor",
+      text: "Programa pauses freqüents.",
+    },
+    {
+      factor: "humidity",
+      icon: "💧",
+      label: "Humitat",
+      text: "Adapta el ritme de l’activitat.",
+    }
+  );
+
+  assert.deepEqual(
+    rendered.map((item) => [item.icon, item.label]),
+    [
+      ["☀️", "Radiació UV"],
+      ["🌡️", "Calor"],
+      ["💧", "Humitat"],
+    ]
   );
 });
 
@@ -1853,7 +1936,8 @@ test("night recommendations are action-focused and do not repeat primary descrip
   assert.match(recommendationsSource, /factorTropicalNight:\s*"Nit tropical"/);
   assert.match(recommendationsSource, /factorTorridNight:\s*"Nit tòrrida"/);
   assert.match(recommendationsSource, /label:\s*nightLabel/);
-  assert.match(recommendationsSource, /items=\{visibleFactorItems\(/);
+  assert.match(recommendationsSource, /items=\{factorItems\(/);
+  assert.doesNotMatch(recommendationsSource, /clean\.length\s*<=\s*1/);
   assert.doesNotMatch(
     recommendationsSource,
     /tropicalNight:\s*["']La temperatura continua elevada durant la nit/
