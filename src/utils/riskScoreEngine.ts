@@ -6,6 +6,7 @@ import { getWindRisk, type WindRisk } from "./windRisk";
 export type RiskFactor = "aemet" | "heat" | "cold" | "uv" | "wind" | "other";
 export type RiskSeverity = 0 | 1 | 2 | 3 | 4;
 export type ActivityLevel = "rest" | "walk" | "moderate" | "intense";
+export type NightHeatLevel = "none" | "tropical" | "torrid";
 
 export type FactorRisk = {
   factor: RiskFactor;
@@ -23,6 +24,8 @@ export type RiskEngineInput = {
   coldEffectiveTemp?: number | null;
   windKmh?: number | null;
   uvi?: number | null;
+  isNightAtLocation?: boolean;
+  nightReferenceTemperature?: number | null;
 };
 
 export type RiskScoreResult = {
@@ -31,6 +34,7 @@ export type RiskScoreResult = {
   activeFactorsSorted: FactorRisk[];
   primary: FactorRisk | null;
   maxSeverity: RiskSeverity;
+  nightHeatLevel: NightHeatLevel;
 };
 
 const heatSeverityByClass: Record<HeatRisk["class"], RiskSeverity> = {
@@ -60,6 +64,17 @@ const windSeverityByRisk: Record<WindRisk, RiskSeverity> = {
 
 const finiteNumber = (value: number | null | undefined): number | null =>
   typeof value === "number" && Number.isFinite(value) ? value : null;
+
+function classifyNightHeatLevel(input: RiskEngineInput): NightHeatLevel {
+  if (!input.isNightAtLocation) return "none";
+
+  const nightReferenceTemperature = finiteNumber(input.nightReferenceTemperature);
+  if (nightReferenceTemperature === null) return "none";
+
+  if (nightReferenceTemperature >= 25) return "torrid";
+  if (nightReferenceTemperature >= 20) return "tropical";
+  return "none";
+}
 
 const factorTieOrder: Record<RiskFactor, number> = {
   aemet: 6,
@@ -186,6 +201,7 @@ export function evaluateRiskScore(input: RiskEngineInput): RiskScoreResult {
   const activeFactorsSorted = sortFactorsByPriority(activeFactors);
   const primary = pickPrimaryFactor(factors);
   const maxSeverity = (primary?.severity ?? 0) as RiskSeverity;
+  const nightHeatLevel = classifyNightHeatLevel(input);
 
   return {
     factors,
@@ -193,5 +209,6 @@ export function evaluateRiskScore(input: RiskEngineInput): RiskScoreResult {
     activeFactorsSorted,
     primary,
     maxSeverity,
+    nightHeatLevel,
   };
 }

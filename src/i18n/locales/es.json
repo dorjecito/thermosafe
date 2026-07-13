@@ -153,12 +153,16 @@
       "mildLateDay": "Temperatura todavía elevada",
       "night": "Temperatura nocturna elevada",
       "hotNight": "Noche calurosa",
+      "tropicalNight": "Noche tropical",
+      "torridNight": "Noche tórrida",
       "moderate": "Riesgo moderado por calor",
       "moderateLateDay": "Calor todavía elevado",
       "mildText": "La sensación térmica es moderadamente elevada. Hidrátate y adapta la actividad si mantienes esfuerzo físico.",
       "mildLateDayText": "Aunque el sol ya baja, la sensación térmica todavía puede provocar cansancio. Hidrátate y evita esfuerzos innecesarios.",
       "mildEveningText": "La temperatura aún se mantiene elevada después de la puesta de sol. Aunque el riesgo disminuye respecto al día, el calor acumulado puede hacer menos confortable la actividad al aire libre.",
       "hotNightText": "El calor acumulado durante la noche puede dificultar el descanso y la recuperación térmica. Hidrátate y evita esfuerzos físicos intensos hasta que refresque.",
+      "tropicalNightText": "La temperatura continúa elevada durante la noche, lo que puede dificultar el descanso y la recuperación térmica. Ventila los espacios, hidrátate y evita esfuerzos físicos innecesarios.",
+      "torridNightText": "La temperatura se mantiene muy elevada durante la noche y puede dificultar notablemente el descanso y la recuperación térmica. Refresca y ventila los espacios, hidrátate con regularidad y evita esfuerzos físicos.",
       "moderateLateDayText": "Aunque ya sea tarde, la sensación térmica continúa elevada. Reduce esfuerzos intensos, hidrátate y haz pausas en lugares frescos."
     },
     "cold": {

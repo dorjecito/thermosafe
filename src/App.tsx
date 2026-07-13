@@ -1344,7 +1344,6 @@ const activeAlertEvent = useMemo(() => {
 }, [activeAlert, currentLang]);
 
 const currentFeelTemp = hi ?? temp ?? 99;
-const nocturnalHeat = !day && currentFeelTemp >= 25;
 
 const weatherContext = useMemo(
   () =>
@@ -1374,6 +1373,8 @@ const engineRisk = useMemo(() => {
     coldEffectiveTemp: wc ?? temp,
     windKmh,
     uvi,
+    isNightAtLocation: !day,
+    nightReferenceTemperature: currentFeelTemp,
   });
 }, [
   data,
@@ -1385,7 +1386,12 @@ const engineRisk = useMemo(() => {
   temp,
   windKmh,
   uvi,
+  day,
+  currentFeelTemp,
 ]);
+
+const nightHeatLevel = engineRisk?.nightHeatLevel ?? "none";
+const nocturnalHeat = nightHeatLevel !== "none";
 
 const workWindow = useMemo(
   () =>
@@ -1399,6 +1405,7 @@ const workWindow = useMemo(
       weatherMain,
       activity: preventiveActivity,
       nocturnalHeat,
+      nightHeatLevel,
       engineRisk,
       weatherContext,
     }),
@@ -1413,6 +1420,7 @@ const workWindow = useMemo(
     weatherMain,
     preventiveActivity,
     nocturnalHeat,
+    nightHeatLevel,
     engineRisk,
     weatherContext,
   ]
@@ -1421,8 +1429,8 @@ const workWindow = useMemo(
 const workWindowLang = currentLang;
 const workWindowTitle = useMemo(() => getWorkWindowTitle(workWindowLang), [workWindowLang]);
 const workWindowText = useMemo(
-  () => getWorkWindowText(workWindow, workWindowLang, aemetActive, nocturnalHeat),
-  [workWindow, workWindowLang, aemetActive, nocturnalHeat]
+  () => getWorkWindowText(workWindow, workWindowLang, aemetActive, nightHeatLevel),
+  [workWindow, workWindowLang, aemetActive, nightHeatLevel]
 );
 
 useEffect(() => {
@@ -1565,6 +1573,7 @@ const primaryStatusInput = useMemo(
     isLateDay,
     heatDayPhase,
     nocturnalHeat,
+    nightHeatLevel,
     primaryAdvice,
     contextualUVMessage,
     t,
@@ -1580,6 +1589,7 @@ const primaryStatusInput = useMemo(
     isLateDay,
     heatDayPhase,
     nocturnalHeat,
+    nightHeatLevel,
     primaryAdvice,
     contextualUVMessage,
     t,
@@ -2246,6 +2256,7 @@ return (
     coldRisk={coldRisk ?? undefined}
     coldEffectiveTemp={wc ?? temp}
     riskFactors={engineRisk?.activeFactorsSorted}
+    nightHeatLevel={nightHeatLevel}
     weatherContext={weatherContext}
 
   />

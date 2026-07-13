@@ -131,12 +131,16 @@
       "mildLateDay": "Temperatura encara elevada",
       "night": "Temperatura nocturna elevada",
       "hotNight": "Nit calorosa",
+      "tropicalNight": "Nit tropical",
+      "torridNight": "Nit tòrrida",
       "moderate": "Risc moderat per calor",
       "moderateLateDay": "Calor encara elevada",
       "mildText": "La sensació tèrmica és moderadament elevada. Hidrata’t i adapta l’activitat si mantens esforç físic.",
       "mildLateDayText": "Tot i que el sol ja baixa, la sensació tèrmica encara pot provocar cansament. Hidrata’t i evita esforços innecessaris.",
       "mildEveningText": "La temperatura encara es manté elevada després de la posta de sol. Tot i que el risc disminueix respecte al dia, la calor acumulada pot fer menys confortable l’activitat a l’exterior.",
       "hotNightText": "La calor acumulada durant la nit pot dificultar el descans i la recuperació tèrmica. Hidrata't i evita esforços físics intensos fins que refresqui.",
+      "tropicalNightText": "La temperatura continua elevada durant la nit, fet que pot dificultar el descans i la recuperació tèrmica. Ventila els espais, hidrata't i evita esforços físics innecessaris.",
+      "torridNightText": "La temperatura es manté molt elevada durant la nit i pot dificultar notablement el descans i la recuperació tèrmica. Refresca i ventila els espais, hidrata't amb regularitat i evita esforços físics.",
       "moderateLateDayText": "Tot i ser capvespre, la sensació tèrmica continua elevada. Redueix esforços intensos, hidrata’t i fes pauses en llocs frescos."
     },
     "cold": {

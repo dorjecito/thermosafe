@@ -1,6 +1,7 @@
 import { getUvLevelIndex } from "./uv";
 import type { HeatDayPhase } from "./isDayAtLocation";
 import { detectAemetHazard, type HazardId } from "./aemetAi";
+import type { NightHeatLevel } from "./riskScoreEngine";
 
 type TFunctionLike = (key: string) => string;
 
@@ -29,6 +30,7 @@ type PrimaryStatusBlockArgs = {
   isLateDay?: boolean;
   heatDayPhase?: HeatDayPhase;
   nocturnalHeat?: boolean;
+  nightHeatLevel?: NightHeatLevel;
   primaryAdvice: string | null;
   contextualUVMessage: string;
   t: TFunctionLike;
@@ -52,10 +54,12 @@ export function getPrimaryStatusBlock({
   isLateDay = false,
   heatDayPhase,
   nocturnalHeat = false,
+  nightHeatLevel = "none",
   primaryAdvice,
   contextualUVMessage,
   t,
 }: PrimaryStatusBlockArgs): PrimaryStatusBlockResult {
+  const effectiveNocturnalHeat = nocturnalHeat || nightHeatLevel !== "none";
   const tr = (key: string, fallback: string) => {
     const text = t(key);
     return text && text !== key ? text : fallback;
@@ -64,6 +68,29 @@ export function getPrimaryStatusBlock({
   const translated = (key: string) => {
     const text = t(key);
     return text && text !== key ? text : null;
+  };
+
+  const getNightHeatStatus = (): Pick<
+    PrimaryStatusBlockResult,
+    "title" | "text"
+  > => {
+    if (nightHeatLevel === "torrid") {
+      return {
+        title: tr("primaryStatus.heat.torridNight", "Nit tòrrida"),
+        text: tr(
+          "primaryStatus.heat.torridNightText",
+          "La temperatura es manté molt elevada durant la nit i pot dificultar notablement el descans i la recuperació tèrmica. Refresca i ventila els espais, hidrata’t amb regularitat i evita esforços físics."
+        ),
+      };
+    }
+
+    return {
+      title: tr("primaryStatus.heat.tropicalNight", "Nit tropical"),
+      text: tr(
+        "primaryStatus.heat.tropicalNightText",
+        "La temperatura continua elevada durant la nit, fet que pot dificultar el descans i la recuperació tèrmica. Ventila els espais, hidrata’t i evita esforços físics innecessaris."
+      ),
+    };
   };
 
   const getOfficialAlertSummary = (alertList: any[], phase: "active" | "soon") => {
@@ -194,18 +221,16 @@ export function getPrimaryStatusBlock({
       heatDayPhase ?? (day ? (isLateDay ? "late_day" : "day") : "night");
 
     if (heatRisk?.isExtreme) {
+      const nightStatus = getNightHeatStatus();
       return {
         icon: "⛔",
         title: phase === "night"
-          ? tr("primaryStatus.heat.hotNight", "Nit calorosa")
+          ? nightStatus.title
           : phase === "evening"
             ? tr("primaryStatus.heat.mildLateDay", "Temperatura encara elevada")
             : tr("primaryStatus.heat.extreme", "Risc extrem per calor"),
         text: phase === "night"
-          ? tr(
-              "primaryStatus.heat.hotNightText",
-              "La calor acumulada durant la nit pot dificultar el descans i la recuperació tèrmica. Hidrata’t i evita esforços físics intensos fins que refresqui."
-            )
+          ? nightStatus.text
           : phase === "evening"
             ? tr(
                 "primaryStatus.heat.mildEveningText",
@@ -220,18 +245,16 @@ export function getPrimaryStatusBlock({
     }
 
     if (heatRisk?.isHigh) {
+      const nightStatus = getNightHeatStatus();
       return {
         icon: "🔴",
         title: phase === "night"
-          ? tr("primaryStatus.heat.hotNight", "Nit calorosa")
+          ? nightStatus.title
           : phase === "evening"
             ? tr("primaryStatus.heat.mildLateDay", "Temperatura encara elevada")
             : tr("primaryStatus.heat.high", "Risc alt per calor"),
         text: phase === "night"
-          ? tr(
-              "primaryStatus.heat.hotNightText",
-              "La calor acumulada durant la nit pot dificultar el descans i la recuperació tèrmica. Hidrata’t i evita esforços físics intensos fins que refresqui."
-            )
+          ? nightStatus.text
           : phase === "evening"
             ? tr(
                 "primaryStatus.heat.mildEveningText",
@@ -246,18 +269,16 @@ export function getPrimaryStatusBlock({
     }
 
     if (isLowHeat) {
+      const nightStatus = getNightHeatStatus();
       return {
         icon: "🟡",
         title: phase === "night"
-          ? tr("primaryStatus.heat.hotNight", "Nit calorosa")
+          ? nightStatus.title
           : phase === "late_day" || phase === "evening"
             ? tr("primaryStatus.heat.mildLateDay", "Temperatura encara elevada")
             : tr("primaryStatus.heat.mild", "Precaució lleu per calor"),
         text: phase === "night"
-          ? tr(
-              "primaryStatus.heat.hotNightText",
-              "La calor acumulada durant la nit pot dificultar el descans i la recuperació tèrmica. Hidrata’t i evita esforços físics intensos fins que refresqui."
-            )
+          ? nightStatus.text
           : phase === "evening"
             ? tr(
                 "primaryStatus.heat.mildEveningText",
@@ -276,20 +297,18 @@ export function getPrimaryStatusBlock({
       };
     }
 
+    const nightStatus = getNightHeatStatus();
     return {
       icon: "🟠",
       title: phase === "night"
-        ? tr("primaryStatus.heat.hotNight", "Nit calorosa")
+        ? nightStatus.title
         : phase === "evening"
           ? tr("primaryStatus.heat.mildLateDay", "Temperatura encara elevada")
           : phase === "late_day"
           ? tr("primaryStatus.heat.moderateLateDay", "Calor encara elevada")
           : tr("primaryStatus.heat.moderate", "Risc moderat per calor"),
       text: phase === "night"
-        ? tr(
-            "primaryStatus.heat.hotNightText",
-            "La calor acumulada durant la nit pot dificultar el descans i la recuperació tèrmica. Hidrata’t i evita esforços físics intensos fins que refresqui."
-          )
+        ? nightStatus.text
         : phase === "evening"
           ? tr(
               "primaryStatus.heat.mildEveningText",
@@ -399,14 +418,12 @@ export function getPrimaryStatusBlock({
   }
 
   // 🌙 CALOR NOCTURNA SUAU
-  if (nocturnalHeat) {
+  if (effectiveNocturnalHeat) {
+    const nightStatus = getNightHeatStatus();
     return {
       icon: "🟡",
-      title: tr("primaryStatus.heat.hotNight", "Nit calorosa"),
-      text: tr(
-        "primaryStatus.heat.hotNightText",
-        "La calor acumulada durant la nit pot dificultar el descans i la recuperació tèrmica. Hidrata’t i evita esforços físics intensos fins que refresqui."
-      ),
+      title: nightStatus.title,
+      text: nightStatus.text,
       className: "status-card status-warning",
     };
   }

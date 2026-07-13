@@ -13,7 +13,7 @@ import { getHeatRisk } from "../utils/heatRisk";
 import { getColdRisk, type ColdRisk } from "../utils/getColdRisk";
 import { getUvLevelIndex } from "../utils/uv";
 import type { HeatDayPhase } from "../utils/isDayAtLocation";
-import type { FactorRisk } from "../utils/riskScoreEngine";
+import type { FactorRisk, NightHeatLevel } from "../utils/riskScoreEngine";
 import type { WeatherContext } from "../utils/weatherContext";
 
 type Lang = "ca" | "es" | "eu" | "gl" | "en";
@@ -33,6 +33,8 @@ type TextKeys =
   | "factorRain"
   | "factorStorm"
   | "factorNight"
+  | "factorTropicalNight"
+  | "factorTorridNight"
   | "factorSnow"
   | "factorFog"
   | "factorHail"
@@ -69,6 +71,7 @@ type TextKeys =
   | "loading"
   | "safeUvCloudy"
   | "tropicalNight"
+  | "torridNight"
   | "snow"
   | "fog"
   | "hail"
@@ -166,6 +169,7 @@ interface Props {
   coldRisk?: ColdRisk;
   coldEffectiveTemp?: number | null;
   riskFactors?: FactorRisk[];
+  nightHeatLevel?: NightHeatLevel;
   weatherContext?: WeatherContext;
 }
 
@@ -191,6 +195,8 @@ const TXT: TxtDict = {
     factorRain: "Pluja",
     factorStorm: "Tempestes",
     factorNight: "Nit",
+    factorTropicalNight: "Nit tropical",
+    factorTorridNight: "Nit tòrrida",
     factorSnow: "Neu",
     factorFog: "Boira",
     factorHail: "Calamarsa",
@@ -254,7 +260,9 @@ const TXT: TxtDict = {
     safeUvCloudy:
       "Pot existir radiació UV significativa encara que hi hagi núvols o pluja. Si passes temps a l’exterior, utilitza protecció solar bàsica i adapta l’activitat segons l’evolució del temps.",
     tropicalNight:
-      "Nit tropical. La temperatura continua elevada durant la nit, fet que pot dificultar el descans i la recuperació tèrmica. Ventila els espais, hidrata’t i evita esforços físics innecessaris.",
+      "La temperatura continua elevada durant la nit, fet que pot dificultar el descans i la recuperació tèrmica. Ventila els espais, hidrata’t i evita esforços físics innecessaris.",
+    torridNight:
+      "La temperatura es manté molt elevada durant la nit i pot dificultar notablement el descans i la recuperació tèrmica. Refresca i ventila els espais, hidrata’t amb regularitat i evita esforços físics.",
     snow: "La neu pot reduir la visibilitat i fer relliscoses les superfícies.",
     fog: "La boira redueix la visibilitat. Incrementa la precaució durant els desplaçaments.",
     hail: "Hi pot haver calamarsa puntual. Evita les zones exposades mentre duri el fenomen.",
@@ -282,6 +290,8 @@ const TXT: TxtDict = {
     factorRain: "Lluvia",
     factorStorm: "Tormentas",
     factorNight: "Noche",
+    factorTropicalNight: "Noche tropical",
+    factorTorridNight: "Noche tórrida",
     factorSnow: "Nieve",
     factorFog: "Niebla",
     factorHail: "Granizo",
@@ -345,7 +355,9 @@ const TXT: TxtDict = {
     safeUvCloudy:
       "Puede existir radiación UV significativa aunque haya nubes o lluvia. Si pasas tiempo al aire libre, utiliza protección solar básica y adapta la actividad según la evolución del tiempo.",
     tropicalNight:
-      "Noche tropical. La temperatura continúa elevada durante la noche, lo que puede dificultar el descanso y la recuperación térmica. Ventila los espacios, hidrátate y evita esfuerzos físicos innecesarios.",
+      "La temperatura continúa elevada durante la noche, lo que puede dificultar el descanso y la recuperación térmica. Ventila los espacios, hidrátate y evita esfuerzos físicos innecesarios.",
+    torridNight:
+      "La temperatura se mantiene muy elevada durante la noche y puede dificultar notablemente el descanso y la recuperación térmica. Refresca y ventila los espacios, hidrátate con regularidad y evita esfuerzos físicos.",
     snow: "La nieve puede reducir la visibilidad y hacer que las superficies sean resbaladizas.",
     fog: "La niebla reduce la visibilidad. Aumenta la precaución durante los desplazamientos.",
     hail: "Puede producirse granizo de forma puntual. Evita las zonas expuestas mientras dure el fenómeno.",
@@ -373,6 +385,8 @@ const TXT: TxtDict = {
     factorRain: "Euria",
     factorStorm: "Ekaitzak",
     factorNight: "Gaua",
+    factorTropicalNight: "Gau tropikala",
+    factorTorridNight: "Gau sargoria",
     factorSnow: "Elurra",
     factorFog: "Lainoa",
     factorHail: "Txingorra",
@@ -436,7 +450,9 @@ const TXT: TxtDict = {
     safeUvCloudy:
       "Hodeiak edo euria egon arren, UV erradiazio esanguratsua egon daiteke. Kanpoan denbora ematen baduzu, erabili oinarrizko eguzki-babesa eta egokitu jarduera eguraldiaren bilakaeraren arabera.",
     tropicalNight:
-      "Gau tropikala. Tenperaturak altu jarraitzen du gauez, eta horrek atsedena eta berreskuratze termikoa zaildu ditzake. Aireztatu espazioak, hidratatu eta saihestu alferrikako ahalegin fisikoak.",
+      "Tenperaturak altu jarraitzen du gauez, eta horrek atsedena eta berreskuratze termikoa zaildu ditzake. Aireztatu espazioak, hidratatu eta saihestu alferrikako ahalegin fisikoak.",
+    torridNight:
+      "Tenperatura oso altu mantentzen da gauez, eta horrek nabarmen zaildu ditzake atsedena eta berreskuratze termikoa. Freskatu eta aireztatu espazioak, hidratatu erregularki eta saihestu ahalegin fisikoak.",
     snow: "Elurrak ikuspena murriztu eta gainazalak irristakor bihur ditzake.",
     fog: "Lainoak ikuspena murrizten du. Handitu arreta joan-etorrietan.",
     hail: "Txingorra egin dezake tarteka. Saihestu ageriko eremuak fenomenoak irauten duen bitartean.",
@@ -464,6 +480,8 @@ const TXT: TxtDict = {
     factorRain: "Chuvia",
     factorStorm: "Treboadas",
     factorNight: "Noite",
+    factorTropicalNight: "Noite tropical",
+    factorTorridNight: "Noite tórrida",
     factorSnow: "Neve",
     factorFog: "Néboa",
     factorHail: "Sarabia",
@@ -527,7 +545,9 @@ const TXT: TxtDict = {
     safeUvCloudy:
       "Pode existir radiación UV significativa aínda que haxa nubes ou choiva. Se permaneces ao aire libre, usa protección solar básica e adapta a actividade segundo a evolución do tempo.",
     tropicalNight:
-      "Noite tropical. A temperatura continúa elevada durante a noite, o que pode dificultar o descanso e a recuperación térmica. Ventila os espazos, hidrátate e evita esforzos físicos innecesarios.",
+      "A temperatura continúa elevada durante a noite, o que pode dificultar o descanso e a recuperación térmica. Ventila os espazos, hidrátate e evita esforzos físicos innecesarios.",
+    torridNight:
+      "A temperatura mantense moi elevada durante a noite e pode dificultar notablemente o descanso e a recuperación térmica. Refresca e ventila os espazos, hidrátate con regularidade e evita esforzos físicos.",
     snow: "A neve pode reducir a visibilidade e facer esvaradías as superficies.",
     fog: "A néboa reduce a visibilidade. Aumenta a precaución durante os desprazamentos.",
     hail: "Pode producirse sarabia de forma puntual. Evita as zonas expostas mentres dure o fenómeno.",
@@ -555,6 +575,8 @@ const TXT: TxtDict = {
     factorRain: "Rain",
     factorStorm: "Storms",
     factorNight: "Night",
+    factorTropicalNight: "Tropical night",
+    factorTorridNight: "Torrid night",
     factorSnow: "Snow",
     factorFog: "Fog",
     factorHail: "Hail",
@@ -618,7 +640,9 @@ const TXT: TxtDict = {
     safeUvCloudy:
       "Significant UV radiation may still be present even with clouds or rain. If you stay outdoors, use basic sun protection and adapt activity as the weather evolves.",
     tropicalNight:
-      "Tropical night conditions. Temperatures remain elevated overnight, which may hinder rest and thermal recovery. Ventilate indoor spaces, stay hydrated and avoid unnecessary physical effort.",
+      "Temperatures remain elevated overnight, which may hinder rest and thermal recovery. Ventilate indoor spaces, stay hydrated and avoid unnecessary physical effort.",
+    torridNight:
+      "Temperatures remain very high overnight and may significantly hinder rest and thermal recovery. Cool and ventilate indoor spaces, hydrate regularly and avoid physical effort.",
     snow: "Snow may reduce visibility and make surfaces slippery.",
     fog: "Fog reduces visibility. Take extra care when travelling.",
     hail: "Localised hail is possible. Avoid exposed areas while it persists.",
@@ -653,7 +677,7 @@ type HeatRecommendationKey =
   | "highEvening";
 type ColdKey = "cold_low" | "cold_mod" | "cold_high" | "cold_ext";
 type UvKey = "uvModerate" | "uvHigh" | "uvVeryHigh" | "uvExtreme";
-type NightKey = "nightCool" | "nightSafe" | "nightHeat" | "tropicalNight";
+type NightKey = "nightCool" | "nightSafe" | "nightHeat" | "tropicalNight" | "torridNight";
 
 const mapHeatLevelToKey = (levelRaw: unknown): HeatKey => {
   const s = String(levelRaw ?? "")
@@ -709,11 +733,10 @@ const getUvKey = (uvi: number | null | undefined): UvKey | null => {
   return null;
 };
 
-const getNightKey = (effectiveTemp: number): NightKey => {
-  if (effectiveTemp >= 25) return "tropicalNight";
-  if (effectiveTemp < 18) return "nightCool";
-  if (effectiveTemp < 25) return "nightSafe";
-  return "nightHeat";
+const getNightKey = (nightHeatLevel: NightHeatLevel): NightKey | "torridNight" => {
+  if (nightHeatLevel === "torrid") return "torridNight";
+  if (nightHeatLevel === "tropical") return "tropicalNight";
+  return "nightSafe";
 };
 
 const isCentralHeatHour = (hour?: number): boolean =>
@@ -975,6 +998,7 @@ export default function Recommendations({
   coldRisk,
   coldEffectiveTemp,
   riskFactors,
+  nightHeatLevel = "none",
   weatherContext,
 }: Props) {
   const lng = normalizeLang(lang);
@@ -1252,16 +1276,23 @@ if (isDay && uvActive && uvKey) {
      4️⃣ RECOMANACIONS NOCTURNES
   ========================================================== */
   if (!isDay) {
-    const nightKey = getNightKey(effectiveTemp);
+    const nightKey = getNightKey(nightHeatLevel);
+    const nightClassKey = nightKey === "torridNight" ? "tropicalNight" : nightKey;
+    const nightLabel =
+      nightHeatLevel === "torrid"
+        ? t.factorTorridNight
+        : nightHeatLevel === "tropical"
+          ? t.factorTropicalNight
+          : t.factorNight;
 
     return (
       <RecommendationBox
-        className={`recommendation-box ${nightKey}`}
+        className={`recommendation-box ${nightClassKey}`}
         title={`${getIcon(nightKey)} ${t.title}`}
         body={t[nightKey]}
         items={factorItems(
           riskFactors,
-          { factor: "night", icon: "🌙", label: t.factorNight, text: t[nightKey] },
+          { factor: "night", icon: "🌙", label: nightLabel, text: t[nightKey] },
           humid && { factor: "humidity", icon: "💧", label: t.factorHumidity, text: t.humid },
           showWindModerate && { factor: "wind", icon: "🌬️", label: t.factorWind, text: t.windModerate },
           showWindStrong && { factor: "wind", icon: "🌬️", label: t.factorWind, text: t.windStrong },

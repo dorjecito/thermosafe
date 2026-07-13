@@ -741,6 +741,62 @@ test("risk score engine mirrors wind and cold factors", () => {
   assert.equal(cold.primary?.level, "moderat");
 });
 
+test("risk score engine classifies tropical and torrid night heat levels", () => {
+  const cases = [
+    { isNightAtLocation: false, nightReferenceTemperature: 28, expected: "none" },
+    { isNightAtLocation: true, nightReferenceTemperature: 19.9, expected: "none" },
+    { isNightAtLocation: true, nightReferenceTemperature: 20, expected: "tropical" },
+    { isNightAtLocation: true, nightReferenceTemperature: 24.9, expected: "tropical" },
+    { isNightAtLocation: true, nightReferenceTemperature: 25, expected: "torrid" },
+    { isNightAtLocation: true, nightReferenceTemperature: 28, expected: "torrid" },
+  ] as const;
+
+  for (const scenario of cases) {
+    const result = evaluateRiskScore({
+      heatIndex: 22,
+      coldEffectiveTemp: 22,
+      uvi: 0,
+      windKmh: 0,
+      isNightAtLocation: scenario.isNightAtLocation,
+      nightReferenceTemperature: scenario.nightReferenceTemperature,
+    });
+
+    assert.equal(result.nightHeatLevel, scenario.expected);
+  }
+});
+
+test("night heat level is semantic and does not alter daytime heat severity", () => {
+  const base = evaluateRiskScore({
+    heatIndex: 35,
+    coldEffectiveTemp: 35,
+    uvi: 0,
+    windKmh: 0,
+  });
+  const tropical = evaluateRiskScore({
+    heatIndex: 35,
+    coldEffectiveTemp: 35,
+    uvi: 0,
+    windKmh: 0,
+    isNightAtLocation: true,
+    nightReferenceTemperature: 24.9,
+  });
+  const torrid = evaluateRiskScore({
+    heatIndex: 35,
+    coldEffectiveTemp: 35,
+    uvi: 0,
+    windKmh: 0,
+    isNightAtLocation: true,
+    nightReferenceTemperature: 25,
+  });
+
+  assert.equal(base.primary?.factor, tropical.primary?.factor);
+  assert.equal(base.primary?.severity, tropical.primary?.severity);
+  assert.equal(base.primary?.factor, torrid.primary?.factor);
+  assert.equal(base.primary?.severity, torrid.primary?.severity);
+  assert.equal(tropical.nightHeatLevel, "tropical");
+  assert.equal(torrid.nightHeatLevel, "torrid");
+});
+
 test("risk score engine exposes active factors in combined heat UV wind conditions", () => {
   const result = evaluateRiskScore({
     heatIndex: 35,
@@ -1702,9 +1758,9 @@ test("heat after sunset uses accumulated-heat evening wording", () => {
 test("night heat status avoids daytime shade advice", () => {
   const translations: Record<string, string> = {
     "officialAdviceDynamic.heat.moderate": "Evita esforços intensos i busca ombra regularment.",
-    "primaryStatus.heat.hotNight": "Nit calorosa",
-    "primaryStatus.heat.hotNightText":
-      "La calor acumulada durant la nit pot dificultar el descans i la recuperació tèrmica. Hidrata't i evita esforços físics intensos fins que refresqui.",
+    "primaryStatus.heat.tropicalNight": "Nit tropical",
+    "primaryStatus.heat.tropicalNightText":
+      "La temperatura continua elevada durant la nit, fet que pot dificultar el descans i la recuperació tèrmica. Ventila els espais, hidrata't i evita esforços físics innecessaris.",
   };
 
   const result = getPrimaryStatusBlock({
@@ -1716,15 +1772,17 @@ test("night heat status avoids daytime shade advice", () => {
     uvi: 0,
     day: false,
     heatDayPhase: "night",
+    nightHeatLevel: "tropical",
     primaryAdvice: null,
     contextualUVMessage: "",
     t: (key) => translations[key] || key,
   });
 
-  assert.equal(result.title, "Nit calorosa");
+  assert.equal(result.title, "Nit tropical");
   assert.match(result.text, /nit/i);
   assert.doesNotMatch(result.text, /ombra/i);
   assert.doesNotMatch(result.text, /sol/i);
+  assert.notEqual(result.title, "Nit calorosa");
 });
 
 test("tropical night is not presented as safe primary status", () => {
@@ -1738,15 +1796,50 @@ test("tropical night is not presented as safe primary status", () => {
     day: false,
     heatDayPhase: "night",
     nocturnalHeat: true,
+    nightHeatLevel: "tropical",
     primaryAdvice: null,
     contextualUVMessage: "",
     t: (key) => seasonalTranslations[key] || key,
   });
 
-  assert.equal(result.title, "Nit calorosa");
+  assert.equal(result.title, "Nit tropical");
   assert.notEqual(result.title, "Condicions segures");
+  assert.notEqual(result.title, "Nit calorosa");
   assert.match(result.text, /nit/i);
   assert.match(result.text, /calor|nit|recuperació/i);
+});
+
+test("torrid night is distinct from tropical night in primary status", () => {
+  const result = getPrimaryStatusBlock({
+    alerts: [],
+    primary: { kind: "none", severity: 0, labelKey: "none" },
+    heatRisk: { isHigh: false, isExtreme: false },
+    coldRisk: "cap",
+    windRisk: "none",
+    uvi: 0,
+    day: false,
+    heatDayPhase: "night",
+    nocturnalHeat: true,
+    nightHeatLevel: "torrid",
+    primaryAdvice: null,
+    contextualUVMessage: "",
+    t: (key) => seasonalTranslations[key] || key,
+  });
+
+  assert.equal(result.title, "Nit tòrrida");
+  assert.notEqual(result.title, "Nit tropical");
+  assert.notEqual(result.title, "Nit calorosa");
+  assert.match(result.text, /molt elevada|notablement/i);
+});
+
+test("night heat thresholds are not recalculated inside visual consumers", () => {
+  const recommendationsSource = readFileSync(
+    `${process.cwd()}/src/components/Recommendations.tsx`,
+    "utf8"
+  );
+
+  assert.match(recommendationsSource, /nightHeatLevel/);
+  assert.doesNotMatch(recommendationsSource, /effectiveTemp\s*>=\s*25/);
 });
 
 test("tropical night outdoor activity keeps a mild caution nuance", () => {
@@ -1758,7 +1851,7 @@ test("tropical night outdoor activity keeps a mild caution nuance", () => {
     uvi: 0,
     nocturnalHeat: true,
   });
-  const text = getWorkWindowText(level, "ca", false, true);
+  const text = getWorkWindowText(level, "ca", false, "tropical");
 
   assert.equal(level, "caution");
   assert.match(text, /activitats suaus/i);
@@ -1788,6 +1881,8 @@ const seasonalTranslations: Record<string, string> = {
   "primaryStatus.heat.mild": "Precaució lleu per calor",
   "primaryStatus.heat.mildLateDay": "Temperatura encara elevada",
   "primaryStatus.heat.hotNight": "Nit calorosa",
+  "primaryStatus.heat.tropicalNight": "Nit tropical",
+  "primaryStatus.heat.torridNight": "Nit tòrrida",
   "primaryStatus.heat.moderate": "Risc moderat per calor",
   "primaryStatus.heat.moderateLateDay": "Calor encara elevada",
   "primaryStatus.heat.high": "Risc alt per calor",
@@ -1800,6 +1895,10 @@ const seasonalTranslations: Record<string, string> = {
     "La temperatura encara es manté elevada després de la posta de sol. Tot i que el risc disminueix respecte al dia, la calor acumulada pot fer menys confortable l'activitat a l'exterior.",
   "primaryStatus.heat.hotNightText":
     "La calor acumulada durant la nit pot dificultar el descans i la recuperació tèrmica. Hidrata't i evita esforços físics intensos fins que refresqui.",
+  "primaryStatus.heat.tropicalNightText":
+    "La temperatura continua elevada durant la nit, fet que pot dificultar el descans i la recuperació tèrmica. Ventila els espais, hidrata't i evita esforços físics innecessaris.",
+  "primaryStatus.heat.torridNightText":
+    "La temperatura es manté molt elevada durant la nit i pot dificultar notablement el descans i la recuperació tèrmica. Refresca i ventila els espais, hidrata't amb regularitat i evita esforços físics.",
   "primaryStatus.heat.moderateLateDayText":
     "Tot i ser capvespre, la sensació tèrmica continua elevada. Redueix esforços intensos, hidrata't i fes pauses en llocs frescos.",
   "officialAdviceDynamic.heat.moderate":
@@ -1903,6 +2002,14 @@ test("seasonal validation matrix keeps risk, day phase and messages coherent", a
         uvi: uviForRisk,
         heatRiskClass: heatRisk.class,
       });
+      const engineRisk = evaluateRiskScore({
+        heatIndex: scenario.hi,
+        coldEffectiveTemp: scenario.effForCold,
+        windKmh: scenario.windKmh,
+        uvi: uviForRisk,
+        isNightAtLocation: phase === "night",
+        nightReferenceTemperature: scenario.hi,
+      });
       const status = getPrimaryStatusBlock({
         alerts: [],
         primary,
@@ -1912,6 +2019,8 @@ test("seasonal validation matrix keeps risk, day phase and messages coherent", a
         uvi: uviForRisk,
         day: isDay,
         heatDayPhase: phase,
+        nightHeatLevel: engineRisk.nightHeatLevel,
+        nocturnalHeat: engineRisk.nightHeatLevel !== "none",
         primaryAdvice: null,
         contextualUVMessage: "",
         t: (key) => seasonalTranslations[key] || key,
@@ -2006,6 +2115,8 @@ function evaluateCityScenario(scenario: CityScenario) {
     windKmh: scenario.windKmh,
     uvi: scenario.uvi,
     activity: "rest",
+    isNightAtLocation: !scenario.day,
+    nightReferenceTemperature: scenario.heatIndex,
   });
   const primary = primaryRiskFromEngine(engineRisk);
   const status = getPrimaryStatusBlock({
@@ -2017,7 +2128,8 @@ function evaluateCityScenario(scenario: CityScenario) {
     uvi: scenario.uvi,
     day: scenario.day,
     heatDayPhase: scenario.heatDayPhase,
-    nocturnalHeat: scenario.nocturnalHeat,
+    nocturnalHeat: engineRisk.nightHeatLevel !== "none",
+    nightHeatLevel: engineRisk.nightHeatLevel,
     primaryAdvice: null,
     contextualUVMessage: "",
     t: (key) => seasonalTranslations[key] || key,
@@ -2030,7 +2142,8 @@ function evaluateCityScenario(scenario: CityScenario) {
     uvi: scenario.uvi,
     aemetActive: scenario.aemetActive ?? false,
     weatherMain: scenario.weatherMain,
-    nocturnalHeat: scenario.nocturnalHeat,
+    nocturnalHeat: engineRisk.nightHeatLevel !== "none",
+    nightHeatLevel: engineRisk.nightHeatLevel,
     engineRisk,
     weatherContext,
   });
@@ -2038,7 +2151,7 @@ function evaluateCityScenario(scenario: CityScenario) {
     workWindow,
     "ca",
     scenario.aemetActive ?? false,
-    scenario.nocturnalHeat ?? false
+    engineRisk.nightHeatLevel
   );
 
   const recommendationSignals = new Set<string>();

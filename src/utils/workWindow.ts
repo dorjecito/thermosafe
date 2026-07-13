@@ -1,5 +1,5 @@
 import type { WindRisk } from "./windRisk";
-import type { FactorRisk, RiskScoreResult } from "./riskScoreEngine";
+import type { FactorRisk, NightHeatLevel, RiskScoreResult } from "./riskScoreEngine";
 import type { WeatherContext } from "./weatherContext";
 import { getUvLevelIndex } from "./uv";
 
@@ -27,6 +27,7 @@ type Params = {
   weatherMain?: string | null;
   activity?: ActivityLevel;
   nocturnalHeat?: boolean;
+  nightHeatLevel?: NightHeatLevel;
   engineRisk?: RiskScoreResult | null;
   weatherContext?: WeatherContext | null;
 };
@@ -111,6 +112,7 @@ export function getWorkWindow({
   weatherMain = null,
   activity = "rest",
   nocturnalHeat = false,
+  nightHeatLevel,
   engineRisk = null,
   weatherContext = null,
 }: Params): WorkWindow {
@@ -130,6 +132,9 @@ export function getWorkWindow({
 
   const legacyRainy = isRainyWeather(weatherMain);
   const rainy = weatherContext?.rainy ?? legacyRainy;
+  const effectiveNocturnalHeat = nightHeatLevel
+    ? nightHeatLevel !== "none"
+    : nocturnalHeat;
 
   const hasRelevantWindForCold =
     effectiveWindRisk === "moderate" ||
@@ -190,7 +195,7 @@ export function getWorkWindow({
 
   /* 4) Situacions de precaució */
   if (aemetActive) return "caution";
-  if (nocturnalHeat) return "caution";
+  if (effectiveNocturnalHeat) return "caution";
   if (effectiveWindRisk === "moderate") return "caution";
   if (uvLevel >= 2) return "caution";
   if (rainy) return "caution";
@@ -216,14 +221,22 @@ export function getWorkWindowText(
   level: WorkWindow,
   lang: WorkWindowLang,
   aemetActive = false,
-  nocturnalHeat = false
+  nightHeatLevel: NightHeatLevel | boolean = "none"
 ): string {
+  const effectiveNightHeatLevel: NightHeatLevel =
+    nightHeatLevel === true
+      ? "torrid"
+      : nightHeatLevel === false
+        ? "none"
+        : nightHeatLevel;
+
   const txt = {
     ca: {
       optimal: "Les condicions són adequades per a activitats a l’aire lliure.",
       optimalAlert: "Condicions actuals adequades, però hi ha avisos oficials actius. Mantén la precaució.",
       caution: "Es poden realitzar activitats a l’aire lliure amb precaucions bàsiques.",
-      nightHeat: "Es poden realitzar activitats suaus, però convé evitar esforços físics innecessaris.",
+      tropicalNight: "Es poden realitzar activitats suaus, però convé evitar esforços físics innecessaris.",
+      torridNight: "Es poden realitzar activitats suaus, però convé evitar esforços físics i afavorir el descans fins que refresqui.",
       limited: "Convé limitar les activitats exigents o adaptar-les a les condicions actuals.",
       avoid: "No es recomana fer activitats exigents a l’aire lliure en aquests moments.",
     },
@@ -231,7 +244,8 @@ export function getWorkWindowText(
       optimal: "Las condiciones son adecuadas para actividades al aire libre.",
       optimalAlert: "Condiciones actuales adecuadas, pero hay avisos oficiales activos. Mantén la precaución.",
       caution: "Se pueden realizar actividades al aire libre con precauciones básicas.",
-      nightHeat: "Se pueden realizar actividades suaves, pero conviene evitar esfuerzos físicos innecesarios.",
+      tropicalNight: "Se pueden realizar actividades suaves, pero conviene evitar esfuerzos físicos innecesarios.",
+      torridNight: "Se pueden realizar actividades suaves, pero conviene evitar esfuerzos físicos y favorecer el descanso hasta que refresque.",
       limited: "Conviene limitar las actividades exigentes o adaptarlas a las condiciones actuales.",
       avoid: "No se recomienda realizar actividades exigentes al aire libre en estos momentos.",
     },
@@ -239,7 +253,8 @@ export function getWorkWindowText(
       optimal: "Baldintzak egokiak dira kanpoko jardueretarako.",
       optimalAlert: "Uneko baldintzak egokiak dira, baina abisu ofizialak aktibo daude. Mantendu arreta.",
       caution: "Kanpoko jarduerak egin daitezke oinarrizko neurriak hartuta.",
-      nightHeat: "Jarduera arinak egin daitezke, baina komeni da beharrezkoak ez diren ahalegin fisikoak saihestea.",
+      tropicalNight: "Jarduera arinak egin daitezke, baina komeni da beharrezkoak ez diren ahalegin fisikoak saihestea.",
+      torridNight: "Jarduera arinak egin daitezke, baina komeni da ahalegin fisikoak saihestea eta freskatu arte atsedenari lehentasuna ematea.",
       limited: "Komeni da jarduera zorrotzak mugatzea edo uneko baldintzetara egokitzea.",
       avoid: "Ez da gomendatzen une honetan kanpoko jarduera zorrotzak egitea.",
     },
@@ -247,7 +262,8 @@ export function getWorkWindowText(
       optimal: "As condicións son axeitadas para actividades ao aire libre.",
       optimalAlert: "As condicións actuais son adecuadas, pero hai avisos oficiais activos. Mantén a precaución.",
       caution: "Pódense realizar actividades ao aire libre con precaucións básicas.",
-      nightHeat: "Pódense realizar actividades suaves, pero convén evitar esforzos físicos innecesarios.",
+      tropicalNight: "Pódense realizar actividades suaves, pero convén evitar esforzos físicos innecesarios.",
+      torridNight: "Pódense realizar actividades suaves, pero convén evitar esforzos físicos e favorecer o descanso ata que refresque.",
       limited: "Convén limitar as actividades esixentes ou adaptalas ás condicións actuais.",
       avoid: "Non se recomenda realizar actividades esixentes ao aire libre nestes momentos.",
     },
@@ -255,7 +271,8 @@ export function getWorkWindowText(
       optimal: "Conditions are suitable for outdoor activities.",
       optimalAlert: "Current conditions are suitable, but official alerts are active. Stay cautious.",
       caution: "Outdoor activities are possible with basic precautions.",
-      nightHeat: "Light outdoor activities are possible, but unnecessary physical effort should be avoided.",
+      tropicalNight: "Light outdoor activities are possible, but unnecessary physical effort should be avoided.",
+      torridNight: "Light outdoor activities are possible, but physical effort should be avoided and rest prioritized until it cools down.",
       limited: "It is advisable to limit demanding activities or adapt them to current conditions.",
       avoid: "Demanding outdoor activities are not recommended at this time.",
     },
@@ -265,8 +282,9 @@ export function getWorkWindowText(
     return txt[lang]?.optimalAlert || txt.ca.optimalAlert;
   }
 
-  if (level === "caution" && nocturnalHeat) {
-    return txt[lang]?.nightHeat || txt.ca.nightHeat;
+  if (level === "caution" && effectiveNightHeatLevel !== "none") {
+    const key = effectiveNightHeatLevel === "torrid" ? "torridNight" : "tropicalNight";
+    return txt[lang]?.[key] || txt.ca[key];
   }
 
   return txt[lang]?.[level] || txt.ca[level];
