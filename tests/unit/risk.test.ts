@@ -50,6 +50,7 @@ import {
   CONTEXT_VERY_CLOUDY_THRESHOLD,
   UV_BLOCKING_CLOUDINESS_THRESHOLD,
 } from "../../src/utils/weatherContext";
+import { formatOzoneMeasurement } from "../../src/components/UVDetailPanel";
 
 function selectPrimaryForUi(
   enginePrimary: PrimaryRiskFromEngineResult
@@ -688,6 +689,36 @@ test("UV classification follows the visible one-decimal value", () => {
   assert.equal(normalizeUviForDisplay(7.95), 8);
   assert.equal(getUvLevel(7.95), "very-high");
   assert.equal(getUvText(7.95, "ca"), "Molt alt (8–10.9)");
+});
+
+test("UV ozone detail text avoids redundant update wording and source in the summary", () => {
+  assert.equal(
+    formatOzoneMeasurement(326, "17:04", {
+      ozoneMeasurement: "Mesura d’ozó",
+    }),
+    "Mesura d’ozó: 326 DU (17:04)"
+  );
+
+  const withoutTime = formatOzoneMeasurement(326, null, {
+    ozoneMeasurement: "Mesura d’ozó",
+  });
+  assert.equal(withoutTime, "Mesura d’ozó: 326 DU");
+  assert.doesNotMatch(withoutTime ?? "", /[·()]/);
+
+  assert.equal(
+    formatOzoneMeasurement(null, "17:04", {
+      ozoneMeasurement: "Mesura d’ozó",
+    }),
+    null
+  );
+
+  const uvDetailPanelSource = readFileSync(
+    new URL("../../src/components/UVDetailPanel.tsx", import.meta.url),
+    "utf8"
+  );
+  assert.doesNotMatch(uvDetailPanelSource, /updated:\s*string|Actualitzat|Updated/);
+  assert.doesNotMatch(uvDetailPanelSource, /font OpenUV|fuente OpenUV|OpenUV source/);
+  assert.doesNotMatch(uvDetailPanelSource, /ozoneDataTime|Mesura de les|Measurement from/);
 });
 
 test("risk score engine mirrors basic heat risk cases", () => {

@@ -7,17 +7,17 @@ type Props = {
   lat: number | null;
   lon: number | null;
   lang: Lang;
+  sourceNote?: string;
 };
 
 const TXT: Record<
   Lang,
   {
-    maxToday: string;
+    dayInfo: string;
     sunrise: string;
-    sunset: string;
-    details: string;
-    updated: string;
-    ozone: string;
+    sunset: string;
+    details: string;
+    ozoneMeasurement: string;
     ozoneInfo: string;
     ozoneLow: string;
     ozoneNormal: string;
@@ -26,12 +26,11 @@ const TXT: Record<
   }
 > = {
   ca: {
-    maxToday: "UV màxim avui",
+    dayInfo: "Informació del dia",
     sunrise: "Sortida",
-    sunset: "Posta",
+    sunset: "Posta",
     details: "Detalls",
-    updated: "Actualitzat",
-    ozone: "Ozò",
+    ozoneMeasurement: "Mesura d’ozó",
     ozoneInfo: "Valors habituals: 250–400 DU.",
     ozoneLow: "Capa d’ozó baixa (pot augmentar el risc UV).",
     ozoneNormal: "Capa d’ozó dins rang habitual.",
@@ -39,12 +38,11 @@ const TXT: Record<
     na: "—",
   },
   es: {
-    maxToday: "UV máximo hoy",
+    dayInfo: "Información del día",
     sunrise: "Salida",
-    sunset: "Puesta",
+    sunset: "Puesta",
     details: "Detalles",
-    updated: "Actualizado",
-    ozone: "Ozono",
+    ozoneMeasurement: "Medida de ozono",
     ozoneInfo: "Valores habituales: 250–400 DU.",
     ozoneLow: "Capa de ozono baja (puede aumentar el riesgo UV).",
     ozoneNormal: "Capa de ozono dentro de rangos habituales.",
@@ -52,12 +50,11 @@ const TXT: Record<
     na: "—",
   },
   eu: {
-    maxToday: "Gaurko UV max",
+    dayInfo: "Eguneko informazioa",
     sunrise: "Egunsentia",
-    sunset: "Ilunabarra",
+    sunset: "Ilunabarra",
     details: "Xehetasunak",
-    updated: "Eguneratua",
-    ozone: "Ozonoa",
+    ozoneMeasurement: "Ozono-neurketa",
     ozoneInfo: "Balio arruntak: 250–400 DU.",
     ozoneLow: "Ozono-geruza baxua (UV arriskua handitu daiteke).",
     ozoneNormal: "Ozono-geruza ohiko tartean.",
@@ -65,12 +62,11 @@ const TXT: Record<
     na: "—",
   },
   gl: {
-    maxToday: "UV máximo hoxe",
+    dayInfo: "Información do día",
     sunrise: "Amencer",
-    sunset: "Solpor",
+    sunset: "Solpor",
     details: "Detalles",
-    updated: "Actualizado",
-    ozone: "Ozono",
+    ozoneMeasurement: "Medida de ozono",
     ozoneInfo: "Valores habituais: 250–400 DU.",
     ozoneLow: "Capa de ozono baixa (pode aumentar o risco UV).",
     ozoneNormal: "Capa de ozono en rango habitual.",
@@ -78,18 +74,33 @@ const TXT: Record<
     na: "—",
   },
   en: {
-    maxToday: "Today's max UV",
+    dayInfo: "Day information",
     sunrise: "Sunrise",
-    sunset: "Sunset",
+    sunset: "Sunset",
     details: "Details",
-    updated: "Updated",
-    ozone: "Ozone",
+    ozoneMeasurement: "Ozone measurement",
     ozoneInfo: "Typical values: 250–400 DU.",
     ozoneLow: "Low ozone layer (UV risk may increase).",
     ozoneNormal: "Ozone layer within typical range.",
     ozoneHigh: "Very high ozone layer.",
     na: "—",
   },
+};
+
+const DAY_INFO_ITEM_STYLE: React.CSSProperties = {
+  display: "inline-flex",
+  alignItems: "flex-start",
+  gap: 6,
+  width: "fit-content",
+  maxWidth: "100%",
+  padding: "4px 8px",
+  borderRadius: 10,
+  border: "1px solid rgba(148, 163, 184, 0.28)",
+  background: "rgba(148, 163, 184, 0.10)",
+};
+
+const DAY_INFO_ICON_STYLE: React.CSSProperties = {
+  lineHeight: 1.2,
 };
 
 type UVDetailShape = {
@@ -139,7 +150,16 @@ function ozoneLabel(du: number, t: (typeof TXT)[Lang]) {
   return t.ozoneNormal;
 }
 
-export default function UVDetailPanel({ lat, lon, lang }: Props) {
+export function formatOzoneMeasurement(
+  ozone: number | null,
+  ozoneTime: string | null,
+  labels: { ozoneMeasurement: string }
+): string | null {
+  if (ozone == null) return null;
+  return `${labels.ozoneMeasurement}: ${ozone} DU${ozoneTime ? ` (${ozoneTime})` : ""}`;
+}
+
+export default function UVDetailPanel({ lat, lon, lang, sourceNote }: Props) {
   const t = TXT[lang] ?? TXT.ca;
 
   const [detail, setDetail] = React.useState<UVDetailShape | null>(null);
@@ -174,9 +194,6 @@ export default function UVDetailPanel({ lat, lon, lang }: Props) {
     };
   }, [lat, lon]);
 
-  const uvMax = toNum(detail?.uv_max ?? detail?.uvMax);
-  const uvMaxTime = fmtTime((detail?.uv_max_time ?? detail?.uvMaxTime) ?? null) ?? t.na;
-
   const sunrise =
     fmtTime(
       (detail?.sun_info?.sun_times?.sunrise ??
@@ -191,22 +208,57 @@ export default function UVDetailPanel({ lat, lon, lang }: Props) {
         null) as any
     ) ?? t.na;
 
-  const updated = fmtTime((detail?.uv_time ?? detail?.uvTime ?? null) as any);
   const ozone = typeof detail?.ozone === "number" ? Math.round(detail.ozone) : null;
   const ozoneTime = fmtTime((detail?.ozone_time ?? detail?.ozoneTime ?? null) as any);
+  const ozoneMeasurementText = formatOzoneMeasurement(ozone, ozoneTime, t);
 
   return (
     <div style={{ marginTop: 8 }}>
-      <div className="muted" style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
-        <span>
-          <strong>{t.maxToday}:</strong>{" "}
-          {loading ? "…" : uvMax != null ? `${uvMax.toFixed(1)} (${uvMaxTime})` : t.na}
-        </span>
-
-        <span>
-          <strong>{t.sunrise}:</strong> {loading ? "…" : sunrise} ·{" "}
-          <strong>{t.sunset}:</strong> {loading ? "…" : sunset}
-        </span>
+      <div className="muted" style={{ display: "grid", gap: 6 }}>
+        <strong>{t.dayInfo}</strong>
+        <div
+          style={{
+            display: "grid",
+            gridTemplateColumns: "repeat(auto-fit, minmax(140px, 1fr))",
+            gap: "4px 10px",
+            lineHeight: 1.25,
+          }}
+        >
+          <span style={DAY_INFO_ITEM_STYLE}>
+            <span aria-hidden="true" style={DAY_INFO_ICON_STYLE}>
+              🌅
+            </span>
+            <span>
+              <strong>{t.sunrise}:</strong> {loading ? "…" : sunrise}
+            </span>
+          </span>
+          <span style={DAY_INFO_ITEM_STYLE}>
+            <span aria-hidden="true" style={DAY_INFO_ICON_STYLE}>
+              🌇
+            </span>
+            <span>
+              <strong>{t.sunset}:</strong> {loading ? "…" : sunset}
+            </span>
+          </span>
+          {loading && (
+            <span style={DAY_INFO_ITEM_STYLE}>
+              <span aria-hidden="true" style={DAY_INFO_ICON_STYLE}>
+                🛡️
+              </span>
+              <span>
+                <strong>{t.ozoneMeasurement}:</strong> …
+              </span>
+            </span>
+          )}
+          {!loading && ozoneMeasurementText && (
+            <span style={DAY_INFO_ITEM_STYLE}>
+              <span aria-hidden="true" style={DAY_INFO_ICON_STYLE}>
+                🛡️
+              </span>
+              <span>{ozoneMeasurementText}</span>
+            </span>
+          )}
+        </div>
       </div>
 
       <details style={{ marginTop: 6 }}>
@@ -215,25 +267,18 @@ export default function UVDetailPanel({ lat, lon, lang }: Props) {
         </summary>
 
         <div className="muted" style={{ marginTop: 6, display: "grid", gap: 6 }}>
-          <div>
-            <strong>{t.updated}:</strong> {loading ? "…" : updated ?? t.na}
-          </div>
-
-          <div>
-            <strong>{t.ozone}:</strong>{" "}
-            {loading
-              ? "…"
-              : ozone != null
-              ? `${ozone} DU${ozoneTime ? ` (${ozoneTime})` : ""}`
-              : t.na}
-          </div>
-
           {/* ✅ línia curta d’interpretació + rang */}
           {!loading && ozone != null && (
             <div style={{ fontSize: "0.9em", opacity: 0.9 }}>
               {ozoneLabel(ozone, t)} {t.ozoneInfo}
             </div>
           )}
+
+          {sourceNote && (
+            <div style={{ fontSize: "0.9em", opacity: 0.9 }}>
+              ℹ️ {sourceNote}
+            </div>
+          )}
         </div>
       </details>
     </div>

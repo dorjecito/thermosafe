@@ -45,7 +45,8 @@ import { getUVDetailFromOpenUV, getUVFromOpenUV } from "./services/openUV";
    import { formatLastUpdate } from "./utils/formatLastUpdate";
 	   import { getRemainingTime } from "./utils/getRemainingTime";
 	   import { normalizeLang } from "./utils/normalizeLang";
-	   import { getUvAdvice, getUvText, normalizeUviForDisplay } from "./utils/uv";
+	   import { getUvText, normalizeUviForDisplay } from "./utils/uv";
+     import { getTimeAwareUvAdvice } from "./utils/uvAdviceMessage";
 	   import { buildRiskTrend, type RiskTrendResult } from "./utils/riskTrend";
    import { safeUVFetch } from "./utils/safeUVFetch";
    import { evaluateRiskScore } from "./utils/riskScoreEngine";
@@ -80,7 +81,6 @@ import { getUVDetailFromOpenUV, getUVFromOpenUV } from "./services/openUV";
    import { useSmartActivity, type ActivityLevel } from "./hooks/useSmartActivity";
 
 const UVAdvice = React.lazy(() => import("./components/UVAdvice"));
-const UVContextCard = React.lazy(() => import("./components/UVContextCard"));
 const UVSafeTime = React.lazy(() => import("./components/UVSafeTime"));
 const UVDetailPanel = React.lazy(() => import("./components/UVDetailPanel"));
 const SkinTypeInfo = React.lazy(() => import("./components/SkinTypeInfo"));
@@ -146,7 +146,7 @@ const UI_LABELS = {
     viewAllAlerts: "Veure totes les alertes",
     hideAlerts: "Amagar alertes",
     currentUv: "Índex UV actual",
-    uvMaxToday: "UV màxim avui",
+    uvMaxToday: "UV màxim d’avui",
     moreUv: "Veure més informació UV",
     lessUv: "Amagar informació UV",
     skinType: "Fototip de pell",
@@ -155,7 +155,7 @@ const UI_LABELS = {
     viewAllAlerts: "Ver todas las alertas",
     hideAlerts: "Ocultar alertas",
     currentUv: "Índice UV actual",
-    uvMaxToday: "UV máximo hoy",
+    uvMaxToday: "UV máximo de hoy",
     moreUv: "Ver más información UV",
     lessUv: "Ocultar información UV",
     skinType: "Fototipo de piel",
@@ -173,7 +173,7 @@ const UI_LABELS = {
     viewAllAlerts: "Ver todas as alertas",
     hideAlerts: "Agochar alertas",
     currentUv: "Índice UV actual",
-    uvMaxToday: "UV máximo hoxe",
+    uvMaxToday: "UV máximo de hoxe",
     moreUv: "Ver máis información UV",
     lessUv: "Agochar información UV",
     skinType: "Fototipo de pel",
@@ -1720,8 +1720,8 @@ const uvSummaryText = useMemo(
   [uvSummaryValue, currentLang]
 );
 const uvSummaryAdvice = useMemo(
-  () => getUvAdvice(uvSummaryValue, currentLang),
-  [uvSummaryValue, currentLang]
+  () => getTimeAwareUvAdvice(uvSummaryValue, currentLang, locationCurrentHour),
+  [uvSummaryValue, currentLang, locationCurrentHour]
 );
 const isRiskRenderReady = Boolean(data && isInitialRiskReady && !loading);
 const locationTimezoneOffsetSec =
@@ -2315,9 +2315,7 @@ return (
 	        i18n.resolvedLanguage || i18n.language || "ca"
 	      ) as any;
 	      const uvCompactLevel = uvSummaryText.replace(/\s*\([^)]*\)/g, "");
-	      const uvCompactAdvice = uvSummaryAdvice
-	        ? uvSummaryAdvice.split(".")[0] + "."
-	        : "";
+	      const uvCompactAdvice = uvSummaryAdvice;
 
 	      return (
 	        <>
@@ -2325,14 +2323,24 @@ return (
 		          {day && (
 		            <>
 		              <div className="uv-context-card uv-context-card--info uv-summary-compact">
-		                <span className="uv-context-text">
-		                  <strong>UV {uvSummaryValue != null ? uvSummaryValue.toFixed(1) : "—"}</strong>
-		                  {" · "}
-		                  {uvCompactLevel}
-		                  {uvCompactAdvice && (
-		                    <span className="uv-compact-advice">{uvCompactAdvice}</span>
-		                  )}
-		                </span>
+                    <div
+                      className="uv-context-text"
+                      style={{ display: "grid", gap: "0.35rem" }}
+                    >
+                      <span>
+                        <strong>{localUi.currentUv}:</strong>{" "}
+                        {uvSummaryValue != null ? uvSummaryValue.toFixed(1) : "—"}
+                        {" · "}
+                        {uvCompactLevel}
+                      </span>
+                      <span>
+                        <strong>{localUi.uvMaxToday}:</strong>{" "}
+                        {uvMaxSummaryValue != null ? uvMaxSummaryValue.toFixed(1) : "—"}
+                      </span>
+                      {uvCompactAdvice && (
+                        <span className="uv-compact-advice">{uvCompactAdvice}</span>
+                      )}
+                    </div>
 		              </div>
 
 		              <details
@@ -2347,29 +2355,15 @@ return (
 
                     {uvDetailsOpen && (
                       <React.Suspense fallback={null}>
-		                <p className="uv-max-detail">
-		                  <strong>{localUi.uvMaxToday}:</strong>{" "}
-		                  {uvMaxSummaryValue != null ? uvMaxSummaryValue.toFixed(1) : "—"}
-		                </p>
-
 		                <UVAdvice
 	                  uvi={uvi}
 	                  lang={i18n.resolvedLanguage || i18n.language || "ca"}
 	                  weatherMain={data?.weather?.[0]?.main ?? null}
 	                  cloudiness={data?.clouds?.all}
 	                  weatherContext={weatherContext}
+                    currentHour={locationCurrentHour}
+                    summaryAdvice={uvSummaryAdvice}
 	                />
-
-	                <UVContextCard
-	                uvi={uvi}
-	                lang={i18n.resolvedLanguage || i18n.language || "ca"}
-	                />
-
-	                {/* ℹ️ Nota informativa UV */}
-	                <p className="uv-source-note">
-	                  ℹ️ {t("uv_source_note") ??
-	                    "Els valors d’índex UV poden variar segons l’hora i la font meteorològica (OpenUV, NASA o OpenWeather)."}
-	                </p>
 
 	                {/* ⏱ Temps segur d’exposició */}
 	               <UVSafeTime
@@ -2387,6 +2381,10 @@ return (
 	                    lat={lat}
 	                    lon={lon}
 	                    lang={lang}
+                      sourceNote={
+                        t("uv_source_note") ??
+                        "Els valors d’índex UV poden variar segons l’hora i la font meteorològica (OpenUV, NASA o OpenWeather)."
+                      }
 	                  />
 	                )}
                       </React.Suspense>

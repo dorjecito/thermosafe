@@ -30,6 +30,7 @@ const TXT: Record<
     noteModerate: string;
     noteHigh: string;
     moreThanMax: string;
+    noLimitVeryLow: string;
     phototypes: Record<SkinType, string>;
   }
 > = {
@@ -46,6 +47,7 @@ const TXT: Record<
     noteHigh:
       "Estimació orientativa basada en índex UV actual. Redueix exposició, reforça protecció i prioritza ombra.",
     moreThanMax: "> 8 h",
+    noLimitVeryLow: "Sense límit orientatiu amb aquest nivell d’UV.",
     phototypes: {
       "1": "Tipus 1",
       "2": "Tipus 2",
@@ -68,6 +70,7 @@ const TXT: Record<
     noteHigh:
       "Estimación orientativa basada en el índice UV actual. Reduce la exposición, refuerza la protección y prioriza la sombra.",
     moreThanMax: "> 8 h",
+    noLimitVeryLow: "Sin límite orientativo con este nivel de UV.",
     phototypes: {
       "1": "Tipo 1",
       "2": "Tipo 2",
@@ -90,6 +93,7 @@ const TXT: Record<
     noteHigh:
       "UV indize aktualean oinarritutako gutxi gorabeherako estimazioa. Murriztu esposizioa, indartu babesa eta lehenetsi itzala.",
     moreThanMax: "> 8 h",
+    noLimitVeryLow: "UV maila honekin ez dago orientaziozko mugarik.",
     phototypes: {
       "1": "1 mota",
       "2": "2 mota",
@@ -112,6 +116,7 @@ const TXT: Record<
     noteHigh:
       "Estimación orientativa baseada no índice UV actual. Reduce a exposición, reforza a protección e prioriza a sombra.",
     moreThanMax: "> 8 h",
+    noLimitVeryLow: "Sen límite orientativo con este nivel de UV.",
     phototypes: {
       "1": "Tipo 1",
       "2": "Tipo 2",
@@ -134,6 +139,7 @@ const TXT: Record<
     noteHigh:
       "Approximate estimate based on current UV index. Reduce exposure, reinforce protection and prioritise shade.",
     moreThanMax: "> 8 h",
+    noLimitVeryLow: "No indicative limit with this UV level.",
     phototypes: {
       "1": "Type 1",
       "2": "Type 2",
@@ -192,6 +198,7 @@ export default function UVSafeTime({
 
   const hasValidUvi = typeof uvi === "number" && Number.isFinite(uvi);
   const isNight = hasValidUvi && (uvi as number) <= 0;
+  const isVeryLowUv = hasValidUvi && (uvi as number) > 0 && (uvi as number) <= 0.5;
   const shouldShowTime = hasValidUvi && (uvi as number) >= MIN_UV_TO_SHOW_TIME;
 
   const safeMinutes = shouldShowTime
@@ -255,17 +262,28 @@ export default function UVSafeTime({
           ))}
         </select>
 
-        <div style={{ fontWeight: 600 }}>
+        <div
+          style={{
+            fontWeight: 700,
+            padding: "0.35rem 0.6rem",
+            borderRadius: 8,
+            background: "rgba(255,255,255,0.08)",
+          }}
+        >
           {t.estimated}:{" "}
-          {!hasValidUvi
-            ? t.unknown
-            : isNight
-            ? t.night
-            : !shouldShowTime
-            ? "—"
-            : safeMinutes != null
-            ? fmtMinutes(safeMinutes, lang, t.moreThanMax)
-            : t.unknown}
+          <span>
+             {!hasValidUvi
+               ? t.unknown
+               : isNight
+               ? t.night
+              : isVeryLowUv
+              ? t.noLimitVeryLow
+               : !shouldShowTime
+               ? "—"
+              : safeMinutes != null
+              ? fmtMinutes(safeMinutes, lang, t.moreThanMax)
+              : t.unknown}
+          </span>
         </div>
       </div>
 

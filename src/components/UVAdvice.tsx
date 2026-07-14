@@ -1,6 +1,7 @@
 import React from "react";
 import type { WeatherContext } from "../utils/weatherContext";
 import { getUvLevelIndex, normalizeUviForDisplay } from "../utils/uv";
+import { getTimeAwareUvAdvice } from "../utils/uvAdviceMessage";
 
 type Lang = "ca" | "es" | "eu" | "gl" | "en";
 
@@ -10,11 +11,14 @@ interface UVAdviceProps {
   weatherMain?: string | null;
   cloudiness?: number | null;
   weatherContext?: WeatherContext | null;
+  currentHour?: number | null;
+  summaryAdvice?: string | null;
 }
 
 const texts = {
   ca: {
     idx: "Índex UV",
+    adviceTitle: "Recomanació UV",
     levels: ["Baix (0–2.9)", "Moderat (3–5.9)", "Alt (6–7.9)", "Molt alt (8–10.9)", "Extrem (11+)"],
     msgs: [
       "Protecció mínima necessària.",
@@ -36,6 +40,7 @@ const texts = {
   },
   es: {
     idx: "Índice UV",
+    adviceTitle: "Recomendación UV",
     levels: ["Bajo (0–2.9)", "Moderado (3–5.9)", "Alto (6–7.9)", "Muy alto (8–10.9)", "Extremo (11+)"],
     msgs: [
       "Protección mínima necesaria.",
@@ -57,6 +62,7 @@ const texts = {
   },
   eu: {
     idx: "UV indizea",
+    adviceTitle: "UV gomendioa",
     levels: ["Baxua (0–2.9)", "Moderatua (3–5.9)", "Altua (6–7.9)", "Oso altua (8–10.9)", "Muturrekoa (11+)"],
     msgs: [
       "Babes minimoa behar da.",
@@ -78,6 +84,7 @@ const texts = {
   },
   gl: {
     idx: "Índice UV",
+    adviceTitle: "Recomendación UV",
     levels: ["Baixo (0–2.9)", "Moderado (3–5.9)", "Alto (6–7.9)", "Moi alto (8–10.9)", "Extremo (11+)"],
     msgs: [
       "Precísase protección mínima.",
@@ -99,6 +106,7 @@ const texts = {
   },
   en: {
     idx: "UV index",
+    adviceTitle: "UV recommendation",
     levels: ["Low (0–2.9)", "Moderate (3–5.9)", "High (6–7.9)", "Very high (8–10.9)", "Extreme (11+)"],
     msgs: [
       "Minimal protection required.",
@@ -146,6 +154,8 @@ const UVAdvice: React.FC<UVAdviceProps> = ({
   weatherMain,
   cloudiness,
   weatherContext,
+  currentHour,
+  summaryAdvice,
 }) => {
   const lng = normalizeLang(lang);
   const L = texts[lng];
@@ -188,7 +198,11 @@ const UVAdvice: React.FC<UVAdviceProps> = ({
   const mainMsg =
     suppressUv && veryCloudy && u >= 3 && !rainy
       ? L.cloudyMsgs[b]
-      : L.msgs[b];
+      : getTimeAwareUvAdvice(u, lng, currentHour);
+
+  if (!extraNote && summaryAdvice && mainMsg.trim() === summaryAdvice.trim()) {
+    return null;
+  }
 
   return (
     <div
@@ -200,9 +214,7 @@ const UVAdvice: React.FC<UVAdviceProps> = ({
         marginTop: "1rem",
       }}
     >
-      <strong>
-        🔆 {L.idx}: {u.toFixed(1)} — {L.levels[b]}
-      </strong>
+      <strong>🔆 {L.adviceTitle}</strong>
 
       <p style={{ marginTop: ".5rem", marginBottom: extraNote ? ".4rem" : 0 }}>
         {mainMsg}
