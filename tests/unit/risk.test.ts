@@ -1954,6 +1954,26 @@ test("night recommendations are action-focused and do not repeat primary descrip
   );
 });
 
+test("visible recommendation branches always provide factor subtitles", () => {
+  const recommendationsSource = readFileSync(
+    `${process.cwd()}/src/components/Recommendations.tsx`,
+    "utf8"
+  );
+  const recommendationBoxes = recommendationsSource.match(
+    /<RecommendationBox[\s\S]*?\/>/g
+  );
+
+  assert.ok(recommendationBoxes?.length);
+
+  const uncategorizedBoxes = recommendationBoxes
+    .filter((box) => !box.includes("body={t.loading}"))
+    .filter((box) => !box.includes("items={"));
+
+  assert.deepEqual(uncategorizedBoxes, []);
+  assert.match(recommendationsSource, /thermalComfortItem\(t,\s*t\.safeCloudy\)/);
+  assert.match(recommendationsSource, /thermalComfortItem\(t\)/);
+});
+
 test("tropical night outdoor activity keeps a mild caution nuance", () => {
   const level = getWorkWindow({
     heatRisk: { class: "safe", isHigh: false, isExtreme: false },

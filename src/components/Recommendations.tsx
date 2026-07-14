@@ -911,6 +911,16 @@ export const factorItems = (
   }));
 };
 
+const thermalComfortItem = (
+  t: TextPack,
+  text = t.safe
+): RecommendationItem => ({
+  factor: "thermalComfort",
+  icon: "🌡️",
+  label: t.factorThermalComfort,
+  text,
+});
+
 export const getRecommendationFactorState = (
   riskFactors?: FactorRisk[]
 ): RecommendationFactorState => {
@@ -1130,12 +1140,7 @@ export default function Recommendations({
         body={t.safe}
         items={factorItems(
           riskFactors,
-          {
-            factor: "thermalComfort",
-            icon: "🌡️",
-            label: t.factorThermalComfort,
-            text: t.safe,
-          }
+          thermalComfortItem(t)
         )}
       />
     );
@@ -1254,6 +1259,17 @@ export default function Recommendations({
 	      showWindModerate && t.windModerate,
         contextualText
     )}
+      items={factorItems(
+        riskFactors,
+        stormy
+          ? { factor: "storm", icon: "⛈️", label: t.factorStorm, text: t.storm }
+          : rainy
+            ? { factor: "rain", icon: "🌧️", label: t.factorRain, text: t.rain }
+            : { factor: "uv", icon: "☀️", label: t.factorUv, text: t.safeUvCloudy },
+        humid && { factor: "humidity", icon: "💧", label: t.factorHumidity, text: t.humid },
+        showWindModerate && { factor: "wind", icon: "🌬️", label: t.factorWind, text: t.windModerate },
+        ...contextualItems
+      )}
     />
   );
 } 
@@ -1372,6 +1388,13 @@ if (isDay && uvActive && uvKey) {
           showWindModerate && t.windModerate,
           contextualText
         )}
+        items={factorItems(
+          riskFactors,
+          { factor: "uv", icon: "☀️", label: t.factorUv, text: t.safeUvModerate },
+          humid && { factor: "humidity", icon: "💧", label: t.factorHumidity, text: t.humid },
+          showWindModerate && { factor: "wind", icon: "🌬️", label: t.factorWind, text: t.windModerate },
+          ...contextualItems
+        )}
       />
     );
   }
@@ -1386,6 +1409,12 @@ if (isDay && uvActive && uvKey) {
           humid && t.humid,
           contextualText
         )}
+        items={factorItems(
+          riskFactors,
+          { factor: "wind", icon: "🌬️", label: t.factorWind, text: t.safeWind },
+          humid && { factor: "humidity", icon: "💧", label: t.factorHumidity, text: t.humid },
+          ...contextualItems
+        )}
       />
     );
   }
@@ -1400,6 +1429,14 @@ if (isDay && uvActive && uvKey) {
           stormy ? t.storm : t.rain,
           contextualText
         )}
+        items={factorItems(
+          riskFactors,
+          thermalComfortItem(t),
+          stormy
+            ? { factor: "storm", icon: "⛈️", label: t.factorStorm, text: t.storm }
+            : { factor: "rain", icon: "🌧️", label: t.factorRain, text: t.rain },
+          ...contextualItems
+        )}
       />
     );
   }
@@ -1414,6 +1451,12 @@ if (isDay && uvActive && uvKey) {
           humid && t.humid,
           contextualText
         )}
+        items={factorItems(
+          riskFactors,
+          thermalComfortItem(t, t.safeCloudy),
+          humid && { factor: "humidity", icon: "💧", label: t.factorHumidity, text: t.humid },
+          ...contextualItems
+        )}
       />
     );
   }
@@ -1432,12 +1475,7 @@ if (isDay && uvActive && uvKey) {
       )}
       items={factorItems(
         riskFactors,
-        {
-          factor: "thermalComfort",
-          icon: "🌡️",
-          label: t.factorThermalComfort,
-          text: t.safe,
-        },
+        thermalComfortItem(t),
         humid && { factor: "humidity", icon: "💧", label: t.factorHumidity, text: t.humid },
         ...contextualItems
       )}
