@@ -872,6 +872,12 @@ test("recommendation factor ordering keeps unknown factors stable", () => {
 test("single recommendation factors keep their visible subtitle", () => {
   const cases: RecommendationItem[] = [
     {
+      factor: "thermalComfort",
+      icon: "🌡️",
+      label: "Confort tèrmic",
+      text: "El confort tèrmic és favorable.",
+    },
+    {
       factor: "heat",
       icon: "🌡️",
       label: "Calor",

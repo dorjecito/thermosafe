@@ -25,6 +25,7 @@ type TextKeys =
   | "safeUvModerate"
   | "safeWind"
   | "safeCloudy"
+  | "factorThermalComfort"
   | "factorHeat"
   | "factorCold"
   | "factorUv"
@@ -83,6 +84,7 @@ type TextPack = Record<TextKeys, string>;
 type TxtDict = Record<Lang, TextPack>;
 type RecommendationFactor =
   | FactorRisk["factor"]
+  | "thermalComfort"
   | "humidity"
   | "rain"
   | "storm"
@@ -187,6 +189,7 @@ const TXT: TxtDict = {
       "Vent moderat. Assegura objectes, evita manipular materials lleugers exposats i augmenta la precaució amb eines o treballs a l’exterior.",
     safeCloudy:
       "Les condicions són adequades per a l’activitat habitual. Tot i els núvols, conserva una precaució bàsica si passes molta estona a l’exterior.",
+    factorThermalComfort: "Confort tèrmic",
     factorHeat: "Calor",
     factorCold: "Fred",
     factorUv: "Radiació UV",
@@ -282,6 +285,7 @@ const TXT: TxtDict = {
       "Viento moderado. Asegura objetos, evita manipular materiales ligeros expuestos y aumenta la precaución con herramientas o trabajos al aire libre.",
     safeCloudy:
       "Las condiciones son adecuadas para la actividad habitual. Aunque haya nubes, conserva una precaución básica si pasas mucho tiempo al aire libre.",
+    factorThermalComfort: "Confort térmico",
     factorHeat: "Calor",
     factorCold: "Frío",
     factorUv: "Radiación UV",
@@ -377,6 +381,7 @@ const TXT: TxtDict = {
       "Haize moderatua. Lotu objektuak, saihestu agerian dauden material arinak manipulatzea eta handitu arreta tresnekin edo kanpoko lanetan.",
     safeCloudy:
       "Baldintzak egokiak dira ohiko jarduerarako. Hodeiak egon arren, eutsi oinarrizko arretari kanpoan denbora asko ematen baduzu.",
+    factorThermalComfort: "Konfort termikoa",
     factorHeat: "Beroa",
     factorCold: "Hotza",
     factorUv: "UV erradiazioa",
@@ -472,6 +477,7 @@ const TXT: TxtDict = {
       "Vento moderado. Asegura obxectos, evita manipular materiais lixeiros expostos e aumenta a precaución con ferramentas ou traballos ao aire libre.",
     safeCloudy:
       "As condicións son adecuadas para a actividade habitual. Aínda con nubes, conserva unha precaución básica se pasas moito tempo ao aire libre.",
+    factorThermalComfort: "Confort térmico",
     factorHeat: "Calor",
     factorCold: "Frío",
     factorUv: "Radiación UV",
@@ -567,6 +573,7 @@ const TXT: TxtDict = {
       "Moderate wind. Secure objects, avoid handling exposed light materials and increase caution with tools or outdoor work.",
     safeCloudy:
       "Conditions are suitable for usual activity. Even with clouds, keep basic awareness if you remain outdoors for long periods.",
+    factorThermalComfort: "Thermal comfort",
     factorHeat: "Heat",
     factorCold: "Cold",
     factorUv: "UV radiation",
@@ -1121,6 +1128,15 @@ export default function Recommendations({
         className="recommendation-box safe"
         title={`${getIcon("safe")} ${t.title}`}
         body={t.safe}
+        items={factorItems(
+          riskFactors,
+          {
+            factor: "thermalComfort",
+            icon: "🌡️",
+            label: t.factorThermalComfort,
+            text: t.safe,
+          }
+        )}
       />
     );
   }
@@ -1414,6 +1430,17 @@ if (isDay && uvActive && uvKey) {
         humid && t.humid,
         contextualText
       )}
+      items={factorItems(
+        riskFactors,
+        {
+          factor: "thermalComfort",
+          icon: "🌡️",
+          label: t.factorThermalComfort,
+          text: t.safe,
+        },
+        humid && { factor: "humidity", icon: "💧", label: t.factorHumidity, text: t.humid },
+        ...contextualItems
+      )}
     />
   );
 }
