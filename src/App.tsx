@@ -803,7 +803,9 @@ const fetchWeather = async (cityName: string) => {
 	      setUvi(uv);
 	      await loadUvMaxToday(newLat, newLon);
 
-	      console.log("[DEBUG] Coordenades ciutat cercada:", newLat, newLon);
+		      if (import.meta.env.DEV) {
+		        console.log("[DEBUG] Coordenades ciutat cercada:", newLat, newLon);
+		      }
 
       // ⚠️ Avisos oficials
       await loadAlertsIfNeeded(
@@ -990,7 +992,9 @@ const lon = position.coords.longitude;
 setLat(lat);
 setLon(lon);
 
-console.log(`[DEBUG] Coordenades GPS obtingudes: ${lat}, ${lon}`);
+if (import.meta.env.DEV) {
+  console.log(`[DEBUG] Coordenades GPS obtingudes: ${lat}, ${lon}`);
+}
 
 // 🌦️ // 2. Obté dades del temps per coordenades
 const d = await getWeatherByCoords(lat, lon, lang);

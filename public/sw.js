@@ -57,8 +57,6 @@ function buildNotificationFromPayload(payload) {
 // ✅ Firebase background handler (Android/Chrome)
 // ─────────────────────────────────────────────
 messaging.onBackgroundMessage((payload) => {
-  console.log("[SW] onBackgroundMessage", payload);
-
   const { title, options } = buildNotificationFromPayload(payload);
 
   return self.registration.showNotification(title, options);
@@ -85,8 +83,6 @@ self.addEventListener("push", (event) => {
       },
     };
   }
-
-  console.log("[SW] push event", payload);
 
   const { title, options } = buildNotificationFromPayload(payload);
 

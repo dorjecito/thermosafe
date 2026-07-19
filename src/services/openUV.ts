@@ -157,13 +157,17 @@ export async function getUVFromOpenUV(
 
   const cached = getCached(uvNowCache, key, UV_NOW_TTL);
   if (cached !== null) {
-    console.log("[OpenUV] UV des de caché:", key, cached);
+    if (import.meta.env.DEV) {
+      console.log("[OpenUV] UV des de caché:", key, cached);
+    }
     return cached;
   }
 
   const pending = uvNowPending.get(key);
   if (pending) {
-    console.log("[OpenUV] reutilitzant petició UV en curs:", key);
+    if (import.meta.env.DEV) {
+      console.log("[OpenUV] reutilitzant petició UV en curs:", key);
+    }
     return pending;
   }
 
@@ -171,11 +175,15 @@ export async function getUVFromOpenUV(
     try {
       const url = buildOpenUVProxyUrl("uv", lat, lon);
 
-      console.log("[OpenUV] Fetch UV:", url);
+      if (import.meta.env.DEV) {
+        console.log("[OpenUV] Fetch UV via proxy");
+      }
 
       const data = (await safeFetch(url)) as OpenUVCurrentResponse;
 
-      console.log("[OpenUV] UV Response:", data);
+      if (import.meta.env.DEV) {
+        console.log("[OpenUV] UV Response keys:", Object.keys(data || {}));
+      }
 
       const uvi = data.result?.uv ?? null;
       const safeUvi = typeof uvi === "number" && Number.isFinite(uvi) ? uvi : null;
@@ -205,11 +213,18 @@ export async function getUVForecast(
   try {
     const url = buildOpenUVProxyUrl("forecast", lat, lon);
 
-    console.log("[OpenUV] Fetch Forecast:", url);
+    if (import.meta.env.DEV) {
+      console.log("[OpenUV] Fetch Forecast via proxy");
+    }
 
     const data = (await safeFetch(url)) as OpenUVForecastResponse;
 
-    console.log("[OpenUV] Forecast Response:", data);
+    if (import.meta.env.DEV) {
+      console.log(
+        "[OpenUV] Forecast Response count:",
+        Array.isArray(data.result) ? data.result.length : 0
+      );
+    }
 
     return Array.isArray(data.result) ? data.result : [];
   } catch (err) {
@@ -257,26 +272,34 @@ export async function getUVDetailFromOpenUV(
 
   const cached = getCached(uvDetailCache, key, UV_DETAIL_TTL);
   if (cached !== null) {
-    console.log("[OpenUV] UV detail des de caché:", key);
+    if (import.meta.env.DEV) {
+      console.log("[OpenUV] UV detail des de caché:", key);
+    }
     return cached;
   }
 
   const pending = uvDetailPending.get(key);
   if (pending) {
-    console.log("[OpenUV] reutilitzant petició UV detail en curs:", key);
+    if (import.meta.env.DEV) {
+      console.log("[OpenUV] reutilitzant petició UV detail en curs:", key);
+    }
     return pending;
   }
 
   const request = (async () => {
     try {
       const url = buildOpenUVProxyUrl("uv", lat, lon);
-      console.log("[OpenUV] Fetch UV Detail:", url);
+      if (import.meta.env.DEV) {
+        console.log("[OpenUV] Fetch UV Detail via proxy");
+      }
 
       const data = (await safeFetch(url)) as OpenUVCurrentResponse;
 
       const r = data?.result;
-      console.log("[OpenUV] UV detail result keys:", Object.keys(r || {}));
-      console.log("[OpenUV] safe_exposure_time:", r?.safe_exposure_time);
+      if (import.meta.env.DEV) {
+        console.log("[OpenUV] UV detail result keys:", Object.keys(r || {}));
+        console.log("[OpenUV] safe_exposure_time available:", Boolean(r?.safe_exposure_time));
+      }
 
       const uv = typeof r?.uv === "number" && Number.isFinite(r.uv) ? r.uv : null;
 

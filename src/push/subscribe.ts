@@ -154,7 +154,12 @@ export async function getCurrentFcmToken(): Promise<string | null> {
 
   if (!token || token.length < 50) return null;
 
-  console.log("🔑 Token FCM actual:", token);
+  if (import.meta.env.DEV) {
+    console.log("🔑 Token FCM disponible:", {
+      tokenAvailable: true,
+      tokenLength: token.length,
+    });
+  }
   return token;
 }
 
@@ -209,15 +214,16 @@ export async function updateRiskAlertLocation({
       !langChanged &&
       !placeChanged
     ) {
-      console.log("📍 Ubicació de notificacions sense canvis rellevants:", {
-        tokenPreview: token.slice(0, 20),
-        lat,
-        lon,
-        place: placeNorm || "",
-        distanceKm: roundedDistanceKm,
-        minUpdateKm: MIN_UPDATE_DISTANCE_KM,
-        mustResetLevels: false,
-      });
+      if (import.meta.env.DEV) {
+        console.log("📍 Ubicació de notificacions sense canvis rellevants:", {
+          tokenAvailable: true,
+          tokenLength: token.length,
+          place: placeNorm || "",
+          distanceKm: roundedDistanceKm,
+          minUpdateKm: MIN_UPDATE_DISTANCE_KM,
+          mustResetLevels: false,
+        });
+      }
 
       return true;
     }
@@ -234,14 +240,15 @@ export async function updateRiskAlertLocation({
 
     await setDoc(ref, payload, { merge: true });
 
-    console.log("📍 Ubicació de notificacions actualitzada:", {
-      tokenPreview: token.slice(0, 20),
-      lat,
-      lon,
-      place: placeNorm || "",
-      distanceKm: roundedDistanceKm,
-      mustResetLevels,
-    });
+    if (import.meta.env.DEV) {
+      console.log("📍 Ubicació de notificacions actualitzada:", {
+        tokenAvailable: true,
+        tokenLength: token.length,
+        place: placeNorm || "",
+        distanceKm: roundedDistanceKm,
+        mustResetLevels,
+      });
+    }
 
     return true;
   } catch (e) {
@@ -383,11 +390,14 @@ export async function enableRiskAlerts({
       { merge: true }
     );
 
-    console.log("✅ Subscripció existent actualitzada a Firestore.", {
-      tokenPreview: token.slice(0, 20),
-      distanceKm: Math.round(distanceKm * 100) / 100,
-      mustResetLevels,
-    });
+    if (import.meta.env.DEV) {
+      console.log("✅ Subscripció existent actualitzada a Firestore.", {
+        tokenAvailable: true,
+        tokenLength: token.length,
+        distanceKm: Math.round(distanceKm * 100) / 100,
+        mustResetLevels,
+      });
+    }
   }
 
   localStorage.setItem("fcmToken", token);
