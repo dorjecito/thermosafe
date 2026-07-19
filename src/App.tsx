@@ -79,11 +79,17 @@ import { getUVDetailFromOpenUV, getUVFromOpenUV } from "./services/openUV";
    import { useRiskNotifications } from "./hooks/useRiskNotifications";
    import { useCitySuggestions } from "./hooks/useCitySuggestions";
    import { useSmartActivity, type ActivityLevel } from "./hooks/useSmartActivity";
+   import { createLongPressController, type DiagnosticsAlertSetting } from "./utils/diagnostics";
 
 const UVAdvice = React.lazy(() => import("./components/UVAdvice"));
 const UVSafeTime = React.lazy(() => import("./components/UVSafeTime"));
 const UVDetailPanel = React.lazy(() => import("./components/UVDetailPanel"));
 const SkinTypeInfo = React.lazy(() => import("./components/SkinTypeInfo"));
+const NotificationDiagnosticsModal = React.lazy(
+  () => import("./components/NotificationDiagnosticsModal")
+);
+
+const THERMOSAFE_VERSION = "1.0.10";
 
 type EnableRiskAlertsOptions = Parameters<typeof import("./push/subscribe").enableRiskAlerts>[0];
 type UpdateRiskAlertLocationPayload = Parameters<typeof import("./push/subscribe").updateRiskAlertLocation>[0];
@@ -279,6 +285,55 @@ const [pushEnabled, setPushEnabled] = useState(false);
 const [pushToken, setPushToken] = useState<string | null>(null);
 const [busy, setBusy] = useState(false);
 const [showActivityInfo, setShowActivityInfo] = useState(false);
+const [diagnosticsOpen, setDiagnosticsOpen] = useState(false);
+const diagnosticsLongPressRef = useRef<ReturnType<typeof createLongPressController> | null>(null);
+const diagnosticsScrollCancelRef = useRef<(() => void) | null>(null);
+
+if (!diagnosticsLongPressRef.current) {
+  diagnosticsLongPressRef.current = createLongPressController(
+    () => setDiagnosticsOpen(true),
+    { delayMs: 1800 }
+  );
+}
+
+const cancelDiagnosticsLongPress = () => {
+  diagnosticsLongPressRef.current?.cancel();
+  if (diagnosticsScrollCancelRef.current) {
+    window.removeEventListener("scroll", diagnosticsScrollCancelRef.current);
+    diagnosticsScrollCancelRef.current = null;
+  }
+};
+
+const startDiagnosticsLongPress = (event: React.PointerEvent<HTMLElement>) => {
+  if (event.pointerType === "mouse" && event.button !== 0) return;
+  if (diagnosticsOpen) return;
+
+  cancelDiagnosticsLongPress();
+  const cancelOnScroll = () => cancelDiagnosticsLongPress();
+  diagnosticsScrollCancelRef.current = cancelOnScroll;
+  window.addEventListener("scroll", cancelOnScroll, {
+    passive: true,
+    once: true,
+  });
+  diagnosticsLongPressRef.current?.start();
+};
+
+const diagnosticsTitleHandlers = {
+  onPointerDown: startDiagnosticsLongPress,
+  onPointerUp: cancelDiagnosticsLongPress,
+  onPointerLeave: cancelDiagnosticsLongPress,
+  onPointerCancel: cancelDiagnosticsLongPress,
+};
+
+useEffect(() => {
+  return () => {
+    diagnosticsLongPressRef.current?.dispose();
+    if (diagnosticsScrollCancelRef.current) {
+      window.removeEventListener("scroll", diagnosticsScrollCancelRef.current);
+      diagnosticsScrollCancelRef.current = null;
+    }
+  };
+}, []);
 
 // Guarda automàticament totes les preferències quan canvien
 useEffect(() => {
@@ -1649,6 +1704,25 @@ const riskIcons = getRiskIcons(
 );
 
 const localUi = useMemo(() => UI_LABELS[currentLang] || UI_LABELS.ca, [currentLang]);
+const diagnosticsAlertSettings = useMemo<DiagnosticsAlertSetting[]>(
+  () => [
+    { key: "heat", enabled: pushEnabled ? true : null },
+    { key: "uv", enabled: enableUvAlerts },
+    { key: "wind", enabled: enableWindAlerts },
+    { key: "cold", enabled: enableColdAlerts },
+  ],
+  [pushEnabled, enableUvAlerts, enableWindAlerts, enableColdAlerts]
+);
+const diagnosticsLastWeatherUpdate = useMemo(
+  () =>
+    typeof data?.dt === "number"
+      ? new Date(data.dt * 1000).toLocaleTimeString(currentLang, {
+          hour: "2-digit",
+          minute: "2-digit",
+        })
+      : null,
+  [data?.dt, currentLang]
+);
 const alertCards = useMemo(
   () =>
     alerts.map((alert, i) => {
@@ -1820,6 +1894,7 @@ return (
       visible={showCompactHeader}
       city={city}
       temp={temp}
+      titleLongPressHandlers={diagnosticsTitleHandlers}
     />
     <div className={`top-sticky-ui ${showCompactHeader ? "compact-mode" : ""}`}>
       {/* 🔄 Selector d’idioma */}
@@ -1828,7 +1903,11 @@ return (
       </div>
 
       <div className="app-header">
-        <h1 className={appTitleClass}>
+        <h1
+          className={appTitleClass}
+          {...diagnosticsTitleHandlers}
+          style={{ touchAction: "manipulation" }}
+        >
   ThermoSafe – {t("risk.current")} {riskIcons}
 </h1>
       </div>
@@ -2451,6 +2530,29 @@ return (
   )
 )}
 {err && <p style={{ color: 'red' }}>{err}</p>}
+{diagnosticsOpen && (
+  <React.Suspense fallback={null}>
+    <NotificationDiagnosticsModal
+      open={diagnosticsOpen}
+      onClose={() => setDiagnosticsOpen(false)}
+      version={THERMOSAFE_VERSION}
+      language={currentLang}
+      notificationsEnabled={pushEnabled}
+      pushEnabled={Boolean(pushEnabled && pushToken)}
+      alertSettings={diagnosticsAlertSettings}
+      location={{
+        place: realCity || city || null,
+        zone: data?.sys?.country || null,
+        lat,
+        lon,
+        lang: currentLang,
+        lastWeatherUpdate: diagnosticsLastWeatherUpdate,
+        lastLocationUpdate: null,
+        lastTokenSync: null,
+      }}
+    />
+  </React.Suspense>
+)}
 </div>
 );
 }

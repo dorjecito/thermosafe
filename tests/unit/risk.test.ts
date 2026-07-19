@@ -51,6 +51,19 @@ import {
   UV_BLOCKING_CLOUDINESS_THRESHOLD,
 } from "../../src/utils/weatherContext";
 import { formatOzoneMeasurement } from "../../src/components/UVDetailPanel";
+import {
+  buildDiagnosticsCopyText,
+  createDiagnosticsSnapshot,
+  createLongPressController,
+  detectBrowser,
+  detectDisplayMode,
+  formatTokenSyncStatus,
+  getDiagnosticsChecks,
+  getDiagnosticsMessages,
+  getOverallDiagnosticsStatus,
+  getTokenSyncStatus,
+  type DiagnosticsCopyLabels,
+} from "../../src/utils/diagnostics";
 
 function selectPrimaryForUi(
   enginePrimary: PrimaryRiskFromEngineResult
@@ -719,6 +732,347 @@ test("UV ozone detail text avoids redundant update wording and source in the sum
   assert.doesNotMatch(uvDetailPanelSource, /updated:\s*string|Actualitzat|Updated/);
   assert.doesNotMatch(uvDetailPanelSource, /font OpenUV|fuente OpenUV|OpenUV source/);
   assert.doesNotMatch(uvDetailPanelSource, /ozoneDataTime|Mesura de les|Measurement from/);
+});
+
+const diagnosticCopyLabels: DiagnosticsCopyLabels = {
+  title: "ThermoSafe Diagnostics",
+  version: "Version",
+  platform: "Platform",
+  browser: "Browser",
+  language: "Language",
+  displayMode: "Display Mode",
+  localTime: "Local Time",
+  online: "Online",
+  notificationPermission: "Notification Permission",
+  notificationsEnabled: "Notifications Enabled",
+  pushEnabled: "Push Enabled",
+  firebaseMessaging: "Firebase Messaging",
+  fcmToken: "FCM Token",
+  tokenLength: "Token Length",
+  serviceWorker: "Service Worker",
+  serviceWorkerOrigin: "Service Worker Origin",
+  location: "Location",
+  zone: "Zone",
+  lastWeatherUpdate: "Last Weather Update",
+  lastLocationUpdate: "Last Location Update",
+  lastTokenSync: "Last Token Sync",
+  notRegisteredLocally: "Not registered locally",
+  relativeMinute: "{{count}} minute ago",
+  relativeMinutes: "{{count}} minutes ago",
+  relativeHour: "{{count}} hour ago",
+  relativeHours: "{{count}} hours ago",
+  relativeDay: "{{count}} day ago",
+  relativeDays: "{{count}} days ago",
+  overallStatus: "Overall Status",
+  yes: "true",
+  no: "false",
+  unavailable: "Not available",
+  ok: "OK",
+  review: "Review",
+  error: "Error",
+  unknown: "Unknown",
+  info: "Info",
+};
+
+function createOkDiagnosticsSnapshot(overrides: Parameters<typeof createDiagnosticsSnapshot>[1] = {}) {
+  return createDiagnosticsSnapshot(
+    {
+      version: "1.0.10",
+      language: "ca",
+      notificationsEnabled: true,
+      pushEnabled: true,
+      alertSettings: [
+        { key: "uv", enabled: true },
+        { key: "wind", enabled: true },
+        { key: "cold", enabled: true },
+      ],
+      location: {
+        place: "Llucmajor",
+        zone: "ES",
+        lat: 39.512345,
+        lon: 2.894567,
+        lang: "ca",
+        lastWeatherUpdate: "18:05",
+      },
+    },
+    {
+      userAgent:
+        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/138.0.0.0 Safari/537.36",
+      platform: "Win32",
+      online: true,
+      notificationSupported: true,
+      notificationPermission: "granted",
+      serviceWorkerSupported: true,
+      pushManagerSupported: true,
+      token: "token-with-safe-length-only",
+      now: new Date("2026-07-19T18:05:00Z"),
+      locationOrigin: "https://thermosafe.app",
+      hostname: "thermosafe.app",
+      ...overrides,
+    }
+  );
+}
+
+test("diagnostics long press opens only after delay and supports cancellation", () => {
+  let opened = 0;
+  let pending: (() => void) | null = null;
+
+  const controller = createLongPressController(
+    () => {
+      opened += 1;
+    },
+    {
+      delayMs: 1800,
+      setTimeoutFn: (callback) => {
+        pending = callback;
+        return 1;
+      },
+      clearTimeoutFn: () => {
+        pending = null;
+      },
+    }
+  );
+
+  controller.start();
+  assert.equal(opened, 0);
+  controller.cancel();
+  pending?.();
+  assert.equal(opened, 0);
+
+  controller.start();
+  pending?.();
+  assert.equal(opened, 1);
+  assert.equal(controller.isPending(), false);
+});
+
+test("diagnostics snapshot classifies permissions and overall status", () => {
+  const snapshot = createDiagnosticsSnapshot(
+    {
+      version: "1.0.10",
+      language: "ca",
+      notificationsEnabled: true,
+      pushEnabled: true,
+      alertSettings: [
+        { key: "uv", enabled: true },
+        { key: "wind", enabled: false },
+      ],
+      location: {
+        place: "Llucmajor",
+        zone: "ES",
+        lat: 39.512345,
+        lon: 2.894567,
+        lang: "ca",
+        lastWeatherUpdate: "18:05",
+      },
+    },
+    {
+      userAgent:
+        "Mozilla/5.0 (Linux; Android 14) AppleWebKit/537.36 Chrome/126.0 Mobile Safari/537.36",
+      platform: "Linux armv8l",
+      online: true,
+      notificationSupported: true,
+      notificationPermission: "denied",
+      serviceWorkerSupported: true,
+      pushManagerSupported: true,
+      token: null,
+      now: new Date("2026-07-19T18:05:00Z"),
+    }
+  );
+
+  const checks = getDiagnosticsChecks(snapshot);
+  assert.equal(snapshot.platform, "Android");
+  assert.equal(snapshot.browser, "Chrome 126");
+  assert.equal(
+    checks.find((check) => check.key === "notificationPermission")?.status,
+    "error"
+  );
+  assert.equal(getOverallDiagnosticsStatus(checks), "error");
+  assert.deepEqual(getDiagnosticsMessages(snapshot), [
+    "permissionDenied",
+    "missingToken",
+  ]);
+});
+
+test("diagnostics does not treat normal browser mode as an issue", () => {
+  const snapshot = createOkDiagnosticsSnapshot({
+    displayModeStandalone: false,
+    locationOrigin: "https://thermosafe.app",
+    hostname: "thermosafe.app",
+  });
+
+  const checks = getDiagnosticsChecks(snapshot);
+  const pwa = checks.find((check) => check.key === "pwa");
+
+  assert.equal(snapshot.displayMode, "Browser");
+  assert.equal(pwa?.status, "info");
+  assert.equal(pwa?.detailKey, "runningInBrowser");
+  assert.equal(getOverallDiagnosticsStatus(checks), "ok");
+});
+
+test("diagnostics does not treat localhost as an issue", () => {
+  const snapshot = createOkDiagnosticsSnapshot({
+    locationOrigin: "http://localhost:5173",
+    hostname: "localhost",
+  });
+
+  const checks = getDiagnosticsChecks(snapshot);
+  const pwa = checks.find((check) => check.key === "pwa");
+
+  assert.equal(snapshot.isLocalhost, true);
+  assert.equal(pwa?.status, "info");
+  assert.equal(pwa?.detailKey, "localhostMode");
+  assert.equal(getOverallDiagnosticsStatus(checks), "ok");
+});
+
+test("diagnostics marks installed PWA display modes as correct", () => {
+  const standalone = createOkDiagnosticsSnapshot({ displayModeStandalone: true });
+  const fullscreen = createOkDiagnosticsSnapshot({ displayModeFullscreen: true });
+  const minimalUi = createOkDiagnosticsSnapshot({ displayModeMinimalUi: true });
+
+  assert.equal(detectDisplayMode({ displayModeStandalone: true }), "Standalone");
+  assert.equal(detectDisplayMode({ displayModeFullscreen: true }), "Fullscreen");
+  assert.equal(detectDisplayMode({ displayModeMinimalUi: true }), "Minimal-ui");
+  assert.equal(getDiagnosticsChecks(standalone).find((check) => check.key === "pwa")?.status, "ok");
+  assert.equal(getDiagnosticsChecks(fullscreen).find((check) => check.key === "pwa")?.status, "ok");
+  assert.equal(getDiagnosticsChecks(minimalUi).find((check) => check.key === "pwa")?.status, "ok");
+});
+
+test("diagnostics detects approximate browser versions", () => {
+  assert.equal(
+    detectBrowser({
+      userAgent:
+        "Mozilla/5.0 AppleWebKit/537.36 Chrome/138.0.0.0 Safari/537.36",
+    }),
+    "Chrome 138"
+  );
+  assert.equal(
+    detectBrowser({
+      userAgent:
+        "Mozilla/5.0 Gecko/20100101 Firefox/141.0",
+    }),
+    "Firefox 141"
+  );
+  assert.equal(
+    detectBrowser({
+      userAgent:
+        "Mozilla/5.0 Version/18.0 Mobile/15E148 Safari/604.1",
+    }),
+    "Safari 18"
+  );
+});
+
+test("diagnostics overall ok explains local scope and backend checks", () => {
+  const snapshot = createOkDiagnosticsSnapshot();
+  const checks = getDiagnosticsChecks(snapshot);
+
+  assert.equal(getOverallDiagnosticsStatus(checks), "ok");
+  assert.deepEqual(getDiagnosticsMessages(snapshot), ["localOk", "backendHint"]);
+});
+
+test("diagnostics formats token sync time in minutes hours and days", () => {
+  const now = new Date("2026-07-19T12:00:00Z");
+
+  assert.equal(
+    formatTokenSyncStatus(
+      getTokenSyncStatus(true, "2026-07-19T11:48:00Z", now),
+      diagnosticCopyLabels
+    ),
+    "12 minutes ago"
+  );
+  assert.equal(
+    formatTokenSyncStatus(
+      getTokenSyncStatus(true, "2026-07-19T09:00:00Z", now),
+      diagnosticCopyLabels
+    ),
+    "3 hours ago"
+  );
+  assert.equal(
+    formatTokenSyncStatus(
+      getTokenSyncStatus(true, "2026-07-17T12:00:00Z", now),
+      diagnosticCopyLabels
+    ),
+    "2 days ago"
+  );
+});
+
+test("diagnostics formats token sync absolute date when relative time is not computable", () => {
+  const now = new Date("2026-07-19T12:00:00Z");
+  const status = getTokenSyncStatus(true, "2026-07-20T09:42:00", now);
+
+  assert.equal(status.kind, "absolute");
+  assert.match(formatTokenSyncStatus(status, diagnosticCopyLabels), /20\/07\/2026/);
+  assert.match(formatTokenSyncStatus(status, diagnosticCopyLabels), /09:42/);
+});
+
+test("diagnostics distinguishes missing local token sync record from missing token", () => {
+  assert.equal(
+    formatTokenSyncStatus(getTokenSyncStatus(true, null), diagnosticCopyLabels),
+    "Not registered locally"
+  );
+  assert.equal(
+    formatTokenSyncStatus(getTokenSyncStatus(false, "2026-07-19T09:42:00Z"), diagnosticCopyLabels),
+    "Not available"
+  );
+});
+
+test("diagnostics copy text does not expose sensitive token data", () => {
+  const fullToken = "fcm_secret_token_value_that_must_never_be_copied_1234567890";
+  const snapshot = createDiagnosticsSnapshot(
+    {
+      version: "1.0.10",
+      language: "ca",
+      notificationsEnabled: true,
+      pushEnabled: true,
+      alertSettings: [{ key: "uv", enabled: true }],
+      location: {
+        place: "Llucmajor",
+        zone: "ES",
+        lat: 39.512345,
+        lon: 2.894567,
+        lang: "ca",
+        lastWeatherUpdate: "18:05",
+      },
+    },
+    {
+      userAgent: "Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) Safari/605.1.15",
+      platform: "iPhone",
+      online: true,
+      notificationSupported: true,
+      notificationPermission: "granted",
+      serviceWorkerSupported: true,
+      pushManagerSupported: true,
+      token: fullToken,
+      now: new Date("2026-07-19T18:05:00Z"),
+    }
+  );
+
+  const text = buildDiagnosticsCopyText(snapshot, diagnosticCopyLabels);
+
+  assert.match(text, /FCM Token: true/);
+  assert.match(text, new RegExp(`Token Length: ${fullToken.length}`));
+  assert.doesNotMatch(text, new RegExp(fullToken));
+  assert.doesNotMatch(text, /39\.512345|2\.894567/);
+  assert.doesNotMatch(text, /AIza|api[_-]?key/i);
+});
+
+test("diagnostics copy text includes service worker origin without sensitive data", () => {
+  const snapshot = {
+    ...createOkDiagnosticsSnapshot({
+      locationOrigin: "https://thermosafe.app",
+    }),
+    serviceWorker: {
+      supported: true,
+      registered: true,
+      controllerActive: true,
+      state: "active" as const,
+      origin: "https://thermosafe.app",
+    },
+  };
+
+  const text = buildDiagnosticsCopyText(snapshot, diagnosticCopyLabels);
+
+  assert.match(text, /Service Worker Origin: https:\/\/thermosafe\.app/);
+  assert.doesNotMatch(text, /fcm_secret|AIza|api[_-]?key/i);
 });
 
 test("risk score engine mirrors basic heat risk cases", () => {
