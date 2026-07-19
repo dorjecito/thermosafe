@@ -1,0 +1,188 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    /*
+     * ThermoSafe no usa Firebase Auth en la PWA.
+     * Per tant, aquestes regles protegeixen per forma del document i pel token FCM
+     * usat com a document ID, evitant llistats i camps inesperats.
+     */
+
+    function validToken(token) {
+      return token is string && token.size() >= 50 && token.size() <= 4096;
+    }
+
+    function validLang(lang) {
+      return lang in ["ca", "es", "eu", "gl", "en"];
+    }
+
+    function validThreshold(threshold) {
+      return threshold in ["moderate", "high", "very_high"];
+    }
+
+    function validOptionalNumber(data, key) {
+      return !(key in data) || data[key] == null || data[key] is number;
+    }
+
+    function validOptionalString(data, key, maxSize) {
+      return !(key in data) || data[key] == null ||
+        (data[key] is string && data[key].size() <= maxSize);
+    }
+
+    function validOptionalMap(data, key) {
+      return !(key in data) || data[key] == null || data[key] is map;
+    }
+
+    function validOptionalStringOrMap(data, key, maxSize) {
+      return !(key in data) || data[key] == null ||
+        (data[key] is string && data[key].size() <= maxSize) ||
+        data[key] is map;
+    }
+
+    function validSubKeys(data) {
+      return data.keys().hasOnly([
+        "token",
+        "lat",
+        "lon",
+        "place",
+        "threshold",
+        "lang",
+        "createdAt",
+        "updatedAt",
+        "lastNotified",
+        "lastNotifiedDay",
+        "lastDailyResetDay",
+        "lastHeatLevel",
+        "lastHeatAt",
+        "lastColdLevel",
+        "lastColdAt",
+        "lastWindLevel",
+        "lastWindAt",
+        "lastUvLevel",
+        "lastUvAt",
+        "lastUvResetDay",
+        "uvLevelsByZone",
+        "lastAemetLevel",
+        "lastAemetAt",
+        "lastAemetEvent",
+        "lastAemetSender",
+        "lastAemetEventKey",
+        "lastAemetResetDay"
+      ]);
+    }
+
+    function validSubShape(data, token) {
+      return validSubKeys(data)
+        && validToken(token)
+        && data.token == token
+        && data.lat is number
+        && data.lat >= -90
+        && data.lat <= 90
+        && data.lon is number
+        && data.lon >= -180
+        && data.lon <= 180
+        && (!("threshold" in data) || data.threshold == null || validThreshold(data.threshold))
+        && (!("lang" in data) || data.lang == null || validLang(data.lang))
+        && validOptionalString(data, "place", 200)
+        && validOptionalNumber(data, "createdAt")
+        && validOptionalNumber(data, "updatedAt")
+        && validOptionalNumber(data, "lastNotified")
+        && validOptionalString(data, "lastNotifiedDay", 20)
+        && validOptionalString(data, "lastDailyResetDay", 20)
+        && validOptionalNumber(data, "lastHeatLevel")
+        && validOptionalNumber(data, "lastHeatAt")
+        && validOptionalNumber(data, "lastColdLevel")
+        && validOptionalNumber(data, "lastColdAt")
+        && validOptionalNumber(data, "lastWindLevel")
+        && validOptionalNumber(data, "lastWindAt")
+        && validOptionalNumber(data, "lastUvLevel")
+        && validOptionalNumber(data, "lastUvAt")
+        && validOptionalString(data, "lastUvResetDay", 20)
+        && validOptionalMap(data, "uvLevelsByZone")
+        && validOptionalNumber(data, "lastAemetLevel")
+        && validOptionalNumber(data, "lastAemetAt")
+        && validOptionalStringOrMap(data, "lastAemetEvent", 300)
+        && validOptionalString(data, "lastAemetSender", 300)
+        && validOptionalString(data, "lastAemetEventKey", 500)
+        && validOptionalString(data, "lastAemetResetDay", 20);
+    }
+
+    match /subs/{token} {
+      allow list: if false;
+      allow get: if validToken(token);
+      allow create: if validSubShape(request.resource.data, token);
+      allow update: if validToken(token)
+        && resource.data.token == token
+        && request.resource.data.token == token
+        && validSubShape(request.resource.data, token);
+      allow delete: if validToken(token) && resource.data.token == token;
+    }
+
+    function validApiUsageId(usageId, data) {
+      return usageId.matches("^openuv_[0-9]{4}-[0-9]{2}-[0-9]{2}$")
+        && data.provider == "openuv"
+        && data.date is string
+        && data.date.matches("^[0-9]{4}-[0-9]{2}-[0-9]{2}$");
+    }
+
+    function validApiUsageShape(usageId, data) {
+      return data.keys().hasOnly([
+        "provider",
+        "date",
+        "calls",
+        "errors",
+        "lastCallAt"
+      ])
+      && validApiUsageId(usageId, data)
+      && data.calls is number
+      && data.calls >= 0
+      && data.errors is number
+      && data.errors >= 0
+      && data.lastCallAt is timestamp;
+    }
+
+    match /apiUsage/{usageId} {
+      allow get: if false;
+
+      allow list: if request.query.limit != null
+        && request.query.limit <= 20;
+
+      allow create: if validApiUsageShape(usageId, request.resource.data)
+        && request.resource.data.calls == 1
+        && request.resource.data.errors in [0, 1];
+
+      allow update: if validApiUsageShape(usageId, resource.data)
+        && validApiUsageShape(usageId, request.resource.data)
+        && request.resource.data.provider == resource.data.provider
+        && request.resource.data.date == resource.data.date
+        && request.resource.data.calls == resource.data.calls + 1
+        && (
+          request.resource.data.errors == resource.data.errors ||
+          request.resource.data.errors == resource.data.errors + 1
+        );
+
+      allow delete: if validApiUsageShape(usageId, resource.data)
+        && resource.data.lastCallAt < request.time - duration.value(90, "d");
+    }
+
+    match /weatherCache/{document=**} {
+      allow read, write: if false;
+    }
+
+    match /uvCache/{document=**} {
+      allow read, write: if false;
+    }
+
+    match /aemetZones/{document=**} {
+      allow read, write: if false;
+    }
+
+    match /notificationState/{document=**} {
+      allow read, write: if false;
+    }
+
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}
