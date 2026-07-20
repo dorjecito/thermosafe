@@ -224,7 +224,7 @@ export function getTokenSyncStatus(
   if (lastTokenSync == null || lastTokenSync === "") return { kind: "not_registered" };
 
   const date = parseStoredDate(lastTokenSync);
-  if (!date) return { kind: "absolute", value: String(lastTokenSync) };
+  if (!date) return { kind: "not_registered" };
 
   const diffMs = now.getTime() - date.getTime();
   if (!Number.isFinite(diffMs) || diffMs < 0) {

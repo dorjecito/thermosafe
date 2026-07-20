@@ -64,6 +64,19 @@ import {
   getTokenSyncStatus,
   type DiagnosticsCopyLabels,
 } from "../../src/utils/diagnostics";
+import {
+  CHUNK_RELOAD_STORAGE_KEY,
+  getChunkLoadRecoveryDecision,
+  isChunkLoadError,
+} from "../../src/utils/chunkLoadRecovery";
+import {
+  buildTokenLastSyncedPayload,
+  isFirestorePermissionDenied,
+  omitTokenLastSyncedAt,
+  saveTokenLastSyncedLocally,
+  TOKEN_LAST_SYNCED_LOCAL_KEY,
+  writeWithOptionalTokenSyncFallback,
+} from "../../src/utils/tokenSyncMetadata";
 
 function selectPrimaryForUi(
   enginePrimary: PrimaryRiskFromEngineResult
@@ -1012,6 +1025,154 @@ test("diagnostics distinguishes missing local token sync record from missing tok
   assert.equal(
     formatTokenSyncStatus(getTokenSyncStatus(false, "2026-07-19T09:42:00Z"), diagnosticCopyLabels),
     "Not available"
+  );
+});
+
+test("diagnostics treats invalid local token sync dates as not registered", () => {
+  assert.equal(
+    formatTokenSyncStatus(getTokenSyncStatus(true, "not-a-date"), diagnosticCopyLabels),
+    "Not registered locally"
+  );
+});
+
+test("token sync metadata stores the local timestamp only when called", () => {
+  const values = new Map<string, string>();
+  const storage = {
+    setItem(key: string, value: string) {
+      values.set(key, value);
+    },
+  };
+
+  assert.equal(values.has(TOKEN_LAST_SYNCED_LOCAL_KEY), false);
+  saveTokenLastSyncedLocally(
+    storage,
+    new Date("2026-07-20T09:42:00.000Z")
+  );
+
+  assert.equal(
+    values.get(TOKEN_LAST_SYNCED_LOCAL_KEY),
+    "2026-07-20T09:42:00.000Z"
+  );
+});
+
+test("token sync metadata builds an additive tokenLastSyncedAt payload", () => {
+  const sentinel = { kind: "serverTimestamp" };
+
+  assert.deepEqual(buildTokenLastSyncedPayload(sentinel), {
+    tokenLastSyncedAt: sentinel,
+  });
+});
+
+test("token sync metadata can omit the additive timestamp field", () => {
+  assert.deepEqual(
+    omitTokenLastSyncedAt({
+      token: "abc",
+      updatedAt: 123,
+      tokenLastSyncedAt: { kind: "serverTimestamp" },
+    }),
+    {
+      token: "abc",
+      updatedAt: 123,
+    }
+  );
+});
+
+test("token sync metadata detects Firestore permission-denied errors", () => {
+  assert.equal(isFirestorePermissionDenied({ code: "permission-denied" }), true);
+  assert.equal(
+    isFirestorePermissionDenied(
+      new Error("FirebaseError: Missing or insufficient permissions.")
+    ),
+    true
+  );
+  assert.equal(isFirestorePermissionDenied(new Error("network unavailable")), false);
+});
+
+test("token sync fallback keeps the subscription write when only timestamp metadata is denied", async () => {
+  const writes: Array<Record<string, unknown>> = [];
+  let localSyncSaved = false;
+
+  const result = await writeWithOptionalTokenSyncFallback(
+    {
+      token: "abc",
+      updatedAt: 123,
+      tokenLastSyncedAt: { kind: "serverTimestamp" },
+    },
+    async (payload) => {
+      writes.push(payload);
+      if (writes.length === 1) {
+        const error = new Error("Missing or insufficient permissions.");
+        (error as Error & { code?: string }).code = "permission-denied";
+        throw error;
+      }
+    },
+    () => {
+      localSyncSaved = true;
+    }
+  );
+
+  assert.equal(result.tokenSyncWritten, false);
+  assert.equal(localSyncSaved, false);
+  assert.equal(writes.length, 2);
+  assert.equal("tokenLastSyncedAt" in writes[0], true);
+  assert.equal("tokenLastSyncedAt" in writes[1], false);
+});
+
+test("token sync fallback fails when the critical subscription write fails", async () => {
+  await assert.rejects(
+    () =>
+      writeWithOptionalTokenSyncFallback(
+        {
+          token: "abc",
+          updatedAt: 123,
+        },
+        async () => {
+          throw new Error("Firestore unavailable");
+        },
+        () => {
+          throw new Error("should not save local sync");
+        }
+      ),
+    /Firestore unavailable/
+  );
+});
+
+test("chunk load recovery detects dynamic import chunk failures", () => {
+  assert.equal(
+    isChunkLoadError(
+      new TypeError(
+        "Failed to fetch dynamically imported module: https://thermosafe.app/assets/subscribe-old.js"
+      )
+    ),
+    true
+  );
+  assert.equal(
+    isChunkLoadError(new Error("FirebaseError: Missing or insufficient permissions")),
+    false
+  );
+});
+
+test("chunk load recovery reloads once inside the guard window", () => {
+  const values = new Map<string, string>();
+  const storage = {
+    getItem(key: string) {
+      return values.get(key) ?? null;
+    },
+    setItem(key: string, value: string) {
+      values.set(key, value);
+    },
+    removeItem(key: string) {
+      values.delete(key);
+    },
+  };
+  const error = new Error("ChunkLoadError: Loading chunk subscribe failed");
+
+  assert.equal(getChunkLoadRecoveryDecision(error, storage, 1000), "reload");
+  assert.equal(values.get(CHUNK_RELOAD_STORAGE_KEY), "1000");
+  assert.equal(getChunkLoadRecoveryDecision(error, storage, 1200), "already_attempted");
+  assert.equal(
+    getChunkLoadRecoveryDecision(new Error("ordinary error"), storage, 1300),
+    "not_chunk_error"
   );
 });
 

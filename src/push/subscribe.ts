@@ -1,8 +1,21 @@
 // 🔔 Subscripció i gestió de notificacions push ThermoSafe
 // --------------------------------------------------------
-import { doc, setDoc, deleteDoc, getDoc } from "firebase/firestore";
+import {
+  doc,
+  setDoc,
+  deleteDoc,
+  getDoc,
+  serverTimestamp,
+  type FieldValue,
+  type Timestamp,
+} from "firebase/firestore";
 import { getToken } from "firebase/messaging";
 import { db, messagingPromise } from "../firebase";
+import {
+  buildTokenLastSyncedPayload,
+  saveTokenLastSyncedLocally,
+  writeWithOptionalTokenSyncFallback,
+} from "../utils/tokenSyncMetadata";
 
 type Level = "moderate" | "high" | "very_high";
 type Lang = "ca" | "es" | "eu" | "gl" | "en";
@@ -36,6 +49,7 @@ type SubDoc = {
   lastUvAt?: number;
   lastAemetLevel?: number;
   lastAemetAt?: number;
+  tokenLastSyncedAt?: Timestamp | FieldValue | null;
 };
 
 const RESET_DISTANCE_KM = 15;
@@ -122,6 +136,48 @@ function resetRiskLevelsPayload() {
   };
 }
 
+function tokenLastSyncedPayload() {
+  return buildTokenLastSyncedPayload(serverTimestamp());
+}
+
+function rememberSuccessfulTokenSync() {
+  saveTokenLastSyncedLocally(localStorage);
+}
+
+function logNotifications(message: string, details?: unknown) {
+  if (!import.meta.env.DEV) return;
+  if (details === undefined) {
+    console.log(`[Notifications] ${message}`);
+  } else {
+    console.log(`[Notifications] ${message}`, details);
+  }
+}
+
+function warnNotifications(message: string, error?: unknown) {
+  if (!import.meta.env.DEV) return;
+  if (error === undefined) {
+    console.warn(`[Notifications] ${message}`);
+  } else {
+    console.warn(`[Notifications] ${message}`, error);
+  }
+}
+
+async function writeSubDocWithOptionalTokenSync<T extends Record<string, unknown>>(
+  ref: ReturnType<typeof doc>,
+  payload: T
+) {
+  return writeWithOptionalTokenSyncFallback(
+    payload,
+    (payloadToWrite) => setDoc(ref, payloadToWrite, { merge: true }),
+    rememberSuccessfulTokenSync,
+    (error) =>
+      warnNotifications(
+        "No s'ha pogut desar tokenLastSyncedAt. La subscripció continua sent vàlida.",
+        error
+      )
+  );
+}
+
 async function getFirebaseMessagingSwRegistration(): Promise<ServiceWorkerRegistration> {
   if (!("serviceWorker" in navigator)) {
     throw new Error("Aquest navegador no suporta Service Worker");
@@ -134,7 +190,7 @@ async function getFirebaseMessagingSwRegistration(): Promise<ServiceWorkerRegist
 
   await navigator.serviceWorker.ready;
 
-  console.log("✅ Firebase Messaging SW registrat:", reg.scope);
+  logNotifications("Firebase Messaging SW registrat.", { scope: reg.scope });
   return reg;
 }
 
@@ -214,8 +270,17 @@ export async function updateRiskAlertLocation({
       !langChanged &&
       !placeChanged
     ) {
+      await writeSubDocWithOptionalTokenSync(
+        ref,
+        {
+          token,
+          updatedAt: now,
+          ...tokenLastSyncedPayload(),
+        }
+      );
+
       if (import.meta.env.DEV) {
-        console.log("📍 Ubicació de notificacions sense canvis rellevants:", {
+        logNotifications("Ubicació de notificacions sense canvis rellevants.", {
           tokenAvailable: true,
           tokenLength: token.length,
           place: placeNorm || "",
@@ -235,13 +300,14 @@ export async function updateRiskAlertLocation({
       ...(placeNorm ? { place: placeNorm } : {}),
       ...(langNorm ? { lang: langNorm } : {}),
       updatedAt: now,
+      ...tokenLastSyncedPayload(),
       ...(mustResetLevels ? resetRiskLevelsPayload() : {}),
     };
 
-    await setDoc(ref, payload, { merge: true });
+    await writeSubDocWithOptionalTokenSync(ref, payload as Record<string, unknown>);
 
     if (import.meta.env.DEV) {
-      console.log("📍 Ubicació de notificacions actualitzada:", {
+      logNotifications("Ubicació de notificacions actualitzada.", {
         tokenAvailable: true,
         tokenLength: token.length,
         place: placeNorm || "",
@@ -252,7 +318,10 @@ export async function updateRiskAlertLocation({
 
     return true;
   } catch (e) {
-    console.error("⚠️ Error actualitzant ubicació de notificacions:", e);
+    warnNotifications(
+      "No s'ha pogut actualitzar la ubicació. La subscripció continua sent vàlida.",
+      e
+    );
     return false;
   }
 }
@@ -261,7 +330,7 @@ export async function updateRiskAlertLanguage(lang: Lang): Promise<boolean> {
   const token = localStorage.getItem("fcmToken");
 
   if (!token) {
-    console.log("🌍 No hi ha token FCM per actualitzar l'idioma de notificacions.");
+    logNotifications("No hi ha token FCM per actualitzar l'idioma de notificacions.");
     return false;
   }
 
@@ -270,23 +339,23 @@ export async function updateRiskAlertLanguage(lang: Lang): Promise<boolean> {
     const snap = await getDoc(ref);
 
     if (!snap.exists()) {
-      console.log("🌍 No existeix subscripció a Firestore per actualitzar idioma.");
+      logNotifications("No existeix subscripció a Firestore per actualitzar idioma.");
       return false;
     }
 
-    await setDoc(
+    await writeSubDocWithOptionalTokenSync(
       ref,
       {
         lang: normalizeLangValue(lang),
         updatedAt: Date.now(),
-      },
-      { merge: true }
+        ...tokenLastSyncedPayload(),
+      }
     );
 
-    console.log("🌍 Idioma de notificacions actualitzat:", lang);
+    logNotifications("Idioma de notificacions actualitzat.", { lang });
     return true;
   } catch (e) {
-    console.warn("⚠️ No s'ha pogut actualitzar l'idioma de notificacions:", e);
+    warnNotifications("No s'ha pogut actualitzar l'idioma de notificacions.", e);
     return false;
   }
 }
@@ -313,7 +382,7 @@ export async function enableRiskAlerts({
   lang,
   place,
 }: { threshold?: Level; lang?: Lang; place?: string } = {}) {
-  console.log("🟢 Iniciant activació de notificacions push...");
+  logNotifications("Iniciant activació de notificacions push.");
 
   const ok = await askNotifPerm();
   if (!ok) throw new Error("Has denegat el permís de notificacions");
@@ -345,7 +414,7 @@ export async function enableRiskAlerts({
   const now = Date.now();
 
   if (!snap.exists()) {
-    await setDoc(
+    await writeSubDocWithOptionalTokenSync(
       ref,
       {
         token,
@@ -356,12 +425,12 @@ export async function enableRiskAlerts({
         ...(placeNorm ? { place: placeNorm } : {}),
         createdAt: now,
         updatedAt: now,
+        ...tokenLastSyncedPayload(),
         ...resetRiskLevelsPayload(),
-      },
-      { merge: true }
+      }
     );
 
-    console.log("✅ Subscripció nova creada a Firestore.");
+    logNotifications("Subscripció nova creada a Firestore.");
   } else {
     const prev = snap.data() as SubDoc;
 
@@ -375,7 +444,7 @@ export async function enableRiskAlerts({
 
     const mustResetLevels = distanceKm >= RESET_DISTANCE_KM;
 
-    await setDoc(
+    await writeSubDocWithOptionalTokenSync(
       ref,
       {
         token,
@@ -385,13 +454,13 @@ export async function enableRiskAlerts({
         lang: langNorm,
         ...(placeNorm ? { place: placeNorm } : {}),
         updatedAt: now,
+        ...tokenLastSyncedPayload(),
         ...(mustResetLevels ? resetRiskLevelsPayload() : {}),
-      },
-      { merge: true }
+      }
     );
 
     if (import.meta.env.DEV) {
-      console.log("✅ Subscripció existent actualitzada a Firestore.", {
+      logNotifications("Subscripció existent actualitzada a Firestore.", {
         tokenAvailable: true,
         tokenLength: token.length,
         distanceKm: Math.round(distanceKm * 100) / 100,
@@ -402,7 +471,7 @@ export async function enableRiskAlerts({
 
   localStorage.setItem("fcmToken", token);
 
-  console.log("✅ Activació completada correctament.");
+  logNotifications("Activació completada correctament.");
   return token;
 }
 
@@ -412,7 +481,7 @@ export async function disableRiskAlerts(token: string | null) {
   try {
     await deleteDoc(doc(db, "subs", token));
     localStorage.removeItem("fcmToken");
-    console.log("🧹 Subscripció eliminada de Firestore i localStorage.");
+    logNotifications("Subscripció eliminada de Firestore i localStorage.");
   } catch (e) {
     console.error("⚠️ Error eliminant subscripció:", e);
   }

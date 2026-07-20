@@ -39,6 +39,10 @@ service cloud.firestore {
         data[key] is map;
     }
 
+    function validOptionalTimestamp(data, key) {
+      return !(key in data) || data[key] == null || data[key] is timestamp;
+    }
+
     function validSubKeys(data) {
       return data.keys().hasOnly([
         "token",
@@ -67,7 +71,8 @@ service cloud.firestore {
         "lastAemetEvent",
         "lastAemetSender",
         "lastAemetEventKey",
-        "lastAemetResetDay"
+        "lastAemetResetDay",
+        "tokenLastSyncedAt"
       ]);
     }
 
@@ -104,7 +109,8 @@ service cloud.firestore {
         && validOptionalStringOrMap(data, "lastAemetEvent", 300)
         && validOptionalString(data, "lastAemetSender", 300)
         && validOptionalString(data, "lastAemetEventKey", 500)
-        && validOptionalString(data, "lastAemetResetDay", 20);
+        && validOptionalString(data, "lastAemetResetDay", 20)
+        && validOptionalTimestamp(data, "tokenLastSyncedAt");
     }
 
     match /subs/{token} {

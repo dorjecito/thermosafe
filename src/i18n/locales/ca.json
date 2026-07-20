@@ -491,6 +491,11 @@
 "uvHigh": "Índex UV alt. Protecció elevada.",
 "uvVeryHigh": "Índex UV molt alt. Protecció solar imprescindible!",
 "uvExtreme": "🚨 UV EXTREM (11+) — Evita exposició directa",
+  "chunkRecovery": {
+    "title": "ThermoSafe s’ha actualitzat.",
+    "reloading": "S’està carregant la nova versió…",
+    "manual": "Carrega de nou la pàgina per continuar amb la nova versió."
+  },
   "diagnostics": {
     "title": "🔧 Diagnòstic de ThermoSafe",
     "copy": "📋 Copiar diagnòstic",

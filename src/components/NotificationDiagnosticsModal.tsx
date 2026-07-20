@@ -17,6 +17,7 @@ import {
   type DiagnosticsLocationInfo,
   type DiagnosticsSnapshot,
 } from "../utils/diagnostics";
+import { TOKEN_LAST_SYNCED_LOCAL_KEY } from "../utils/tokenSyncMetadata";
 
 type Props = {
   open: boolean;
@@ -140,6 +141,7 @@ function getEnvironment() {
     pushManagerSupported: typeof PushManager !== "undefined",
     token: readLocalStorage(["fcmToken"]),
     lastTokenSync: readLocalStorage([
+      TOKEN_LAST_SYNCED_LOCAL_KEY,
       "fcmTokenLastSyncAt",
       "lastFcmTokenSync",
       "lastTokenSync",

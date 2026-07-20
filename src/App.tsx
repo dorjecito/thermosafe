@@ -1,7 +1,7 @@
 /* ───────────────────────────────────────────
    src/App.tsx  —  100 % camins relatius
    ─────────────────────────────────────────── */
-   import React, { useEffect, useMemo, useRef, useState } from 'react';
+   import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
    import { useTranslation } from 'react-i18next';
    import './i18n';
    import "./App.css";
@@ -80,6 +80,10 @@ import { getUVDetailFromOpenUV, getUVFromOpenUV } from "./services/openUV";
    import { useCitySuggestions } from "./hooks/useCitySuggestions";
    import { useSmartActivity, type ActivityLevel } from "./hooks/useSmartActivity";
    import { createLongPressController, type DiagnosticsAlertSetting } from "./utils/diagnostics";
+   import {
+     clearExpiredChunkReloadAttempt,
+     getChunkLoadRecoveryDecision,
+   } from "./utils/chunkLoadRecovery";
 
 const UVAdvice = React.lazy(() => import("./components/UVAdvice"));
 const UVSafeTime = React.lazy(() => import("./components/UVSafeTime"));
@@ -286,8 +290,10 @@ const [pushToken, setPushToken] = useState<string | null>(null);
 const [busy, setBusy] = useState(false);
 const [showActivityInfo, setShowActivityInfo] = useState(false);
 const [diagnosticsOpen, setDiagnosticsOpen] = useState(false);
+const [chunkRecoveryState, setChunkRecoveryState] = useState<"reloading" | "manual" | null>(null);
 const diagnosticsLongPressRef = useRef<ReturnType<typeof createLongPressController> | null>(null);
 const diagnosticsScrollCancelRef = useRef<(() => void) | null>(null);
+const chunkReloadTimerRef = useRef<number | null>(null);
 
 if (!diagnosticsLongPressRef.current) {
   diagnosticsLongPressRef.current = createLongPressController(
@@ -303,6 +309,58 @@ const cancelDiagnosticsLongPress = () => {
     diagnosticsScrollCancelRef.current = null;
   }
 };
+
+useEffect(() => {
+  try {
+    clearExpiredChunkReloadAttempt(window.sessionStorage);
+  } catch {
+    // sessionStorage pot no estar disponible en alguns entorns privats.
+  }
+
+  return () => {
+    if (chunkReloadTimerRef.current != null) {
+      window.clearTimeout(chunkReloadTimerRef.current);
+    }
+  };
+}, []);
+
+const handleChunkLoadFailure = useCallback((error: unknown): boolean => {
+  let decision: ReturnType<typeof getChunkLoadRecoveryDecision>;
+
+  try {
+    decision = getChunkLoadRecoveryDecision(error, window.sessionStorage);
+  } catch {
+    decision = "not_chunk_error";
+  }
+
+  if (decision === "not_chunk_error") return false;
+
+  if (decision === "reload") {
+    setChunkRecoveryState("reloading");
+    if (chunkReloadTimerRef.current == null) {
+      chunkReloadTimerRef.current = window.setTimeout(() => {
+        window.location.reload();
+      }, 900);
+    }
+    return true;
+  }
+
+  setChunkRecoveryState("manual");
+  return true;
+}, []);
+
+useEffect(() => {
+  const onUnhandledRejection = (event: PromiseRejectionEvent) => {
+    if (handleChunkLoadFailure(event.reason)) {
+      event.preventDefault();
+    }
+  };
+
+  window.addEventListener("unhandledrejection", onUnhandledRejection);
+  return () => {
+    window.removeEventListener("unhandledrejection", onUnhandledRejection);
+  };
+}, [handleChunkLoadFailure]);
 
 const startDiagnosticsLongPress = (event: React.PointerEvent<HTMLElement>) => {
   if (event.pointerType === "mouse" && event.button !== 0) return;
@@ -676,6 +734,8 @@ async function onTogglePush(next: boolean) {
       // ❌ eliminat: setMsgHeat(t("push.disabled"));
     }
   } catch (e: any) {
+    if (handleChunkLoadFailure(e)) return;
+
     console.error(e);
 
     const key =
@@ -821,9 +881,11 @@ const fetchWeather = async (cityName: string) => {
           lon: newLon,
           place: resolvedName,
           lang,
-        }).catch((e) =>
-          console.warn("[PUSH] No s'ha pogut actualitzar la ubicació del token:", e)
-        );
+        }).catch((e) => {
+          if (!handleChunkLoadFailure(e)) {
+            console.warn("[PUSH] No s'ha pogut actualitzar la ubicació del token:", e);
+          }
+        });
       }
 		    } else {
 		      setUvi(null);
@@ -1061,9 +1123,11 @@ setDataSource("gps");
 // 🔔 Si les notificacions estan activades, actualitza la ubicació i el nom visible del token.
 // Si la nova ubicació és a 15 km o més de l'anterior, subscribe.ts reiniciarà els nivells a 0.
 if (localStorage.getItem("fcmToken")) {
-  updateRiskAlertLocationLazy({ lat, lon, place: nm, lang }).catch((e) =>
-    console.warn("[PUSH] No s'ha pogut actualitzar la ubicació del token:", e)
-  );
+  updateRiskAlertLocationLazy({ lat, lon, place: nm, lang }).catch((e) => {
+    if (!handleChunkLoadFailure(e)) {
+      console.warn("[PUSH] No s'ha pogut actualitzar la ubicació del token:", e);
+    }
+  });
 }
 
 function normalizeSky(desc: string): string {
@@ -1262,9 +1326,11 @@ const handleSuggestionSelect = async (s: any) => {
         lon: s.lon,
         place: label,
         lang,
-      }).catch((e) =>
-        console.warn("[PUSH] No s'ha pogut actualitzar la ubicació del token:", e)
-      );
+      }).catch((e) => {
+        if (!handleChunkLoadFailure(e)) {
+          console.warn("[PUSH] No s'ha pogut actualitzar la ubicació del token:", e);
+        }
+      });
     }
     collapseSearchPanel();
 	  } catch (err) {
@@ -1894,6 +1960,37 @@ const skyLabel = useMemo(() => {
 
 return (
   <div className="container">
+    {chunkRecoveryState && (
+      <div
+        role="status"
+        aria-live="assertive"
+        style={{
+          position: "fixed",
+          top: 16,
+          left: "50%",
+          transform: "translateX(-50%)",
+          zIndex: 9999,
+          maxWidth: "min(92vw, 420px)",
+          padding: "12px 16px",
+          borderRadius: 12,
+          background: "#fff7ed",
+          color: "#7c2d12",
+          boxShadow: "0 10px 24px rgba(0,0,0,.18)",
+          border: "1px solid rgba(251,146,60,.45)",
+          textAlign: "center",
+          fontWeight: 700,
+        }}
+      >
+        <div>{t("chunkRecovery.title")}</div>
+        <div style={{ fontWeight: 500, marginTop: 4 }}>
+          {t(
+            chunkRecoveryState === "reloading"
+              ? "chunkRecovery.reloading"
+              : "chunkRecovery.manual"
+          )}
+        </div>
+      </div>
+    )}
     <CompactHeader
       visible={showCompactHeader}
       city={city}
