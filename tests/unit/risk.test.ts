@@ -1028,6 +1028,38 @@ test("diagnostics distinguishes missing local token sync record from missing tok
   );
 });
 
+test("diagnostics uses a specific message when location was not updated this session", () => {
+  const modalSource = readFileSync(
+    new URL("../../src/components/NotificationDiagnosticsModal.tsx", import.meta.url),
+    "utf8"
+  );
+
+  assert.match(modalSource, /lastLocationUpdate[\s\S]*locationNotUpdatedThisSession/);
+});
+
+test("diagnostics location update fallback is translated in all supported languages", () => {
+  const locales = ["ca", "es", "en", "eu", "gl"];
+
+  for (const locale of locales) {
+    const messages = JSON.parse(
+      readFileSync(
+        new URL(`../../src/i18n/locales/${locale}.json`, import.meta.url),
+        "utf8"
+      )
+    ) as { diagnostics?: { locationNotUpdatedThisSession?: string } };
+
+    assert.equal(
+      typeof messages.diagnostics?.locationNotUpdatedThisSession,
+      "string",
+      `${locale} should define diagnostics.locationNotUpdatedThisSession`
+    );
+    assert.ok(
+      messages.diagnostics?.locationNotUpdatedThisSession?.length,
+      `${locale} location fallback should not be empty`
+    );
+  }
+});
+
 test("diagnostics treats invalid local token sync dates as not registered", () => {
   assert.equal(
     formatTokenSyncStatus(getTokenSyncStatus(true, "not-a-date"), diagnosticCopyLabels),

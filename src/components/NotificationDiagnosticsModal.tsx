@@ -445,7 +445,7 @@ export default function NotificationDiagnosticsModal({
               />
               <Field
                 label={tr("lastLocationUpdate")}
-                value={snapshot.location.lastLocationUpdate || tr("notAvailableThisSession")}
+                value={snapshot.location.lastLocationUpdate || tr("locationNotUpdatedThisSession")}
               />
               <Field
                 label={tr("lastTokenSync")}
@@ -516,7 +516,7 @@ export default function NotificationDiagnosticsModal({
               />
               <Field
                 label={tr("lastLocationUpdate")}
-                value={snapshot.location.lastLocationUpdate || tr("notAvailableThisSession")}
+                value={snapshot.location.lastLocationUpdate || tr("locationNotUpdatedThisSession")}
               />
               <Field
                 label={tr("lastTokenSync")}

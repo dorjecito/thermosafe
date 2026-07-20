@@ -554,6 +554,7 @@
     "unknownValue": "No disponible",
     "notRegisteredLocally": "No registrado localmente",
     "notAvailableThisSession": "No disponible en esta sesión",
+    "locationNotUpdatedThisSession": "No ha habido ninguna actualización de la ubicación en esta sesión",
     "relativeMinute": "Hace {{count}} minuto",
     "relativeMinutes": "Hace {{count}} minutos",
     "relativeHour": "Hace {{count}} hora",

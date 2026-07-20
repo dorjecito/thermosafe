@@ -526,6 +526,7 @@
     "unknownValue": "Ez dago erabilgarri",
     "notRegisteredLocally": "Ez dago lokalean erregistratuta",
     "notAvailableThisSession": "Ez dago erabilgarri saio honetan",
+    "locationNotUpdatedThisSession": "Saio honetan ez da kokapenaren eguneratzerik erregistratu",
     "relativeMinute": "Duela {{count}} minutu",
     "relativeMinutes": "Duela {{count}} minutu",
     "relativeHour": "Duela {{count}} ordu",

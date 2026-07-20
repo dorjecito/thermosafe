@@ -570,6 +570,7 @@
     "unknownValue": "Non dispoñible",
     "notRegisteredLocally": "Non rexistrada localmente",
     "notAvailableThisSession": "Non dispoñible nesta sesión",
+    "locationNotUpdatedThisSession": "Non houbo ningunha actualización da localización nesta sesión",
     "relativeMinute": "Hai {{count}} minuto",
     "relativeMinutes": "Hai {{count}} minutos",
     "relativeHour": "Hai {{count}} hora",
