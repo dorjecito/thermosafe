@@ -11,7 +11,7 @@ createRoot(document.getElementById('root')!).render(
 );
 
 // 🔔 Registre del Service Worker únic (PWA + Firebase)
-if ('serviceWorker' in navigator) {
+if (import.meta.env.PROD && 'serviceWorker' in navigator) {
   window.addEventListener('load', () => {
     navigator.serviceWorker
       .register('/sw.js')

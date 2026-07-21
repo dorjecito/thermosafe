@@ -475,6 +475,11 @@
     "reloading": "Bertsio berria kargatzen ari da…",
     "manual": "Birkargatu orria bertsio berriarekin jarraitzeko."
   },
+  "update": {
+    "available": "🔄 Bertsio berria eskuragarri",
+    "description": "Eguneratu ThermoSafe azken hobekuntzak jasotzeko.",
+    "reload": "Eguneratu"
+  },
   "uv_source_note": "UV erreferentzia-datuak (OpenUV/NASA). Orduaren eta iturriaren arabera alda daitezke.",
   "diagnostics": {
     "title": "🔧 ThermoSafe diagnostikoa",

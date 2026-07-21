@@ -77,6 +77,17 @@ import {
   TOKEN_LAST_SYNCED_LOCAL_KEY,
   writeWithOptionalTokenSyncFallback,
 } from "../../src/utils/tokenSyncMetadata";
+import {
+  buildVersionUrl,
+  fetchPublishedVersion,
+  isNewVersionAvailable,
+  VERSION_CHECK_INTERVAL_MS,
+} from "../../src/utils/versionCheck";
+import {
+  prepareServiceWorkerForVersionReload,
+  reloadThermoSafeVersion,
+  unregisterAppShellServiceWorkers,
+} from "../../src/utils/serviceWorkerUpdate";
 
 function selectPrimaryForUi(
   enginePrimary: PrimaryRiskFromEngineResult
@@ -1060,6 +1071,21 @@ test("diagnostics location update fallback is translated in all supported langua
   }
 });
 
+test("location audit logging stays development-only and records geocoder fields", () => {
+  const source = readFileSync(
+    new URL("../../src/utils/getLocationNameFromCoords.ts", import.meta.url),
+    "utf8"
+  );
+
+  assert.match(source, /if \(!import\.meta\.env\.DEV\) return;/);
+  assert.match(source, /\[Location Audit\]/);
+  assert.match(source, /suburb/);
+  assert.match(source, /neighbourhood/);
+  assert.match(source, /village/);
+  assert.match(source, /municipality/);
+  assert.match(source, /finalName/);
+});
+
 test("diagnostics treats invalid local token sync dates as not registered", () => {
   assert.equal(
     formatTokenSyncStatus(getTokenSyncStatus(true, "not-a-date"), diagnosticCopyLabels),
@@ -1206,6 +1232,199 @@ test("chunk load recovery reloads once inside the guard window", () => {
     getChunkLoadRecoveryDecision(new Error("ordinary error"), storage, 1300),
     "not_chunk_error"
   );
+});
+
+test("version check detects a newer published build without polling aggressively", async () => {
+  assert.equal(VERSION_CHECK_INTERVAL_MS, 30 * 60 * 1000);
+  assert.equal(isNewVersionAvailable("build-a", { buildId: "build-a" }), false);
+  assert.equal(isNewVersionAvailable("build-a", { buildId: "build-b" }), true);
+  assert.equal(isNewVersionAvailable("", { buildId: "build-b" }), false);
+  assert.equal(isNewVersionAvailable("build-a", null), false);
+
+  assert.equal(buildVersionUrl(12345), "/version.json?t=12345");
+
+  const calls: Array<{ input: RequestInfo | URL; init?: RequestInit }> = [];
+  const version = await fetchPublishedVersion(
+    async (input, init) => {
+      calls.push({ input, init });
+      return {
+        ok: true,
+        async json() {
+          return { version: "1.0.10", buildId: "build-b" };
+        },
+      } as Response;
+    },
+    () => 12345
+  );
+
+  assert.deepEqual(version, { version: "1.0.10", buildId: "build-b" });
+  assert.equal(calls[0]?.input, "/version.json?t=12345");
+  assert.equal(calls[0]?.init?.cache, "no-store");
+});
+
+test("version update banner uses translated accessible copy", () => {
+  const source = readFileSync(
+    new URL("../../src/components/UpdateBanner.tsx", import.meta.url),
+    "utf8"
+  );
+
+  assert.match(source, /role="status"/);
+  assert.match(source, /aria-live="polite"/);
+  assert.match(source, /update\.available/);
+  assert.match(source, /update\.description/);
+  assert.match(source, /update\.reload/);
+});
+
+test("version detection uses the Vite build id injected through import meta env", () => {
+  const appSource = readFileSync(
+    new URL("../../src/App.tsx", import.meta.url),
+    "utf8"
+  );
+  const viteConfigSource = readFileSync(
+    new URL("../../vite.config.ts", import.meta.url),
+    "utf8"
+  );
+
+  assert.match(appSource, /import\.meta\.env\.VITE_THERMOSAFE_BUILD_ID/);
+  assert.doesNotMatch(appSource, /__THERMOSAFE_BUILD_ID__/);
+  assert.match(
+    viteConfigSource,
+    /"import\.meta\.env\.VITE_THERMOSAFE_BUILD_ID"/
+  );
+  assert.match(appSource, /const updateAvailable = isNewVersionAvailable/);
+  assert.match(appSource, /setVersionUpdateAvailable\(updateAvailable\)/);
+});
+
+test("GPS and suggestion weather fetches guard null responses before reading timezone", () => {
+  const appSource = readFileSync(
+    new URL("../../src/App.tsx", import.meta.url),
+    "utf8"
+  );
+
+  assert.match(appSource, /if \(!d\) \{\s*if \(!silent\) setErr\(t\("errorGPS"\)\);\s*return;\s*\}\s*setData\(d\);/);
+  assert.match(appSource, /const data = await getWeatherByCoords\(s\.lat, s\.lon, lang\);\s*if \(!data\) \{\s*setErr\(t\("errorCity"\)\);\s*return;\s*\}/);
+});
+
+test("version reload prepares the service worker before reloading", async () => {
+  let updateCalled = false;
+  let reloaded = false;
+  let listener: (() => void) | null = null;
+  const waitingMessages: unknown[] = [];
+
+  const serviceWorker = {
+    controller: {},
+    addEventListener(type: string, callback: () => void) {
+      if (type === "controllerchange") listener = callback;
+    },
+    removeEventListener(type: string, callback: () => void) {
+      if (type === "controllerchange" && listener === callback) listener = null;
+    },
+    async getRegistrations() {
+      return [
+        {
+          async update() {
+            updateCalled = true;
+            queueMicrotask(() => listener?.());
+          },
+          waiting: {
+            postMessage(message: unknown) {
+              waitingMessages.push(message);
+            },
+          },
+        },
+      ];
+    },
+  };
+
+  await reloadThermoSafeVersion({
+    serviceWorker: serviceWorker as unknown as ServiceWorkerContainer,
+    reload: () => {
+      reloaded = true;
+    },
+    timeoutMs: 50,
+  });
+
+  assert.equal(updateCalled, true);
+  assert.deepEqual(waitingMessages, [{ type: "SKIP_WAITING" }]);
+  assert.equal(reloaded, true);
+});
+
+test("version reload still reloads when service worker update is unavailable", async () => {
+  let reloaded = false;
+
+  await reloadThermoSafeVersion({
+    serviceWorker: null,
+    reload: () => {
+      reloaded = true;
+    },
+    timeoutMs: 1,
+  });
+
+  assert.equal(reloaded, true);
+});
+
+test("service worker preparation tolerates update failures", async () => {
+  let listenerRemoved = false;
+  const serviceWorker = {
+    controller: {},
+    addEventListener() {},
+    removeEventListener() {
+      listenerRemoved = true;
+    },
+    async getRegistrations() {
+      return [
+        {
+          async update() {
+            throw new Error("update failed");
+          },
+        },
+      ];
+    },
+  };
+
+  await prepareServiceWorkerForVersionReload(
+    serviceWorker as unknown as ServiceWorkerContainer,
+    1
+  );
+
+  assert.equal(listenerRemoved, true);
+});
+
+test("version reload unregisters only the app shell service worker", async () => {
+  const unregistered: string[] = [];
+  const serviceWorker = {
+    controller: null,
+    addEventListener() {},
+    removeEventListener() {},
+    async getRegistrations() {
+      return [
+        {
+          active: { scriptURL: "http://localhost:4174/sw.js" },
+          async update() {},
+          async unregister() {
+            unregistered.push("app");
+            return true;
+          },
+        },
+        {
+          active: {
+            scriptURL: "http://localhost:4174/firebase-messaging-sw.js",
+          },
+          async update() {},
+          async unregister() {
+            unregistered.push("firebase");
+            return true;
+          },
+        },
+      ];
+    },
+  };
+
+  await unregisterAppShellServiceWorkers(
+    serviceWorker as unknown as ServiceWorkerContainer
+  );
+
+  assert.deepEqual(unregistered, ["app"]);
 });
 
 test("diagnostics copy text does not expose sensitive token data", () => {

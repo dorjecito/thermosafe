@@ -27,6 +27,50 @@ type NominatimResponse = {
   address?: NominatimAddress;
 };
 
+function locationAuditAddress(address?: NominatimAddress) {
+  return {
+    suburb: address?.suburb || "",
+    neighbourhood: address?.neighbourhood || "",
+    quarter: address?.quarter || "",
+    hamlet: address?.hamlet || "",
+    village: address?.village || "",
+    town: address?.town || "",
+    city: address?.city || "",
+    municipality: address?.municipality || "",
+    county: address?.county || "",
+    state: address?.state || "",
+    country: address?.country || "",
+  };
+}
+
+function logLocationAudit(
+  payload: {
+    lat: number;
+    lon: number;
+    provider: "nominatim" | "openweather";
+    fields: Record<string, unknown>;
+    finalName: string;
+    source: string;
+  }
+) {
+  if (!import.meta.env.DEV) return;
+
+  console.log("[Location Audit]", {
+    gps: {
+      lat: payload.lat,
+      lon: payload.lon,
+    },
+    reverseGeocoder: {
+      provider: payload.provider,
+      ...payload.fields,
+    },
+    selected: {
+      source: payload.source,
+      name: payload.finalName,
+    },
+  });
+}
+
 function pickLocalName(item: GeoReverseItem, lang?: string) {
   const l = (lang || "").toLowerCase();
   const ln = item.local_names;
@@ -104,10 +148,24 @@ async function getFromNominatim(
 
     const data = (await res.json()) as NominatimResponse;
 
-    return (
-      pickBestLocalName(data.address) ||
-      (data.name || data.display_name || "").trim()
-    );
+    const bestLocalName = pickBestLocalName(data.address);
+    const fallbackName = (data.name || data.display_name || "").trim();
+    const finalName = bestLocalName || fallbackName;
+
+    logLocationAudit({
+      lat,
+      lon,
+      provider: "nominatim",
+      fields: {
+        ...locationAuditAddress(data.address),
+        name: data.name || "",
+        display_name: data.display_name || "",
+      },
+      finalName,
+      source: bestLocalName ? "address_priority" : "name_or_display_name",
+    });
+
+    return finalName;
   } catch (error) {
     console.warn("[Nominatim Reverse] Error:", error);
     return "";
@@ -152,7 +210,25 @@ async function getFromOpenWeather(
     const first = data?.[0];
     if (!first) return "";
 
-    return pickLocalName(first, lang);
+    const finalName = pickLocalName(first, lang);
+
+    logLocationAudit({
+      lat,
+      lon,
+      provider: "openweather",
+      fields: {
+        name: first.name || "",
+        state: first.state || "",
+        country: first.country || "",
+        local_names: first.local_names
+          ? Object.keys(first.local_names).sort()
+          : [],
+      },
+      finalName,
+      source: "openweather_reverse",
+    });
+
+    return finalName;
   } catch (error) {
     console.warn("[OpenWeather Reverse] Error:", error);
     return "";

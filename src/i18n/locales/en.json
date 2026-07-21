@@ -513,6 +513,11 @@
     "reloading": "Loading the new version…",
     "manual": "Reload the page to continue with the new version."
   },
+  "update": {
+    "available": "🔄 New version available",
+    "description": "Update ThermoSafe to get the latest improvements.",
+    "reload": "Update"
+  },
   "uv_source_note": "Reference UV data (OpenUV/NASA). Values may vary by time and source.",
   "diagnostics": {
     "title": "🔧 ThermoSafe diagnostics",

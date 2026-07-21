@@ -496,6 +496,11 @@
     "reloading": "S’està carregant la nova versió…",
     "manual": "Carrega de nou la pàgina per continuar amb la nova versió."
   },
+  "update": {
+    "available": "🔄 Nova versió disponible",
+    "description": "Actualitza ThermoSafe per obtenir les darreres millores.",
+    "reload": "Actualitza"
+  },
   "diagnostics": {
     "title": "🔧 Diagnòstic de ThermoSafe",
     "copy": "📋 Copiar diagnòstic",

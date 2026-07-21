@@ -11,33 +11,45 @@ export default function UpdateBanner({ onReload }: Props) {
 
   return (
     <div
+      role="status"
+      aria-live="polite"
       style={{
         position: "fixed",
-        top: 0,
-        width: "100%",
-        background: "#ffcc00",
-        color: "#000",
-        padding: "0.8rem",
+        right: "1rem",
+        bottom: "1rem",
+        maxWidth: "min(92vw, 360px)",
+        background: "var(--card-bg)",
+        color: "var(--card-text)",
+        padding: "0.85rem 0.95rem",
         display: "flex",
+        gap: "0.75rem",
         justifyContent: "space-between",
         alignItems: "center",
+        borderRadius: "14px",
+        border: "1px solid rgba(59,130,246,0.28)",
         zIndex: 9999,
-        fontWeight: 600,
-        boxShadow: "0 2px 6px rgba(0,0,0,0.25)",
+        boxShadow: "0 8px 24px rgba(0,0,0,0.16)",
       }}
     >
-      <span>{t("update.available")}</span>
+      <div>
+        <div style={{ fontWeight: 700 }}>{t("update.available")}</div>
+        <div style={{ fontSize: "0.9rem", opacity: 0.82, marginTop: 2 }}>
+          {t("update.description")}
+        </div>
+      </div>
 
       <button
         onClick={onReload}
+        type="button"
         style={{
-          background: "#000",
+          background: "#1d4ed8",
           color: "white",
           padding: "0.4rem 0.9rem",
-          borderRadius: "6px",
+          borderRadius: "9px",
           border: "none",
           cursor: "pointer",
           fontWeight: 700,
+          whiteSpace: "nowrap",
         }}
       >
         {t("update.reload")}

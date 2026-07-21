@@ -519,6 +519,11 @@
     "reloading": "Estase cargando a nova versión…",
     "manual": "Recarga a páxina para continuar coa nova versión."
   },
+  "update": {
+    "available": "🔄 Nova versión dispoñible",
+    "description": "Actualiza ThermoSafe para obter as últimas melloras.",
+    "reload": "Actualizar"
+  },
   "uv_source_note": "Datos UV de referencia (OpenUV/NASA). Poden variar segundo a hora e a fonte.",
   "diagnostics": {
     "title": "🔧 Diagnóstico de ThermoSafe",

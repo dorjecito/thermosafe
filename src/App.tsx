@@ -53,7 +53,13 @@ import { getUVDetailFromOpenUV, getUVFromOpenUV } from "./services/openUV";
    import { primaryRiskFromEngine } from "./utils/primaryRiskFromEngine";
    import { getWeatherContext } from "./utils/weatherContext";
    import { fetchSolarIrr } from "./utils/fetchSolarIrr";
-   import { resolveSkyDescription } from "./utils/resolveSkyDescription";
+	   import { resolveSkyDescription } from "./utils/resolveSkyDescription";
+	   import {
+	     fetchPublishedVersion,
+	     isNewVersionAvailable,
+	     VERSION_CHECK_INTERVAL_MS,
+	   } from "./utils/versionCheck";
+	   import { reloadThermoSafeVersion } from "./utils/serviceWorkerUpdate";
    
    /* —— components ————————————————————————— */
    import Recommendations     from './components/Recommendations';
@@ -66,6 +72,7 @@ import { getUVDetailFromOpenUV, getUVFromOpenUV } from "./services/openUV";
    import CurrentConditions from "./components/CurrentConditions";
    import CurrentWeatherSummary from "./components/CurrentWeatherSummary";
    import SkyConditionCard from "./components/SkyConditionCard";
+   import UpdateBanner from "./components/UpdateBanner";
    import { useScrollCompactHeader } from "./hooks/useScrollCompactHeader";
    
    /* —— analítica (opcional) ———————————— */
@@ -94,6 +101,7 @@ const NotificationDiagnosticsModal = React.lazy(
 );
 
 const THERMOSAFE_VERSION = "1.0.10";
+const THERMOSAFE_BUILD_ID = import.meta.env.VITE_THERMOSAFE_BUILD_ID || "";
 
 type EnableRiskAlertsOptions = Parameters<typeof import("./push/subscribe").enableRiskAlerts>[0];
 type UpdateRiskAlertLocationPayload = Parameters<typeof import("./push/subscribe").updateRiskAlertLocation>[0];
@@ -291,6 +299,7 @@ const [busy, setBusy] = useState(false);
 const [showActivityInfo, setShowActivityInfo] = useState(false);
 const [diagnosticsOpen, setDiagnosticsOpen] = useState(false);
 const [chunkRecoveryState, setChunkRecoveryState] = useState<"reloading" | "manual" | null>(null);
+const [versionUpdateAvailable, setVersionUpdateAvailable] = useState(false);
 const diagnosticsLongPressRef = useRef<ReturnType<typeof createLongPressController> | null>(null);
 const diagnosticsScrollCancelRef = useRef<(() => void) | null>(null);
 const chunkReloadTimerRef = useRef<number | null>(null);
@@ -348,6 +357,42 @@ const handleChunkLoadFailure = useCallback((error: unknown): boolean => {
   setChunkRecoveryState("manual");
   return true;
 }, []);
+
+const checkForAppUpdate = useCallback(async () => {
+  try {
+    const published = await fetchPublishedVersion();
+    const updateAvailable = isNewVersionAvailable(THERMOSAFE_BUILD_ID, published);
+    setVersionUpdateAvailable(updateAvailable);
+  } catch {
+    // La comprovació de versió és informativa i no ha d'interrompre l'app.
+  }
+}, []);
+
+const handleVersionUpdateReload = useCallback(() => {
+  void reloadThermoSafeVersion();
+}, []);
+
+useEffect(() => {
+  checkForAppUpdate();
+
+  const onVisibilityChange = () => {
+    if (document.visibilityState === "visible") {
+      checkForAppUpdate();
+    }
+  };
+
+  const intervalId = window.setInterval(
+    checkForAppUpdate,
+    VERSION_CHECK_INTERVAL_MS
+  );
+
+  document.addEventListener("visibilitychange", onVisibilityChange);
+
+  return () => {
+    document.removeEventListener("visibilitychange", onVisibilityChange);
+    window.clearInterval(intervalId);
+  };
+}, [checkForAppUpdate]);
 
 useEffect(() => {
   const onUnhandledRejection = (event: PromiseRejectionEvent) => {
@@ -1062,6 +1107,10 @@ if (import.meta.env.DEV) {
 const d = await getWeatherByCoords(lat, lon, lang);
 
 if (isStaleRequest("gps", requestId)) return;
+if (!d) {
+  if (!silent) setErr(t("errorGPS"));
+  return;
+}
 setData(d);
 setDataSource("gps");
 
@@ -1257,6 +1306,10 @@ const handleSuggestionSelect = async (s: any) => {
     setDataSource("search");
 
     const data = await getWeatherByCoords(s.lat, s.lon, lang);
+    if (!data) {
+      setErr(t("errorCity"));
+      return;
+    }
 
     setData(data);
     setLat(s.lat);
@@ -1990,6 +2043,9 @@ return (
           )}
         </div>
       </div>
+    )}
+    {versionUpdateAvailable && (
+      <UpdateBanner onReload={handleVersionUpdateReload} />
     )}
     <CompactHeader
       visible={showCompactHeader}
