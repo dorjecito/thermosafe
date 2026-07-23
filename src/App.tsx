@@ -5,7 +5,7 @@
    import { useTranslation } from 'react-i18next';
    import './i18n';
    import "./App.css";
-  
+
  /* ── serveis ── */
 import {
   getWeatherByCity,
@@ -24,7 +24,7 @@ import {
 } from "./constants/riskThresholds";
 
 import { getUVDetailFromOpenUV, getUVFromOpenUV } from "./services/openUV";
-   
+
    /* —— utilitats ——————————————————————————— */
    import { getLocationNameFromCoords } from './utils/getLocationNameFromCoords';
    import { getHeatRisk } from './utils/heatRisk';
@@ -48,7 +48,8 @@ import { getUVDetailFromOpenUV, getUVFromOpenUV } from "./services/openUV";
 	   import { getUvText, normalizeUviForDisplay } from "./utils/uv";
      import { getTimeAwareUvAdvice } from "./utils/uvAdviceMessage";
 	   import { buildRiskTrend, type RiskTrendResult } from "./utils/riskTrend";
-   import { safeUVFetch } from "./utils/safeUVFetch";
+	   import { getCoords, type Coords } from "./utils/geolocation";
+	   import { safeUVFetch } from "./utils/safeUVFetch";
    import { evaluateRiskScore } from "./utils/riskScoreEngine";
    import { primaryRiskFromEngine } from "./utils/primaryRiskFromEngine";
    import { getWeatherContext } from "./utils/weatherContext";
@@ -60,7 +61,7 @@ import { getUVDetailFromOpenUV, getUVFromOpenUV } from "./services/openUV";
 	     VERSION_CHECK_INTERVAL_MS,
 	   } from "./utils/versionCheck";
 	   import { reloadThermoSafeVersion } from "./utils/serviceWorkerUpdate";
-   
+
    /* —— components ————————————————————————— */
    import Recommendations     from './components/Recommendations';
    import UVScale             from './components/UVScale';
@@ -74,7 +75,7 @@ import { getUVDetailFromOpenUV, getUVFromOpenUV } from "./services/openUV";
    import SkyConditionCard from "./components/SkyConditionCard";
    import UpdateBanner from "./components/UpdateBanner";
    import { useScrollCompactHeader } from "./hooks/useScrollCompactHeader";
-   
+
    /* —— analítica (opcional) ———————————— */
    import { inject } from '@vercel/analytics';
    inject()
@@ -224,7 +225,7 @@ export default function App() {
   const [showSkinInfo, setShowSkinInfo] = useState(false);
   const [uvDetailsOpen, setUvDetailsOpen] = useState(false);
    const searchInputRef = useRef<HTMLInputElement | null>(null);
-  
+
 
   // ✅ Traducció segura: si falta la clau, torna un fallback llegible
   const tr = (key: string, fallback: string) => {
@@ -244,7 +245,7 @@ export default function App() {
   if (i18n.language !== lang) {
     i18n.changeLanguage(lang);
   }
-}, []); 
+}, []);
 
 // --- Recupera l'estat del push i preferències al carregar la PWA ---
 useEffect(() => {
@@ -502,7 +503,7 @@ useEffect(() => {
   return () => {
     document.removeEventListener("click", handleClickOutside);
   };
-}, []); 
+}, []);
 
 // ☁️ Estat del cel
 const [sky, setSky] = useState<string>('');
@@ -539,7 +540,7 @@ const [alerts, setAlerts] = useState<any[]>([]);
   requesting: activityRequesting,
   error: activityError,
   activate,
-  deactivate,              
+  deactivate,
 } = useSmartActivity();
 
 const ALERTS_CACHE_KEY = "thermosafe_last_alerts_fetch";
@@ -961,18 +962,15 @@ useEffect(() => {
       // Comprova permisos de geolocalització
       const perm = await navigator.permissions.query({ name: "geolocation" as PermissionName });
 
-      if (perm.state === "granted") {
-        console.log("[DEBUG] Permís GPS ja concedit → ubicació inicial");
-        await locate();
-      } else if (perm.state === "prompt") {
-        console.log("[DEBUG] Demanant permís de GPS a l'usuari...");
-        navigator.geolocation.getCurrentPosition(
-          async (position) => await locate(false, position),
-          (err) => console.warn("[WARN] Permís de geolocalització rebutjat:", err)
-        );
-      } else {
-        console.warn("[WARN] Permís de geolocalització denegat o restringit.");
-      }
+	      if (perm.state === "granted") {
+	        console.log("[DEBUG] Permís GPS ja concedit → ubicació inicial");
+	        await locate();
+	      } else if (perm.state === "prompt") {
+	        console.log("[DEBUG] Demanant permís de GPS a l'usuari...");
+	        await locate();
+	      } else {
+	        console.warn("[WARN] Permís de geolocalització denegat o restringit.");
+	      }
     } catch (e) {
       console.error("[DEBUG] Error inicialitzant localització:", e);
     }
@@ -1070,7 +1068,7 @@ setIrr(ir ?? null);
 };
 
 /* 📍 LOCALITZACIÓ ACTUAL */
-const locate = async (silent = false, initialPosition?: GeolocationPosition) => {
+const locate = async (silent = false, initialCoords?: Coords) => {
 
   const requestId = startRequest("gps");
 
@@ -1084,23 +1082,31 @@ const locate = async (silent = false, initialPosition?: GeolocationPosition) => 
     setInput('');
 
     // 📍 1. Obté coordenades del dispositiu
-    const position =
-      initialPosition ??
-      (await new Promise<GeolocationPosition>((resolve, reject) => {
-        navigator.geolocation.getCurrentPosition(resolve, reject);
-      }));
+	    const position = initialCoords ?? (await getCoords());
 
-    if (isStaleRequest("gps", requestId)) return;
+	    if (isStaleRequest("gps", requestId)) return;
+	    if (!position) {
+	      if (!silent) setErr(t("errorGPS"));
+	      return;
+	    }
 
-const lat = position.coords.latitude;
-const lon = position.coords.longitude;
+	const lat = position.lat;
+	const lon = position.lon;
+	const accuracy = position.acc ?? null;
 
 // ✅ PUNT 4: desa coordenades a l’estat global (per components com UVSafeTime)
 setLat(lat);
 setLon(lon);
 
 if (import.meta.env.DEV) {
-  console.log(`[DEBUG] Coordenades GPS obtingudes: ${lat}, ${lon}`);
+  console.log("[GPS]", {
+    latitude: lat,
+    longitude: lon,
+    accuracy,
+    timestamp: new Date().toISOString(),
+    provider: "navigator.geolocation",
+    requestId,
+  });
 }
 
 // 🌦️ // 2. Obté dades del temps per coordenades
@@ -1148,15 +1154,23 @@ let nm = "";
 
 if (lat != null && lon != null) {
   try {
-    nm = (await getLocationNameFromCoords(lat, lon, lang)) || "";
+	    nm = (await getLocationNameFromCoords(lat, lon, lang)) || "";
 
-  if (isStaleRequest("gps", requestId)) return;
+	  if (isStaleRequest("gps", requestId)) return;
 
-    // Retry només si realment ha tornat buit
-   nm = nm?.trim() || d.name || "Ubicació desconeguda";
+	    // Retry només si realment ha tornat buit
+	   nm = nm?.trim() || d.name || "Ubicació desconeguda";
 
-    console.log(`[DEBUG] Ciutat trobada per coordenades: ${nm}`);
-  } catch (e) {
+	    if (import.meta.env.DEV) {
+	      console.log("[Reverse Geocoding]", {
+	        selectedField: "see Location Audit",
+	        selectedValue: nm,
+	        municipality: "",
+	        finalLabel: nm,
+	        requestId,
+	      });
+	    }
+	  } catch (e) {
     console.warn("[WARN] Error obtenint nom de ciutat:", e);
   }
 }

@@ -88,6 +88,7 @@ import {
   reloadThermoSafeVersion,
   unregisterAppShellServiceWorkers,
 } from "../../src/utils/serviceWorkerUpdate";
+import { getNominatimSelectionAudit } from "../../src/utils/getLocationNameFromCoords";
 
 function selectPrimaryForUi(
   enginePrimary: PrimaryRiskFromEngineResult
@@ -1084,6 +1085,68 @@ test("location audit logging stays development-only and records geocoder fields"
   assert.match(source, /village/);
   assert.match(source, /municipality/);
   assert.match(source, /finalName/);
+});
+
+test("Nominatim selection audit exposes the selected field without changing priority", () => {
+  const badiaGran = getNominatimSelectionAudit({
+    suburb: "Badia Gran",
+    town: "Llucmajor",
+  });
+  assert.equal(badiaGran.selectedField, "suburb");
+  assert.equal(badiaGran.selectedValue, "Badia Gran");
+  assert.equal(badiaGran.finalLabel, "Badia Gran, Llucmajor");
+
+  const tolleric = getNominatimSelectionAudit({
+    hamlet: "Tolleric",
+    town: "Llucmajor",
+  });
+  assert.equal(tolleric.selectedField, "hamlet");
+  assert.equal(tolleric.selectedValue, "Tolleric");
+  assert.equal(tolleric.finalLabel, "Tolleric, Llucmajor");
+
+  const llucmajor = getNominatimSelectionAudit({ town: "Llucmajor" });
+  assert.equal(llucmajor.selectedField, "town");
+  assert.equal(llucmajor.selectedValue, "Llucmajor");
+  assert.equal(llucmajor.finalLabel, "Llucmajor");
+
+  const centreHistoric = getNominatimSelectionAudit({
+    quarter: "Centre històric",
+    town: "Llucmajor",
+  });
+  assert.equal(centreHistoric.selectedField, "quarter");
+  assert.equal(centreHistoric.selectedValue, "Centre històric");
+  assert.equal(centreHistoric.finalLabel, "Centre històric, Llucmajor");
+
+  const noUsefulFields = getNominatimSelectionAudit({});
+  assert.equal(noUsefulFields.selectedField, null);
+  assert.equal(noUsefulFields.selectedValue, null);
+  assert.equal(noUsefulFields.finalLabel, "");
+});
+
+test("App GPS flow uses the shared geolocation helper instead of direct geolocation calls", () => {
+  const source = readFileSync(
+    new URL("../../src/App.tsx", import.meta.url),
+    "utf8"
+  );
+
+  assert.match(source, /import \{ getCoords, type Coords \} from "\.\/utils\/geolocation";/);
+  assert.match(source, /await getCoords\(\)/);
+  assert.doesNotMatch(source, /navigator\.geolocation\.getCurrentPosition/);
+  assert.match(source, /\[GPS\]/);
+  assert.match(source, /accuracy/);
+});
+
+test("geolocation helper preserves accuracy metadata and filters poor fine positions", () => {
+  const source = readFileSync(
+    new URL("../../src/utils/geolocation.ts", import.meta.url),
+    "utf8"
+  );
+
+  assert.match(source, /acc: pos\.coords\.accuracy/);
+  assert.match(source, /enableHighAccuracy: true/);
+  assert.match(source, /maximumAge: 0/);
+  assert.match(source, /fine\.acc \?\? 999999\) <= 200/);
+  assert.match(source, /return fine;/);
 });
 
 test("diagnostics treats invalid local token sync dates as not registered", () => {

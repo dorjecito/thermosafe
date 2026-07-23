@@ -8,38 +8,85 @@ type GeoReverseItem = {
 };
 
 type NominatimAddress = {
+  house_number?: string;
+  road?: string;
+  pedestrian?: string;
+  residential?: string;
   suburb?: string;
   neighbourhood?: string;
   quarter?: string;
+  city_district?: string;
+  borough?: string;
   hamlet?: string;
   village?: string;
   town?: string;
   city?: string;
   municipality?: string;
   county?: string;
+  state_district?: string;
   state?: string;
+  postcode?: string;
   country?: string;
+  country_code?: string;
 };
 
 type NominatimResponse = {
   name?: string;
   display_name?: string;
+  type?: string;
+  category?: string;
+  addresstype?: string;
   address?: NominatimAddress;
+};
+
+const NOMINATIM_CANDIDATE_FIELDS = [
+  "suburb",
+  "neighbourhood",
+  "quarter",
+  "hamlet",
+  "village",
+  "town",
+  "city",
+  "county",
+  "state",
+  "country",
+] as const;
+
+export type LocationCandidateField = {
+  field: (typeof NOMINATIM_CANDIDATE_FIELDS)[number];
+  value: string | null;
+};
+
+export type LocationSelectionAudit = {
+  candidateFields: LocationCandidateField[];
+  selectedField: LocationCandidateField["field"] | "municipality" | null;
+  selectedValue: string | null;
+  municipality: string;
+  finalLabel: string;
 };
 
 function locationAuditAddress(address?: NominatimAddress) {
   return {
+    house_number: address?.house_number || "",
+    road: address?.road || "",
+    pedestrian: address?.pedestrian || "",
+    residential: address?.residential || "",
     suburb: address?.suburb || "",
     neighbourhood: address?.neighbourhood || "",
     quarter: address?.quarter || "",
+    city_district: address?.city_district || "",
+    borough: address?.borough || "",
     hamlet: address?.hamlet || "",
     village: address?.village || "",
     town: address?.town || "",
     city: address?.city || "",
     municipality: address?.municipality || "",
     county: address?.county || "",
+    state_district: address?.state_district || "",
     state: address?.state || "",
+    postcode: address?.postcode || "",
     country: address?.country || "",
+    country_code: address?.country_code || "",
   };
 }
 
@@ -47,27 +94,34 @@ function logLocationAudit(
   payload: {
     lat: number;
     lon: number;
-    provider: "nominatim" | "openweather";
+    provider: "Nominatim" | "OpenWeather fallback";
     fields: Record<string, unknown>;
     finalName: string;
     source: string;
+    selection?: LocationSelectionAudit;
+    fallbackReason?: string;
   }
 ) {
   if (!import.meta.env.DEV) return;
 
   console.log("[Location Audit]", {
     gps: {
-      lat: payload.lat,
-      lon: payload.lon,
+      latitude: payload.lat,
+      longitude: payload.lon,
     },
     reverseGeocoder: {
       provider: payload.provider,
       ...payload.fields,
     },
-    selected: {
-      source: payload.source,
-      name: payload.finalName,
-    },
+    selection: payload.selection || {
+      candidateFields: [],
+      selectedField: null,
+      selectedValue: payload.finalName || null,
+      municipality: "",
+      finalLabel: payload.finalName,
+      source: payload.source,
+      fallbackReason: payload.fallbackReason || "",
+    },
   });
 }
 
@@ -86,37 +140,54 @@ function pickLocalName(item: GeoReverseItem, lang?: string) {
   return (byLang || item.name || "").trim();
 }
 
+export function getNominatimSelectionAudit(
+  address?: NominatimAddress
+): LocationSelectionAudit {
+  const candidateFields = NOMINATIM_CANDIDATE_FIELDS.map((field) => ({
+    field,
+    value: address?.[field]?.trim() || null,
+  }));
+  const localCandidate =
+    candidateFields
+      .filter((candidate) =>
+        ["suburb", "neighbourhood", "quarter", "hamlet", "village", "town", "city"].includes(
+          candidate.field
+        )
+      )
+      .find((candidate) => candidate.value) || null;
+  const municipality =
+    address?.municipality?.trim() ||
+    address?.city?.trim() ||
+    address?.town?.trim() ||
+    "";
+  const fallbackCandidate =
+    candidateFields
+      .filter((candidate) => ["county", "state", "country"].includes(candidate.field))
+      .find((candidate) => candidate.value) || null;
+  const selectedCandidate =
+    localCandidate ||
+    (municipality ? { field: "municipality" as const, value: municipality } : null) ||
+    fallbackCandidate;
+  const selectedValue = selectedCandidate?.value || null;
+  const finalLabel =
+    localCandidate?.value && municipality && localCandidate.value !== municipality
+      ? `${localCandidate.value}, ${municipality}`
+      : localCandidate?.value ||
+        municipality ||
+        fallbackCandidate?.value ||
+        "";
+
+  return {
+    candidateFields,
+    selectedField: selectedCandidate?.field || null,
+    selectedValue,
+    municipality,
+    finalLabel,
+  };
+}
+
 function pickBestLocalName(address?: NominatimAddress): string {
-  if (!address) return "";
-
-  const local =
-    address.suburb ||
-    address.neighbourhood ||
-    address.quarter ||
-    address.hamlet ||
-    address.village ||
-    address.town ||
-    address.city ||
-    "";
-
-  const municipality =
-    address.municipality ||
-    address.city ||
-    address.town ||
-    "";
-
-  if (local && municipality && local !== municipality) {
-    return `${local}, ${municipality}`;
-  }
-
-  return (
-    local ||
-    municipality ||
-    address.county ||
-    address.state ||
-    address.country ||
-    ""
-  );
+  return getNominatimSelectionAudit(address).finalLabel;
 }
 
 async function getFromNominatim(
@@ -148,21 +219,26 @@ async function getFromNominatim(
 
     const data = (await res.json()) as NominatimResponse;
 
-    const bestLocalName = pickBestLocalName(data.address);
+    const selection = getNominatimSelectionAudit(data.address);
+    const bestLocalName = selection.finalLabel;
     const fallbackName = (data.name || data.display_name || "").trim();
     const finalName = bestLocalName || fallbackName;
 
     logLocationAudit({
       lat,
       lon,
-      provider: "nominatim",
+      provider: "Nominatim",
       fields: {
-        ...locationAuditAddress(data.address),
-        name: data.name || "",
-        display_name: data.display_name || "",
+        displayName: data.display_name || "",
+        name: data.name || "",
+        type: data.type || "",
+        category: data.category || "",
+        addresstype: data.addresstype || "",
+        address: locationAuditAddress(data.address),
       },
       finalName,
       source: bestLocalName ? "address_priority" : "name_or_display_name",
+      selection,
     });
 
     return finalName;
@@ -215,7 +291,7 @@ async function getFromOpenWeather(
     logLocationAudit({
       lat,
       lon,
-      provider: "openweather",
+      provider: "OpenWeather fallback",
       fields: {
         name: first.name || "",
         state: first.state || "",
@@ -226,6 +302,7 @@ async function getFromOpenWeather(
       },
       finalName,
       source: "openweather_reverse",
+      fallbackReason: "Nominatim returned no usable label or failed",
     });
 
     return finalName;

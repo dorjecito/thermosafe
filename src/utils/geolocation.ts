@@ -17,7 +17,7 @@ function getOnce(opts: PositionOptions): Promise<Coords | null> {
   });
 }
 
-export async function getCoords(): Promise<{ lat: number; lon: number } | null> {
+export async function getCoords(): Promise<Coords | null> {
   // 1) intent GPS fi (clau per iPhone)
   const fine = await getOnce({
     enableHighAccuracy: true,
@@ -26,7 +26,7 @@ export async function getCoords(): Promise<{ lat: number; lon: number } | null> 
   });
 
   if (fine && (fine.acc ?? 999999) <= 200) {
-    return { lat: fine.lat, lon: fine.lon };
+    return fine;
   }
 
   // 2) fallback ràpid
@@ -36,9 +36,9 @@ export async function getCoords(): Promise<{ lat: number; lon: number } | null> 
     maximumAge: 0,
   });
 
-  if (coarse) return { lat: coarse.lat, lon: coarse.lon };
+  if (coarse) return coarse;
 
-  if (fine) return { lat: fine.lat, lon: fine.lon };
+  if (fine) return fine;
 
   return null;
 }
