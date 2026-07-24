@@ -464,6 +464,7 @@
 
   "official_advice_title": "Recomanacions oficials de seguretat",
   "official_advice_footer": "Basat en guies de l’INSST i AEMET.",
+  "data_sources_footer": "Fonts de dades: OpenWeather · OpenUV · NASA POWER · AEMET (avisos oficials) · OpenStreetMap/Nominatim",
 
   "rec": {
     "safe": "Condicions segures. Mantén la hidratació habitual.",

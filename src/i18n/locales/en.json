@@ -483,6 +483,7 @@
 
   "official_advice_title": "Official safety recommendations",
   "official_advice_footer": "Based on INSST and AEMET guidance.",
+  "data_sources_footer": "Data sources: OpenWeather · OpenUV · NASA POWER · AEMET (official alerts) · OpenStreetMap/Nominatim",
 
   "rec": {
     "safe": "Safe conditions. Maintain your usual hydration.",

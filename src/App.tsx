@@ -2886,8 +2886,21 @@ return (
   city={realCity || city || ""}
 />
 
-	  </>
-) : (
+<p
+  style={{
+    margin: "0.85rem 0 0",
+    fontSize: "0.78rem",
+    lineHeight: 1.35,
+    color: "var(--card-text)",
+    opacity: 0.62,
+    textAlign: "center",
+  }}
+>
+  {t("data_sources_footer")}
+</p>
+
+		  </>
+	) : (
   !err && (
     <div className={`loading-weather-card ${loading ? "is-loading" : ""}`} aria-busy={loading}>
       <span className="loading-weather-icon" aria-hidden="true">↻</span>

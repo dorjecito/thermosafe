@@ -502,6 +502,7 @@
 },
 "official_advice_title": "Recomendacións oficiais de seguridade",
 "official_advice_footer": "Baseado en guías do INSST e AEMET.",
+"data_sources_footer": "Fontes de datos: OpenWeather · OpenUV · NASA POWER · AEMET (avisos oficiais) · OpenStreetMap/Nominatim",
 "alert_time": {
   "active": "Vixente",
   "ended": "Finalizado",
