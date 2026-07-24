@@ -1,4 +1,5 @@
 // src/services/openUV.ts
+import { startupEnd, startupStart } from "../utils/startupAudit";
 
 // ==============================
 // 🔹 Tipus
@@ -157,6 +158,8 @@ export async function getUVFromOpenUV(
 
   const cached = getCached(uvNowCache, key, UV_NOW_TTL);
   if (cached !== null) {
+    startupStart("openuv-current", { cache: "memory-hit" });
+    startupEnd("openuv-current", { status: "cache-hit" });
     if (import.meta.env.DEV) {
       console.log("[OpenUV] UV des de caché:", key, cached);
     }
@@ -165,6 +168,8 @@ export async function getUVFromOpenUV(
 
   const pending = uvNowPending.get(key);
   if (pending) {
+    startupStart("openuv-current", { cache: "pending" });
+    startupEnd("openuv-current", { status: "pending-reuse" });
     if (import.meta.env.DEV) {
       console.log("[OpenUV] reutilitzant petició UV en curs:", key);
     }
@@ -173,6 +178,7 @@ export async function getUVFromOpenUV(
 
   const request = (async () => {
     try {
+      startupStart("openuv-current", { cache: "miss" });
       const url = buildOpenUVProxyUrl("uv", lat, lon);
 
       if (import.meta.env.DEV) {
@@ -189,8 +195,10 @@ export async function getUVFromOpenUV(
       const safeUvi = typeof uvi === "number" && Number.isFinite(uvi) ? uvi : null;
 
       setCached(uvNowCache, key, safeUvi);
+      startupEnd("openuv-current", { status: "ok", hasValue: safeUvi !== null });
       return safeUvi;
     } catch (err) {
+      startupEnd("openuv-current", { status: "error" });
       console.error("[OpenUV] Error obtenint UVI:", err);
       return null;
     } finally {
@@ -272,6 +280,8 @@ export async function getUVDetailFromOpenUV(
 
   const cached = getCached(uvDetailCache, key, UV_DETAIL_TTL);
   if (cached !== null) {
+    startupStart("openuv-detail", { cache: "memory-hit" });
+    startupEnd("openuv-detail", { status: "cache-hit" });
     if (import.meta.env.DEV) {
       console.log("[OpenUV] UV detail des de caché:", key);
     }
@@ -280,6 +290,8 @@ export async function getUVDetailFromOpenUV(
 
   const pending = uvDetailPending.get(key);
   if (pending) {
+    startupStart("openuv-detail", { cache: "pending" });
+    startupEnd("openuv-detail", { status: "pending-reuse" });
     if (import.meta.env.DEV) {
       console.log("[OpenUV] reutilitzant petició UV detail en curs:", key);
     }
@@ -288,6 +300,7 @@ export async function getUVDetailFromOpenUV(
 
   const request = (async () => {
     try {
+      startupStart("openuv-detail", { cache: "miss" });
       const url = buildOpenUVProxyUrl("uv", lat, lon);
       if (import.meta.env.DEV) {
         console.log("[OpenUV] Fetch UV Detail via proxy");
@@ -342,8 +355,14 @@ export async function getUVDetailFromOpenUV(
       };
 
       setCached(uvDetailCache, key, detail);
+      startupEnd("openuv-detail", {
+        status: "ok",
+        hasUvMax: uv_max !== null,
+        hasSafeExposure: Boolean(safe),
+      });
       return detail;
     } catch (err) {
+      startupEnd("openuv-detail", { status: "error" });
       console.error("[OpenUV] Error obtenint detall UV:", err);
       return null;
     } finally {

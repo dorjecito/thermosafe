@@ -1149,6 +1149,43 @@ test("geolocation helper preserves accuracy metadata and filters poor fine posit
   assert.match(source, /return fine;/);
 });
 
+test("startup audit instrumentation is development-only and covers cold-start milestones", () => {
+  const auditSource = readFileSync(
+    new URL("../../src/utils/startupAudit.ts", import.meta.url),
+    "utf8"
+  );
+  const appSource = readFileSync(
+    new URL("../../src/App.tsx", import.meta.url),
+    "utf8"
+  );
+
+  assert.match(auditSource, /import\.meta\.env\?\.DEV/);
+  assert.match(auditSource, /\[Startup Audit\]/);
+  assert.match(auditSource, /getStartupAuditSnapshot/);
+  assert.match(appSource, /startupStart\("gps-cold-start-flow"|const auditFlowName = silent \? "gps-refresh-flow" : "gps-cold-start-flow"/);
+  assert.match(appSource, /startupStart\("gps-acquire"/);
+  assert.match(appSource, /startupMark\("weather-visible"/);
+  assert.match(appSource, /startupMark\("location-visible"/);
+  assert.match(appSource, /startupMark\("first-useful-content"/);
+  assert.match(appSource, /startupMark\("risk-visible"/);
+  assert.match(appSource, /startupMark\("full-data-visible"/);
+});
+
+test("GPS startup releases primary content before secondary location UV and alerts tasks settle", () => {
+  const appSource = readFileSync(
+    new URL("../../src/App.tsx", import.meta.url),
+    "utf8"
+  );
+
+  assert.match(appSource, /setData\(d\);[\s\S]*?startupMark\("weather-visible"/);
+  assert.match(appSource, /setCity\(provisionalName\);[\s\S]*?setIsInitialRiskReady\(true\);[\s\S]*?setLoading\(false\);/);
+  assert.match(appSource, /const uvTask = \(async \(\) => \{/);
+  assert.match(appSource, /const geocodingTask = \(async \(\) => \{/);
+  assert.match(appSource, /const alertsTask = \(async \(\) => \{/);
+  assert.match(appSource, /await Promise\.allSettled\(\[[\s\S]*?uvTask,[\s\S]*?geocodingTask,[\s\S]*?alertsTask,[\s\S]*?notificationsTask,[\s\S]*?\]\);/);
+  assert.match(appSource, /if \(isStaleRequest\("gps", requestId\)\)[\s\S]*?return;/);
+});
+
 test("diagnostics treats invalid local token sync dates as not registered", () => {
   assert.equal(
     formatTokenSyncStatus(getTokenSyncStatus(true, "not-a-date"), diagnosticCopyLabels),
@@ -1364,7 +1401,8 @@ test("GPS and suggestion weather fetches guard null responses before reading tim
     "utf8"
   );
 
-  assert.match(appSource, /if \(!d\) \{\s*if \(!silent\) setErr\(t\("errorGPS"\)\);\s*return;\s*\}\s*setData\(d\);/);
+  assert.match(appSource, /if \(!d\) \{[\s\S]*?if \(!silent\) setErr\(t\("errorGPS"\)\);[\s\S]*?return;[\s\S]*?\}/);
+  assert.match(appSource, /if \(!d\) \{[\s\S]*?return;[\s\S]*?\}\s*[\s\S]*?setData\(d\);/);
   assert.match(appSource, /const data = await getWeatherByCoords\(s\.lat, s\.lon, lang\);\s*if \(!data\) \{\s*setErr\(t\("errorCity"\)\);\s*return;\s*\}/);
 });
 

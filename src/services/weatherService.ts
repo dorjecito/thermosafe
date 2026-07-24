@@ -1,4 +1,5 @@
 // 🌤️ Serveis meteorològics unificats (OpenWeather 2.5 i 3.0)
+import { startupEnd, startupStart } from "../utils/startupAudit";
 
 const OPENWEATHER_PROXY_URL = "/api/openweather";
 
@@ -171,7 +172,11 @@ export async function getWeatherByCoords(
 
   const cacheKey = getCacheKey("coords", lat.toFixed(4), lon.toFixed(4), lang2);
   const cached = getFromCache<any>(cacheKey);
-  if (cached) return cached;
+  if (cached) {
+    startupStart("openweather-current", { source: "coords", cache: "memory-hit" });
+    startupEnd("openweather-current", { status: "cache-hit" });
+    return cached;
+  }
 
   const url = buildOpenWeatherUrl(
     "weather",
@@ -180,8 +185,10 @@ export async function getWeatherByCoords(
   );
 
   try {
+    startupStart("openweather-current", { source: "coords", cache: "miss" });
     const response = await fetch(url);
     if (!response.ok) {
+      startupEnd("openweather-current", { status: "http-error", httpStatus: response.status });
       console.error("[DEBUG] Error HTTP a getWeatherByCoords:", response.status);
       return null;
     }
@@ -195,8 +202,10 @@ export async function getWeatherByCoords(
     if (typeof data.name !== "string") data.name = "";
 
     saveToCache(cacheKey, data);
+    startupEnd("openweather-current", { status: "ok" });
     return data;
   } catch (err) {
+    startupEnd("openweather-current", { status: "error" });
     console.error("[DEBUG] Error a getWeatherByCoords:", err);
     return null;
   }
@@ -212,7 +221,11 @@ export async function getWeatherByCity(
 
   const cacheKey = getCacheKey("city", cityName.trim().toLowerCase(), lang2);
   const cached = getFromCache<any>(cacheKey);
-  if (cached) return cached;
+  if (cached) {
+    startupStart("openweather-city", { cache: "memory-hit" });
+    startupEnd("openweather-city", { status: "cache-hit" });
+    return cached;
+  }
 
   const url = buildOpenWeatherUrl(
     "weather",
@@ -221,8 +234,10 @@ export async function getWeatherByCity(
   );
 
   try {
+    startupStart("openweather-city", { cache: "miss" });
     const response = await fetch(url);
     if (!response.ok) {
+      startupEnd("openweather-city", { status: "http-error", httpStatus: response.status });
       console.error("[DEBUG] Error HTTP a getWeatherByCity:", response.status);
       return null;
     }
@@ -268,8 +283,10 @@ export async function getWeatherByCity(
     }
 
     saveToCache(cacheKey, data);
+    startupEnd("openweather-city", { status: "ok" });
     return data;
   } catch (err) {
+    startupEnd("openweather-city", { status: "error" });
     console.error("[DEBUG] Error a getWeatherByCity:", err);
     return null;
   }
@@ -284,9 +301,13 @@ export async function getWeatherAlerts(
 ): Promise<any[]> {
   const lang2 = normLang2(lang);
   const cacheKey = getCacheKey("alerts", lat.toFixed(3), lon.toFixed(3), lang2);
-  const cached = getFromCache<any[]>(cacheKey);
+  const cached = getFromCache<any[]>(cacheKey);
 
-  if (cached) return cached;
+  if (cached) {
+    startupStart("openweather-alerts", { cache: "memory-hit" });
+    startupEnd("openweather-alerts", { status: "cache-hit" });
+    return cached;
+  }
 
   // Demanam essencialment alerts
   const url = buildOpenWeatherUrl(
@@ -301,23 +322,27 @@ export async function getWeatherAlerts(
     apiKey
   );
 
-  try {
-    const response = await fetch(url);
+  try {
+    startupStart("openweather-alerts", { cache: "miss" });
+    const response = await fetch(url);
 
-    if (!response.ok) {
-      console.error("[DEBUG] Error HTTP a getWeatherAlerts:", response.status);
-      return [];
+    if (!response.ok) {
+      startupEnd("openweather-alerts", { status: "http-error", httpStatus: response.status });
+      console.error("[DEBUG] Error HTTP a getWeatherAlerts:", response.status);
+      return [];
     }
 
     const data = await response.json();
     const alerts = Array.isArray(data?.alerts) ? data.alerts : [];
 
-    saveToCache(cacheKey, alerts);
-    return alerts;
-  } catch (err) {
-    console.error("[DEBUG] Error obtenint avisos meteorològics:", err);
-    return [];
-  }
+    saveToCache(cacheKey, alerts);
+    startupEnd("openweather-alerts", { status: "ok", alertsCount: alerts.length });
+    return alerts;
+  } catch (err) {
+    startupEnd("openweather-alerts", { status: "error" });
+    console.error("[DEBUG] Error obtenint avisos meteorològics:", err);
+    return [];
+  }
 }
 
 export async function getHourlyForecastByCoords(
@@ -334,18 +359,25 @@ export async function getHourlyForecastByCoords(
   const freshTtl = 60 * 60 * 1000;
   const staleTtl = 6 * 60 * 60 * 1000;
 
-  const fresh = getStoredForecast(storageKey, freshTtl);
-  if (fresh) return fresh;
+  const fresh = getStoredForecast(storageKey, freshTtl);
+  if (fresh) {
+    startupStart("openweather-hourly-forecast", { cache: "localStorage-fresh" });
+    startupEnd("openweather-hourly-forecast", { status: "cache-hit" });
+    return fresh;
+  }
 
   if (forecastInflight.has(storageKey)) {
     return forecastInflight.get(storageKey)!;
   }
 
-  const promise = (async () => {
-    const stale = getStoredForecastFallback(lat, lon, lang2, staleTtl);
+  const promise = (async () => {
+    const stale = getStoredForecastFallback(lat, lon, lang2, staleTtl);
 
-    try {
-      const url = buildOpenWeatherUrl(
+    try {
+      startupStart("openweather-hourly-forecast", {
+        cache: stale ? "stale-available" : "miss",
+      });
+      const url = buildOpenWeatherUrl(
         "onecall",
         {
           lat,
@@ -359,15 +391,26 @@ export async function getHourlyForecastByCoords(
 
       const response = await fetch(url);
 
-      if (!response.ok) {
-        console.error("[FORECAST] Error HTTP:", response.status);
-        return stale ? { ...stale, stale: true } : null;
-      }
+      if (!response.ok) {
+        startupEnd("openweather-hourly-forecast", {
+          status: "http-error",
+          httpStatus: response.status,
+          fallback: Boolean(stale),
+        });
+        console.error("[FORECAST] Error HTTP:", response.status);
+        return stale ? { ...stale, stale: true } : null;
+      }
 
       const data = await response.json();
       const hourly = Array.isArray(data?.hourly) ? data.hourly : [];
 
-      if (!hourly.length) return stale ? { ...stale, stale: true } : null;
+      if (!hourly.length) {
+        startupEnd("openweather-hourly-forecast", {
+          status: "empty",
+          fallback: Boolean(stale),
+        });
+        return stale ? { ...stale, stale: true } : null;
+      }
 
       const normalized: HourlyForecastResponse = {
         hourly,
@@ -375,11 +418,16 @@ export async function getHourlyForecastByCoords(
           typeof data?.timezone_offset === "number" ? data.timezone_offset : undefined,
       };
 
-      saveStoredForecast(storageKey, normalized);
-      return normalized;
-    } catch (err) {
-      console.warn("[FORECAST] Error obtenint previsió horària:", err);
-      return stale ? { ...stale, stale: true } : null;
+      saveStoredForecast(storageKey, normalized);
+      startupEnd("openweather-hourly-forecast", { status: "ok", hourlyCount: hourly.length });
+      return normalized;
+    } catch (err) {
+      startupEnd("openweather-hourly-forecast", {
+        status: "error",
+        fallback: Boolean(stale),
+      });
+      console.warn("[FORECAST] Error obtenint previsió horària:", err);
+      return stale ? { ...stale, stale: true } : null;
     }
   })();
 

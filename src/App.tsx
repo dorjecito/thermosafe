@@ -61,6 +61,12 @@ import { getUVDetailFromOpenUV, getUVFromOpenUV } from "./services/openUV";
 	     VERSION_CHECK_INTERVAL_MS,
 	   } from "./utils/versionCheck";
 	   import { reloadThermoSafeVersion } from "./utils/serviceWorkerUpdate";
+     import {
+       logStartupSummary,
+       startupEnd,
+       startupMark,
+       startupStart,
+     } from "./utils/startupAudit";
 
    /* —— components ————————————————————————— */
    import Recommendations     from './components/Recommendations';
@@ -210,9 +216,20 @@ const UI_LABELS = {
 
 /* ──────── component ──────── */
 export default function App() {
+  const firstRenderAuditRef = useRef(false);
+  const firstUsefulAuditRef = useRef(false);
+  const fullDataAuditRef = useRef(false);
+  const riskVisibleAuditRef = useRef(false);
+
+  if (!firstRenderAuditRef.current) {
+    startupMark("first-render");
+    firstRenderAuditRef.current = true;
+  }
+
   /* i18next */
   const [loading, setLoading] = useState(false);
   const [isInitialRiskReady, setIsInitialRiskReady] = useState(false);
+  const [startupFullDataReady, setStartupFullDataReady] = useState(false);
   const { t, i18n } = useTranslation();
 
   // 🧴 Fototip (1–6)
@@ -232,6 +249,10 @@ export default function App() {
     const out = t(key);
     return out && out !== key ? out : fallback;
   };
+
+  useEffect(() => {
+    startupMark("react-mounted");
+  }, []);
 
   useEffect(() => {
   const browserLang = navigator.language?.slice(0, 2) || "ca";
@@ -359,15 +380,21 @@ const handleChunkLoadFailure = useCallback((error: unknown): boolean => {
   return true;
 }, []);
 
-const checkForAppUpdate = useCallback(async () => {
-  try {
-    const published = await fetchPublishedVersion();
-    const updateAvailable = isNewVersionAvailable(THERMOSAFE_BUILD_ID, published);
-    setVersionUpdateAvailable(updateAvailable);
-  } catch {
-    // La comprovació de versió és informativa i no ha d'interrompre l'app.
-  }
-}, []);
+	const checkForAppUpdate = useCallback(async () => {
+	  try {
+      startupStart("version-check");
+	    const published = await fetchPublishedVersion();
+	    const updateAvailable = isNewVersionAvailable(THERMOSAFE_BUILD_ID, published);
+	    setVersionUpdateAvailable(updateAvailable);
+      startupEnd("version-check", {
+        status: "ok",
+        updateAvailable,
+      });
+	  } catch {
+      startupEnd("version-check", { status: "error" });
+	    // La comprovació de versió és informativa i no ha d'interrompre l'app.
+	  }
+	}, []);
 
 const handleVersionUpdateReload = useCallback(() => {
   void reloadThermoSafeVersion();
@@ -551,6 +578,7 @@ async function loadAlertsIfNeeded(
   lang: string,
   _isDayValue: boolean = true
 ) {
+  startupStart("alerts-load");
   const now = Date.now();
 
   let prevLat: number | null = null;
@@ -584,6 +612,10 @@ async function loadAlertsIfNeeded(
   if (sameArea && tooSoon && hasCachedAlerts) {
     console.log("[ALERTS] Caché local reutilitzada");
     setAlerts(cachedAlerts);
+    startupEnd("alerts-load", {
+      status: "cache-hit",
+      alertsCount: cachedAlerts.length,
+    });
     return;
   }
 
@@ -604,14 +636,25 @@ async function loadAlertsIfNeeded(
     );
 
     console.log("[ALERTS] Avisos carregats:", safeAlerts.length);
+    startupEnd("alerts-load", {
+      status: "api",
+      alertsCount: safeAlerts.length,
+    });
   } catch (err) {
     console.warn("[ALERTS] Error carregant avisos:", err);
 
     if (hasCachedAlerts) {
       console.log("[ALERTS] Error API → reutilitzant caché");
       setAlerts(cachedAlerts);
+      startupEnd("alerts-load", {
+        status: "error-cache-fallback",
+        alertsCount: cachedAlerts.length,
+      });
     } else {
       setAlerts([]);
+      startupEnd("alerts-load", {
+        status: "error-empty",
+      });
     }
   }
 }
@@ -1071,24 +1114,48 @@ setIrr(ir ?? null);
 const locate = async (silent = false, initialCoords?: Coords) => {
 
   const requestId = startRequest("gps");
+  const auditFlowName = silent ? "gps-refresh-flow" : "gps-cold-start-flow";
+  let auditStatus = "unknown";
+  let primaryContentReleased = false;
+  startupStart(auditFlowName, { silent, requestId });
 
   try {
     if (!silent) {
       setIsInitialRiskReady(false);
+      setStartupFullDataReady(false);
+      firstUsefulAuditRef.current = false;
+      riskVisibleAuditRef.current = false;
+      fullDataAuditRef.current = false;
       setLoading(true);
     }
     setCurrentSource("gps");
     setDataSource("gps");
     setInput('');
 
-    // 📍 1. Obté coordenades del dispositiu
-	    const position = initialCoords ?? (await getCoords());
+	    // 📍 1. Obté coordenades del dispositiu
+        startupStart("gps-acquire", { source: initialCoords ? "initialCoords" : "getCoords" });
+		    const position = initialCoords ?? (await getCoords());
+        startupEnd("gps-acquire", {
+          status: position ? "ok" : "empty",
+          accuracyBucket:
+            typeof position?.acc === "number"
+              ? position.acc <= 50
+                ? "<=50m"
+                : position.acc <= 200
+                ? "<=200m"
+                : ">200m"
+              : "unknown",
+        });
 
-	    if (isStaleRequest("gps", requestId)) return;
-	    if (!position) {
-	      if (!silent) setErr(t("errorGPS"));
-	      return;
-	    }
+		    if (isStaleRequest("gps", requestId)) {
+          auditStatus = "stale-after-gps";
+          return;
+        }
+		    if (!position) {
+		      if (!silent) setErr(t("errorGPS"));
+          auditStatus = "gps-empty";
+		      return;
+		    }
 
 	const lat = position.lat;
 	const lon = position.lon;
@@ -1109,16 +1176,21 @@ if (import.meta.env.DEV) {
   });
 }
 
-// 🌦️ // 2. Obté dades del temps per coordenades
-const d = await getWeatherByCoords(lat, lon, lang);
+	// 🌦️ // 2. Obté dades del temps per coordenades
+	const d = await getWeatherByCoords(lat, lon, lang);
 
-if (isStaleRequest("gps", requestId)) return;
-if (!d) {
-  if (!silent) setErr(t("errorGPS"));
-  return;
-}
-setData(d);
-setDataSource("gps");
+	if (isStaleRequest("gps", requestId)) {
+    auditStatus = "stale-after-weather";
+    return;
+  }
+	if (!d) {
+	  if (!silent) setErr(t("errorGPS"));
+    auditStatus = "weather-empty";
+	  return;
+	}
+	setData(d);
+  startupMark("weather-visible", { source: "gps" });
+	setDataSource("gps");
 
 // 🌞 Dia/nit REAL per la ubicació GPS (timezone + sunrise/sunset)
 const nowUtc = Math.floor(Date.now() / 1000);
@@ -1129,16 +1201,6 @@ const sunset = d.sys?.sunset;
 const isDayHere = isDayAtLocation(nowUtc, tz, sunrise, sunset);
 setDay(isDayHere);
 
-// 🌞 Obté UVI real per la ubicació GPS
-const uv = await safeUVFetch(lat, lon, isDayHere);
-
-if (isStaleRequest("gps", requestId)) return;
-
-setUvi(uv);
-loadUvMaxTodayInBackground(lat, lon);
-console.log("[DEBUG] UVI actual (nou):", uv);
-console.log("[TEST] Tipus UV (nou):", typeof uv, "Valor:", uv);
-
 // Meteo bàsica
 setTemp(d.main?.temp ?? null);
 setHum(d.main?.humidity ?? null);
@@ -1148,50 +1210,6 @@ setWeatherMain(d.weather?.[0]?.main ?? null);
 
 // 🔍 Mostra per consola per verificar
 console.log(`[DEBUG] Temperatura: ${d.main?.temp}°C, Humitat: ${d.main?.humidity}%, Sensació: ${d.main?.feels_like}°C`);
-
-    // 📍 3. Nom de ciutat (nom real segons coordenades)
-let nm = "";
-
-if (lat != null && lon != null) {
-  try {
-	    nm = (await getLocationNameFromCoords(lat, lon, lang)) || "";
-
-	  if (isStaleRequest("gps", requestId)) return;
-
-	    // Retry només si realment ha tornat buit
-	   nm = nm?.trim() || d.name || "Ubicació desconeguda";
-
-	    if (import.meta.env.DEV) {
-	      console.log("[Reverse Geocoding]", {
-	        selectedField: "see Location Audit",
-	        selectedValue: nm,
-	        municipality: "",
-	        finalLabel: nm,
-	        requestId,
-	      });
-	    }
-	  } catch (e) {
-    console.warn("[WARN] Error obtenint nom de ciutat:", e);
-  }
-}
-
-// Fallback final
-nm = nm || d.name || "Ubicació desconeguda";
-
-// ✅ Desa sempre abans del render
-setCity(nm);
-setRealCity(nm);
-setDataSource("gps");
-
-// 🔔 Si les notificacions estan activades, actualitza la ubicació i el nom visible del token.
-// Si la nova ubicació és a 15 km o més de l'anterior, subscribe.ts reiniciarà els nivells a 0.
-if (localStorage.getItem("fcmToken")) {
-  updateRiskAlertLocationLazy({ lat, lon, place: nm, lang }).catch((e) => {
-    if (!handleChunkLoadFailure(e)) {
-      console.warn("[PUSH] No s'ha pogut actualitzar la ubicació del token:", e);
-    }
-  });
-}
 
 function normalizeSky(desc: string): string {
   return desc
@@ -1260,38 +1278,150 @@ setWc(wcVal);
 const coldRiskValue = getColdRisk(effForCold, wKmH);
 setColdRisk(coldRiskValue as ColdRisk);
 
-// ⚠️ 9. Avisos oficials
-await loadAlertsIfNeeded(
-  lat,
-  lon,
-  lang,
-  isDayHere
-);
+const provisionalName = d.name || "Ubicació desconeguda";
+setCity(provisionalName);
+setRealCity("");
+setDataSource("gps");
+startupMark("primary-weather-ready", {
+  hasWeather: true,
+  hasProvisionalLocation: Boolean(provisionalName),
+});
 
-if (isStaleRequest("gps", requestId)) return;
-
-// 🔥 10. Notificacions
-if (!isStaleRequest("gps", requestId)) {
-await maybeNotifyHeat(d.main.feels_like);
-await maybeNotifyCold(effForCold, wKmH);
-await maybeNotifyWind(wKmH);
-	await maybeNotifyUV(uv);
-	}
-
-	if (isStaleRequest("gps", requestId)) return;
-	    // ✅ Tot correcte
-	    if (!silent) setErr("");
-    if (!silent) collapseSearchPanel();
-
-	  } catch (error) {
-	  console.error("[DEBUG] Error obtenint dades per GPS:", error);
-	  if (!silent) setErr(t("errorGPS"));
-} finally {
-  if (!silent && !isStaleRequest("gps", requestId)) {
-    setIsInitialRiskReady(true);
-    setLoading(false);
-  }
+if (!silent) {
+  setErr("");
+  collapseSearchPanel();
+  setIsInitialRiskReady(true);
+  setLoading(false);
+  primaryContentReleased = true;
 }
+
+const uvTask = (async () => {
+  const uv = await safeUVFetch(lat, lon, isDayHere);
+
+  if (isStaleRequest("gps", requestId)) {
+    auditStatus = "stale-after-uv";
+    return null;
+  }
+
+  setUvi(uv);
+  startupMark("uv-visible", { hasValue: typeof uv === "number" });
+  loadUvMaxTodayInBackground(lat, lon);
+  console.log("[DEBUG] UVI actual (nou):", uv);
+  console.log("[TEST] Tipus UV (nou):", typeof uv, "Valor:", uv);
+  return uv;
+})();
+
+const geocodingTask = (async () => {
+  let nm = "";
+
+  try {
+    startupStart("reverse-geocoding");
+    nm = (await getLocationNameFromCoords(lat, lon, lang)) || "";
+    startupEnd("reverse-geocoding", {
+      status: nm ? "ok" : "empty",
+    });
+
+    if (isStaleRequest("gps", requestId)) {
+      auditStatus = "stale-after-geocoding";
+      return provisionalName;
+    }
+
+    nm = nm?.trim() || provisionalName;
+
+    if (import.meta.env.DEV) {
+      console.log("[Reverse Geocoding]", {
+        selectedField: "see Location Audit",
+        selectedValue: nm,
+        municipality: "",
+        finalLabel: nm,
+        requestId,
+      });
+    }
+  } catch (e) {
+    startupEnd("reverse-geocoding", { status: "error" });
+    console.warn("[WARN] Error obtenint nom de ciutat:", e);
+    nm = provisionalName;
+  }
+
+  if (!isStaleRequest("gps", requestId)) {
+    setCity(nm);
+    setRealCity(nm);
+    startupMark("location-visible", { hasLabel: Boolean(nm) });
+
+    if (localStorage.getItem("fcmToken")) {
+      startupStart("notifications-location-sync");
+      updateRiskAlertLocationLazy({ lat, lon, place: nm, lang }).catch((e) => {
+        if (!handleChunkLoadFailure(e)) {
+          console.warn("[PUSH] No s'ha pogut actualitzar la ubicació del token:", e);
+        }
+      }).finally(() => {
+        startupEnd("notifications-location-sync", { status: "settled-background" });
+      });
+    }
+  }
+
+  return nm;
+})();
+
+const alertsTask = (async () => {
+  await loadAlertsIfNeeded(
+    lat,
+    lon,
+    lang,
+    isDayHere
+  );
+
+  if (isStaleRequest("gps", requestId)) {
+    auditStatus = "stale-after-alerts";
+  }
+})();
+
+const notificationsTask = uvTask.then(async (uv) => {
+  if (isStaleRequest("gps", requestId)) return;
+
+  startupStart("risk-notifications");
+  try {
+    await maybeNotifyHeat(d.main.feels_like);
+    await maybeNotifyCold(effForCold, wKmH);
+    await maybeNotifyWind(wKmH);
+    await maybeNotifyUV(uv);
+    startupEnd("risk-notifications", { status: "ok" });
+  } catch (error) {
+    startupEnd("risk-notifications", { status: "error" });
+    throw error;
+  }
+});
+
+await Promise.allSettled([
+  uvTask,
+  geocodingTask,
+  alertsTask,
+  notificationsTask,
+]);
+
+if (isStaleRequest("gps", requestId)) {
+  auditStatus = auditStatus === "unknown" ? "stale-after-secondary" : auditStatus;
+  return;
+}
+
+setStartupFullDataReady(true);
+startupMark("full-data");
+logStartupSummary("gps-flow-finally");
+auditStatus = "ok";
+
+		  } catch (error) {
+      auditStatus = "error";
+		  console.error("[DEBUG] Error obtenint dades per GPS:", error);
+		  if (!silent) setErr(t("errorGPS"));
+	} finally {
+    startupEnd(auditFlowName, { status: auditStatus });
+	  if (!silent && !isStaleRequest("gps", requestId) && !primaryContentReleased) {
+      startupMark("full-data");
+      logStartupSummary("gps-flow-finally");
+	    setIsInitialRiskReady(true);
+	    setLoading(false);
+	  }
+	}
 };
 
 const search = async () => {
@@ -1644,10 +1774,11 @@ useEffect(() => {
   let cancelled = false;
   setRiskTrendLoading(true);
 
-  const timer = window.setTimeout(async () => {
-    try {
-      const forecast = await getHourlyForecastByCoords(lat, lon, currentLang);
-      if (cancelled) return;
+	  const timer = window.setTimeout(async () => {
+	    try {
+        startupStart("risk-trend-post-render", { delayMs: 500 });
+	      const forecast = await getHourlyForecastByCoords(lat, lon, currentLang);
+	      if (cancelled) return;
 
       const trend = buildRiskTrend(forecast, {
         heatIndex: hi,
@@ -1657,9 +1788,14 @@ useEffect(() => {
         activity: preventiveActivity,
       });
 
-      setRiskTrend(trend);
-    } catch (err) {
-      if (!cancelled) {
+	      setRiskTrend(trend);
+        startupEnd("risk-trend-post-render", {
+          status: forecast ? "ok" : "no-forecast",
+          hasTrend: Boolean(trend),
+        });
+	    } catch (err) {
+        startupEnd("risk-trend-post-render", { status: "error" });
+	      if (!cancelled) {
         console.warn("[FORECAST] No s'ha pogut calcular la tendència:", err);
         setRiskTrend(null);
       }
@@ -2022,6 +2158,65 @@ const skyLabel = useMemo(() => {
   const translated = t(key);
   return translated !== key ? translated : sky;
 }, [sky, t]);
+
+useEffect(() => {
+  if (
+    firstUsefulAuditRef.current ||
+    !data ||
+    !city ||
+    temp === null ||
+    loading
+  ) {
+    return;
+  }
+
+  startupMark("first-useful-content", {
+    hasWeather: true,
+    hasLocation: Boolean(city),
+  });
+  firstUsefulAuditRef.current = true;
+  logStartupSummary("first-useful-content");
+}, [data, city, temp, loading]);
+
+useEffect(() => {
+  if (
+    riskVisibleAuditRef.current ||
+    !data ||
+    !isInitialRiskReady ||
+    loading ||
+    !primaryStatus?.title
+  ) {
+    return;
+  }
+
+  startupMark("risk-visible", {
+    primaryKind: primary.kind,
+    severity: primary.severity,
+  });
+  startupMark("recommendations-visible");
+  riskVisibleAuditRef.current = true;
+  logStartupSummary("risk-visible");
+}, [data, isInitialRiskReady, loading, primaryStatus?.title, primary.kind, primary.severity]);
+
+useEffect(() => {
+  if (
+    fullDataAuditRef.current ||
+    !data ||
+    !isInitialRiskReady ||
+    !startupFullDataReady ||
+    loading ||
+    !city
+  ) {
+    return;
+  }
+
+  startupMark("full-data-visible", {
+    hasUv: typeof uvi === "number",
+    hasAlerts: Array.isArray(alerts),
+  });
+  fullDataAuditRef.current = true;
+  logStartupSummary("full-data-visible");
+}, [data, isInitialRiskReady, startupFullDataReady, loading, city, uvi, alerts]);
 
 //Return ok
 

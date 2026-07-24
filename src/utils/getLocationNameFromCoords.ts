@@ -1,4 +1,5 @@
 // src/utils/getLocationNameFromCoords.ts
+import { startupEnd, startupStart } from "./startupAudit";
 
 type GeoReverseItem = {
   name?: string;
@@ -213,6 +214,7 @@ async function getFromNominatim(
     });
 
     if (!res.ok) {
+      startupEnd("nominatim-reverse", { status: "http-error", httpStatus: res.status });
       console.warn("[Nominatim Reverse] HTTP", res.status, res.statusText);
       return "";
     }
@@ -241,8 +243,14 @@ async function getFromNominatim(
       selection,
     });
 
+    startupEnd("nominatim-reverse", {
+      status: finalName ? "ok" : "empty",
+      selectedField: selection.selectedField,
+      hasLocalField: Boolean(selection.selectedValue),
+    });
     return finalName;
   } catch (error) {
+    startupEnd("nominatim-reverse", { status: "error" });
     console.warn("[Nominatim Reverse] Error:", error);
     return "";
   }
@@ -254,6 +262,7 @@ async function getFromOpenWeather(
   lang?: string
 ): Promise<string> {
   try {
+    startupStart("openweather-reverse-fallback", { cache: "not-instrumented" });
     const directKey = import.meta.env.DEV
       ? import.meta.env.VITE_OPENWEATHER_API_KEY ||
         import.meta.env.VITE_OPENWEATHER_KEY ||
@@ -278,13 +287,20 @@ async function getFromOpenWeather(
     );
 
     if (!res.ok) {
+      startupEnd("openweather-reverse-fallback", {
+        status: "http-error",
+        httpStatus: res.status,
+      });
       console.warn("[OpenWeather Reverse] HTTP", res.status, res.statusText);
       return "";
     }
 
     const data = (await res.json()) as GeoReverseItem[];
     const first = data?.[0];
-    if (!first) return "";
+    if (!first) {
+      startupEnd("openweather-reverse-fallback", { status: "empty" });
+      return "";
+    }
 
     const finalName = pickLocalName(first, lang);
 
@@ -305,8 +321,13 @@ async function getFromOpenWeather(
       fallbackReason: "Nominatim returned no usable label or failed",
     });
 
+    startupEnd("openweather-reverse-fallback", {
+      status: finalName ? "ok" : "empty",
+      hasName: Boolean(finalName),
+    });
     return finalName;
   } catch (error) {
+    startupEnd("openweather-reverse-fallback", { status: "error" });
     console.warn("[OpenWeather Reverse] Error:", error);
     return "";
   }
@@ -319,6 +340,7 @@ export async function getLocationNameFromCoords(
 ): Promise<string> {
   try {
     // 1) Intent més fi: barri / suburbi / urbanització / nucli
+    startupStart("nominatim-reverse");
     const nominatimName = await getFromNominatim(lat, lon, lang);
     if (nominatimName) return nominatimName;
 
