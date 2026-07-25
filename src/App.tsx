@@ -561,14 +561,22 @@ function isStaleRequest(source: "gps" | "search", id: number) {
 
 const [alerts, setAlerts] = useState<any[]>([]);
 
- const {
+const activityMotionMessages = useMemo(
+  () => ({
+    permissionDenied: t("activity.motion_permission_denied"),
+    activationError: t("activity.motion_activation_error"),
+  }),
+  [t, i18n.resolvedLanguage]
+);
+
+const {
   level: activityLevel,
   enabled: activityEnabled,
   requesting: activityRequesting,
   error: activityError,
   activate,
   deactivate,
-} = useSmartActivity();
+} = useSmartActivity(activityMotionMessages);
 
 const ALERTS_CACHE_KEY = "thermosafe_last_alerts_fetch";
 

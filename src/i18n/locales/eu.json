@@ -372,9 +372,11 @@
   "extra": "gehigarri",
   "adjusts_risk": "prebentzio-doikuntza aktibo",
   "no_impact": "ez du eraginik uneko arriskuan",
+  "motion_permission_denied": "Mugimendu-baimena ukatu da",
+  "motion_activation_error": "Ezin izan da mugimendu-detekzioa aktibatu",
   "info_label": "Mugimendu-detekzioari buruzko informazioa",
   "info_title": "Mugimendu-detekzioa",
-  "info_body": "ThermoSafe-k gailuaren sentsoreak erabiltzen ditu jarduera fisikoaren maila estimatzeko eta prebentzio-gomendioak doitzeko.",
+  "info_body": "ThermoSafek gailuaren mugimendu-sentsoreak erabiltzen ditu jarduera-maila hautemateko eta prebentzio-gomendioak egokitzeko.",
   "info_privacy": "Datuak gailuan bertan prozesatzen dira eta ez dira zerbitzarietara bidaltzen.",
   "info_close": "Ulertuta"
 },

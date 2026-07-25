@@ -363,7 +363,7 @@
     "extra": "{{x}} °C extra",
     "info_label": "Información sobre a detección de movemento",
     "info_title": "Detección de movemento",
-    "info_body": "ThermoSafe utiliza os sensores do dispositivo para estimar o nivel de actividade física e axustar as recomendacións preventivas.",
+    "info_body": "ThermoSafe utiliza os sensores de movemento do dispositivo para detectar o nivel de actividade e adaptar as recomendacións preventivas.",
     "info_privacy": "Os datos procésanse localmente no dispositivo e non se envían a ningún servidor.",
     "info_close": "Entendido"
   },
@@ -418,9 +418,11 @@
   "extra": "extra",
   "adjusts_risk": "axuste preventivo activo",
   "no_impact": "sen impacto no risco actual",
+  "motion_permission_denied": "Permiso de movemento denegado",
+  "motion_activation_error": "Non se puido activar a detección de movemento",
   "info_label": "Información sobre a detección de movemento",
   "info_title": "Detección de movemento",
-  "info_body": "ThermoSafe utiliza os sensores do dispositivo para estimar o nivel de actividade física e axustar as recomendacións preventivas.",
+  "info_body": "ThermoSafe utiliza os sensores de movemento do dispositivo para detectar o nivel de actividade e adaptar as recomendacións preventivas.",
   "info_privacy": "Os datos procésanse localmente no dispositivo e non se envían a ningún servidor.",
   "info_close": "Entendido"
 },

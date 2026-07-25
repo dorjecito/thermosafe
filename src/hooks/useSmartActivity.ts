@@ -13,6 +13,16 @@ interface SmartActivityState {
   deactivate: () => void;
 }
 
+interface SmartActivityMessages {
+  permissionDenied?: string;
+  activationError?: string;
+}
+
+const DEFAULT_SMART_ACTIVITY_MESSAGES: Required<SmartActivityMessages> = {
+  permissionDenied: "Motion permission denied",
+  activationError: "Motion detection could not be enabled",
+};
+
 const DELTAS: Record<ActivityLevel, number> = {
   rest: 0,
   walk: 5,
@@ -30,7 +40,14 @@ const logActivity = (...args: unknown[]) => {
   }
 };
 
-export function useSmartActivity(): SmartActivityState {
+export function useSmartActivity(
+  messages: SmartActivityMessages = DEFAULT_SMART_ACTIVITY_MESSAGES
+): SmartActivityState {
+  const permissionDeniedMessage =
+    messages.permissionDenied ?? DEFAULT_SMART_ACTIVITY_MESSAGES.permissionDenied;
+  const activationErrorMessage =
+    messages.activationError ?? DEFAULT_SMART_ACTIVITY_MESSAGES.activationError;
+
   const [enabled, setEnabled] = useState(false);
   const [requesting, setRequesting] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -184,7 +201,7 @@ export function useSmartActivity(): SmartActivityState {
         logActivity("[ACTIVITY] Resultat requestPermission:", res);
 
         if (res !== "granted") {
-          setError("Permís de moviment denegat");
+          setError(permissionDeniedMessage);
           setEnabled(false);
           setRequesting(false);
           return;
@@ -195,7 +212,7 @@ export function useSmartActivity(): SmartActivityState {
       setEnabled(true);
     } catch (e: any) {
       logActivity("[ACTIVITY] ❌ ERROR activant:", e);
-      setError(e?.message || "No s'ha pogut activar la detecció de moviment");
+      setError(e?.message || activationErrorMessage);
       setEnabled(false);
     } finally {
       setRequesting(false);

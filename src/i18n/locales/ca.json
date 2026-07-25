@@ -396,9 +396,11 @@
     "extra": "Extra",
     "adjusts_risk": "ajust preventiu actiu",
     "no_impact": "sense impacte en el risc actual",
+    "motion_permission_denied": "Permís de moviment denegat",
+    "motion_activation_error": "No s'ha pogut activar la detecció de moviment",
     "info_label": "Informació sobre la detecció de moviment",
     "info_title": "Detecció de moviment",
-    "info_body": "ThermoSafe utilitza els sensors del dispositiu per estimar el nivell d’activitat física i ajustar les recomanacions preventives.",
+    "info_body": "ThermoSafe utilitza els sensors de moviment del dispositiu per detectar el nivell d’activitat i adaptar les recomanacions preventives.",
     "info_privacy": "Les dades es processen localment al dispositiu i no s’envien a cap servidor.",
     "info_close": "Entesos"
   },
