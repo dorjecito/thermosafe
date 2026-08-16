@@ -1,4 +1,9 @@
 import * as React from "react";
+import {
+  estimateUvExposureMinutes,
+  formatUvExposureMinutes,
+  MIN_UV_TO_SHOW_EXPOSURE_TIME,
+} from "../utils/uvExposureEstimate";
 
 type Lang = "ca" | "es" | "eu" | "gl" | "en";
 
@@ -9,13 +14,11 @@ type Props = {
   uvi?: number | null;
   skinType: SelectedSkinType;
   onSkinTypeChange: (skinType: SelectedSkinType) => void;
+  showEstimateBadge?: boolean;
 };
 
 type SkinType = "1" | "2" | "3" | "4" | "5" | "6";
 type SelectedSkinType = 1 | 2 | 3 | 4 | 5 | 6;
-
-const MAX_MINUTES = 480;
-const MIN_UV_TO_SHOW_TIME = 3;
 
 const TXT: Record<
   Lang,
@@ -151,64 +154,28 @@ const TXT: Record<
   },
 };
 
-const UV_MULTIPLIER: Record<SkinType, number> = {
-  "1": 0.67,
-  "2": 0.83,
-  "3": 1,
-  "4": 1.33,
-  "5": 1.67,
-  "6": 2,
-};
-
-function fmtMinutes(totalMinutes: number, lang: Lang, moreThanMax: string): string {
-  if (totalMinutes > MAX_MINUTES) return moreThanMax;
-
-  const mins = Math.max(1, Math.round(totalMinutes));
-  const h = Math.floor(mins / 60);
-  const m = mins % 60;
-
-  if (lang === "en") {
-    if (h > 0 && m > 0) return `${h} h ${m} min`;
-    if (h > 0) return `${h} h`;
-    return `${m} min`;
-  }
-
-  if (h > 0 && m > 0) return `${h} h ${m} min`;
-  if (h > 0) return `${h} h`;
-  return `${m} min`;
-}
-
-function estimateSafeMinutes(uvi: number, skinType: SkinType): number | null {
-  if (!Number.isFinite(uvi) || uvi <= 0) return null;
-  if (uvi < MIN_UV_TO_SHOW_TIME) return null;
-
-  const basePhototype3 = 200 / uvi;
-  const adjusted = basePhototype3 * UV_MULTIPLIER[skinType];
-
-  return Math.max(5, adjusted);
-}
-
 export default function UVSafeTime({
   lang,
   uvi,
   skinType,
   onSkinTypeChange,
+  showEstimateBadge = true,
 }: Props) {
   const t = TXT[lang] ?? TXT.ca;
 
   const hasValidUvi = typeof uvi === "number" && Number.isFinite(uvi);
   const isNight = hasValidUvi && (uvi as number) <= 0;
   const isVeryLowUv = hasValidUvi && (uvi as number) > 0 && (uvi as number) <= 0.5;
-  const shouldShowTime = hasValidUvi && (uvi as number) >= MIN_UV_TO_SHOW_TIME;
+  const shouldShowTime = hasValidUvi && (uvi as number) >= MIN_UV_TO_SHOW_EXPOSURE_TIME;
 
   const safeMinutes = shouldShowTime
-    ? estimateSafeMinutes(uvi as number, String(skinType) as SkinType)
+    ? estimateUvExposureMinutes(uvi as number, skinType)
     : null;
 
   let note = t.unknown;
   if (hasValidUvi) {
     if ((uvi as number) <= 0) note = t.night;
-    else if ((uvi as number) < MIN_UV_TO_SHOW_TIME) note = t.noRisk;
+    else if ((uvi as number) < MIN_UV_TO_SHOW_EXPOSURE_TIME) note = t.noRisk;
     else if ((uvi as number) < 6) note = t.noteLow;
     else if ((uvi as number) < 8) note = t.noteModerate;
     else note = t.noteHigh;
@@ -262,6 +229,7 @@ export default function UVSafeTime({
           ))}
         </select>
 
+        {showEstimateBadge && (
         <div
           style={{
             fontWeight: 700,
@@ -281,10 +249,11 @@ export default function UVSafeTime({
                : !shouldShowTime
                ? "—"
               : safeMinutes != null
-              ? fmtMinutes(safeMinutes, lang, t.moreThanMax)
+              ? formatUvExposureMinutes(safeMinutes, lang, t.moreThanMax)
               : t.unknown}
           </span>
         </div>
+        )}
       </div>
 
       <div style={{ opacity: 0.92, lineHeight: 1.5 }}>{note}</div>

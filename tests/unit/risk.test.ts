@@ -18,6 +18,16 @@ import {
   isDayAtLocation,
   isLateDayAtLocation,
 } from "../../src/utils/isDayAtLocation";
+import {
+  inferSkinTypeConfigured,
+  readStoredSkinType,
+  shouldShowSkinTypePrompt,
+  SKIN_TYPE_CONFIGURED_STORAGE_KEY,
+  SKIN_TYPE_PROMPT_DISMISSED_STORAGE_KEY,
+  SKIN_TYPE_PROMPT_SEEN_STORAGE_KEY,
+  SKIN_TYPE_STORAGE_KEY,
+  type SkinTypeStorage,
+} from "../../src/utils/skinTypePreference";
 import { getPrimaryStatusBlock } from "../../src/utils/getPrimaryStatusBlock";
 import { detectAemetHazard } from "../../src/utils/aemetAi";
 import { pickPrimaryRisk } from "../../src/utils/PickPrimaryRisk";
@@ -2673,6 +2683,62 @@ test("day/night detection uses local sunrise and sunset boundaries", () => {
   assert.equal(isDayAtLocation(sunrise - 1, tz, sunrise, sunset), false);
   assert.equal(isDayAtLocation(sunset, tz, sunrise, sunset), false);
   assert.equal(isDayAtLocation(10_000, tz), true);
+});
+
+function makeSkinTypeStorage(values: Record<string, string>): SkinTypeStorage {
+  return {
+    getItem: (key: string) => values[key] ?? null,
+  };
+}
+
+test("skin type preference keeps type 3 as default until explicitly configured", () => {
+  const fresh = makeSkinTypeStorage({});
+  assert.equal(readStoredSkinType(fresh), 3);
+  assert.equal(inferSkinTypeConfigured(fresh), false);
+  assert.equal(shouldShowSkinTypePrompt(fresh), true);
+
+  const explicitType3 = makeSkinTypeStorage({
+    [SKIN_TYPE_STORAGE_KEY]: "3",
+    [SKIN_TYPE_CONFIGURED_STORAGE_KEY]: "true",
+  });
+  assert.equal(readStoredSkinType(explicitType3), 3);
+  assert.equal(inferSkinTypeConfigured(explicitType3), true);
+  assert.equal(shouldShowSkinTypePrompt(explicitType3), false);
+});
+
+test("skin type preference infers only non-default legacy values as configured", () => {
+  const legacyType4 = makeSkinTypeStorage({
+    [SKIN_TYPE_STORAGE_KEY]: "4",
+  });
+  assert.equal(readStoredSkinType(legacyType4), 4);
+  assert.equal(inferSkinTypeConfigured(legacyType4), true);
+  assert.equal(shouldShowSkinTypePrompt(legacyType4), false);
+
+  const legacyType3 = makeSkinTypeStorage({
+    [SKIN_TYPE_STORAGE_KEY]: "3",
+  });
+  assert.equal(readStoredSkinType(legacyType3), 3);
+  assert.equal(inferSkinTypeConfigured(legacyType3), false);
+  assert.equal(shouldShowSkinTypePrompt(legacyType3), true);
+});
+
+test("skin type prompt respects not-now and seen persistence", () => {
+  assert.equal(
+    shouldShowSkinTypePrompt(
+      makeSkinTypeStorage({
+        [SKIN_TYPE_PROMPT_DISMISSED_STORAGE_KEY]: "true",
+      })
+    ),
+    false
+  );
+  assert.equal(
+    shouldShowSkinTypePrompt(
+      makeSkinTypeStorage({
+        [SKIN_TYPE_PROMPT_SEEN_STORAGE_KEY]: "true",
+      })
+    ),
+    false
+  );
 });
 
 test("late-day detection follows the local sunset window", () => {

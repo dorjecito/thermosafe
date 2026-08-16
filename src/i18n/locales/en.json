@@ -339,6 +339,14 @@
   "uv_night_title": "Solar information",
   "uv_night_message": "There is no UV radiation at night.",
   "uv_night_info": "It is nighttime. There is no UV radiation risk.",
+  "skin_prompt": {
+    "title": "Personalize sun protection",
+    "text": "Set your skin type to better estimate your sun exposure time.",
+    "configure": "Configure",
+    "not_now": "Not now",
+    "exposure_summary": "Estimated exposure",
+    "skin_summary_type": "Skin type"
+  },
 
   "uv": {
     "safe_time_title": "Safe exposure time",

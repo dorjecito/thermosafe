@@ -55,6 +55,20 @@ import { getUVDetailFromOpenUV, getUVFromOpenUV } from "./services/openUV";
    import { getWeatherContext } from "./utils/weatherContext";
    import { fetchSolarIrr } from "./utils/fetchSolarIrr";
 	   import { resolveSkyDescription } from "./utils/resolveSkyDescription";
+     import {
+       estimateUvExposureMinutes,
+       formatUvExposureMinutes,
+     } from "./utils/uvExposureEstimate";
+     import {
+       inferSkinTypeConfigured,
+       readStoredBoolean,
+       readStoredSkinType,
+       shouldShowSkinTypePrompt,
+       SKIN_TYPE_CONFIGURED_STORAGE_KEY,
+       SKIN_TYPE_PROMPT_DISMISSED_STORAGE_KEY,
+       SKIN_TYPE_PROMPT_SEEN_STORAGE_KEY,
+       SKIN_TYPE_STORAGE_KEY,
+     } from "./utils/skinTypePreference";
 	   import {
 	     fetchPublishedVersion,
 	     isNewVersionAvailable,
@@ -175,6 +189,14 @@ const UI_LABELS = {
     moreUv: "Veure més informació UV",
     lessUv: "Amagar informació UV",
     skinType: "Fototip de pell",
+    skinPromptTitle: "Personalitza la protecció solar",
+    skinPromptText:
+      "Indica el teu tipus de pell per estimar millor el temps d’exposició al sol.",
+    configure: "Configurar",
+    notNow: "Ara no",
+    exposureSummary: "Exposició orientativa",
+    skinSummaryType: "Pell tipus",
+    moreThanMaxExposure: "> 8 h",
   },
   es: {
     viewAllAlerts: "Ver todas las alertas",
@@ -184,6 +206,14 @@ const UI_LABELS = {
     moreUv: "Ver más información UV",
     lessUv: "Ocultar información UV",
     skinType: "Fototipo de piel",
+    skinPromptTitle: "Personaliza la protección solar",
+    skinPromptText:
+      "Indica tu tipo de piel para estimar mejor el tiempo de exposición al sol.",
+    configure: "Configurar",
+    notNow: "Ahora no",
+    exposureSummary: "Exposición orientativa",
+    skinSummaryType: "Piel tipo",
+    moreThanMaxExposure: "> 8 h",
   },
   eu: {
     viewAllAlerts: "Ikusi alerta guztiak",
@@ -193,6 +223,14 @@ const UI_LABELS = {
     moreUv: "Ikusi UV informazio gehiago",
     lessUv: "Ezkutatu UV informazioa",
     skinType: "Azalaren fototipoa",
+    skinPromptTitle: "Pertsonalizatu eguzki-babesa",
+    skinPromptText:
+      "Adierazi zure azal mota eguzkitan egoteko denbora hobeto estimatzeko.",
+    configure: "Konfiguratu",
+    notNow: "Orain ez",
+    exposureSummary: "Gutxi gorabeherako esposizioa",
+    skinSummaryType: "Azal mota",
+    moreThanMaxExposure: "> 8 h",
   },
   gl: {
     viewAllAlerts: "Ver todas as alertas",
@@ -202,6 +240,14 @@ const UI_LABELS = {
     moreUv: "Ver máis información UV",
     lessUv: "Agochar información UV",
     skinType: "Fototipo de pel",
+    skinPromptTitle: "Personaliza a protección solar",
+    skinPromptText:
+      "Indica o teu tipo de pel para estimar mellor o tempo de exposición ao sol.",
+    configure: "Configurar",
+    notNow: "Agora non",
+    exposureSummary: "Exposición orientativa",
+    skinSummaryType: "Pel tipo",
+    moreThanMaxExposure: "> 8 h",
   },
   en: {
     viewAllAlerts: "View all alerts",
@@ -211,6 +257,14 @@ const UI_LABELS = {
     moreUv: "View more UV information",
     lessUv: "Hide UV information",
     skinType: "Skin phototype",
+    skinPromptTitle: "Personalize sun protection",
+    skinPromptText:
+      "Set your skin type to better estimate your sun exposure time.",
+    configure: "Configure",
+    notNow: "Not now",
+    exposureSummary: "Estimated exposure",
+    skinSummaryType: "Skin type",
+    moreThanMaxExposure: "> 8 h",
   },
 } as const;
 
@@ -234,10 +288,18 @@ export default function App() {
 
   // 🧴 Fototip (1–6)
   const [skinType, setSkinType] = useState<SkinType>(() => {
-    const savedSkinType = Number(localStorage.getItem("skinType"));
-    return savedSkinType >= 1 && savedSkinType <= 6
-      ? (savedSkinType as SkinType)
-      : 3;
+    return readStoredSkinType(localStorage);
+  });
+  const [skinTypeConfigured, setSkinTypeConfigured] = useState<boolean>(() => {
+    return inferSkinTypeConfigured(localStorage);
+  });
+  const [skinTypePromptDismissed, setSkinTypePromptDismissed] =
+    useState<boolean>(
+      () =>
+        readStoredBoolean(localStorage, SKIN_TYPE_PROMPT_DISMISSED_STORAGE_KEY) === true
+    );
+  const [showSkinTypePrompt, setShowSkinTypePrompt] = useState<boolean>(() => {
+    return shouldShowSkinTypePrompt(localStorage);
   });
   const [showSkinInfo, setShowSkinInfo] = useState(false);
   const [uvDetailsOpen, setUvDetailsOpen] = useState(false);
@@ -249,6 +311,23 @@ export default function App() {
     const out = t(key);
     return out && out !== key ? out : fallback;
   };
+
+  const handleSkinTypeChange = useCallback((nextSkinType: SkinType) => {
+    setSkinType(nextSkinType);
+    setSkinTypeConfigured(true);
+    setShowSkinTypePrompt(false);
+  }, []);
+
+  const handleSkinTypePromptConfigure = useCallback(() => {
+    setSkinTypeConfigured(true);
+    setShowSkinInfo(true);
+    setShowSkinTypePrompt(false);
+  }, []);
+
+  const handleSkinTypePromptDismiss = useCallback(() => {
+    setSkinTypePromptDismissed(true);
+    setShowSkinTypePrompt(false);
+  }, []);
 
   useEffect(() => {
     startupMark("react-mounted");
@@ -484,8 +563,22 @@ useEffect(() => {
 }, [pushEnabled]);
 
 useEffect(() => {
-    localStorage.setItem("skinType", String(skinType));
+    localStorage.setItem(SKIN_TYPE_STORAGE_KEY, String(skinType));
 }, [skinType]);
+
+useEffect(() => {
+    localStorage.setItem(
+      SKIN_TYPE_CONFIGURED_STORAGE_KEY,
+      JSON.stringify(skinTypeConfigured)
+    );
+}, [skinTypeConfigured]);
+
+useEffect(() => {
+    localStorage.setItem(
+      SKIN_TYPE_PROMPT_DISMISSED_STORAGE_KEY,
+      JSON.stringify(skinTypePromptDismissed)
+    );
+}, [skinTypePromptDismissed]);
 
   /* state */
   const [data, setData] = useState<any | null>(null);
@@ -1885,9 +1978,14 @@ const isClearlyColdNow = currentFeelTemp < 8;
 const isColdRisk = typeof risk === "string" && risk.startsWith("cold_");
 
 const shouldHideUVBlock = useMemo(
-  () => isRainy || (isVeryCloudy && isClearlyColdNow) || isColdRisk,
-  [isRainy, isVeryCloudy, isClearlyColdNow, isColdRisk]
+  () => !day || isRainy || (isVeryCloudy && isClearlyColdNow) || isColdRisk,
+  [day, isRainy, isVeryCloudy, isClearlyColdNow, isColdRisk]
 );
+
+useEffect(() => {
+  if (!showSkinTypePrompt || shouldHideUVBlock) return;
+  localStorage.setItem(SKIN_TYPE_PROMPT_SEEN_STORAGE_KEY, "true");
+}, [showSkinTypePrompt, shouldHideUVBlock]);
 
 const contextualUVMessage = useMemo(
   () =>
@@ -1985,6 +2083,20 @@ const riskIcons = getRiskIcons(
 );
 
 const localUi = useMemo(() => UI_LABELS[currentLang] || UI_LABELS.ca, [currentLang]);
+const configuredSkinExposureSummary = useMemo(() => {
+  if (!skinTypeConfigured || typeof uvi !== "number" || !Number.isFinite(uvi)) {
+    return null;
+  }
+
+  const minutes = estimateUvExposureMinutes(uvi, skinType);
+  if (minutes == null) return null;
+
+  return formatUvExposureMinutes(
+    minutes,
+    currentLang,
+    localUi.moreThanMaxExposure
+  );
+}, [skinTypeConfigured, uvi, skinType, currentLang, localUi.moreThanMaxExposure]);
 const diagnosticsAlertSettings = useMemo<DiagnosticsAlertSetting[]>(
   () => [
     { key: "heat", enabled: pushEnabled ? true : null },
@@ -2796,6 +2908,43 @@ return (
                     </div>
 		              </div>
 
+                  {configuredSkinExposureSummary && (
+                    <p className="uv-skin-exposure-summary">
+                      <span className="uv-skin-exposure-type">
+                        {localUi.skinSummaryType} {skinType}
+                      </span>
+                      <span className="uv-skin-exposure-separator"> · </span>
+                      <span className="uv-skin-exposure-time">
+                        {localUi.exposureSummary}: {configuredSkinExposureSummary}
+                      </span>
+                    </p>
+                  )}
+
+                  {showSkinTypePrompt && (
+                    <div className="uv-context-card uv-context-card--info skin-type-prompt">
+                      <div className="uv-context-text">
+                        <strong>{localUi.skinPromptTitle}</strong>
+                        <span>{localUi.skinPromptText}</span>
+                      </div>
+                      <div className="skin-type-prompt-actions">
+                        <button
+                          type="button"
+                          className="secondary-toggle-btn"
+                          onClick={handleSkinTypePromptConfigure}
+                        >
+                          {localUi.configure}
+                        </button>
+                        <button
+                          type="button"
+                          className="secondary-toggle-btn skin-type-prompt-dismiss"
+                          onClick={handleSkinTypePromptDismiss}
+                        >
+                          {localUi.notNow}
+                        </button>
+                      </div>
+                    </div>
+                  )}
+
 		              <details
                     className="aemet-alert-details"
                     style={{ marginTop: "0.75rem" }}
@@ -2825,7 +2974,8 @@ return (
 	                  lang={lang}
 	                  uvi={uvi}
 	                  skinType={skinType}
-	                  onSkinTypeChange={setSkinType}
+	                  onSkinTypeChange={handleSkinTypeChange}
+                    showEstimateBadge={!configuredSkinExposureSummary}
 	                />
 
 	                {/* 📊 Detall UV (OpenUV) */}
@@ -2846,13 +2996,6 @@ return (
 	            </>
 	          )}
 
-          {/* 🌙 Durant la nit */}
-          {!day && (
-            <p className="data-label" style={{ opacity: 0.85 }}>
-              🌙 {t("uv_night_info") ??
-                "És de nit. No hi ha risc per radiació UV."}
-            </p>
-          )}
 	        </>
 	      );
 	    })()}
@@ -2876,7 +3019,7 @@ return (
 	            <SkinTypeInfo
 	              lang={currentLang as "ca" | "es" | "eu" | "gl" | "en"}
 	              value={skinType}
-	              onChange={setSkinType}
+	              onChange={handleSkinTypeChange}
 	            />
             </React.Suspense>
 	        )}

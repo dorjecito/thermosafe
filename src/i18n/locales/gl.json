@@ -353,6 +353,14 @@
   "uv_night_title": "Información solar",
   "uv_night_message": "Pola noite non hai radiación UV.",
   "uv_night_info": "É de noite. Non hai risco por radiación UV.",
+  "skin_prompt": {
+    "title": "Personaliza a protección solar",
+    "text": "Indica o teu tipo de pel para estimar mellor o tempo de exposición ao sol.",
+    "configure": "Configurar",
+    "not_now": "Agora non",
+    "exposure_summary": "Exposición orientativa",
+    "skin_summary_type": "Pel tipo"
+  },
 
   "activity": {
     "label": "Actividade",

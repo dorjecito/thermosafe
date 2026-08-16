@@ -360,6 +360,14 @@
   "uv_night_title": "Eguzki-informazioa",
   "uv_night_message": "Gauez ez dago UV arriskurik.",
   "uv_night_info": "Gaua da. UV arriskurik ez.",
+  "skin_prompt": {
+    "title": "Pertsonalizatu eguzki-babesa",
+    "text": "Adierazi zure azal mota eguzkitan egoteko denbora hobeto estimatzeko.",
+    "configure": "Konfiguratu",
+    "not_now": "Orain ez",
+    "exposure_summary": "Gutxi gorabeherako esposizioa",
+    "skin_summary_type": "Azal mota"
+  },
 
   "activity": {
   "inactive": "Mugimendua detektatzea aktibatu",

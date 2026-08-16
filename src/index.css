@@ -2351,8 +2351,12 @@ body,
   margin: 0.45rem 0 0.6rem !important;
 }
 
+.uv-block {
+  --uv-summary-inline-padding: 0.65rem;
+}
+
 .uv-summary-compact {
-  padding: 0.5rem 0.65rem !important;
+  padding: 0.5rem var(--uv-summary-inline-padding) !important;
   margin: 0 !important;
 }
 
@@ -2365,6 +2369,63 @@ body,
   display: block;
   margin-top: 0.16rem;
   font-size: 0.92rem;
+}
+
+.uv-skin-exposure-summary {
+  margin: 0.28rem var(--uv-summary-inline-padding) 0.58rem;
+  font-size: 0.9rem;
+  line-height: 1.3;
+  color: var(--card-text);
+}
+
+.uv-skin-exposure-type,
+.uv-skin-exposure-separator,
+.uv-skin-exposure-time {
+  display: inline;
+}
+
+.uv-skin-exposure-type,
+.uv-skin-exposure-separator {
+  color: var(--muted-text, var(--card-text));
+  font-weight: 600;
+  opacity: 0.82;
+}
+
+.uv-skin-exposure-time {
+  color: var(--card-text);
+  font-weight: 700;
+}
+
+.skin-type-prompt {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.75rem;
+  align-items: center;
+  margin-top: 0.55rem;
+  padding: 0.62rem 0.72rem !important;
+}
+
+.skin-type-prompt .uv-context-text {
+  display: grid;
+  gap: 0.18rem;
+  line-height: 1.25;
+}
+
+.skin-type-prompt-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.42rem;
+  justify-content: flex-end;
+}
+
+.skin-type-prompt-actions .secondary-toggle-btn {
+  padding: 0.38rem 0.58rem;
+  font-size: 0.82rem;
+  white-space: nowrap;
+}
+
+.skin-type-prompt-dismiss {
+  opacity: 0.82;
 }
 
 .uv-max-detail {

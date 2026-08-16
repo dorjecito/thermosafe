@@ -375,6 +375,14 @@
   "uv_night_title": "Información solar",
   "uv_night_message": "Por la noche no hay radiación UV.",
   "uv_night_info": "Es de noche. No hay riesgo por radiación UV.",
+  "skin_prompt": {
+    "title": "Personaliza la protección solar",
+    "text": "Indica tu tipo de piel para estimar mejor el tiempo de exposición al sol.",
+    "configure": "Configurar",
+    "not_now": "Ahora no",
+    "exposure_summary": "Exposición orientativa",
+    "skin_summary_type": "Piel tipo"
+  },
 
   "recommendations_full": {
     "heat": {

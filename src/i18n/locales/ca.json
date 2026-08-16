@@ -350,6 +350,14 @@
   "uv_night_message": "A la nit no hi ha radiació UV.",
   "uv_night_info": "És de nit. No hi ha risc per radiació UV.",
   "uv_source_note": "Dades UV de referència (OpenUV/NASA). Poden variar segons l’hora i la font.",
+  "skin_prompt": {
+    "title": "Personalitza la protecció solar",
+    "text": "Indica el teu tipus de pell per estimar millor el temps d’exposició al sol.",
+    "configure": "Configurar",
+    "not_now": "Ara no",
+    "exposure_summary": "Exposició orientativa",
+    "skin_summary_type": "Pell tipus"
+  },
 
   "recommendations_full": {
     "heat": {
