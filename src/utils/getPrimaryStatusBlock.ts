@@ -205,7 +205,7 @@ export function getPrimaryStatusBlock({
       title:
         soonSummary.title ||
         t("official_alert_soon") ||
-        "Avís meteorològic oficial proper",
+        "Pròxim avís meteorològic oficial",
       text:
         soonSummary.text ||
         t("follow_official_alerts_soon") ||

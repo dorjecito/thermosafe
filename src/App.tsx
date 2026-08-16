@@ -182,7 +182,7 @@ const getQuickTempToneClass = (value: number | null): string => {
 
 const UI_LABELS = {
   ca: {
-    viewAllAlerts: "Veure totes les alertes",
+    viewAllAlerts: "Veure {{count}} alertes més",
     hideAlerts: "Amagar alertes",
     currentUv: "Índex UV actual",
     uvMaxToday: "UV màxim d’avui",
@@ -233,7 +233,7 @@ const UI_LABELS = {
     moreThanMaxExposure: "> 8 h",
   },
   gl: {
-    viewAllAlerts: "Ver todas as alertas",
+    viewAllAlerts: "Ver {{count}} alertas máis",
     hideAlerts: "Agochar alertas",
     currentUv: "Índice UV actual",
     uvMaxToday: "UV máximo de hoxe",
@@ -250,13 +250,13 @@ const UI_LABELS = {
     moreThanMaxExposure: "> 8 h",
   },
   en: {
-    viewAllAlerts: "View all alerts",
+    viewAllAlerts: "View {{count}} more alerts",
     hideAlerts: "Hide alerts",
     currentUv: "Current UV index",
     uvMaxToday: "Today's max UV",
     moreUv: "View more UV information",
     lessUv: "Hide UV information",
-    skinType: "Skin phototype",
+    skinType: "Skin type",
     skinPromptTitle: "Personalize sun protection",
     skinPromptText:
       "Set your skin type to better estimate your sun exposure time.",
@@ -1990,9 +1990,9 @@ useEffect(() => {
 const contextualUVMessage = useMemo(
   () =>
     typeof uvi === "number" && Number.isFinite(uvi)
-      ? getContextualUVMessage(uvi)
+      ? getContextualUVMessage(uvi, currentLang)
       : "",
-  [uvi]
+  [uvi, currentLang]
 );
 
 const primaryStatusInput = useMemo(
@@ -2751,12 +2751,12 @@ return (
    {/* 🛰️ Font de dades (GPS o Cerca manual) */}
 {showSource && currentSource === 'gps' && (
   <p style={{ fontSize: '0.9em', color: '#6cf', transition: 'opacity 0.5s' }}>
-    🛰️ Font: GPS
+    🛰️ {currentLang === "en" ? `${t("source")}: GPS` : "Font: GPS"}
   </p>
 )}
 {showSource && currentSource === 'search' && (
   <p style={{ fontSize: '0.9em', color: '#ffb347', transition: 'opacity 0.5s' }}>
-    🔍 Font: Cerca manual
+    🔍 {currentLang === "en" ? `${t("source")}: ${t("source_manual_search")}` : "Font: Cerca manual"}
   </p>
 )}
 
@@ -2769,7 +2769,15 @@ return (
       <details className="aemet-alert-details" style={{ marginTop: "0.75rem" }}>
         <summary className="aemet-alert-summary">
           <span className="summary-closed">
-            {localUi.viewAllAlerts} ({alertCards.length - 1})
+            {currentLang === "es"
+              ? `Ver ${alertCards.length - 1} alertas más`
+              : currentLang === "ca"
+                ? localUi.viewAllAlerts.replace("{{count}}", String(alertCards.length - 1))
+                : currentLang === "gl"
+                  ? localUi.viewAllAlerts.replace("{{count}}", String(alertCards.length - 1))
+                : currentLang === "en"
+                  ? localUi.viewAllAlerts.replace("{{count}}", String(alertCards.length - 1))
+                  : `${localUi.viewAllAlerts} (${alertCards.length - 1})`}
           </span>
           <span className="summary-open">{localUi.hideAlerts}</span>
         </summary>

@@ -246,10 +246,10 @@ export default function UVSafeTime({
                ? t.night
               : isVeryLowUv
               ? t.noLimitVeryLow
-               : !shouldShowTime
-               ? "—"
+              : !shouldShowTime
+            ? "—"
               : safeMinutes != null
-              ? formatUvExposureMinutes(safeMinutes, lang, t.moreThanMax)
+               ? formatUvExposureMinutes(safeMinutes, lang, t.moreThanMax)
               : t.unknown}
           </span>
         </div>

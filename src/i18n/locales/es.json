@@ -37,7 +37,7 @@
   "riskTrend": {
     "loading": "Se está calculando la previsión para las próximas horas…",
     "unavailable": "La previsión para las próximas horas no está disponible.",
-    "stable": "No se esperan cambios importantes durante las próximas horas.",
+    "stable": "Se espera que las condiciones locales se mantengan similares durante las próximas horas.",
     "improving": "Durante las próximas horas las condiciones mejorarán.",
     "improving_heat": "La sensación térmica bajará durante las próximas horas.",
     "improving_cold": "Las temperaturas serán menos frías durante las próximas horas.",
@@ -89,7 +89,7 @@
   "alertRisk": "⚠️ Riesgo alto o extremo por calor.",
 
   "loading": "Cargando datos meteorológicos...",
-  "errorGPS": "No se ha podido obtener la temperatura por GPS.",
+  "errorGPS": "No se ha podido obtener la ubicación por GPS.",
   "errorCity": "No se han encontrado datos para esta ubicación. Se muestran los últimos datos disponibles.",
   "errorNoLocation": "No se ha podido obtener la ubicación.",
 
@@ -104,8 +104,8 @@
   "top_alert_weather_active": "Alerta meteorológica activa",
   "official_alert": "Aviso meteorológico oficial activo",
   "follow_official_alerts": "Sigue las indicaciones oficiales y extrema la precaución.",
-  "official_alert_soon": "Aviso meteorológico oficial próximo",
-  "follow_official_alerts_soon": "Hay un aviso meteorológico previsto. Conviene anticiparse y revisar la actividad prevista.",
+  "official_alert_soon": "Próximo aviso meteorológico oficial",
+  "follow_official_alerts_soon": "Hay un aviso meteorológico previsto. Revisa la actividad prevista y planifica con antelación.",
   "official_alert_active_prefix": "Aviso oficial activo",
   "official_alert_soon_prefix": "Próximo aviso oficial",
   "official_alert_active_multiple": "Avisos oficiales activos",
@@ -123,14 +123,14 @@
   "official_alert_active_multiple_text": "Hay varios avisos meteorológicos activos. Revisa el detalle y extrema la precaución.",
   "official_alert_soon_multiple_text": "Hay varios avisos meteorológicos previstos. Revisa el detalle antes de planificar la actividad.",
   "official_alert_active_hazard": {
-    "rain": "Lluvia activa. Sigue las indicaciones oficiales y extrema la precaución.",
+    "rain": "Aviso activo por lluvia. Sigue las indicaciones oficiales y extrema la precaución.",
     "snow": "Nieve activa. Sigue las indicaciones oficiales y extrema la precaución.",
-    "wind": "Viento activo. Sigue las indicaciones oficiales y extrema la precaución.",
+    "wind": "Aviso activo por viento. Sigue las indicaciones oficiales y extrema la precaución.",
     "storm": "Tormentas activas. Sigue las indicaciones oficiales y extrema la precaución.",
-    "coast": "Costa y oleaje activos. Sigue las indicaciones oficiales y extrema la precaución.",
+    "coast": "Aviso activo por costa y oleaje. Sigue las indicaciones oficiales y extrema la precaución.",
     "fog": "Niebla activa. Sigue las indicaciones oficiales y extrema la precaución.",
-    "temp_min": "Temperaturas bajas activas. Sigue las indicaciones oficiales y extrema la precaución.",
-    "temp_max": "Temperaturas extremas activas. Sigue las indicaciones oficiales y extrema la precaución."
+    "temp_min": "Aviso activo por temperaturas bajas. Sigue las indicaciones oficiales y extrema la precaución.",
+    "temp_max": "Aviso activo por temperaturas extremas. Sigue las indicaciones oficiales y extrema la precaución."
   },
   "official_alert_soon_hazard": {
     "rain": "Lluvia prevista. Conviene anticiparse y revisar la actividad prevista.",
@@ -386,7 +386,7 @@
 
   "recommendations_full": {
     "heat": {
-      "low": "Mantén buena hidratación y evita el sol directo en las horas de más calor.",
+      "low": "Bebe agua con frecuencia y evita el sol directo en las horas de más calor.",
       "moderate": "Hidrátate a menudo, descansa en zonas frescas y evita esfuerzos intensos.",
       "high": "Riesgo importante: limita la actividad exterior, bebe agua con frecuencia y busca sombra.",
       "extreme": "Peligro extremo: evita totalmente el exterior. Riesgo elevado de golpe de calor."
@@ -399,12 +399,12 @@
     },
     "wind": {
       "low": "Viento suave: sin medidas especiales.",
-      "moderate": "Viento moderado: asegura objetos ligeros y mantén precaución.",
+      "moderate": "Viento moderado: asegura objetos ligeros y actúa con precaución.",
       "high": "Viento fuerte: evita zonas arboladas y asegura mobiliario exterior.",
       "extreme": "Viento muy violento: permanece en interiores y aléjate de árboles o estructuras inestables."
     },
     "fog": {
-      "low": "Niebla ligera: precaución en desplazamientos.",
+      "low": "Niebla ligera: ten precaución en los desplazamientos.",
       "moderate": "Niebla moderada: reduce velocidad y aumenta distancia de seguridad.",
       "high": "Niebla densa: evita desplazamientos innecesarios.",
       "extreme": "Visibilidad nula: detén cualquier desplazamiento hasta que mejore."
@@ -413,7 +413,7 @@
       "low": "Oleaje débil: condiciones normales.",
       "moderate": "Oleaje moderado: evita zonas rocosas y pasos estrechos.",
       "high": "Fuerte oleaje: aléjate de espigones y rompientes.",
-      "extreme": "Oleaje muy fuerte: riesgo extremo. Evita totalmente paseos cerca del mar."
+      "extreme": "Oleaje muy fuerte: riesgo extremo. Evita por completo pasear cerca del mar."
     }
   },
 
@@ -440,7 +440,7 @@
   "officialAdviceDynamic": {
     "heat": {
       "mild": "Hidrátate a menudo y descansa en zonas frescas.",
-      "moderate": "Evita esfuerzos intensos, hidrátate adecuadamente y adapta la actividad según las condiciones ambientales.",
+      "moderate": "Evita esfuerzos intensos, bebe agua con frecuencia y adapta la actividad a las condiciones.",
       "moderate_night": "La temperatura se mantiene elevada durante la noche. Hidrátate, ventila los espacios y evita esfuerzos innecesarios.",
       "high": "Riesgo importante: limita la actividad exterior e hidrátate de forma continua.",
       "high_night": "El calor continúa elevado durante la noche. Reduce esfuerzos, hidrátate y favorece la ventilación.",

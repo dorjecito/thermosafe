@@ -27,7 +27,7 @@ export default function OfficialAdviceCard({
   function confirmCall112(lang: string) {
     const msg =
       {
-        ca: "Estàs segur que vols cridar a emergències?",
+        ca: "Segur que vols trucar a emergències?",
         es: "¿Seguro que quieres llamar a emergencias?",
         eu: "Larrialdietara deitu nahi duzula ziur zaude?",
         gl: "Tes certeza de que queres chamar ás emerxencias?",

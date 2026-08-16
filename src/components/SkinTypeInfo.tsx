@@ -105,8 +105,8 @@ const TEXT: Record<Lang, {
     },
   },
   en: {
-    title: "🧴 Skin phototype info",
-    label: "Phototype",
+    title: "🧴 Skin type info",
+    label: "Skin type",
     types: {
       1: "Type 1 — Very fair",
       2: "Type 2 — Fair",

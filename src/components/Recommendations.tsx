@@ -182,7 +182,7 @@ const TXT: TxtDict = {
   ca: {
     title: "Recomanacions preventives",
     safe:
-      "El confort tèrmic és favorable. Mantén una hidratació adequada i adapta l’activitat al teu ritme.",
+      "El confort tèrmic és favorable. Beu aigua amb regularitat i adapta l’activitat al teu ritme.",
     safeUvModerate:
       "Radiació UV moderada. Es recomana protecció solar si l’exposició és prolongada.",
     safeWind:
@@ -251,7 +251,7 @@ const TXT: TxtDict = {
     cold_ext:
       "Roman en un espai interior, protegeix extremitats i conserva la calor corporal.",
     rain:
-      "Augmenta la precaució davant possibles relliscades, pèrdua d’adherència i menor confort.",
+      "Ves amb més compte: la pluja pot provocar relliscades i reduir l’adherència.",
     storm:
       "Situació potencialment adversa per precipitació o tempesta. Limita l’activitat exterior si no és imprescindible.",
     humid:
@@ -278,7 +278,7 @@ const TXT: TxtDict = {
   es: {
     title: "Recomendaciones preventivas",
     safe:
-      "El confort térmico es favorable. Mantén una hidratación adecuada y adapta la actividad a tu ritmo.",
+      "El confort térmico es favorable. Bebe agua con regularidad y adapta la actividad a tu ritmo.",
     safeUvModerate:
       "Radiación UV moderada. Se recomienda protección solar si la exposición es prolongada.",
     safeWind:
@@ -303,11 +303,11 @@ const TXT: TxtDict = {
     factorSmoke: "Humo",
     factorIce: "Hielo",
     mild:
-      "Mantén una hidratación adecuada y evita esfuerzos prolongados. Haz pausas si notas fatiga.",
+      "Bebe agua con regularidad y evita esfuerzos prolongados. Haz pausas si notas fatiga.",
     mildMorning:
       "Planifica las actividades más exigentes antes del mediodía, bebe agua con frecuencia y haz pausas en lugares frescos.",
     moderate:
-      "Programa pausas frecuentes, reduce la carga física y procura hidratarte de forma regular.",
+      "Haz pausas frecuentes, reduce la carga física y bebe agua con regularidad.",
     moderateMorning:
       "Prioriza las actividades más exigentes antes del mediodía y prevé pausas e hidratación regulares.",
     moderateLateDay:
@@ -315,7 +315,7 @@ const TXT: TxtDict = {
     high:
       "Limita la exposición prolongada, reduce la carga física y haz pausas frecuentes en lugares frescos.",
     highLateDay:
-      "Prioriza una buena hidratación y evita esfuerzos físicos intensos hasta que las condiciones mejoren.",
+      "Bebe agua con frecuencia y evita esfuerzos físicos intensos hasta que las condiciones mejoren.",
     highEvening:
       "Sigue hidratándote bien y limita los esfuerzos físicos mientras persista el calor.",
     ext:
@@ -347,7 +347,7 @@ const TXT: TxtDict = {
     cold_ext:
       "Permanece en interiores, protege las extremidades y conserva el calor corporal.",
     rain:
-      "Aumenta la precaución ante posibles resbalones, pérdida de adherencia y menor confort.",
+      "Ten más cuidado: la lluvia puede provocar resbalones y reducir la adherencia.",
     storm:
       "Situación potencialmente adversa por precipitación o tormenta. Limita la actividad exterior si no es imprescindible.",
     humid:
@@ -355,7 +355,7 @@ const TXT: TxtDict = {
     windModerate:
       "Vigila herramientas, materiales ligeros y maniobras en zonas expuestas.",
     windStrong:
-      "Reevalúa tareas expuestas y asegura herramientas o materiales ligeros.",
+      "Revisa las tareas en zonas expuestas y asegura herramientas o materiales ligeros.",
     safeUvCloudy:
       "Puede existir radiación UV significativa aunque haya nubes o lluvia. Si pasas tiempo al aire libre, utiliza protección solar básica y adapta la actividad según la evolución del tiempo.",
     tropicalNight:
@@ -470,7 +470,7 @@ const TXT: TxtDict = {
   gl: {
     title: "Recomendacións preventivas",
     safe:
-      "O confort térmico é favorable. Mantén unha hidratación adecuada e adapta a actividade ao teu ritmo.",
+      "O confort térmico é favorable. Bebe auga con regularidade e adapta a actividade ao teu ritmo.",
     safeUvModerate:
       "Radiación UV moderada. Recoméndase protección solar se a exposición é prolongada.",
     safeWind:
@@ -495,11 +495,11 @@ const TXT: TxtDict = {
     factorSmoke: "Fume",
     factorIce: "Xeo",
     mild:
-      "Mantén unha hidratación adecuada e evita esforzos prolongados. Fai pausas se notas fatiga.",
+      "Bebe auga con regularidade e evita esforzos prolongados. Fai pausas se notas fatiga.",
     mildMorning:
       "Planifica as actividades máis esixentes antes do mediodía, bebe auga con frecuencia e fai pausas en lugares frescos.",
     moderate:
-      "Programa pausas frecuentes, reduce a carga física e procura hidratarte de forma regular.",
+      "Fai pausas frecuentes, reduce a carga física e bebe auga con regularidade.",
     moderateMorning:
       "Prioriza as actividades máis esixentes antes do mediodía e prevé pausas e hidratación regulares.",
     moderateLateDay:
@@ -507,7 +507,7 @@ const TXT: TxtDict = {
     high:
       "Limita a exposición prolongada, reduce a carga física e fai pausas frecuentes en lugares frescos.",
     highLateDay:
-      "Prioriza unha boa hidratación e evita esforzos físicos intensos ata que as condicións melloren.",
+      "Bebe auga con frecuencia e evita esforzos físicos intensos ata que as condicións melloren.",
     highEvening:
       "Continúa hidratándote ben e limita os esforzos físicos mentres persista a calor.",
     ext:
@@ -539,7 +539,7 @@ const TXT: TxtDict = {
     cold_ext:
       "Permanece en interiores, protexe as extremidades e conserva a calor corporal.",
     rain:
-      "Aumenta a precaución ante posibles esvaróns, perda de adherencia e menor confort.",
+      "Ten máis coidado: a chuvia pode provocar esvaróns e reducir a adherencia.",
     storm:
       "Situación potencialmente adversa por precipitación ou treboada. Limita a actividade exterior se non é imprescindible.",
     humid:
@@ -547,7 +547,7 @@ const TXT: TxtDict = {
     windModerate:
       "Vixía ferramentas, materiais lixeiros e manobras en zonas expostas.",
     windStrong:
-      "Reavalia tarefas expostas e asegura ferramentas ou materiais lixeiros.",
+      "Revisa as tarefas en zonas expostas e asegura ferramentas ou materiais lixeiros.",
     safeUvCloudy:
       "Pode existir radiación UV significativa aínda que haxa nubes ou choiva. Se permaneces ao aire libre, usa protección solar básica e adapta a actividade segundo a evolución do tempo.",
     tropicalNight:
@@ -566,7 +566,7 @@ const TXT: TxtDict = {
   en: {
     title: "Preventive recommendations",
     safe:
-      "Thermal comfort is favourable. Keep adequate hydration and adapt activity to your pace.",
+      "Thermal comfort is favourable. Drink water regularly and adapt activity to your pace.",
     safeUvModerate:
       "Moderate UV radiation. Sun protection is recommended if exposure is prolonged.",
     safeWind:
@@ -591,11 +591,11 @@ const TXT: TxtDict = {
     factorSmoke: "Smoke",
     factorIce: "Ice",
     mild:
-      "Keep hydrated and avoid prolonged effort. Take breaks if fatigue appears.",
+      "Drink water regularly and avoid prolonged effort. Take breaks if you feel tired.",
     mildMorning:
       "Plan the most demanding activities before midday, drink water regularly and take breaks in cool places.",
     moderate:
-      "Schedule frequent breaks, reduce physical strain and keep hydration regular.",
+      "Take frequent breaks, reduce physical strain, and drink water regularly.",
     moderateMorning:
       "Prioritise the most demanding activities before midday and plan regular breaks and hydration.",
     moderateLateDay:
@@ -635,7 +635,7 @@ const TXT: TxtDict = {
     cold_ext:
       "Stay indoors, protect extremities and preserve body heat.",
     rain:
-      "Increase caution due to possible slips, loss of traction and lower comfort.",
+      "Take extra care: rain can cause slips and reduce traction.",
     storm:
       "Potentially adverse weather due to precipitation or storm activity. Limit outdoor activity if not essential.",
     humid:

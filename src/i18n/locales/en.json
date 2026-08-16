@@ -8,6 +8,8 @@
   "search_button": "🔍 Search",
   "gps_button": "📍 Use current location",
   "location": "📍 Location",
+  "source": "Source",
+  "source_manual_search": "Manual search",
   "current_conditions": "Current conditions",
   "humidity": "Humidity",
   "feels_like": "Feels like",
@@ -34,7 +36,7 @@
   "alert_extreme": "🚨 EXTREME heat risk! Stop activity and hydrate immediately.",
   "alertRisk": "⚠️ High or extreme heat risk.",
   "loading": "Loading weather data...",
-  "errorGPS": "Unable to obtain temperature via GPS.",
+  "errorGPS": "Unable to obtain location via GPS.",
   "errorCity": "No data found for this location. The latest available data is shown.",
   "errorNoLocation": "Unable to obtain location.",
   "recommendations_title": "Recommendations based on current conditions:",
@@ -49,7 +51,7 @@
   "official_alert": "Official weather alert active",
   "follow_official_alerts": "Follow official guidance and take extra precautions.",
   "official_alert_soon": "Upcoming official weather alert",
-  "follow_official_alerts_soon": "A weather alert is expected. It is advisable to anticipate it and review planned activities.",
+  "follow_official_alerts_soon": "A weather alert is expected. Plan ahead and review any planned activities.",
   "official_alert_active_prefix": "Active official alert",
   "official_alert_soon_prefix": "Upcoming official alert",
   "official_alert_active_multiple": "Active official alerts",
@@ -59,7 +61,7 @@
     "snow": "snow",
     "wind": "wind",
     "storm": "storms",
-    "coast": "coast and waves",
+    "coast": "coastal conditions",
     "fog": "fog",
     "temp_min": "low temperatures",
     "temp_max": "extreme temperatures"
@@ -71,20 +73,20 @@
     "snow": "Snow alert active. Follow official guidance and take extra precautions.",
     "wind": "Wind alert active. Follow official guidance and take extra precautions.",
     "storm": "Storm alerts active. Follow official guidance and take extra precautions.",
-    "coast": "Coastal and wave alert active. Follow official guidance and take extra precautions.",
+    "coast": "Coastal conditions alert active. Follow official guidance and take extra precautions.",
     "fog": "Fog alert active. Follow official guidance and take extra precautions.",
     "temp_min": "Low temperature alert active. Follow official guidance and take extra precautions.",
     "temp_max": "Extreme temperature alert active. Follow official guidance and take extra precautions."
   },
   "official_alert_soon_hazard": {
-    "rain": "Rain is expected. Plan ahead and review the planned activity.",
-    "snow": "Snow is expected. Plan ahead and review the planned activity.",
-    "wind": "Wind is expected. Plan ahead and review the planned activity.",
-    "storm": "Storms are expected. Plan ahead and review the planned activity.",
-    "coast": "An official coastal and wave alert is expected. Plan ahead and review the planned activity.",
-    "fog": "Fog is expected. Plan ahead and review the planned activity.",
-    "temp_min": "Low temperatures are expected. Plan ahead and review the planned activity.",
-    "temp_max": "Extreme temperatures are expected. Plan ahead and review the planned activity."
+    "rain": "Rain is expected. Plan ahead and review any planned activities.",
+    "snow": "Snow is expected. Plan ahead and review any planned activities.",
+    "wind": "Wind is expected. Plan ahead and review any planned activities.",
+    "storm": "Storms are expected. Plan ahead and review any planned activities.",
+    "coast": "An official coastal conditions alert is expected. Plan ahead and review any planned activities.",
+    "fog": "Fog is expected. Plan ahead and review any planned activities.",
+    "temp_min": "Low temperatures are expected. Plan ahead and review any planned activities.",
+    "temp_max": "Extreme temperatures are expected. Plan ahead and review any planned activities."
   },
   "safe_conditions_text_night_warm": "Elevated night-time temperatures. Ensure cross ventilation and wear light clothing.",
   "primaryStatus": {
@@ -139,7 +141,7 @@
   "riskTrend": {
     "loading": "The forecast for the next few hours is being calculated…",
     "unavailable": "The forecast for the next few hours is not available.",
-    "stable": "No major changes are expected over the next few hours.",
+    "stable": "Local conditions are expected to remain similar over the next few hours.",
     "improving": "Conditions are expected to improve over the next few hours.",
     "improving_heat": "The apparent temperature is expected to ease over the next few hours.",
     "improving_cold": "Temperatures are expected to be less cold over the next few hours.",
@@ -200,7 +202,7 @@
     "moderate_rain": "Moderate rain",
     "heavy_intensity_rain": "Heavy rain",
     "drizzle": "Drizzle",
-    "shower_rain": "Shower rain",
+    "shower_rain": "Rain showers",
     "thunderstorm": "Thunderstorm",
     "thunderstorm_with_rain": "Thunderstorm with rain",
     "snow": "Snow",
@@ -349,8 +351,8 @@
   },
 
   "uv": {
-    "safe_time_title": "Safe exposure time",
-    "phototype": "Phototype",
+    "safe_time_title": "Indicative exposure time",
+    "phototype": "Skin type",
     "safe_time_hint": "Indicative estimate. Use sun protection and reduce exposure during peak hours.",
     "max_today": "Max UV today",
     "sunrise": "Sunrise",
@@ -429,7 +431,7 @@
   },
 
   "skin": {
-    "toggle": "Show/Hide phototype information"
+    "toggle": "Show/Hide skin type information"
   },
 
   "risk": {
@@ -485,7 +487,7 @@
     "avoidTrees": "Avoid walking near unstable trees or branches.",
     "avoidUnstableStructures": "Keep away from weak or unstable structures.",
     "useSPF": "Apply SPF 30+ sunscreen.",
-    "useShade": "Use shade whenever possible.",
+    "useShade": "Seek shade whenever possible.",
     "followAlerts": "Follow official weather alerts.",
     "symptoms": "If you feel dizzy, nauseous, or confused, stop activity.",
     "symptomsCold": "If you have chills, shivering, or confusion, seek shelter and warmth."
@@ -496,7 +498,7 @@
   "data_sources_footer": "Data sources: OpenWeather · OpenUV · NASA POWER · AEMET (official alerts) · OpenStreetMap/Nominatim",
 
   "rec": {
-    "safe": "Safe conditions. Maintain your usual hydration.",
+    "safe": "Safe conditions. Drink water as usual.",
     "safeWithHighUV": "Thermally safe conditions. Use caution due to solar radiation."
   },
 

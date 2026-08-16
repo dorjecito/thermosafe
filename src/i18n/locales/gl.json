@@ -3,12 +3,12 @@
 
   "ph": "Introduce unha cidade ou concello",
   "btn": "🔍 Consultar",
-  "gps": "📍 Usar ubicación actual",
+  "gps": "📍 Usar localización actual",
 
   "title": "ThermoSafe – Risco actual ☀️❄️💨",
   "search_placeholder": "Buscar cidade",
   "search_button": "🔍 Consultar",
-  "gps_button": "📍 Usar ubicación actual",
+  "gps_button": "📍 Usar localización actual",
 
   "location": "📍 Localización",
   "current_conditions": "Condicións actuais",
@@ -37,7 +37,7 @@
   "riskTrend": {
     "loading": "Estase a calcular a previsión para as próximas horas…",
     "unavailable": "A previsión para as próximas horas non está dispoñible.",
-    "stable": "Non se esperan cambios importantes durante as próximas horas.",
+    "stable": "Espérase que as condicións locais se manteñan semellantes durante as próximas horas.",
     "improving": "Durante as próximas horas as condicións mellorarán.",
     "improving_heat": "A sensación térmica baixará durante as próximas horas.",
     "improving_cold": "As temperaturas serán menos frías durante as próximas horas.",
@@ -82,17 +82,17 @@
 
   "highIrradianceWarning": "⚠️ Irradiancia solar moi alta. Evita a exposición directa ao sol.",
   "highUVIWarning": "⚠️ Índice UV moi alto. Protección solar imprescindible!",
-  "extremeUVIWarning": "🚨 UV EXTREMO (11+) — Evita exposición directa",
-  "irradianceTips": "👒 Usa sombreiro, lentes de sol e crema solar. Evita exercicio directo ao sol.",
+  "extremeUVIWarning": "🚨 UV EXTREMO (11+) — Evita a exposición directa",
+  "irradianceTips": "👒 Usa sombreiro, lentes de sol e crema solar. Evita facer exercicio baixo o sol.",
 
   "risk_level": "Risco por calor:",
   "alert_extreme": "🚨 RISCO EXTREMO DE CALOR! Detén a actividade e hidrátate.",
   "alertRisk": "⚠️ Risco alto ou extremo por calor.",
 
   "loading": "Cargando datos meteorolóxicos...",
-  "errorGPS": "Non se puido obter a temperatura por GPS.",
+  "errorGPS": "Non se puido obter a localización por GPS.",
   "errorCity": "Non se atoparon datos para esta localización. Amósanse os últimos datos dispoñibles.",
-  "errorNoLocation": "Non se puido obter a ubicación.",
+  "errorNoLocation": "Non se puido obter a localización.",
 
   "recommendations_title": "Recomendacións segundo as condicións actuais:",
   "solarProtection": "🔆 Protección solar",
@@ -105,7 +105,7 @@
   "top_alert_weather_active": "Alerta meteorolóxica activa",
   "official_alert": "Aviso meteorolóxico oficial activo",
   "follow_official_alerts": "Segue as indicacións oficiais e extrema a precaución.",
-  "official_alert_soon": "Aviso meteorolóxico oficial próximo",
+  "official_alert_soon": "Próximo aviso meteorolóxico oficial",
   "follow_official_alerts_soon": "Hai un aviso meteorolóxico previsto. Convén anticiparse e revisar a actividade prevista.",
   "official_alert_active_prefix": "Aviso oficial activo",
   "official_alert_soon_prefix": "Próximo aviso oficial",
@@ -116,7 +116,7 @@
     "snow": "neve",
     "wind": "vento",
     "storm": "treboadas",
-    "coast": "costa e ondada",
+    "coast": "costa e ondaxe",
     "fog": "néboa",
     "temp_min": "temperaturas baixas",
     "temp_max": "temperaturas extremas"
@@ -128,7 +128,7 @@
     "snow": "Neve activa. Segue as indicacións oficiais e extrema a precaución.",
     "wind": "Vento activo. Segue as indicacións oficiais e extrema a precaución.",
     "storm": "Treboadas activas. Segue as indicacións oficiais e extrema a precaución.",
-    "coast": "Costa e ondada activas. Segue as indicacións oficiais e extrema a precaución.",
+    "coast": "Costa e ondaxe activas. Segue as indicacións oficiais e extrema a precaución.",
     "fog": "Néboa activa. Segue as indicacións oficiais e extrema a precaución.",
     "temp_min": "Temperaturas baixas activas. Segue as indicacións oficiais e extrema a precaución.",
     "temp_max": "Temperaturas extremas activas. Segue as indicacións oficiais e extrema a precaución."
@@ -138,7 +138,7 @@
     "snow": "Neve prevista. Convén anticiparse e revisar a actividade prevista.",
     "wind": "Vento previsto. Convén anticiparse e revisar a actividade prevista.",
     "storm": "Treboadas previstas. Convén anticiparse e revisar a actividade prevista.",
-    "coast": "Prevese un aviso oficial por costa e ondada. Convén anticiparse e revisar a actividade prevista.",
+    "coast": "Prevese un aviso oficial por costa e ondaxe. Convén anticiparse e revisar a actividade prevista.",
     "fog": "Néboa prevista. Convén anticiparse e revisar a actividade prevista.",
     "temp_min": "Temperaturas baixas previstas. Convén anticiparse e revisar a actividade prevista.",
     "temp_max": "Temperaturas extremas previstas. Convén anticiparse e revisar a actividade prevista."
@@ -192,7 +192,7 @@
     "disabled": "Avisos desactivados.",
     "errors": {
       "permissionDenied": "Denegaches o permiso de notificacións.",
-      "noGps": "Non se puido obter a ubicación (GPS).",
+      "noGps": "Non se puido obter a localización (GPS).",
       "notSupported": "O navegador non admite Web Push.",
       "noToken": "Non se puido obter o token de notificacións."
     }
@@ -384,15 +384,15 @@
 
   "recommendations_full": {
     "heat": {
-      "low": "Mantén boa hidratación e evita o sol directo.",
+      "low": "Bebe auga con frecuencia e evita o sol directo.",
       "moderate": "Hidrátate a miúdo e descansa en zonas frescas.",
       "high": "Risco alto: limita actividade, hidrátate e busca sombra.",
       "extreme": "Risco extremo: evita saír. Alto risco de golpe de calor."
     },
     "cold": {
       "low": "Noite fresca: abrígate lixeiramente.",
-      "moderate": "Vístete por capas e evita exposición prolongada.",
-      "high": "Risco alto: protexe extremidades e limita tempo fóra.",
+      "moderate": "Vístete por capas e evita exposicións prolongadas.",
+      "high": "Risco alto: protexe extremidades e limita o tempo fóra.",
       "extreme": "Risco grave: evita saír. Risco de conxelación en minutos."
     },
     "wind": {
@@ -408,10 +408,10 @@
       "extreme": "Visibilidade nula: detén calquera desprazamento."
     },
     "coast": {
-      "low": "Ondada feble: condicións normais.",
-      "moderate": "Ondada moderada: precaución en zonas rochosas.",
-      "high": "Ondada forte: afástaste da costa.",
-      "extreme": "Ondada extrema: evita completamente achegarte ao mar."
+      "low": "Ondaxe feble: condicións normais.",
+      "moderate": "Ondaxe moderada: precaución en zonas rochosas.",
+      "high": "Ondaxe forte: afástate da costa.",
+      "extreme": "Ondaxe extrema: evita completamente achegarte ao mar."
     }
   },
 
@@ -419,7 +419,7 @@
   "inactive": "Activar detección de movemento",
   "requesting": "Activando detección…",
   "active_label": "Actividade",
-  "rest": "Reposo",
+  "rest": "Repouso",
   "walk": "Camiñando",
   "moderate": "Esforzo moderado",
   "intense": "Esforzo intenso",

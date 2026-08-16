@@ -83,7 +83,7 @@ const escalaUV = [
     color: '#E03E2D',
     nivell: { ca: 'Molt alt', es: 'Muy alto', eu: 'Oso altua', gl: 'Moi alto', en: 'Very High' },
     consell: {
-      ca: 'Evita exposició directa. Usa roba i SPF 50+.',
+      ca: 'Evita l’exposició directa. Usa roba i SPF 50+.',
       es: 'Evita la exposición directa. Usa ropa y SPF 50+.',
       eu: 'Saihestu esposizio zuzena. Erabili arropa eta SPF 50+.',
       gl: 'Evita a exposición directa. Usa roupa e SPF 50+.',

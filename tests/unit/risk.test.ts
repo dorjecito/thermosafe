@@ -2503,7 +2503,7 @@ test("official alert primary status keeps a generic title and describes the know
 
   try {
     const translations: Record<string, string> = {
-      official_alert_soon: "Avís meteorològic oficial proper",
+      official_alert_soon: "Pròxim avís meteorològic oficial",
       follow_official_alerts_soon: "Hi ha un avís meteorològic previst.",
       official_alert_soon_prefix: "Pròxim avís oficial",
       "official_alert_soon_hazard.coast":
@@ -2548,7 +2548,7 @@ test("official alert primary status keeps a generic title and describes the know
     );
     assert.equal(
       makeStatus([{ event: "Unknown advisory", start: 2_000, end: 3_000 }]).title,
-      "Avís meteorològic oficial proper"
+      "Pròxim avís meteorològic oficial"
     );
   } finally {
     Date.now = originalNow;

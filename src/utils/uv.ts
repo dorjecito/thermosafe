@@ -40,6 +40,7 @@ export function getUvText(uvi: number | null, lang: string): string {
     es: ["Bajo (0–2.9)", "Moderado (3–5.9)", "Alto (6–7.9)", "Muy alto (8–10.9)", "Extremo (11+)"],
     gl: ["Baixo (0–2.9)", "Moderado (3–5.9)", "Alto (6–7.9)", "Moi alto (8–10.9)", "Extremo (11+)"],
     eu: ["Baxua (0–2.9)", "Moderatua (3–5.9)", "Altua (6–7.9)", "Oso altua (8–10.9)", "Muturrekoa (11+)"],
+    en: ["Low (0–2.9)", "Moderate (3–5.9)", "High (6–7.9)", "Very high (8–10.9)", "Extreme (11+)"],
   };
 
   return level === -1 ? "—" : (text[lang] || text["ca"])[level];
@@ -55,7 +56,7 @@ export function getUvAdvice(uvi: number | null, lang: string): string {
       "Protecció mínima necessària.",
       "Si l’exposició és prolongada, utilitza protecció solar i cerca ombra a les hores centrals.",
       "Evita el sol de 12h a 16h. Protecció extra.",
-      "Evita exposició directa. Usa roba i SPF 50+.",
+      "Evita l’exposició directa. Usa roba i SPF 50+.",
       "Risc greu. Queda’t a l’ombra o dins casa."
     ],
     es: [
@@ -69,8 +70,8 @@ export function getUvAdvice(uvi: number | null, lang: string): string {
       "Protección mínima necesaria.",
       "Se a exposición é prolongada, usa protección solar e busca sombra nas horas centrais.",
       "Evita o sol de 12h a 16h. Protección extra.",
-      "Evita exposición directa. Roupa e SPF 50+.",
-      "Risco extremo. Permanece á sombra ou interior."
+      "Evita a exposición directa. Roupa e SPF 50+.",
+      "Risco extremo. Permanece á sombra ou no interior."
     ],
     eu: [
       "Gutxieneko babesa beharrezkoa.",

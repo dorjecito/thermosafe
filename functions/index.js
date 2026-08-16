@@ -712,7 +712,7 @@ function buildCombinedRiskMessage({
       officialTitle: "🚨 ThermoSafe — Active official alert",
       official: "Active official alert",
       uv: "UV index",
-      heat: "Thermal sensation",
+      heat: "Apparent temperature",
       adviceOfficial:
         "Follow official guidance and check ThermoSafe for local context.",
       adviceHeatUv:

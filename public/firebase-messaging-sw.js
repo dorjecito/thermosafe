@@ -17,8 +17,6 @@ function buildNotificationFromPayload(payload) {
   const notification = payload?.notification || {};
   const data = payload?.data || {};
 
-  const title = data.title || notification.title || "ThermoSafe – Avís";
-
   // 🔴 AFEGIT: incloure ubicació si existeix
   const baseBody = data.body || notification.body || "";
   const place = data.place || "";
@@ -28,6 +26,7 @@ function buildNotificationFromPayload(payload) {
     : baseBody;
 
   const lang = data.lang || "ca";
+  const title = data.title || notification.title || (lang === "en" ? "ThermoSafe – Alert" : "ThermoSafe – Avís");
   const icon = data.icon || "/icons/icon-192.png";
   const badge = data.badge || "/icons/badge-72.png";
   const tag = data.tag || "thermosafe-notification";
@@ -43,8 +42,8 @@ function buildNotificationFromPayload(payload) {
       requireInteraction: true,
       data,
       actions: [
-        { action: "open", title: lang === "es" ? "Abrir" : "Obrir" },
-        { action: "dismiss", title: lang === "es" ? "Descartar" : "Tancar" },
+        { action: "open", title: lang === "en" ? "Open" : lang === "es" ? "Abrir" : "Obrir" },
+        { action: "dismiss", title: lang === "en" ? "Dismiss" : lang === "es" ? "Descartar" : "Tancar" },
       ],
     },
   };

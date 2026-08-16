@@ -16,7 +16,7 @@
   "uvi": "🔆 Índex UV",
   "wind_direction": "Direcció del vent",
   "wind_risk": "Risc per vent",
-  "cloudiness": "Nubolositat",
+  "cloudiness": "Nuvolositat",
   
   "combinedRisk": {
   "highTitle": "Combinació de riscos rellevant",
@@ -28,7 +28,7 @@
   "riskTrend": {
     "loading": "S’està calculant la previsió de les pròximes hores…",
     "unavailable": "La previsió per a les pròximes hores no està disponible.",
-    "stable": "No s’esperen canvis importants durant les pròximes hores.",
+    "stable": "Es preveu que les condicions locals es mantinguin semblants durant les pròximes hores.",
     "improving": "Durant les pròximes hores les condicions milloraran.",
     "improving_heat": "La sensació tèrmica baixarà durant les pròximes hores.",
     "improving_cold": "Les temperatures seran menys fredes durant les pròximes hores.",
@@ -67,7 +67,7 @@
   },
 
   "loading": "Carregant dades meteorològiques...",
-  "errorGPS": "No s'ha pogut obtenir la temperatura per GPS.",
+  "errorGPS": "No s'ha pogut obtenir la ubicació per GPS.",
   "errorCity": "No s'han trobat dades per a aquesta ubicació. Es mostren les darreres dades disponibles.",
   "errorNoLocation": "No s'ha pogut obtenir la ubicació.",
 
@@ -82,7 +82,7 @@
   "top_alert_weather_active": "Alerta meteorològica activa",
   "official_alert": "Avís meteorològic oficial actiu",
   "follow_official_alerts": "Segueix les indicacions oficials i extrema la precaució.",
-  "official_alert_soon": "Avís meteorològic oficial proper",
+  "official_alert_soon": "Pròxim avís meteorològic oficial",
   "follow_official_alerts_soon": "Hi ha un avís meteorològic previst. Convé anticipar-se i revisar l’activitat prevista.",
   "official_alert_active_prefix": "Avís oficial actiu",
   "official_alert_soon_prefix": "Pròxim avís oficial",
@@ -166,7 +166,7 @@
 
   "highIrradianceWarning": "⚠️ Irradiància solar molt alta. Evita l'exposició directa al sol.",
   "highUVIWarning": "⚠️ Índex UV molt alt. Protecció solar imprescindible!",
-  "extremeUVIWarning": "🚨 UV EXTREM (11+) — Evita exposició directa",
+  "extremeUVIWarning": "🚨 UV EXTREM (11+) — Evita l’exposició directa",
   "irradianceTips": "👒 Fes servir barret, ulleres de sol i crema solar. Evita fer activitat física sota el sol.",
 
   "risk_level": "Risc per calor:",
@@ -376,7 +376,7 @@
       "low": "Vent feble: cap mesura especial.",
       "moderate": "Vent moderat: assegura objectes lleugers i mantén precaució.",
       "high": "Vent fort: evita zones arbrades i assegura mobiliari exterior.",
-      "extreme": "Vent molt violent: queda't en interiors i allunya't d’arbres i estructures inestables."
+      "extreme": "Vent molt violent: queda't a l'interior i allunya't d’arbres i estructures inestables."
     },
     "fog": {
       "low": "Boira lleu: vigila en desplaçaments.",
@@ -387,8 +387,8 @@
     "coast": {
       "low": "Onatge feble: condicions normals.",
       "moderate": "Onatge moderat: evita zones rocoses i passos estrets.",
-      "high": "Fort onatge: allunya’t d’espigons i rompudes.",
-      "extreme": "Onatge molt fort: risc extrem. Evita totalment passejos prop del mar."
+      "high": "Onatge fort: allunya’t d’espigons i de zones exposades a les onades.",
+      "extreme": "Onatge molt fort: risc extrem. Evita completament passejar prop del mar."
     }
   },
   
@@ -461,10 +461,10 @@
     "coldClothes": "Amb fred, utilitza capes de roba i protecció tallavents.",
     "limitExposure": "Limita el temps d’exposició exterior.",
     "protectExtremities": "Protegeix mans, orelles i extremitats.",
-    "avoidWind": "Evita exposició directa al vent.",
+    "avoidWind": "Evita l’exposició directa al vent.",
     "secureObjects": "Assegura objectes exteriors que puguin sortir projectats.",
     "avoidTrees": "Evita passar prop d’arbres o branques inestables.",
-    "avoidUnstableStructures": "Mantén-te allunyat d'estructures febles o inestables.",
+    "avoidUnstableStructures": "Mantén-te allunyat d’estructures febles o inestables.",
     "useSPF": "Aplica protecció solar SPF 30+.",
     "useShade": "Fes servir ombra sempre que sigui possible.",
     "followAlerts": "Segueix els avisos meteorològics oficials.",
@@ -501,7 +501,7 @@
 "uvModerate": "Índex UV moderat. Protecció recomanada.",
 "uvHigh": "Índex UV alt. Protecció elevada.",
 "uvVeryHigh": "Índex UV molt alt. Protecció solar imprescindible!",
-"uvExtreme": "🚨 UV EXTREM (11+) — Evita exposició directa",
+"uvExtreme": "🚨 UV EXTREM (11+) — Evita l’exposició directa",
   "chunkRecovery": {
     "title": "ThermoSafe s’ha actualitzat.",
     "reloading": "S’està carregant la nova versió…",
