@@ -1,4 +1,5 @@
 import { getApps, initializeApp } from "firebase/app";
+import type { VercelRequest, VercelResponse } from "@vercel/node";
 import {
   collection,
   deleteDoc,
@@ -80,7 +81,7 @@ async function trackExternalApiUsage(provider: "openuv", hasError: boolean) {
   }
 }
 
-export default async function handler(req, res) {
+export default async function handler(req: VercelRequest, res: VercelResponse) {
   res.setHeader("Access-Control-Allow-Origin", "*");
   res.setHeader("Cache-Control", "s-maxage=300, stale-while-revalidate=600");
 
@@ -94,13 +95,19 @@ export default async function handler(req, res) {
   const path = endpoint === "forecast" ? "forecast" : "uv";
 
   let usageTracked = false;
+  const openUvKey = process.env.OPENUV_KEY;
+
+  if (!openUvKey) {
+    await trackExternalApiUsage("openuv", true);
+    return res.status(500).json({ error: "Missing OPENUV_KEY" });
+  }
 
   try {
     const r = await fetch(
       `https://api.openuv.io/api/v1/${path}?lat=${lat}&lng=${lng}`,
       {
         headers: {
-          "x-access-token": process.env.OPENUV_KEY,
+          "x-access-token": openUvKey,
         },
       }
     );

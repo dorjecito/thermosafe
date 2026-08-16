@@ -1,3 +1,5 @@
+import type { VercelRequest, VercelResponse } from "@vercel/node";
+
 const OPENWEATHER_BASE = "https://api.openweathermap.org";
 
 const ROUTES = {
@@ -26,7 +28,7 @@ function isAllowedRoute(route: string): route is RouteKey {
   return Object.prototype.hasOwnProperty.call(ROUTES, route);
 }
 
-export default async function handler(req, res) {
+export default async function handler(req: VercelRequest, res: VercelResponse) {
   res.setHeader("Access-Control-Allow-Origin", "*");
   res.setHeader("Access-Control-Allow-Methods", "GET, OPTIONS");
   res.setHeader("Access-Control-Allow-Headers", "Content-Type");
