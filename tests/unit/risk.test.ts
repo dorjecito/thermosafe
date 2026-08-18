@@ -2938,20 +2938,192 @@ test("visible recommendation branches always provide factor subtitles", () => {
   assert.match(recommendationsSource, /thermalComfortItem\(t\)/);
 });
 
-test("tropical night outdoor activity keeps a mild caution nuance", () => {
+test("tropical night does not restrict outdoor activity without current heat risk", () => {
+  const engineRisk = evaluateRiskScore({
+    heatIndex: 23.9,
+    coldEffectiveTemp: 23.2,
+    windKmh: 4,
+    uvi: 0,
+    isNightAtLocation: true,
+    nightReferenceTemperature: 23.2,
+  });
   const level = getWorkWindow({
     heatRisk: { class: "safe", isHigh: false, isExtreme: false },
-    heatIndex: 25.5,
+    heatIndex: 23.9,
     coldRisk: "cap",
     windRisk: "none",
     uvi: 0,
     nocturnalHeat: true,
+    nightHeatLevel: engineRisk.nightHeatLevel,
+    engineRisk,
   });
-  const text = getWorkWindowText(level, "ca", false, "tropical");
+  const text = getWorkWindowText(level, "ca", false, engineRisk.nightHeatLevel);
 
-  assert.equal(level, "caution");
-  assert.match(text, /activitats suaus/i);
-  assert.doesNotMatch(text, /Situació adequada/i);
+  assert.equal(engineRisk.nightHeatLevel, "tropical");
+  assert.equal(level, "optimal");
+  assert.match(text, /adequades per a activitats/i);
+  assert.doesNotMatch(text, /activitats suaus|evitar esforços/i);
+});
+
+test("tropical night outdoor activity follows current heat risk thresholds", () => {
+  const cases = [
+    {
+      label: "moderate current heat risk",
+      heatIndex: 34,
+      expectedLevel: "limited" as const,
+      expectedText: /limitar les activitats exigents/i,
+    },
+    {
+      label: "high current heat risk",
+      heatIndex: 42,
+      expectedLevel: "avoid" as const,
+      expectedText: /No es recomana fer activitats exigents/i,
+    },
+    {
+      label: "extreme current heat risk",
+      heatIndex: 55,
+      expectedLevel: "avoid" as const,
+      expectedText: /No es recomana fer activitats exigents/i,
+    },
+  ];
+
+  for (const scenario of cases) {
+    const engineRisk = evaluateRiskScore({
+      heatIndex: scenario.heatIndex,
+      coldEffectiveTemp: scenario.heatIndex,
+      windKmh: 4,
+      uvi: 0,
+      isNightAtLocation: true,
+      nightReferenceTemperature: scenario.heatIndex,
+    });
+    const level = getWorkWindow({
+      heatRisk: getHeatRisk(scenario.heatIndex, "rest"),
+      heatIndex: scenario.heatIndex,
+      coldRisk: "cap",
+      windRisk: "none",
+      uvi: 0,
+      nocturnalHeat: true,
+      nightHeatLevel: engineRisk.nightHeatLevel,
+      engineRisk,
+    });
+    const text = getWorkWindowText(level, "ca", false, engineRisk.nightHeatLevel);
+
+    assert.equal(level, scenario.expectedLevel, scenario.label);
+    assert.match(text, scenario.expectedText, scenario.label);
+  }
+});
+
+test("non tropical night and day heat keep outdoor activity behavior", () => {
+  const lowNight = getWorkWindow({
+    heatRisk: getHeatRisk(19, "rest"),
+    heatIndex: 19,
+    coldRisk: "cap",
+    windRisk: "none",
+    uvi: 0,
+    nocturnalHeat: false,
+    nightHeatLevel: "none",
+  });
+  const dayHeat = getWorkWindow({
+    heatRisk: getHeatRisk(34, "rest"),
+    heatIndex: 34,
+    coldRisk: "cap",
+    windRisk: "none",
+    uvi: 0,
+    nocturnalHeat: false,
+    nightHeatLevel: "none",
+  });
+
+  assert.equal(lowNight, "optimal");
+  assert.equal(dayHeat, "limited");
+});
+
+test("outdoor activity is invariant across night heat labels for the same current heat risk", () => {
+  const cases = [
+    { temp: 23, humidity: 50, expectedLevel: "optimal" as const, expectedHeatClass: "safe" },
+    { temp: 23, humidity: 90, expectedLevel: "optimal" as const, expectedHeatClass: "safe" },
+    { temp: 27, humidity: 50, expectedLevel: "caution" as const, expectedHeatClass: "mild" },
+    { temp: 27, humidity: 80, expectedLevel: "caution" as const, expectedHeatClass: "mild" },
+    { temp: 30, humidity: 40, expectedLevel: "caution" as const, expectedHeatClass: "mild" },
+    { temp: 30, humidity: 60, expectedLevel: "limited" as const, expectedHeatClass: "moderate" },
+    { temp: 30, humidity: 80, expectedLevel: "limited" as const, expectedHeatClass: "moderate" },
+    { temp: 32, humidity: 50, expectedLevel: "limited" as const, expectedHeatClass: "moderate" },
+    { temp: 32, humidity: 70, expectedLevel: "limited" as const, expectedHeatClass: "moderate" },
+  ];
+  const nightLabels = ["none", "tropical", "torrid"] as const;
+
+  for (const scenario of cases) {
+    const heatIndex = calcHI(scenario.temp, scenario.humidity);
+    const heatRisk = getHeatRisk(heatIndex, "rest");
+    const outcomes = nightLabels.map((nightHeatLevel) => {
+      const engineRisk = evaluateRiskScore({
+        heatIndex,
+        coldEffectiveTemp: heatIndex,
+        windKmh: 0,
+        uvi: 0,
+        activity: "rest",
+        isNightAtLocation: nightHeatLevel !== "none",
+        nightReferenceTemperature:
+          nightHeatLevel === "none" ? 19 : nightHeatLevel === "tropical" ? 23 : 25,
+      });
+      const level = getWorkWindow({
+        heatRisk,
+        heatIndex,
+        coldRisk: "cap",
+        windRisk: "none",
+        uvi: 0,
+        activity: "rest",
+        nocturnalHeat: nightHeatLevel !== "none",
+        nightHeatLevel,
+        engineRisk,
+      });
+      const text = getWorkWindowText(level, "ca", false, nightHeatLevel);
+
+      return { nightHeatLevel, level, text };
+    });
+
+    assert.equal(heatRisk.class, scenario.expectedHeatClass);
+    assert.deepEqual(
+      outcomes.map((outcome) => outcome.level),
+      [scenario.expectedLevel, scenario.expectedLevel, scenario.expectedLevel],
+      `${scenario.temp} C ${scenario.humidity}% HR HI ${heatIndex}`
+    );
+    assert.equal(new Set(outcomes.map((outcome) => outcome.text)).size, 1);
+    assert.ok(
+      outcomes.every((outcome) => !/activitats suaus|evitar esforços/i.test(outcome.text))
+    );
+  }
+});
+
+test("high and extreme current heat risk avoid outdoor activity regardless of night heat label", () => {
+  for (const heatIndex of [45, 55]) {
+    const heatRisk = getHeatRisk(heatIndex, "rest");
+    const outcomes = (["none", "tropical", "torrid"] as const).map((nightHeatLevel) => {
+      const engineRisk = evaluateRiskScore({
+        heatIndex,
+        coldEffectiveTemp: heatIndex,
+        windKmh: 0,
+        uvi: 0,
+        activity: "rest",
+        isNightAtLocation: nightHeatLevel !== "none",
+        nightReferenceTemperature:
+          nightHeatLevel === "none" ? 19 : nightHeatLevel === "tropical" ? 23 : 25,
+      });
+
+      return getWorkWindow({
+        heatRisk,
+        heatIndex,
+        coldRisk: "cap",
+        windRisk: "none",
+        uvi: 0,
+        activity: "rest",
+        nocturnalHeat: nightHeatLevel !== "none",
+        nightHeatLevel,
+        engineRisk,
+      });
+    });
+
+    assert.deepEqual(outcomes, ["avoid", "avoid", "avoid"]);
+  }
 });
 
 test("dark theme keeps recommendation variants readable", () => {
