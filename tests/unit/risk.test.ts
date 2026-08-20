@@ -1,6 +1,20 @@
 import assert from "node:assert/strict";
+import { createHash } from "node:crypto";
 import { readFileSync } from "node:fs";
+import { createRequire } from "node:module";
 import test from "node:test";
+import { handleOpenWeatherRequest } from "../../api/openweather";
+import {
+  buildOpenWeatherUsagePayload,
+  getOpenWeatherUsageFieldForRoute,
+  trackOpenWeatherApiUsage,
+  type OpenWeatherUsageField,
+} from "../../api/openweatherUsage";
+import {
+  buildAemetDescriptionTranslationKey,
+  clearAemetDescriptionTranslationSessionCache,
+  translateAemetDescriptionForUi,
+} from "../../src/services/aemetDescriptionTranslation";
 
 import { getBaseHeatRisk, getHeatRisk } from "../../src/utils/heatRisk";
 import { calcHI } from "../../src/utils/calcHI";
@@ -29,7 +43,20 @@ import {
   type SkinTypeStorage,
 } from "../../src/utils/skinTypePreference";
 import { getPrimaryStatusBlock } from "../../src/utils/getPrimaryStatusBlock";
-import { detectAemetHazard } from "../../src/utils/aemetAi";
+import {
+  buildAemetAiAlert,
+  detectAemetHazard,
+  isKnownAemetDescription,
+  type LangKey,
+} from "../../src/utils/aemetAi";
+import {
+  getAemetAlertSeverity,
+  getAemetAlertPhase,
+  getAemetAlertTimelineState,
+  sortAemetAlerts,
+} from "../../src/utils/aemetAlertTimeline";
+import { getAlertTimeCountdown } from "../../src/utils/getRemainingTime";
+import { getTopAlertBannerState } from "../../src/components/TopAlertBanner";
 import { pickPrimaryRisk } from "../../src/utils/PickPrimaryRisk";
 import { getWorkWindow, getWorkWindowText } from "../../src/utils/workWindow";
 import { buildRiskTrend } from "../../src/utils/riskTrend";
@@ -100,6 +127,217 @@ import {
 } from "../../src/utils/serviceWorkerUpdate";
 import { getNominatimSelectionAudit } from "../../src/utils/getLocationNameFromCoords";
 
+const require = createRequire(import.meta.url);
+const functionsApiUsage = require("../../functions/apiUsage.js") as {
+  cleanupOldApiUsageCounters: (
+    db: any,
+    now?: Date,
+    logger?: Pick<Console, "log" | "warn">
+  ) => Promise<{ scanned: number; deleted: number; errors: number }>;
+  fetchTrackedOpenWeather: (
+    fetchFn: (url: string) => Promise<{ ok: boolean }>,
+    db: any,
+    admin: any,
+    url: string,
+    field: OpenWeatherUsageField,
+    logger?: Pick<Console, "warn">
+  ) => Promise<{ ok: boolean }>;
+  getOpenWeatherUsageFieldForFunction: (fnName: string) => OpenWeatherUsageField | null;
+  shouldDeleteApiUsageDoc: (id: string, data: any, now?: Date) => boolean;
+};
+const functionsAemetAlerts = require("../../functions/aemetAlerts.js") as {
+  getAemetAlertSeverity: (alert: any) => number;
+  getAemetLevelFromAlerts: (
+    alerts: any[],
+    nowTs?: number
+  ) => {
+    level: number;
+    event: string;
+    sender: string;
+    description: string;
+    timing: string;
+  };
+  isAemetHeatRelatedAlert: (...values: unknown[]) => boolean;
+};
+const functionsAemetTranslations = require("../../functions/aemetTranslations.js") as {
+  AEMET_TRANSLATION_CACHE_VERSION: string;
+  buildAemetTranslationCacheKey: (
+    text: string,
+    targetLang: string
+  ) => {
+    key: string;
+    sourceHash: string;
+    cacheVersion: string;
+    normalizedText: string;
+    targetLang: string;
+  };
+  handleAemetTranslationRequest: (
+    req: any,
+    res: any,
+    options?: {
+      db?: any;
+      enabled?: string;
+      translateFn?: (input: { text: string; targetLang: string }) => Promise<any>;
+      logger?: Pick<Console, "log" | "warn">;
+      verifyAppCheckToken?: (token: string) => Promise<any>;
+    }
+  ) => Promise<any>;
+  normalizeAemetTranslationCacheText: (text: string) => string;
+  protectAemetDescriptionTokens: (
+    text: string
+  ) => { text: string; tokens: Array<{ placeholder: string; value: string }> };
+  restoreAemetDescriptionTokens: (
+    text: string,
+    tokens: Array<{ placeholder: string; value: string }>
+  ) => string;
+  translateAemetDescription: (options: {
+    text: string;
+    targetLang: string;
+    db?: any;
+    translateFn?: (input: { text: string; targetLang: string }) => Promise<any>;
+    now?: Date;
+    logger?: Pick<Console, "log" | "warn">;
+  }) => Promise<{ text: string; source: string; cached: boolean; valid: boolean; reason?: string; key?: string }>;
+  validateAemetDescriptionTokens: (
+    text: string,
+    tokens: Array<{ placeholder: string; value: string }>
+  ) => { valid: boolean; missingTokens: string[]; residualPlaceholders: boolean; tokenCount: number };
+};
+const functionsTranslationProvider = require("../../functions/translationProvider.js") as {
+  translateWithGoogleCloudTranslation: (options: {
+    text: string;
+    targetLang: string;
+    fetchFn?: (url: string, init?: any) => Promise<any>;
+    projectId?: string;
+    getAccessTokenFn?: () => Promise<string | null>;
+    logger?: Pick<Console, "warn">;
+  }) => Promise<{ ok: boolean; text: string; detectedSourceLang?: string; skippedSameLanguage?: boolean }>;
+};
+
+const mixedTemperatureDescription =
+  "Temperatura máxima: 36 °C. En los litorales de Valencia y sur de Castellón, no se descarta que se alcancen los 38-39 °C de forma local.";
+
+function createOpenWeatherTestResponse() {
+  const headers = new Map([["content-type", "application/json"]]);
+
+  return {
+    statusCode: 200,
+    body: undefined as unknown,
+    headers: new Map<string, string>(),
+    setHeader(key: string, value: string) {
+      this.headers.set(key, value);
+    },
+    status(code: number) {
+      this.statusCode = code;
+      return this;
+    },
+    json(body: unknown) {
+      this.body = body;
+      return this;
+    },
+    send(body: unknown) {
+      this.body = body;
+      return this;
+    },
+    end() {
+      this.body = "";
+      return this;
+    },
+    upstreamResponse(status = 200, ok = true) {
+      return {
+        ok,
+        status,
+        headers: {
+          get: (key: string) => headers.get(key) || null,
+        },
+        text: async () => "{\"ok\":true}",
+      };
+    },
+  };
+}
+
+function createJsonTestResponse() {
+  return {
+    statusCode: 200,
+    body: undefined as any,
+    status(code: number) {
+      this.statusCode = code;
+      return this;
+    },
+    json(body: unknown) {
+      this.body = body;
+      return this;
+    },
+    send(body: unknown) {
+      this.body = body;
+      return this;
+    },
+  };
+}
+
+function createAemetTranslationTestDb(options: { readError?: boolean; writeError?: boolean } = {}) {
+  const docs = new Map<string, any>();
+  const writes: Array<{ collection: string; id: string; data: any; options: any }> = [];
+  const reads: Array<{ collection: string; id: string }> = [];
+
+  return {
+    docs,
+    writes,
+    reads,
+    collection(name: string) {
+      return {
+        doc(id: string) {
+          return {
+            async get() {
+              reads.push({ collection: name, id });
+              if (options.readError) throw new Error("read failed");
+              return {
+                exists: docs.has(id),
+                data: () => docs.get(id),
+              };
+            },
+            async set(data: any, setOptions: any) {
+              writes.push({ collection: name, id, data, options: setOptions });
+              if (options.writeError) throw new Error("write failed");
+              const previous = docs.get(id) || {};
+              docs.set(id, setOptions?.merge ? { ...previous, ...data } : data);
+            },
+          };
+        },
+      };
+    },
+  };
+}
+
+const quietAemetTranslationLogger = {
+  log: () => undefined,
+  warn: () => undefined,
+};
+
+const validAemetAppCheckHeaders = {
+  "content-type": "application/json",
+  "x-firebase-appcheck": "valid-app-check-token",
+};
+
+const verifyValidAemetAppCheckToken = async (token: string) => {
+  if (token !== "valid-app-check-token") throw new Error("invalid app check token");
+  return { appId: "thermosafe-web" };
+};
+
+function createAemetTranslationPostRequest(body: unknown, headers = validAemetAppCheckHeaders) {
+  return {
+    method: "POST",
+    headers,
+    body,
+  };
+}
+
+function buildLegacyAemetTranslationCacheKey(text: string, targetLang: string) {
+  const normalizedText = functionsAemetTranslations.normalizeAemetTranslationCacheText(text);
+  const lang = String(targetLang || "").trim().toLowerCase().slice(0, 2);
+  return createHash("sha256").update(`${normalizedText}|${lang}`).digest("hex");
+}
+
 function selectPrimaryForUi(
   enginePrimary: PrimaryRiskFromEngineResult
 ): PrimaryRiskFromEngineResult {
@@ -129,6 +367,1340 @@ function compareRiskEngineWithPrimaryPicker(input: RiskEngineInput) {
     engineKind: engine.primary?.factor ?? "none",
   };
 }
+
+test("OpenWeather proxy classifies weather as currentWeather usage", () => {
+  assert.equal(getOpenWeatherUsageFieldForRoute("weather"), "currentWeather");
+});
+
+test("OpenWeather proxy classifies onecall as oneCall usage", () => {
+  assert.equal(getOpenWeatherUsageFieldForRoute("onecall"), "oneCall");
+});
+
+test("OpenWeather proxy classifies geo-direct as geoDirect usage", () => {
+  assert.equal(getOpenWeatherUsageFieldForRoute("geo-direct"), "geoDirect");
+});
+
+test("OpenWeather proxy classifies geo-reverse as geoReverse usage", () => {
+  assert.equal(getOpenWeatherUsageFieldForRoute("geo-reverse"), "geoReverse");
+});
+
+test("OpenWeather usage payload increments endpoint and errors atomically", () => {
+  const payload = buildOpenWeatherUsagePayload(
+    "oneCall",
+    true,
+    {
+      increment: (value: number) => ({ incrementBy: value }),
+      serverTimestamp: () => "server-time",
+    },
+    new Date("2026-08-19T12:00:00.000Z")
+  );
+
+  assert.equal(payload.id, "openweather_2026-08-19");
+  assert.deepEqual(payload.data.oneCall, { incrementBy: 1 });
+  assert.deepEqual(payload.data.currentWeather, { incrementBy: 0 });
+  assert.deepEqual(payload.data.errors, { incrementBy: 1 });
+  assert.equal(payload.data.lastCallAt, "server-time");
+});
+
+test("OpenWeather proxy increments errors when upstream is not ok", async () => {
+  const req = {
+    method: "GET",
+    query: { route: "onecall", lat: "39.57", lon: "2.65" },
+  } as any;
+  const res = createOpenWeatherTestResponse() as any;
+  const tracked: Array<{ field: OpenWeatherUsageField; hasError: boolean }> = [];
+  const scheduled: Promise<unknown>[] = [];
+
+  await handleOpenWeatherRequest(req, res, {
+    getOpenWeatherKeyFn: () => "test-key",
+    fetchFn: async () => res.upstreamResponse(500, false) as any,
+    trackUsageFn: async (field, hasError) => {
+      tracked.push({ field, hasError });
+    },
+    waitUntilFn: (promise) => {
+      scheduled.push(promise);
+    },
+  });
+  await Promise.all(scheduled);
+
+  assert.equal(res.statusCode, 500);
+  assert.deepEqual(tracked, [{ field: "oneCall", hasError: true }]);
+});
+
+test("OpenWeather proxy cache hits do not increment because no upstream request runs", async () => {
+  const req = {
+    method: "OPTIONS",
+    query: { route: "onecall", lat: "39.57", lon: "2.65" },
+  } as any;
+  const res = createOpenWeatherTestResponse() as any;
+  let fetchCalls = 0;
+  let usageCalls = 0;
+
+  await handleOpenWeatherRequest(req, res, {
+    getOpenWeatherKeyFn: () => "test-key",
+    fetchFn: async () => {
+      fetchCalls += 1;
+      return res.upstreamResponse() as any;
+    },
+    trackUsageFn: async () => {
+      usageCalls += 1;
+    },
+  });
+
+  assert.equal(res.statusCode, 204);
+  assert.equal(fetchCalls, 0);
+  assert.equal(usageCalls, 0);
+});
+
+test("OpenWeather counter failures do not interrupt proxy responses", async () => {
+  const req = {
+    method: "GET",
+    query: { route: "weather", lat: "39.57", lon: "2.65" },
+  } as any;
+  const res = createOpenWeatherTestResponse() as any;
+  const scheduled: Promise<unknown>[] = [];
+
+  await handleOpenWeatherRequest(req, res, {
+    getOpenWeatherKeyFn: () => "test-key",
+    fetchFn: async () => res.upstreamResponse() as any,
+    trackUsageFn: async () => {
+      throw new Error("counter down");
+    },
+    waitUntilFn: (promise) => {
+      scheduled.push(promise);
+    },
+  });
+  await Promise.all(scheduled);
+
+  assert.equal(res.statusCode, 200);
+  assert.equal(res.body, "{\"ok\":true}");
+});
+
+test("OpenWeather proxy does not wait for slow usage tracking before responding", async () => {
+  const req = {
+    method: "GET",
+    query: { route: "weather", lat: "39.57", lon: "2.65" },
+  } as any;
+  const res = createOpenWeatherTestResponse() as any;
+  const scheduled: Promise<unknown>[] = [];
+  let resolveTracking: () => void = () => undefined;
+  let trackingResolved = false;
+  const pendingTracking = new Promise<void>((resolve) => {
+    resolveTracking = () => {
+      trackingResolved = true;
+      resolve();
+    };
+  });
+
+  await handleOpenWeatherRequest(req, res, {
+    getOpenWeatherKeyFn: () => "test-key",
+    fetchFn: async () => res.upstreamResponse() as any,
+    trackUsageFn: async () => pendingTracking,
+    waitUntilFn: (promise) => {
+      scheduled.push(promise);
+    },
+  });
+
+  assert.equal(res.statusCode, 200);
+  assert.equal(res.body, "{\"ok\":true}");
+  assert.equal(trackingResolved, false);
+  assert.equal(scheduled.length, 1);
+
+  resolveTracking();
+  await Promise.all(scheduled);
+});
+
+test("OpenWeather best-effort tracker swallows Firestore errors", async () => {
+  await trackOpenWeatherApiUsage("geoDirect", false, {
+    dbInstance: {
+      collection: () => ({
+        doc: () => ({
+          set: async () => {
+            throw new Error("firestore down");
+          },
+        }),
+      }),
+    },
+    fieldValue: {
+      increment: (value: number) => value,
+      serverTimestamp: () => "now",
+    },
+    logger: { warn: () => undefined },
+  });
+
+  assert.ok(true);
+});
+
+test("OpenWeather Vercel tracker uses server Admin-shaped Firestore writes", async () => {
+  const writes: any[] = [];
+
+  await trackOpenWeatherApiUsage("geoReverse", false, {
+    dbInstance: {
+      collection: (name: string) => {
+        assert.equal(name, "apiUsage");
+        return {
+          doc: (id: string) => ({
+            set: async (data: any, options: any) => writes.push({ id, data, options }),
+          }),
+        };
+      },
+    },
+    fieldValue: {
+      increment: (value: number) => ({ incrementBy: value }),
+      serverTimestamp: () => "server-time",
+    },
+    logger: { warn: () => undefined },
+  });
+
+  assert.match(writes[0].id, /^openweather_\d{4}-\d{2}-\d{2}$/);
+  assert.deepEqual(writes[0].data.geoReverse, { incrementBy: 1 });
+  assert.deepEqual(writes[0].options, { merge: true });
+});
+
+test("OpenWeather Vercel tracker no longer imports Firebase client SDK", () => {
+  const source = readFileSync("api/openweatherUsage.ts", "utf8");
+  const proxySource = readFileSync("api/openweather.ts", "utf8");
+
+  assert.doesNotMatch(source, /firebase\/app/);
+  assert.doesNotMatch(source, /firebase\/firestore/);
+  assert.match(source, /firebase-admin/);
+  assert.match(proxySource, /from "\.\/openweatherUsage\.js"/);
+});
+
+test("Cloud Functions OpenWeather classification maps functions to usage fields", () => {
+  assert.equal(
+    functionsApiUsage.getOpenWeatherUsageFieldForFunction("getWeather"),
+    "currentWeather"
+  );
+  assert.equal(
+    functionsApiUsage.getOpenWeatherUsageFieldForFunction("getWeatherAlerts"),
+    "oneCall"
+  );
+  assert.equal(
+    functionsApiUsage.getOpenWeatherUsageFieldForFunction("getUVfromOpenWeather"),
+    "oneCall"
+  );
+});
+
+test("Cloud Functions tracked OpenWeather fetch classifies request fields", async () => {
+  const writes: any[] = [];
+  const db = {
+    collection: () => ({
+      doc: (id: string) => ({
+        set: async (data: any, options: any) => writes.push({ id, data, options }),
+      }),
+    }),
+  };
+  const admin = {
+    firestore: {
+      FieldValue: {
+        increment: (value: number) => ({ incrementBy: value }),
+        serverTimestamp: () => "server-time",
+      },
+    },
+  };
+
+  await functionsApiUsage.fetchTrackedOpenWeather(
+    async () => ({ ok: true }),
+    db,
+    admin,
+    "https://api.openweathermap.org/data/2.5/weather",
+    "currentWeather",
+    { warn: () => undefined }
+  );
+  await functionsApiUsage.fetchTrackedOpenWeather(
+    async () => ({ ok: true }),
+    db,
+    admin,
+    "https://api.openweathermap.org/data/3.0/onecall",
+    "oneCall",
+    { warn: () => undefined }
+  );
+
+  assert.deepEqual(writes[0].data.currentWeather, { incrementBy: 1 });
+  assert.deepEqual(writes[0].data.oneCall, { incrementBy: 0 });
+  assert.deepEqual(writes[1].data.currentWeather, { incrementBy: 0 });
+  assert.deepEqual(writes[1].data.oneCall, { incrementBy: 1 });
+});
+
+test("apiUsage retention keeps 89 and 90 day documents and deletes 91 day documents", () => {
+  const now = new Date("2026-08-19T12:00:00.000Z");
+
+  assert.equal(
+    functionsApiUsage.shouldDeleteApiUsageDoc(
+      "openweather_2026-05-22",
+      { date: "2026-05-22" },
+      now
+    ),
+    false
+  );
+  assert.equal(
+    functionsApiUsage.shouldDeleteApiUsageDoc(
+      "openweather_2026-05-21",
+      { date: "2026-05-21" },
+      now
+    ),
+    false
+  );
+  assert.equal(
+    functionsApiUsage.shouldDeleteApiUsageDoc(
+      "openweather_2026-05-20",
+      { date: "2026-05-20" },
+      now
+    ),
+    true
+  );
+});
+
+test("apiUsage retention deletes old OpenUV and OpenWeather counters only", () => {
+  const now = new Date("2026-08-19T12:00:00.000Z");
+
+  assert.equal(
+    functionsApiUsage.shouldDeleteApiUsageDoc("openuv_2026-05-20", {}, now),
+    true
+  );
+  assert.equal(
+    functionsApiUsage.shouldDeleteApiUsageDoc("openweather_2026-05-20", {}, now),
+    true
+  );
+  assert.equal(
+    functionsApiUsage.shouldDeleteApiUsageDoc(
+      "openweather_2026-08-18",
+      { date: "2026-08-18" },
+      now
+    ),
+    false
+  );
+  assert.equal(
+    functionsApiUsage.shouldDeleteApiUsageDoc("other_2026-05-20", {}, now),
+    false
+  );
+  assert.equal(
+    functionsApiUsage.shouldDeleteApiUsageDoc("openweather_2026-99-99", {}, now),
+    false
+  );
+});
+
+test("apiUsage cleanup continues after per-document delete errors", async () => {
+  const deleted: string[] = [];
+  const docs = [
+    {
+      id: "openuv_2026-05-20",
+      data: () => ({}),
+      ref: {
+        delete: async () => {
+          deleted.push("openuv_2026-05-20");
+        },
+      },
+    },
+    {
+      id: "openweather_2026-05-20",
+      data: () => ({}),
+      ref: {
+        delete: async () => {
+          throw new Error("delete failed");
+        },
+      },
+    },
+    {
+      id: "openweather_2026-05-19",
+      data: () => ({}),
+      ref: {
+        delete: async () => {
+          deleted.push("openweather_2026-05-19");
+        },
+      },
+    },
+    {
+      id: "custom_2026-05-19",
+      data: () => ({}),
+      ref: {
+        delete: async () => {
+          deleted.push("custom_2026-05-19");
+        },
+      },
+    },
+  ];
+  const db = {
+    collection: (name: string) => {
+      assert.equal(name, "apiUsage");
+      return {
+        limit: (limitValue: number) => {
+          assert.equal(limitValue, 500);
+          return {
+            get: async () => ({ docs, size: docs.length }),
+          };
+        },
+      };
+    },
+  };
+
+  const result = await functionsApiUsage.cleanupOldApiUsageCounters(
+    db,
+    new Date("2026-08-19T12:00:00.000Z"),
+    { log: () => undefined, warn: () => undefined }
+  );
+
+  assert.deepEqual(deleted, ["openuv_2026-05-20", "openweather_2026-05-19"]);
+  assert.deepEqual(result, { scanned: 4, deleted: 2, errors: 1 });
+});
+
+test("AEMET translation cache hit returns cached text without provider call", async () => {
+  const db = createAemetTranslationTestDb();
+  const { key } = functionsAemetTranslations.buildAemetTranslationCacheKey(
+    "Rachas de hasta 100 km/h.",
+    "ca"
+  );
+  db.docs.set(key, {
+    translatedText: "Ratxes de fins a 100 km/h.",
+  });
+  let providerCalls = 0;
+
+  const result = await functionsAemetTranslations.translateAemetDescription({
+    text: "Rachas de hasta 100 km/h.",
+    targetLang: "ca",
+    db,
+    translateFn: async () => {
+      providerCalls += 1;
+      return { ok: true, text: "should not be used" };
+    },
+    logger: quietAemetTranslationLogger,
+  });
+
+  assert.equal(result.text, "Ratxes de fins a 100 km/h.");
+  assert.equal(result.source, "cache");
+  assert.equal(result.cached, true);
+  assert.equal(result.valid, true);
+  assert.equal(providerCalls, 0);
+  assert.equal(db.writes.length, 0);
+});
+
+test("AEMET translation ignores legacy unversioned cache keys", async () => {
+  const db = createAemetTranslationTestDb();
+  const legacyKey = buildLegacyAemetTranslationCacheKey("Rachas de hasta 100 km/h.", "ca");
+  const currentKey = functionsAemetTranslations.buildAemetTranslationCacheKey(
+    "Rachas de hasta 100 km/h.",
+    "ca"
+  ).key;
+  db.docs.set(legacyKey, {
+    translatedText: "Traducció antiga parcial.",
+  });
+  let providerCalls = 0;
+
+  const result = await functionsAemetTranslations.translateAemetDescription({
+    text: "Rachas de hasta 100 km/h.",
+    targetLang: "ca",
+    db,
+    translateFn: async () => {
+      providerCalls += 1;
+      return { ok: true, text: "Ratxes de fins a __TS_TOKEN_0__." };
+    },
+    logger: quietAemetTranslationLogger,
+  });
+
+  assert.notEqual(currentKey, legacyKey);
+  assert.equal(result.text, "Ratxes de fins a 100 km/h.");
+  assert.equal(result.source, "provider");
+  assert.equal(providerCalls, 1);
+});
+
+test("AEMET translation cache miss calls provider and stores valid translation", async () => {
+  const db = createAemetTranslationTestDb();
+  const now = new Date("2026-08-20T10:00:00.000Z");
+  let providerInput: any = null;
+
+  const result = await functionsAemetTranslations.translateAemetDescription({
+    text: "Rachas de hasta 100 km/h.",
+    targetLang: "ca",
+    db,
+    now,
+    translateFn: async (input) => {
+      providerInput = input;
+      return { ok: true, text: "Ratxes de fins a __TS_TOKEN_0__." };
+    },
+    logger: quietAemetTranslationLogger,
+  });
+
+  assert.equal(providerInput.text, "Rachas de hasta __TS_TOKEN_0__.");
+  assert.equal(result.text, "Ratxes de fins a 100 km/h.");
+  assert.equal(result.source, "provider");
+  assert.equal(result.valid, true);
+  assert.equal(db.writes.length, 1);
+  assert.equal(db.writes[0].collection, "aemetTranslations");
+  assert.equal(db.writes[0].data.sourceText, "Rachas de hasta 100 km/h.");
+  assert.equal(db.writes[0].data.targetLang, "ca");
+  assert.equal(db.writes[0].data.sourceHash, db.writes[0].id);
+  assert.equal(db.writes[0].data.translatedText, "Ratxes de fins a 100 km/h.");
+  assert.equal(db.writes[0].data.provider, "google-cloud-translation");
+  assert.equal(db.writes[0].data.status, "ok");
+  assert.equal(db.writes[0].data.tokenValidation.valid, true);
+});
+
+test("AEMET translation provider error returns original text", async () => {
+  const db = createAemetTranslationTestDb();
+
+  const result = await functionsAemetTranslations.translateAemetDescription({
+    text: "Rachas de hasta 100 km/h.",
+    targetLang: "ca",
+    db,
+    translateFn: async () => ({ ok: false, error: "provider-error", text: "" }),
+    logger: quietAemetTranslationLogger,
+  });
+
+  assert.equal(result.text, "Rachas de hasta 100 km/h.");
+  assert.equal(result.source, "original");
+  assert.equal(result.valid, false);
+  assert.equal(result.reason, "provider-error");
+});
+
+test("AEMET translation provider timeout returns original text", async () => {
+  const db = createAemetTranslationTestDb();
+
+  const result = await functionsAemetTranslations.translateAemetDescription({
+    text: "Rachas de hasta 100 km/h.",
+    targetLang: "ca",
+    db,
+    translateFn: async () => ({ ok: false, error: "timeout", text: "" }),
+    logger: quietAemetTranslationLogger,
+  });
+
+  assert.equal(result.text, "Rachas de hasta 100 km/h.");
+  assert.equal(result.source, "original");
+  assert.equal(result.reason, "timeout");
+});
+
+test("AEMET translation Firestore read error continues safely through provider", async () => {
+  const db = createAemetTranslationTestDb({ readError: true });
+
+  const result = await functionsAemetTranslations.translateAemetDescription({
+    text: "Rachas de hasta 100 km/h.",
+    targetLang: "ca",
+    db,
+    translateFn: async () => ({ ok: true, text: "Ratxes de fins a __TS_TOKEN_0__." }),
+    logger: quietAemetTranslationLogger,
+  });
+
+  assert.equal(result.text, "Ratxes de fins a 100 km/h.");
+  assert.equal(result.source, "provider");
+  assert.equal(result.valid, true);
+});
+
+test("AEMET translation Firestore write error returns valid provider translation", async () => {
+  const db = createAemetTranslationTestDb({ writeError: true });
+
+  const result = await functionsAemetTranslations.translateAemetDescription({
+    text: "Rachas de hasta 100 km/h.",
+    targetLang: "ca",
+    db,
+    translateFn: async () => ({ ok: true, text: "Ratxes de fins a __TS_TOKEN_0__." }),
+    logger: quietAemetTranslationLogger,
+  });
+
+  assert.equal(result.text, "Ratxes de fins a 100 km/h.");
+  assert.equal(result.source, "provider");
+  assert.equal(result.valid, true);
+});
+
+test("AEMET translation rejects unsupported target language", async () => {
+  const db = createAemetTranslationTestDb();
+  let providerCalls = 0;
+
+  const result = await functionsAemetTranslations.translateAemetDescription({
+    text: "Rachas de hasta 100 km/h.",
+    targetLang: "fr",
+    db,
+    translateFn: async () => {
+      providerCalls += 1;
+      return { ok: true, text: "unused" };
+    },
+    logger: quietAemetTranslationLogger,
+  });
+
+  assert.equal(result.text, "Rachas de hasta 100 km/h.");
+  assert.equal(result.source, "original");
+  assert.equal(result.reason, "unsupported-lang");
+  assert.equal(providerCalls, 0);
+});
+
+test("AEMET translation returns original for empty text", async () => {
+  const db = createAemetTranslationTestDb();
+  let providerCalls = 0;
+
+  const result = await functionsAemetTranslations.translateAemetDescription({
+    text: "   ",
+    targetLang: "ca",
+    db,
+    translateFn: async () => {
+      providerCalls += 1;
+      return { ok: true, text: "unused" };
+    },
+    logger: quietAemetTranslationLogger,
+  });
+
+  assert.equal(result.text, "   ");
+  assert.equal(result.source, "original");
+  assert.equal(result.reason, "empty-text");
+  assert.equal(providerCalls, 0);
+});
+
+test("AEMET translation preserves critical weather tokens exactly", async () => {
+  const db = createAemetTranslationTestDb();
+  const original = "Aviso 2026-08-20 14:00: 100 km/h, 30 mm, 38 °C y 90%.";
+
+  const result = await functionsAemetTranslations.translateAemetDescription({
+    text: original,
+    targetLang: "ca",
+    db,
+    translateFn: async () => ({
+      ok: true,
+      text: "Avís __TS_TOKEN_0__ __TS_TOKEN_1__: __TS_TOKEN_2__, __TS_TOKEN_3__, __TS_TOKEN_4__ i __TS_TOKEN_5__.",
+    }),
+    logger: quietAemetTranslationLogger,
+  });
+
+  assert.equal(result.text, "Avís 2026-08-20 14:00: 100 km/h, 30 mm, 38 °C i 90%.");
+  assert.match(result.text, /100 km\/h/);
+  assert.match(result.text, /30 mm/);
+  assert.match(result.text, /38 °C/);
+  assert.match(result.text, /90%/);
+  assert.match(result.text, /14:00/);
+});
+
+test("AEMET translation protects temperature ranges as a single weather token", async () => {
+  const protectedResult = functionsAemetTranslations.protectAemetDescriptionTokens(
+    mixedTemperatureDescription
+  );
+
+  assert.deepEqual(
+    protectedResult.tokens.map((token) => token.value),
+    ["36 °C", "38-39 °C"]
+  );
+  assert.equal(
+    functionsAemetTranslations.restoreAemetDescriptionTokens(
+      "Tenperatura maximoa: __TS_TOKEN_0__. Tokian tokiko __TS_TOKEN_1__.",
+      protectedResult.tokens
+    ),
+    "Tenperatura maximoa: 36 °C. Tokian tokiko 38-39 °C."
+  );
+});
+
+test("AEMET mixed maximum-temperature detail is unknown and not partially resolved locally", () => {
+  for (const lang of ["ca", "es", "eu", "gl", "en"] as LangKey[]) {
+    assert.equal(isKnownAemetDescription(mixedTemperatureDescription, lang), false, lang);
+  }
+
+  assert.equal(
+    buildAemetAiAlert("Maximum temperature warning", mixedTemperatureDescription, "es").body,
+    mixedTemperatureDescription
+  );
+  assert.notEqual(
+    buildAemetAiAlert("Maximum temperature warning", mixedTemperatureDescription, "es").body,
+    "Maximum temperature: 36 °C. En los litorales de Valencia y sur de Castellón, no se descarta que se alcancen los 38-39 °C de forma local."
+  );
+});
+
+test("AEMET translation discards provider output with residual placeholder", async () => {
+  const db = createAemetTranslationTestDb();
+  const original = "Rachas de hasta 100 km/h.";
+
+  const result = await functionsAemetTranslations.translateAemetDescription({
+    text: original,
+    targetLang: "ca",
+    db,
+    translateFn: async () => ({
+      ok: true,
+      text: "Ratxes de fins a __TS_TOKEN_0__ i __TS_TOKEN_9__.",
+    }),
+    logger: quietAemetTranslationLogger,
+  });
+
+  assert.equal(result.text, original);
+  assert.equal(result.source, "original");
+  assert.equal(result.reason, "token-validation-failed");
+  assert.equal(db.writes.length, 0);
+});
+
+test("AEMET translation cache keys differ by target language", () => {
+  const ca = functionsAemetTranslations.buildAemetTranslationCacheKey(
+    "Rachas de hasta 100 km/h.",
+    "ca"
+  );
+  const eu = functionsAemetTranslations.buildAemetTranslationCacheKey(
+    "Rachas de hasta 100 km/h.",
+    "eu"
+  );
+
+  assert.notEqual(ca.key, eu.key);
+});
+
+test("AEMET translation cache key is stable for same text and language", () => {
+  const first = functionsAemetTranslations.buildAemetTranslationCacheKey(
+    "Rachas de hasta 100 km/h.",
+    "ca"
+  );
+  const second = functionsAemetTranslations.buildAemetTranslationCacheKey(
+    "Rachas de hasta 100 km/h.",
+    "ca"
+  );
+
+  assert.equal(first.key, second.key);
+  assert.equal(first.cacheVersion, "v2");
+  assert.equal(first.cacheVersion, functionsAemetTranslations.AEMET_TRANSLATION_CACHE_VERSION);
+});
+
+test("AEMET translation cache keys differ by normalized text", () => {
+  const first = functionsAemetTranslations.buildAemetTranslationCacheKey(
+    "Rachas de hasta 100 km/h.",
+    "ca"
+  );
+  const second = functionsAemetTranslations.buildAemetTranslationCacheKey(
+    "Rachas de hasta 90 km/h.",
+    "ca"
+  );
+
+  assert.notEqual(first.key, second.key);
+});
+
+test("AEMET translation cache key normalizes repeated spaces only", () => {
+  const first = functionsAemetTranslations.buildAemetTranslationCacheKey(
+    "  Rachas   de hasta 100 km/h. ",
+    "ca"
+  );
+  const second = functionsAemetTranslations.buildAemetTranslationCacheKey(
+    "Rachas de hasta 100 km/h.",
+    "ca"
+  );
+
+  assert.equal(first.key, second.key);
+  assert.equal(first.normalizedText, "Rachas de hasta 100 km/h.");
+});
+
+test("AEMET translation provider empty response returns original text", async () => {
+  const db = createAemetTranslationTestDb();
+  const original = "Rachas de hasta 100 km/h.";
+
+  const result = await functionsAemetTranslations.translateAemetDescription({
+    text: original,
+    targetLang: "ca",
+    db,
+    translateFn: async () => ({ ok: true, text: "" }),
+    logger: quietAemetTranslationLogger,
+  });
+
+  assert.equal(result.text, original);
+  assert.equal(result.source, "original");
+  assert.equal(result.reason, "provider-error");
+});
+
+test("Google Translation wrapper keeps provider text even when detected language equals target", async () => {
+  const result = await functionsTranslationProvider.translateWithGoogleCloudTranslation({
+    text: "Maximum temperature: __TS_TOKEN_0__. En los litorales.",
+    targetLang: "en",
+    projectId: "thermosafe-test",
+    getAccessTokenFn: async () => "access-token",
+    fetchFn: async (_url, init) => {
+      assert.equal(JSON.parse(String(init?.body)).targetLanguageCode, "en");
+      return {
+        ok: true,
+        json: async () => ({
+          translations: [
+            {
+              translatedText: "Maximum temperature: __TS_TOKEN_0__. On the coastlines.",
+              detectedLanguageCode: "en",
+            },
+          ],
+        }),
+      };
+    },
+    logger: quietAemetTranslationLogger,
+  });
+
+  assert.equal(result.ok, true);
+  assert.equal(result.detectedSourceLang, "en");
+  assert.equal(result.text, "Maximum temperature: __TS_TOKEN_0__. On the coastlines.");
+  assert.equal(result.skippedSameLanguage, undefined);
+});
+
+test("AEMET translation coalesces concurrent same-key provider requests", async () => {
+  const db = createAemetTranslationTestDb();
+  let providerCalls = 0;
+  let resolveProvider: (value: any) => void = () => undefined;
+  const providerPromise = new Promise((resolve) => {
+    resolveProvider = resolve;
+  });
+
+  const first = functionsAemetTranslations.translateAemetDescription({
+    text: "Rachas de hasta 100 km/h.",
+    targetLang: "ca",
+    db,
+    translateFn: async () => {
+      providerCalls += 1;
+      return providerPromise;
+    },
+    logger: quietAemetTranslationLogger,
+  });
+  const second = functionsAemetTranslations.translateAemetDescription({
+    text: "Rachas de hasta 100 km/h.",
+    targetLang: "ca",
+    db,
+    translateFn: async () => {
+      providerCalls += 1;
+      return providerPromise;
+    },
+    logger: quietAemetTranslationLogger,
+  });
+
+  resolveProvider({ ok: true, text: "Ratxes de fins a __TS_TOKEN_0__." });
+  const results = await Promise.all([first, second]);
+
+  assert.equal(providerCalls, 1);
+  assert.equal(results[0].text, "Ratxes de fins a 100 km/h.");
+  assert.equal(results[1].text, "Ratxes de fins a 100 km/h.");
+});
+
+test("AEMET translation uses provider once and versioned cache on identical later request", async () => {
+  const db = createAemetTranslationTestDb();
+  let providerCalls = 0;
+
+  const first = await functionsAemetTranslations.translateAemetDescription({
+    text: "Rachas de hasta 100 km/h.",
+    targetLang: "ca",
+    db,
+    translateFn: async () => {
+      providerCalls += 1;
+      return { ok: true, text: "Ratxes de fins a __TS_TOKEN_0__." };
+    },
+    logger: quietAemetTranslationLogger,
+  });
+  const second = await functionsAemetTranslations.translateAemetDescription({
+    text: "Rachas de hasta 100 km/h.",
+    targetLang: "ca",
+    db,
+    translateFn: async () => {
+      providerCalls += 1;
+      return { ok: true, text: "should not be used" };
+    },
+    logger: quietAemetTranslationLogger,
+  });
+
+  assert.equal(providerCalls, 1);
+  assert.equal(first.source, "provider");
+  assert.equal(second.source, "cache");
+  assert.equal(second.cached, true);
+  assert.equal(first.text, "Ratxes de fins a 100 km/h.");
+  assert.equal(second.text, "Ratxes de fins a 100 km/h.");
+});
+
+test("AEMET translation endpoint returns original when feature flag is off", async () => {
+  const db = createAemetTranslationTestDb();
+  const res = createJsonTestResponse();
+  let providerCalls = 0;
+
+  await functionsAemetTranslations.handleAemetTranslationRequest(
+    createAemetTranslationPostRequest({
+      text: "Unknown official description.",
+      targetLang: "ca",
+    }),
+    res,
+    {
+      db,
+      enabled: undefined,
+      translateFn: async () => {
+        providerCalls += 1;
+        return { ok: true, text: "unused" };
+      },
+      logger: quietAemetTranslationLogger,
+    }
+  );
+
+  assert.equal(res.statusCode, 200);
+  assert.deepEqual(res.body, {
+    text: "Unknown official description.",
+    source: "original",
+    cached: false,
+    valid: false,
+  });
+  assert.equal(providerCalls, 0);
+});
+
+test("AEMET translation endpoint returns safe provider translation when enabled", async () => {
+  const db = createAemetTranslationTestDb();
+  const res = createJsonTestResponse();
+
+  await functionsAemetTranslations.handleAemetTranslationRequest(
+    createAemetTranslationPostRequest({ text: "Rachas de hasta 100 km/h.", targetLang: "ca" }),
+    res,
+    {
+      db,
+      enabled: "true",
+      verifyAppCheckToken: verifyValidAemetAppCheckToken,
+      translateFn: async () => ({ ok: true, text: "Ratxes de fins a __TS_TOKEN_0__." }),
+      logger: quietAemetTranslationLogger,
+    }
+  );
+
+  assert.equal(res.statusCode, 200);
+  assert.deepEqual(res.body, {
+    text: "Ratxes de fins a 100 km/h.",
+    source: "provider",
+    cached: false,
+    valid: true,
+  });
+});
+
+test("AEMET translation endpoint validates input and avoids HTTP 500 on provider fallback", async () => {
+  const db = createAemetTranslationTestDb();
+  const invalidLangRes = createJsonTestResponse();
+  const providerErrorRes = createJsonTestResponse();
+
+  await functionsAemetTranslations.handleAemetTranslationRequest(
+    createAemetTranslationPostRequest({ text: "Rachas de hasta 100 km/h.", targetLang: "fr" }),
+    invalidLangRes,
+    {
+      db,
+      enabled: "true",
+      verifyAppCheckToken: verifyValidAemetAppCheckToken,
+      logger: quietAemetTranslationLogger,
+    }
+  );
+
+  await functionsAemetTranslations.handleAemetTranslationRequest(
+    createAemetTranslationPostRequest({ text: "Rachas de hasta 100 km/h.", targetLang: "ca" }),
+    providerErrorRes,
+    {
+      db,
+      enabled: "true",
+      verifyAppCheckToken: verifyValidAemetAppCheckToken,
+      translateFn: async () => {
+        throw new Error("provider down");
+      },
+      logger: quietAemetTranslationLogger,
+    }
+  );
+
+  assert.equal(invalidLangRes.statusCode, 200);
+  assert.equal(invalidLangRes.body.text, "Rachas de hasta 100 km/h.");
+  assert.equal(invalidLangRes.body.valid, false);
+  assert.equal(providerErrorRes.statusCode, 200);
+  assert.equal(providerErrorRes.body.text, "Rachas de hasta 100 km/h.");
+  assert.equal(providerErrorRes.body.valid, false);
+});
+
+test("AEMET translation endpoint rejects missing App Check before provider call", async () => {
+  const db = createAemetTranslationTestDb();
+  const res = createJsonTestResponse();
+  let providerCalls = 0;
+
+  await functionsAemetTranslations.handleAemetTranslationRequest(
+    createAemetTranslationPostRequest(
+      { text: "Rachas de hasta 100 km/h.", targetLang: "ca" },
+      { "content-type": "application/json" }
+    ),
+    res,
+    {
+      db,
+      enabled: "true",
+      verifyAppCheckToken: verifyValidAemetAppCheckToken,
+      translateFn: async () => {
+        providerCalls += 1;
+        return { ok: true, text: "unused" };
+      },
+      logger: quietAemetTranslationLogger,
+    }
+  );
+
+  assert.equal(res.statusCode, 401);
+  assert.equal(res.body.text, "Rachas de hasta 100 km/h.");
+  assert.equal(res.body.valid, false);
+  assert.equal(providerCalls, 0);
+});
+
+test("AEMET translation endpoint rejects invalid App Check before provider call", async () => {
+  const db = createAemetTranslationTestDb();
+  const res = createJsonTestResponse();
+  let providerCalls = 0;
+
+  await functionsAemetTranslations.handleAemetTranslationRequest(
+    createAemetTranslationPostRequest(
+      { text: "Rachas de hasta 100 km/h.", targetLang: "ca" },
+      {
+        "content-type": "application/json",
+        "x-firebase-appcheck": "invalid-token",
+      }
+    ),
+    res,
+    {
+      db,
+      enabled: "true",
+      verifyAppCheckToken: verifyValidAemetAppCheckToken,
+      translateFn: async () => {
+        providerCalls += 1;
+        return { ok: true, text: "unused" };
+      },
+      logger: quietAemetTranslationLogger,
+    }
+  );
+
+  assert.equal(res.statusCode, 403);
+  assert.equal(res.body.text, "Rachas de hasta 100 km/h.");
+  assert.equal(res.body.valid, false);
+  assert.equal(providerCalls, 0);
+});
+
+test("AEMET translation endpoint validates POST JSON contract", async () => {
+  const getRes = createJsonTestResponse();
+  const contentTypeRes = createJsonTestResponse();
+
+  await functionsAemetTranslations.handleAemetTranslationRequest(
+    { method: "GET", headers: {}, body: {} },
+    getRes,
+    { enabled: "true", logger: quietAemetTranslationLogger }
+  );
+
+  await functionsAemetTranslations.handleAemetTranslationRequest(
+    {
+      method: "POST",
+      headers: {
+        "content-type": "text/plain",
+        "x-firebase-appcheck": "valid-app-check-token",
+      },
+      body: "Rachas de hasta 100 km/h.",
+    },
+    contentTypeRes,
+    {
+      enabled: "true",
+      verifyAppCheckToken: verifyValidAemetAppCheckToken,
+      logger: quietAemetTranslationLogger,
+    }
+  );
+
+  assert.equal(getRes.statusCode, 405);
+  assert.equal(getRes.body.valid, false);
+  assert.equal(contentTypeRes.statusCode, 415);
+  assert.equal(contentTypeRes.body.valid, false);
+});
+
+test("AEMET translation endpoint rejects overlong text safely", async () => {
+  const db = createAemetTranslationTestDb();
+  const res = createJsonTestResponse();
+  let providerCalls = 0;
+
+  await functionsAemetTranslations.handleAemetTranslationRequest(
+    createAemetTranslationPostRequest({ text: "x".repeat(1201), targetLang: "ca" }),
+    res,
+    {
+      db,
+      enabled: "true",
+      verifyAppCheckToken: verifyValidAemetAppCheckToken,
+      translateFn: async () => {
+        providerCalls += 1;
+        return { ok: true, text: "unused" };
+      },
+      logger: quietAemetTranslationLogger,
+    }
+  );
+
+  assert.equal(res.statusCode, 200);
+  assert.equal(res.body.text.length, 1201);
+  assert.equal(res.body.valid, false);
+  assert.equal(providerCalls, 0);
+});
+
+test("AEMET UI auto-translation keeps known templates local without endpoint call", async () => {
+  clearAemetDescriptionTranslationSessionCache();
+  const description = "Maximum temperature: 38 °C.";
+  let fetchCalls = 0;
+
+  assert.equal(isKnownAemetDescription(description, "ca"), true);
+
+  if (!isKnownAemetDescription(description, "ca")) {
+    await translateAemetDescriptionForUi(description, "ca", {
+      enabled: true,
+      endpoint: "/translateAemetDescription",
+      getAppCheckTokenFn: async () => "valid-app-check-token",
+      fetchFn: async () => {
+        fetchCalls += 1;
+        return {
+          ok: true,
+          json: async () => ({ text: "unused", source: "provider", cached: false, valid: true }),
+        } as Response;
+      },
+    });
+  }
+
+  assert.equal(fetchCalls, 0);
+});
+
+test("AEMET UI auto-translation calls endpoint for unknown text when flag is on", async () => {
+  clearAemetDescriptionTranslationSessionCache();
+  const description = "Unknown official description 100 km/h.";
+  let fetchCalls = 0;
+
+  const result = await translateAemetDescriptionForUi(description, "ca", {
+    enabled: true,
+    endpoint: "/translateAemetDescription",
+    getAppCheckTokenFn: async () => "valid-app-check-token",
+    fetchFn: async (_url, init) => {
+      fetchCalls += 1;
+      assert.equal(JSON.parse(String(init?.body)).targetLang, "ca");
+      assert.equal((init?.headers as Record<string, string>)["X-Firebase-AppCheck"], "valid-app-check-token");
+      return {
+        ok: true,
+        json: async () => ({
+          text: "Descripció oficial desconeguda 100 km/h.",
+          source: "provider",
+          cached: false,
+          valid: true,
+        }),
+      } as Response;
+    },
+  });
+
+  assert.equal(fetchCalls, 1);
+  assert.equal(result.text, "Descripció oficial desconeguda 100 km/h.");
+  assert.equal(result.valid, true);
+});
+
+test("AEMET UI auto-translation sends the complete original unknown description for every supported language", async () => {
+  const expected: Record<LangKey, string> = {
+    ca: "Temperatura màxima: 36 °C. Als litorals de València i sud de Castelló, no es descarta que s'assoleixin els 38-39 °C de forma local.",
+    es: "Temperatura máxima: 36 °C. En los litorales de Valencia y sur de Castellón, no se descarta que se alcancen los 38-39 °C de forma local.",
+    eu: "Tenperatura maximoa: 36 °C. Valentziako kostaldeetan eta Castellóko hegoaldean, ez da baztertzen tokian-tokian 38-39 °C-ra iristea.",
+    gl: "Temperatura máxima: 36 °C. Nos litorais de Valencia e sur de Castellón, non se descarta que se alcancen os 38-39 °C de forma local.",
+    en: "Maximum temperature: 36 °C. On the coastlines of Valencia and southern Castellón, local temperatures of 38-39 °C cannot be ruled out.",
+  };
+
+  for (const lang of ["ca", "es", "eu", "gl", "en"] as LangKey[]) {
+    clearAemetDescriptionTranslationSessionCache();
+    let fetchCalls = 0;
+    let sentBody: any = null;
+
+    const result = await translateAemetDescriptionForUi(mixedTemperatureDescription, lang, {
+      enabled: true,
+      endpoint: "/translateAemetDescription",
+      getAppCheckTokenFn: async () => "valid-app-check-token",
+      fetchFn: async (_url, init) => {
+        fetchCalls += 1;
+        sentBody = JSON.parse(String(init?.body));
+        return {
+          ok: true,
+          json: async () => ({
+            text: expected[lang],
+            source: "provider",
+            cached: false,
+            valid: true,
+          }),
+        } as Response;
+      },
+    });
+
+    assert.equal(fetchCalls, 1);
+    assert.equal(sentBody.text, mixedTemperatureDescription);
+    assert.equal(sentBody.targetLang, lang);
+    assert.equal(
+      sentBody.text,
+      "Temperatura máxima: 36 °C. En los litorales de Valencia y sur de Castellón, no se descarta que se alcancen los 38-39 °C de forma local."
+    );
+    assert.doesNotMatch(sentBody.text, /^Maximum temperature:/);
+    assert.equal(result.text, expected[lang]);
+    assert.equal(result.valid, true);
+    assert.match(result.text, /36 °C/);
+    assert.match(result.text, /38-39 °C/);
+    if (lang !== "es") {
+      assert.doesNotMatch(result.text, /En los litorales|no se descarta que se alcancen/);
+    }
+    if (lang === "es") {
+      assert.doesNotMatch(result.text, /^Maximum temperature:/);
+    }
+  }
+});
+
+test("AEMET UI auto-translation keeps original on backend fallback or network error", async () => {
+  clearAemetDescriptionTranslationSessionCache();
+  const fallback = await translateAemetDescriptionForUi("Unknown text.", "ca", {
+    enabled: true,
+    endpoint: "/translateAemetDescription",
+    getAppCheckTokenFn: async () => "valid-app-check-token",
+    fetchFn: async () =>
+      ({
+        ok: true,
+        json: async () => ({
+          text: "Unknown text.",
+          source: "original",
+          cached: false,
+          valid: false,
+        }),
+      }) as Response,
+  });
+  clearAemetDescriptionTranslationSessionCache();
+  const networkError = await translateAemetDescriptionForUi("Unknown text.", "ca", {
+    enabled: true,
+    endpoint: "/translateAemetDescription",
+    getAppCheckTokenFn: async () => "valid-app-check-token",
+    fetchFn: async () => {
+      throw new Error("network down");
+    },
+  });
+
+  assert.equal(fallback.text, "Unknown text.");
+  assert.equal(fallback.valid, false);
+  assert.equal(networkError.text, "Unknown text.");
+  assert.equal(networkError.valid, false);
+});
+
+test("AEMET UI auto-translation deduplicates equal text and language", async () => {
+  clearAemetDescriptionTranslationSessionCache();
+  let fetchCalls = 0;
+  let resolveFetch: (value: Response) => void = () => undefined;
+  const pendingFetch = new Promise<Response>((resolve) => {
+    resolveFetch = resolve;
+  });
+
+  const first = translateAemetDescriptionForUi("Unknown text 100 km/h.", "ca", {
+    enabled: true,
+    endpoint: "/translateAemetDescription",
+    getAppCheckTokenFn: async () => "valid-app-check-token",
+    fetchFn: async () => {
+      fetchCalls += 1;
+      return pendingFetch;
+    },
+  });
+  const second = translateAemetDescriptionForUi("Unknown text 100 km/h.", "ca", {
+    enabled: true,
+    endpoint: "/translateAemetDescription",
+    getAppCheckTokenFn: async () => "valid-app-check-token",
+    fetchFn: async () => {
+      fetchCalls += 1;
+      return pendingFetch;
+    },
+  });
+
+  resolveFetch({
+    ok: true,
+    json: async () => ({
+      text: "Text desconegut 100 km/h.",
+      source: "provider",
+      cached: false,
+      valid: true,
+    }),
+  } as Response);
+
+  const results = await Promise.all([first, second]);
+
+  assert.equal(fetchCalls, 1);
+  assert.equal(results[0].text, "Text desconegut 100 km/h.");
+  assert.equal(results[1].text, "Text desconegut 100 km/h.");
+});
+
+test("AEMET UI auto-translation keeps original when App Check token cannot be obtained", async () => {
+  clearAemetDescriptionTranslationSessionCache();
+  let fetchCalls = 0;
+
+  const result = await translateAemetDescriptionForUi("Unknown text.", "ca", {
+    enabled: true,
+    endpoint: "/translateAemetDescription",
+    getAppCheckTokenFn: async () => "",
+    fetchFn: async () => {
+      fetchCalls += 1;
+      return {
+        ok: true,
+        json: async () => ({ text: "unused", source: "provider", cached: false, valid: true }),
+      } as Response;
+    },
+  });
+
+  assert.equal(result.text, "Unknown text.");
+  assert.equal(result.valid, false);
+  assert.equal(fetchCalls, 0);
+});
+
+test("AEMET UI auto-translation keeps original on 401 or 403", async () => {
+  clearAemetDescriptionTranslationSessionCache();
+  const unauthorized = await translateAemetDescriptionForUi("Unknown text.", "ca", {
+    enabled: true,
+    endpoint: "/translateAemetDescription",
+    getAppCheckTokenFn: async () => "valid-app-check-token",
+    fetchFn: async () =>
+      ({
+        ok: false,
+        status: 401,
+        json: async () => ({ text: "Unknown text.", source: "original", cached: false, valid: false }),
+      }) as Response,
+  });
+
+  clearAemetDescriptionTranslationSessionCache();
+  const forbidden = await translateAemetDescriptionForUi("Unknown text.", "ca", {
+    enabled: true,
+    endpoint: "/translateAemetDescription",
+    getAppCheckTokenFn: async () => "valid-app-check-token",
+    fetchFn: async () =>
+      ({
+        ok: false,
+        status: 403,
+        json: async () => ({ text: "Unknown text.", source: "original", cached: false, valid: false }),
+      }) as Response,
+  });
+
+  assert.equal(unauthorized.text, "Unknown text.");
+  assert.equal(unauthorized.valid, false);
+  assert.equal(forbidden.text, "Unknown text.");
+  assert.equal(forbidden.valid, false);
+});
+
+test("AEMET UI auto-translation feature flag off avoids automatic requests", async () => {
+  clearAemetDescriptionTranslationSessionCache();
+  let fetchCalls = 0;
+
+  const result = await translateAemetDescriptionForUi("Unknown text.", "ca", {
+    enabled: false,
+    endpoint: "/translateAemetDescription",
+    fetchFn: async () => {
+      fetchCalls += 1;
+      return {
+        ok: true,
+        json: async () => ({ text: "unused", source: "provider", cached: false, valid: true }),
+      } as Response;
+    },
+  });
+
+  assert.equal(result.text, "Unknown text.");
+  assert.equal(result.valid, false);
+  assert.equal(fetchCalls, 0);
+});
+
+test("AEMET UI translation keys isolate language and stable alert identity", () => {
+  assert.notEqual(
+    buildAemetDescriptionTranslationKey("Unknown text.", "ca"),
+    buildAemetDescriptionTranslationKey("Unknown text.", "eu")
+  );
+
+  const appSource = readFileSync("src/App.tsx", "utf8");
+  assert.match(appSource, /const stableKey = `\$\{alert\.event \|\| ""\}\|\$\{alert\.start \?\? ""\}\|\$\{alert\.end \?\? ""\}\|\$\{desc\}`/);
+  assert.match(appSource, /const translationStateKey = `\$\{stableKey\}\|\$\{currentLang\}`/);
+  assert.match(appSource, /const autoTranslationEnabled = isAemetAutoTranslationEnabled\(\)/);
+  assert.match(appSource, /!knownDescription && autoTranslationEnabled[\s\S]*\{ \.\.\.baseAi, body: desc \}/);
+  assert.match(appSource, /cancelled \|\| aemetTranslationRunRef\.current !== runId/);
+});
+
+test("AEMET UI auto-translation integration stays out of core alert logic", () => {
+  const appSource = readFileSync("src/App.tsx", "utf8");
+  const functionsSource = readFileSync("functions/index.js", "utf8");
+
+  assert.match(appSource, /isKnownAemetDescription\(desc, currentLang\)/);
+  assert.match(appSource, /translateAemetDescriptionForUi\(group\.text, currentLang\)/);
+  assert.doesNotMatch(functionsSource, /cronCheckAemetRiskV2[\s\S]*translateAemetDescription/);
+  assert.doesNotMatch(functionsSource, /cronCheckWeatherRiskV2[\s\S]*translateAemetDescription/);
+  assert.doesNotMatch(functionsSource, /cronCheckUvRiskV2[\s\S]*translateAemetDescription/);
+});
+
+test("cleanupCaches keeps cache cleanup and adds isolated apiUsage cleanup", () => {
+  const source = readFileSync("functions/index.js", "utf8");
+
+  assert.match(source, /cleanupCollection\("uvCache", 7\)/);
+  assert.match(source, /cleanupCollection\("weatherCache", 2\)/);
+  assert.match(source, /cleanupOldApiUsageCounters\(db\)/);
+  assert.match(source, /\[API USAGE CLEANUP ERROR\]/);
+});
 
 test("heat risk follows INSST-style threshold boundaries", () => {
   assert.equal(getBaseHeatRisk(26.9).class, "safe");
@@ -375,6 +1947,89 @@ test("workWindow keeps AEMET plus rainy behavior through WeatherContext", () => 
     }),
     "caution"
   );
+});
+
+test("workWindow does not harden current activity for future-only AEMET alerts", () => {
+  const aemetActive = false;
+  const aemetSoon = true;
+  const input = {
+    heatRisk: getHeatRisk(24, "rest"),
+    heatIndex: 24,
+    coldRisk: "cap" as const,
+    windRisk: "none" as const,
+    uvi: 0,
+    aemetActive,
+  };
+
+  assert.equal(aemetSoon, true);
+  assert.equal(getWorkWindow(input), "optimal");
+  assert.equal(getWorkWindow({ ...input, aemetActive: aemetActive || aemetSoon }), "caution");
+});
+
+test("workWindow keeps moderate wind at caution when only AEMET future alerts exist", () => {
+  const aemetActive = false;
+  const aemetSoon = true;
+  const input = {
+    heatRisk: getHeatRisk(24, "rest"),
+    heatIndex: 24,
+    coldRisk: "cap" as const,
+    windRisk: "moderate" as const,
+    uvi: 0,
+    aemetActive,
+  };
+
+  assert.equal(aemetSoon, true);
+  assert.equal(getWorkWindow(input), "caution");
+  assert.equal(getWorkWindow({ ...input, aemetActive: aemetActive || aemetSoon }), "limited");
+});
+
+test("workWindow keeps rain and UV at caution when only AEMET future alerts exist", () => {
+  const aemetActive = false;
+  const aemetSoon = true;
+  const input = {
+    heatRisk: getHeatRisk(24, "rest"),
+    heatIndex: 24,
+    coldRisk: "cap" as const,
+    windRisk: "none" as const,
+    uvi: 2.4,
+    weatherMain: "Rain",
+    aemetActive,
+  };
+
+  assert.equal(aemetSoon, true);
+  assert.equal(getWorkWindow(input), "caution");
+  assert.equal(getWorkWindow({ ...input, aemetActive: aemetActive || aemetSoon }), "limited");
+});
+
+test("workWindow preserves active AEMET preventive behavior", () => {
+  const input = {
+    heatRisk: getHeatRisk(24, "rest"),
+    heatIndex: 24,
+    coldRisk: "cap" as const,
+    windRisk: "none" as const,
+    uvi: 0,
+    aemetActive: true,
+  };
+
+  assert.equal(getWorkWindow(input), "caution");
+  assert.equal(getWorkWindow({ ...input, weatherMain: "Rain" }), "limited");
+});
+
+test("workWindow uses the active AEMET state once when active and future alerts coexist", () => {
+  const aemetActive = true;
+  const aemetSoon = true;
+  const input = {
+    heatRisk: getHeatRisk(24, "rest"),
+    heatIndex: 24,
+    coldRisk: "cap" as const,
+    windRisk: "none" as const,
+    uvi: 0,
+    aemetActive,
+  };
+
+  assert.equal(aemetSoon, true);
+  assert.equal(getWorkWindow(input), "caution");
+  assert.equal(getWorkWindow({ ...input, aemetActive: aemetActive || aemetSoon }), "caution");
 });
 
 test("workWindow stormy source is wired without adding storm severity", () => {
@@ -2495,6 +4150,533 @@ test("official alert hazard detection covers common AEMET phenomena", () => {
   assert.equal(detectAemetHazard("Thunderstorm warning"), "storm");
   assert.equal(detectAemetHazard("High temperature warning"), "temp_max");
   assert.equal(detectAemetHazard("Unknown advisory"), "other");
+});
+
+test("AEMET/OpenWeather descriptions are localized from complete known templates", () => {
+  const cases: Array<{
+    description: string;
+    expected: Record<LangKey, string>;
+  }> = [
+    {
+      description: "Rachas fuertes o muy fuertes.",
+      expected: {
+        ca: "Ratxes fortes o molt fortes.",
+        es: "Rachas fuertes o muy fuertes.",
+        eu: "Haize-bolada gogorrak edo oso gogorrak.",
+        gl: "Refachos fortes ou moi fortes.",
+        en: "Strong or very strong wind gusts.",
+      },
+    },
+    {
+      description: "Rachas fuertes o muy fuertes (de 80 km/h).",
+      expected: {
+        ca: "Ratxes fortes o molt fortes (de 80 km/h).",
+        es: "Rachas fuertes o muy fuertes (de 80 km/h).",
+        eu: "Haize-bolada gogorrak edo oso gogorrak (80 km/h-koak).",
+        gl: "Refachos fortes ou moi fortes (de 80 km/h).",
+        en: "Strong or very strong wind gusts (80 km/h).",
+      },
+    },
+    {
+      description: "Maximum temperature: 38 °C.",
+      expected: {
+        ca: "Temperatura màxima: 38 °C.",
+        es: "Temperatura máxima: 38 °C.",
+        eu: "Gehieneko tenperatura: 38 °C.",
+        gl: "Temperatura máxima: 38 °C.",
+        en: "Maximum temperature: 38 °C.",
+      },
+    },
+    {
+      description: "Maximum temperature: 41 °C.",
+      expected: {
+        ca: "Temperatura màxima: 41 °C.",
+        es: "Temperatura máxima: 41 °C.",
+        eu: "Gehieneko tenperatura: 41 °C.",
+        gl: "Temperatura máxima: 41 °C.",
+        en: "Maximum temperature: 41 °C.",
+      },
+    },
+    {
+      description: "Especial atención a las rachas que pueden alcanzar los 100 km/h.",
+      expected: {
+        ca: "Atenció especial a les ratxes que poden arribar als 100 km/h.",
+        es: "Especial atención a las rachas que pueden alcanzar los 100 km/h.",
+        eu: "Arreta berezia 100 km/h-ra irits daitezkeen haize-boladei.",
+        gl: "Especial atención aos refachos que poden alcanzar os 100 km/h.",
+        en: "Special attention to wind gusts that may reach 100 km/h.",
+      },
+    },
+    {
+      description: "Especial atención a las rachas que pueden alcanzar los 90 km/h.",
+      expected: {
+        ca: "Atenció especial a les ratxes que poden arribar als 90 km/h.",
+        es: "Especial atención a las rachas que pueden alcanzar los 90 km/h.",
+        eu: "Arreta berezia 90 km/h-ra irits daitezkeen haize-boladei.",
+        gl: "Especial atención aos refachos que poden alcanzar os 90 km/h.",
+        en: "Special attention to wind gusts that may reach 90 km/h.",
+      },
+    },
+    {
+      description: "Pueden ir acompañadas de granizo y rachas de viento muy fuertes.",
+      expected: {
+        ca: "Poden anar acompanyades de calamarsa i ratxes de vent molt fortes.",
+        es: "Pueden ir acompañadas de granizo y rachas de viento muy fuertes.",
+        eu: "Txingorra eta haize-bolada oso gogorrak izan ditzakete.",
+        gl: "Poden ir acompañadas de sarabia e refachos de vento moi fortes.",
+        en: "They may be accompanied by hail and very strong wind gusts.",
+      },
+    },
+    {
+      description: "Pueden ir acompañadas de granizo y ratxes de viento muy fuertes.",
+      expected: {
+        ca: "Poden anar acompanyades de calamarsa i ratxes de vent molt fortes.",
+        es: "Pueden ir acompañadas de granizo y rachas de viento muy fuertes.",
+        eu: "Txingorra eta haize-bolada oso gogorrak izan ditzakete.",
+        gl: "Poden ir acompañadas de sarabia e refachos de vento moi fortes.",
+        en: "They may be accompanied by hail and very strong wind gusts.",
+      },
+    },
+    {
+      description: "Pueden ir acompañadas de granizo y rachas muy fuertes de viento.",
+      expected: {
+        ca: "Poden anar acompanyades de calamarsa i ratxes de vent molt fortes.",
+        es: "Pueden ir acompañadas de granizo y rachas de viento muy fuertes.",
+        eu: "Txingorra eta haize-bolada oso gogorrak izan ditzakete.",
+        gl: "Poden ir acompañadas de sarabia e refachos de vento moi fortes.",
+        en: "They may be accompanied by hail and very strong wind gusts.",
+      },
+    },
+    {
+      description: "Pueden ir acompañadas de rachas de viento muy fuertes y granizo.",
+      expected: {
+        ca: "Poden anar acompanyades de calamarsa i ratxes de vent molt fortes.",
+        es: "Pueden ir acompañadas de granizo y rachas de viento muy fuertes.",
+        eu: "Txingorra eta haize-bolada oso gogorrak izan ditzakete.",
+        gl: "Poden ir acompañadas de sarabia e refachos de vento moi fortes.",
+        en: "They may be accompanied by hail and very strong wind gusts.",
+      },
+    },
+    {
+      description: "Pueden ir acompañadas de granizo y ratxes muy fuertes de viento.",
+      expected: {
+        ca: "Poden anar acompanyades de calamarsa i ratxes de vent molt fortes.",
+        es: "Pueden ir acompañadas de granizo y rachas de viento muy fuertes.",
+        eu: "Txingorra eta haize-bolada oso gogorrak izan ditzakete.",
+        gl: "Poden ir acompañadas de sarabia e refachos de vento moi fortes.",
+        en: "They may be accompanied by hail and very strong wind gusts.",
+      },
+    },
+    {
+      description: "Twelve-hours accumulated precipitation: 60 mm.",
+      expected: {
+        ca: "Precipitació acumulada en dotze hores: 60 mm.",
+        es: "Precipitación acumulada en doce horas: 60 mm.",
+        eu: "Hamabi ordutako prezipitazio metatua: 60 mm.",
+        gl: "Precipitación acumulada en doce horas: 60 mm.",
+        en: "Twelve-hours accumulated precipitation: 60 mm.",
+      },
+    },
+    {
+      description: "Twelve-hours accumulated precipitation: 45 mm.",
+      expected: {
+        ca: "Precipitació acumulada en dotze hores: 45 mm.",
+        es: "Precipitación acumulada en doce horas: 45 mm.",
+        eu: "Hamabi ordutako prezipitazio metatua: 45 mm.",
+        gl: "Precipitación acumulada en doce horas: 45 mm.",
+        en: "Twelve-hours accumulated precipitation: 45 mm.",
+      },
+    },
+    {
+      description: "One-hour accumulated precipitation: 20 mm.",
+      expected: {
+        ca: "Precipitació acumulada en una hora: 20 mm.",
+        es: "Precipitación acumulada en una hora: 20 mm.",
+        eu: "Ordubeteko prezipitazio metatua: 20 mm.",
+        gl: "Precipitación acumulada nunha hora: 20 mm.",
+        en: "One-hour accumulated precipitation: 20 mm.",
+      },
+    },
+  ];
+
+  for (const { description, expected } of cases) {
+    for (const lang of Object.keys(expected) as LangKey[]) {
+      assert.equal(
+        buildAemetAiAlert("Wind warning", description, lang).body,
+        expected[lang],
+        `${lang}: ${description}`
+      );
+    }
+  }
+});
+
+test("AEMET alert ordering keeps a current lower-severity alert before a future severe alert", () => {
+  const nowTs = 1_000;
+  const activeWind = { event: "Wind warning", start: 900, end: 1_200 };
+  const futureHeat = {
+    event: "Important maximum temperature warning",
+    start: 1_300,
+    end: 1_600,
+  };
+
+  const state = getAemetAlertTimelineState([futureHeat, activeWind], nowTs);
+
+  assert.equal(state.aemetActive, true);
+  assert.equal(state.aemetSoon, true);
+  assert.equal(state.activeAlert, activeWind);
+  assert.equal(state.sortedAlerts[0], activeWind);
+});
+
+test("AEMET alert ordering prioritizes severity among currently active alerts", () => {
+  const nowTs = 1_000;
+  const moderateRain = { event: "Moderate rain warning", start: 900, end: 1_500 };
+  const importantWind = { event: "Important wind warning", start: 950, end: 1_400 };
+
+  const sorted = sortAemetAlerts([moderateRain, importantWind], nowTs);
+
+  assert.deepEqual(
+    sorted.map((alert) => alert.event),
+    ["Important wind warning", "Moderate rain warning"]
+  );
+});
+
+test("AEMET future-only alerts are ordered by start time and do not produce active banner text", () => {
+  const nowTs = 1_000;
+  const laterSevere = {
+    event: "Important maximum temperature warning",
+    start: 1_800,
+    end: 2_200,
+  };
+  const earlierModerate = {
+    event: "Moderate wind warning",
+    start: 1_200,
+    end: 1_500,
+  };
+
+  const state = getAemetAlertTimelineState([laterSevere, earlierModerate], nowTs);
+  const banner = getTopAlertBannerState({
+    primary: { kind: "none" },
+    heatRisk: null,
+    uvi: 0,
+    day: true,
+    clouds: 0,
+    irr: null,
+    aemetActive: state.aemetActive,
+    aemetSoon: state.aemetSoon,
+    rainy: false,
+    t: (key) =>
+      key === "official_alert_soon"
+        ? "Avís meteorològic previst"
+        : key === "top_alert_weather_active"
+          ? "Alerta meteorològica activa"
+          : key,
+    UV_HIGH: 6,
+    UV_EXTREME: 11,
+  });
+
+  assert.equal(state.aemetActive, false);
+  assert.equal(state.sortedAlerts[0], earlierModerate);
+  assert.equal(banner?.key, "aemet-soon");
+  assert.equal(banner?.content, "⚠️ Avís meteorològic previst");
+  assert.notEqual(banner?.content, "🚨 Alerta meteorològica activa");
+});
+
+test("AEMET active alert shows active phase and countdown until the end", () => {
+  const t = (key: string, options?: any) =>
+    key === "alert_time.remaining_hours"
+      ? `Queden ${options.hours}h ${options.minutes}min`
+      : key === "alert_time.remaining_minutes"
+        ? `Queden ${options.minutes} min`
+        : key;
+
+  const alert = { event: "Wind warning", start: 900, end: 4_900 };
+
+  assert.equal(getAemetAlertPhase(alert, 1_000), "active");
+  assert.equal(getAlertTimeCountdown(alert.start, alert.end, "ca", t, 1_000), "Queden 1h 5min");
+});
+
+test("AEMET future alert is not active and countdown points to its start", () => {
+  const t = (key: string, options?: any) =>
+    key === "alert_time.starts_in_hours"
+      ? `Comença en ${options.hours}h ${options.minutes}min`
+      : key === "alert_time.starts_in_minutes"
+        ? `Comença en ${options.minutes} min`
+        : key;
+
+  const alert = { event: "Important maximum temperature warning", start: 4_900, end: 8_000 };
+
+  assert.equal(getAemetAlertPhase(alert, 1_000), "future");
+  assert.equal(getAlertTimeCountdown(alert.start, alert.end, "ca", t, 1_000), "Comença en 1h 5min");
+});
+
+test("AEMET Llucmajor and Palma case picks active wind before future maximum temperature warning", () => {
+  const nowTs = Date.UTC(2026, 7, 20, 3, 44, 0) / 1000;
+  const wind = {
+    event: "Wind warning",
+    start: Date.UTC(2026, 7, 19, 22, 0, 0) / 1000,
+    end: Date.UTC(2026, 7, 20, 6, 59, 0) / 1000,
+  };
+  const maximumTemperatures = {
+    event: "Important maximum temperature warning",
+    start: Date.UTC(2026, 7, 20, 10, 0, 0) / 1000,
+    end: Date.UTC(2026, 7, 20, 16, 59, 0) / 1000,
+  };
+
+  const state = getAemetAlertTimelineState([maximumTemperatures, wind], nowTs);
+
+  assert.equal(state.aemetActive, true);
+  assert.equal(state.aemetSoon, true);
+  assert.equal(state.activeAlert, wind);
+  assert.equal(state.sortedAlerts[0], wind);
+});
+
+test("Cloud Functions AEMET severity matches frontend known textual levels", () => {
+  const cases = [
+    { event: "Yellow wind warning", expected: 2 },
+    { event: "Moderate coastal event warning", expected: 2 },
+    { event: "Orange rain warning", expected: 3 },
+    { event: "Important maximum temperature warning", expected: 3 },
+    { event: "High risk wind warning", expected: 3 },
+    { event: "Red wind warning", expected: 4 },
+    { event: "Extreme storm warning", expected: 4 },
+    { event: "Unknown advisory", expected: 1 },
+  ];
+
+  for (const { event, expected } of cases) {
+    const alert = { event, description: "", start: 900, end: 1_200 };
+
+    assert.equal(functionsAemetAlerts.getAemetAlertSeverity(alert), expected, event);
+    assert.equal(functionsAemetAlerts.getAemetAlertSeverity(alert), getAemetAlertSeverity(alert));
+  }
+});
+
+test("Cloud Functions AEMET severity respects numeric fields like frontend", () => {
+  const explicitSeverity = { event: "Unknown advisory", severity: 3 };
+  const explicitLevel = { event: "Unknown advisory", level: 4 };
+
+  assert.equal(functionsAemetAlerts.getAemetAlertSeverity(explicitSeverity), 3);
+  assert.equal(functionsAemetAlerts.getAemetAlertSeverity(explicitLevel), 4);
+  assert.equal(
+    functionsAemetAlerts.getAemetAlertSeverity(explicitSeverity),
+    getAemetAlertSeverity(explicitSeverity)
+  );
+  assert.equal(
+    functionsAemetAlerts.getAemetAlertSeverity(explicitLevel),
+    getAemetAlertSeverity(explicitLevel)
+  );
+});
+
+test("Cloud Functions AEMET level prioritizes the most severe active alert", () => {
+  const nowTs = 1_000;
+  const yellowWind = {
+    event: "Yellow wind warning",
+    sender_name: "AEMET",
+    description: "Rachas fuertes.",
+    start: 900,
+    end: 1_400,
+  };
+  const redStorm = {
+    event: "Red storm warning",
+    sender_name: "AEMET",
+    description: "Storm.",
+    start: 950,
+    end: 1_300,
+  };
+
+  const info = functionsAemetAlerts.getAemetLevelFromAlerts([yellowWind, redStorm], nowTs);
+
+  assert.equal(info.level, 4);
+  assert.equal(info.event, "Red storm warning");
+  assert.equal(info.sender, "AEMET");
+  assert.equal(info.description, "Storm.");
+  assert.equal(info.timing, "active");
+});
+
+test("Cloud Functions AEMET level keeps active lower-severity alert before future severe alert", () => {
+  const nowTs = 1_000;
+  const activeModerate = {
+    event: "Moderate wind warning",
+    start: 900,
+    end: 1_400,
+  };
+  const futureExtreme = {
+    event: "Extreme maximum temperature warning",
+    start: 1_200,
+    end: 1_800,
+  };
+
+  const info = functionsAemetAlerts.getAemetLevelFromAlerts(
+    [futureExtreme, activeModerate],
+    nowTs
+  );
+
+  assert.equal(info.level, 2);
+  assert.equal(info.event, "Moderate wind warning");
+  assert.equal(info.timing, "active");
+});
+
+test("Cloud Functions AEMET level picks earliest future alert before future severity", () => {
+  const nowTs = 1_000;
+  const laterRed = {
+    event: "Red wind warning",
+    start: 1_600,
+    end: 2_000,
+  };
+  const earlierYellow = {
+    event: "Yellow rain warning",
+    start: 1_200,
+    end: 1_500,
+  };
+
+  const info = functionsAemetAlerts.getAemetLevelFromAlerts([laterRed, earlierYellow], nowTs);
+
+  assert.equal(info.level, 2);
+  assert.equal(info.event, "Yellow rain warning");
+  assert.equal(info.timing, "soon");
+});
+
+test("Cloud Functions AEMET level uses future severity as secondary tie-breaker", () => {
+  const nowTs = 1_000;
+  const yellowWind = {
+    event: "Yellow wind warning",
+    start: 1_200,
+    end: 1_500,
+  };
+  const orangeRain = {
+    event: "Orange rain warning",
+    start: 1_200,
+    end: 1_600,
+  };
+
+  const info = functionsAemetAlerts.getAemetLevelFromAlerts([yellowWind, orangeRain], nowTs);
+
+  assert.equal(info.level, 3);
+  assert.equal(info.event, "Orange rain warning");
+  assert.equal(info.timing, "soon");
+});
+
+test("Cloud Functions AEMET level has a stable fallback for unknown fields", () => {
+  const nowTs = 1_000;
+  const info = functionsAemetAlerts.getAemetLevelFromAlerts(
+    [
+      {
+        event: { ca: "Avís desconegut" },
+        description: null,
+        sender_name: "AEMET",
+        start: 900,
+        end: 1_200,
+      },
+    ],
+    nowTs
+  );
+
+  assert.equal(info.level, 1);
+  assert.equal(info.event, "[object Object]");
+  assert.equal(info.sender, "AEMET");
+  assert.equal(info.description, "");
+  assert.equal(info.timing, "active");
+});
+
+test("Cloud Functions and frontend AEMET ordering agree for equivalent scenarios", () => {
+  const nowTs = 1_000;
+  const alerts = [
+    { event: "Orange wind warning", start: 1_200, end: 1_600 },
+    { event: "Yellow rain warning", start: 900, end: 1_500 },
+    { event: "Red storm warning", start: 950, end: 1_400 },
+  ];
+
+  const backendInfo = functionsAemetAlerts.getAemetLevelFromAlerts(alerts, nowTs);
+  const frontendState = getAemetAlertTimelineState(alerts, nowTs);
+
+  assert.equal(backendInfo.event, frontendState.activeAlert?.event);
+  assert.equal(backendInfo.level, getAemetAlertSeverity(frontendState.activeAlert || {}));
+  assert.equal(backendInfo.timing, "active");
+});
+
+test("Cloud Functions heat suppression keeps official heat alerts blocking ThermoSafe heat", () => {
+  const cases = [
+    {
+      level: 2,
+      event: "Yellow maximum temperature warning",
+      description: "Maximum temperature: 38 °C.",
+    },
+    {
+      level: 3,
+      event: "Important temperaturas máximas warning",
+      description: "Temperatura máxima: 40 °C.",
+    },
+    {
+      level: 4,
+      event: "Red heat warning",
+      description: "High temperature risk.",
+    },
+    {
+      level: 1,
+      event: "Heat warning",
+      description: "Calor.",
+    },
+  ];
+
+  for (const { event, description } of cases) {
+    assert.equal(
+      functionsAemetAlerts.isAemetHeatRelatedAlert(event, description),
+      true,
+      event
+    );
+  }
+});
+
+test("Cloud Functions heat suppression ignores non-thermal AEMET severity levels", () => {
+  const cases = [
+    {
+      level: 2,
+      event: "Yellow wind warning",
+      description: "Rachas fuertes o muy fuertes.",
+    },
+    {
+      level: 3,
+      event: "Orange wind warning",
+      description: "Wind gusts may reach 100 km/h.",
+    },
+    {
+      level: 2,
+      event: "Thunderstorm warning",
+      description: "Tormenta con rachas fuertes.",
+    },
+    {
+      level: 2,
+      event: "Rain warning",
+      description: "One-hour accumulated precipitation: 20 mm.",
+    },
+    {
+      level: 3,
+      event: "Coastal event warning",
+      description: "Waves and coastal risk.",
+    },
+    {
+      level: 3,
+      event: "Unknown advisory",
+      description: "Official warning without thermal wording.",
+    },
+    {
+      level: 2,
+      event: "Snow warning",
+      description: "Neu i visibilitat reduïda.",
+    },
+    {
+      level: 2,
+      event: "Fog warning",
+      description: "Boira densa.",
+    },
+  ];
+
+  for (const { event, description } of cases) {
+    assert.equal(
+      functionsAemetAlerts.isAemetHeatRelatedAlert(event, description),
+      false,
+      event
+    );
+  }
 });
 
 test("official alert primary status keeps a generic title and describes the known phenomenon", () => {

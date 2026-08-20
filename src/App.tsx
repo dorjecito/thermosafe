@@ -31,7 +31,11 @@ import { getUVDetailFromOpenUV, getUVFromOpenUV } from "./services/openUV";
    import {windDegToCardinal16 as windDegreesToCardinal16,
    } from "./utils/windDirections";
    import { getWindRisk, type WindRisk } from "./utils/windRisk";
-   import { buildAemetAiAlert, type LangKey } from "./utils/aemetAi";
+   import { buildAemetAiAlert, isKnownAemetDescription, type LangKey } from "./utils/aemetAi";
+   import {
+     isAemetAutoTranslationEnabled,
+     translateAemetDescriptionForUi,
+   } from "./services/aemetDescriptionTranslation";
    import { getContextualUVMessage } from "./utils/getContextualUVMessage";
    import { getWorkWindow, getWorkWindowText, getWorkWindowTitle } from "./utils/workWindow";
    import { getRiskIcons } from "./utils/getRiskIcons";
@@ -43,7 +47,7 @@ import { getUVDetailFromOpenUV, getUVFromOpenUV } from "./services/openUV";
    import { getPrimaryStatusBlock } from "./utils/getPrimaryStatusBlock";
    import { getPrimaryAdviceText } from "./utils/getPrimaryAdviceText";
    import { formatLastUpdate } from "./utils/formatLastUpdate";
-	   import { getRemainingTime } from "./utils/getRemainingTime";
+	   import { getAlertTimeCountdown } from "./utils/getRemainingTime";
 	   import { normalizeLang } from "./utils/normalizeLang";
 	   import { getUvText, normalizeUviForDisplay } from "./utils/uv";
      import { getTimeAwareUvAdvice } from "./utils/uvAdviceMessage";
@@ -54,6 +58,7 @@ import { getUVDetailFromOpenUV, getUVFromOpenUV } from "./services/openUV";
    import { primaryRiskFromEngine } from "./utils/primaryRiskFromEngine";
    import { getWeatherContext } from "./utils/weatherContext";
    import { fetchSolarIrr } from "./utils/fetchSolarIrr";
+   import { getAemetAlertTimelineState } from "./utils/aemetAlertTimeline";
 	   import { resolveSkyDescription } from "./utils/resolveSkyDescription";
      import {
        estimateUvExposureMinutes,
@@ -653,6 +658,8 @@ function isStaleRequest(source: "gps" | "search", id: number) {
 }
 
 const [alerts, setAlerts] = useState<any[]>([]);
+const [aemetTranslatedBodies, setAemetTranslatedBodies] = useState<Record<string, string>>({});
+const aemetTranslationRunRef = useRef(0);
 
 const activityMotionMessages = useMemo(
   () => ({
@@ -1717,38 +1724,9 @@ const {
   aemetActive,
   aemetSoon,
   activeAlert,
+  sortedAlerts,
 } = useMemo(() => {
-  if (!Array.isArray(alerts)) {
-    return {
-      aemetActive: false,
-      aemetSoon: false,
-      activeAlert: undefined as any,
-    };
-  }
-
-  let nextAemetActive = false;
-  let nextAemetSoon = false;
-  let nextActiveAlert: any;
-
-  for (const alert of alerts) {
-    const hasStart = typeof alert?.start === "number";
-    const hasEnd = typeof alert?.end === "number";
-
-    if (hasStart && hasEnd && nowTs >= alert.start && nowTs <= alert.end) {
-      nextAemetActive = true;
-      if (!nextActiveAlert) nextActiveAlert = alert;
-    }
-
-    if (hasStart && alert.start > nowTs) {
-      nextAemetSoon = true;
-    }
-  }
-
-  return {
-    aemetActive: nextAemetActive,
-    aemetSoon: nextAemetSoon,
-    activeAlert: nextActiveAlert,
-  };
+  return getAemetAlertTimelineState(alerts, nowTs);
 }, [alerts, nowTs]);
 
 const currentLang = normalizeLang(i18n.resolvedLanguage || i18n.language || "ca");
@@ -1824,7 +1802,7 @@ const workWindow = useMemo(
       coldRisk,
       windRisk,
       uvi,
-      aemetActive: aemetActive || aemetSoon,
+      aemetActive,
       weatherMain,
       activity: preventiveActivity,
       nocturnalHeat,
@@ -2118,7 +2096,7 @@ const diagnosticsLastWeatherUpdate = useMemo(
 );
 const alertCards = useMemo(
   () =>
-    alerts.map((alert, i) => {
+    sortedAlerts.map((alert, i) => {
       const desc =
         typeof alert.description === "string"
           ? alert.description
@@ -2128,16 +2106,99 @@ const alertCards = useMemo(
               .filter((v) => typeof v === "string" && v.trim().length > 0)
               .join(". ");
 
-      const ai = buildAemetAiAlert(
+      const stableKey = `${alert.event || ""}|${alert.start ?? ""}|${alert.end ?? ""}|${desc}`;
+      const translationStateKey = `${stableKey}|${currentLang}`;
+      const knownDescription = isKnownAemetDescription(desc, currentLang);
+      const autoTranslationEnabled = isAemetAutoTranslationEnabled();
+      const baseAi = buildAemetAiAlert(
         alert.event || "",
         desc,
-        i18n.language as LangKey
+        currentLang
       );
+      const ai = !knownDescription && autoTranslationEnabled
+        ? { ...baseAi, body: desc }
+        : baseAi;
+      const translatedBody = !knownDescription
+        ? aemetTranslatedBodies[translationStateKey]
+        : "";
 
-      return { alert, ai, i };
+      return {
+        alert,
+        ai: translatedBody ? { ...ai, body: translatedBody } : ai,
+        i,
+        desc,
+        knownDescription,
+        stableKey,
+        translationStateKey,
+      };
     }),
-  [alerts, i18n.language]
+  [sortedAlerts, i18n.language, currentLang, aemetTranslatedBodies]
 );
+
+useEffect(() => {
+  const autoTranslationEnabled = isAemetAutoTranslationEnabled();
+  console.log("[AEMET-TRANSLATION] flag", { enabled: autoTranslationEnabled });
+  if (!autoTranslationEnabled) return;
+
+  const groups = new Map<string, { text: string; stateKeys: string[] }>();
+
+  for (const card of alertCards) {
+    if (!card.knownDescription) {
+      console.log("[AEMET-TRANSLATION] unknown candidate", {
+        currentLang,
+        knownDescription: card.knownDescription,
+        hasDesc: Boolean(card.desc.trim()),
+        desc: card.desc.slice(0, 80),
+      });
+    }
+
+    if (!card.desc.trim() || card.knownDescription || aemetTranslatedBodies[card.translationStateKey]) {
+      continue;
+    }
+
+    const requestKey = `${card.desc}|${currentLang}`;
+    const group = groups.get(requestKey) || { text: card.desc, stateKeys: [] };
+    group.stateKeys.push(card.translationStateKey);
+    groups.set(requestKey, group);
+  }
+
+  if (groups.size === 0) return;
+
+  let cancelled = false;
+  const runId = aemetTranslationRunRef.current + 1;
+  aemetTranslationRunRef.current = runId;
+
+  for (const group of groups.values()) {
+    console.log("[AEMET-TRANSLATION] calling provider", {
+      currentLang,
+      desc: group.text.slice(0, 80),
+    });
+    translateAemetDescriptionForUi(group.text, currentLang)
+      .then((result) => {
+        if (cancelled || aemetTranslationRunRef.current !== runId) return;
+        if (!result.valid || !result.text.trim() || result.text === group.text) return;
+
+        setAemetTranslatedBodies((prev) => {
+          let changed = false;
+          const next = { ...prev };
+
+          for (const stateKey of group.stateKeys) {
+            if (next[stateKey] !== result.text) {
+              next[stateKey] = result.text;
+              changed = true;
+            }
+          }
+
+          return changed ? next : prev;
+        });
+      })
+      .catch(() => undefined);
+  }
+
+  return () => {
+    cancelled = true;
+  };
+}, [alertCards, currentLang, aemetTranslatedBodies]);
 
 const renderAlertCard = ({ alert, ai, i }: (typeof alertCards)[number]) => (
   <div
@@ -2155,7 +2216,7 @@ const renderAlertCard = ({ alert, ai, i }: (typeof alertCards)[number]) => (
           <span> · {t("alert_time.active")}</span>
         )}
         <br />
-        ⏳ {getRemainingTime(alert.end, lang, t)}
+        ⏳ {getAlertTimeCountdown(alert.start, alert.end, lang, t)}
       </div>
     )}
 
