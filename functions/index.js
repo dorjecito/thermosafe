@@ -7,6 +7,15 @@ const { onRequest } = require("firebase-functions/v2/https");
 const { onSchedule } = require("firebase-functions/v2/scheduler");
 const { defineSecret } = require("firebase-functions/params");
 const fetch = (...args) => globalThis.fetch(...args);
+const {
+  cleanupOldApiUsageCounters,
+  fetchTrackedOpenWeather,
+} = require("./apiUsage");
+const {
+  getAemetLevelFromAlerts,
+  isAemetHeatRelatedAlert,
+} = require("./aemetAlerts");
+const { handleAemetTranslationRequest } = require("./aemetTranslations");
 
 admin.initializeApp();
 const db = admin.firestore();
@@ -16,6 +25,21 @@ const OPENWEATHER_KEY = defineSecret("OPENWEATHER_KEY");
 const OPENUV_KEY = defineSecret("OPENUV_KEY");
 
 const REGION = "europe-west1";
+
+exports.translateAemetDescription = onRequest(
+  {
+    region: REGION,
+    cors: true,
+    timeoutSeconds: 10,
+    memory: "256MiB",
+  },
+  async (req, res) =>
+    handleAemetTranslationRequest(req, res, {
+      db,
+      enabled: process.env.AEMET_AUTO_TRANSLATION_ENABLED,
+      verifyAppCheckToken: (token) => admin.appCheck().verifyToken(token),
+    })
+);
 
 function getLocalDateParts(nowUtcMs, tzOffsetSec) {
   const d = new Date(nowUtcMs + tzOffsetSec * 1000);
@@ -278,7 +302,13 @@ async function getWeather(lat, lon) {
     `https://api.openweathermap.org/data/2.5/weather?lat=${lat}&lon=${lon}` +
     `&appid=${OPENWEATHER_KEY.value()}&units=metric`;
 
-  const r = await fetch(url);
+  const r = await fetchTrackedOpenWeather(
+    fetch,
+    db,
+    admin,
+    url,
+    "currentWeather"
+  );
   if (!r.ok) throw new Error(`OpenWeather ${r.status}`);
 
   const j = await r.json();
@@ -318,7 +348,13 @@ async function getUVfromOpenWeather(lat, lon) {
       `https://api.openweathermap.org/data/3.0/onecall?lat=${lat}&lon=${lon}` +
       `&appid=${OPENWEATHER_KEY.value()}&exclude=minutely,hourly,daily,alerts&units=metric`;
 
-    const r = await fetch(url);
+    const r = await fetchTrackedOpenWeather(
+      fetch,
+      db,
+      admin,
+      url,
+      "oneCall"
+    );
     if (!r.ok) throw new Error(`OpenWeather UV ${r.status}`);
 
     const j = await r.json();
@@ -1094,53 +1130,17 @@ async function getWeatherAlerts(lat, lon) {
     `https://api.openweathermap.org/data/3.0/onecall?lat=${lat}&lon=${lon}` +
     `&appid=${OPENWEATHER_KEY.value()}&units=metric&exclude=minutely,hourly,daily`;
 
-  const r = await fetch(url);
+  const r = await fetchTrackedOpenWeather(
+    fetch,
+    db,
+    admin,
+    url,
+    "oneCall"
+  );
   if (!r.ok) throw new Error(`OpenWeather alerts ${r.status}`);
 
   const j = await r.json();
   return Array.isArray(j?.alerts) ? j.alerts : [];
-}
-
-function getAemetLevelFromAlerts(alerts) {
-  if (!Array.isArray(alerts) || alerts.length === 0) {
-    return {
-      level: 0,
-      event: "",
-       sender: "",
-       description: "",
-      timing: "",
-    };
-  }
-
-  const nowTs = Math.floor(Date.now() / 1000);
-  const relevantAlerts = alerts.filter(
-    (alert) => typeof alert?.end !== "number" || alert.end >= nowTs
-  );
-  const activeAlert = relevantAlerts.find(
-    (alert) => typeof alert?.start !== "number" || alert.start <= nowTs
-  );
-  const upcomingAlert = relevantAlerts
-    .filter((alert) => typeof alert?.start === "number" && alert.start > nowTs)
-    .sort((a, b) => a.start - b.start)[0];
-  const first = activeAlert || upcomingAlert;
-
-  if (!first) {
-    return {
-      level: 0,
-      event: "",
-      sender: "",
-      description: "",
-      timing: "",
-    };
-  }
-
-  return {
-    level: 1,
-    event: String(first.event || ""),
-    sender: String(first.sender_name || ""),
-    description: String(first.description || ""),
-    timing: activeAlert ? "active" : "soon",
-  };
 }
 
 async function sendAemetPush(token, lang, info, place) {
@@ -1568,6 +1568,7 @@ exports.cronCheckWeatherRiskV2 = onSchedule(
 
             let aemetLevel = 0;
             let aemetEvent = "";
+            let aemetDescription = "";
 
             try {
               const aemetSnap = await db
@@ -1583,6 +1584,7 @@ exports.cronCheckWeatherRiskV2 = onSchedule(
                 if (ageMinutes <= 90) {
                   aemetLevel = Number(aemetData.level ?? 0);
                   aemetEvent = aemetData.event || "";
+                  aemetDescription = aemetData.description || "";
                 }
               }
             } catch (e) {
@@ -1593,15 +1595,10 @@ exports.cronCheckWeatherRiskV2 = onSchedule(
               });
             }
 
-            const aemetText = String(aemetEvent || "").toLowerCase();
-
-            const shouldBlockHeatByAemet =
-              aemetLevel >= 2 ||
-              aemetText.includes("heat") ||
-              aemetText.includes("temperature") ||
-              aemetText.includes("high temperature") ||
-              aemetText.includes("calor") ||
-              aemetText.includes("temperatura");
+            const shouldBlockHeatByAemet = isAemetHeatRelatedAlert(
+              aemetEvent,
+              aemetDescription
+            );
 
             stats.heat.lastValue = hi;
 
@@ -2467,11 +2464,17 @@ exports.cleanupCaches = functions
     try {
       await cleanupCollection("uvCache", 7);
       await cleanupCollection("weatherCache", 2);
-
-      console.log("[CACHE CLEANUP DONE]");
     } catch (e) {
       console.error("[CACHE CLEANUP ERROR]", e);
     }
+
+    try {
+      await cleanupOldApiUsageCounters(db);
+    } catch (e) {
+      console.error("[API USAGE CLEANUP ERROR]", e);
+    }
+
+    console.log("[CACHE CLEANUP DONE]");
 
     return null;
   });
