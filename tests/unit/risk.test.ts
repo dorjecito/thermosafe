@@ -125,6 +125,9 @@ import {
   reloadThermoSafeVersion,
   unregisterAppShellServiceWorkers,
 } from "../../src/utils/serviceWorkerUpdate";
+import {
+  waitForServiceWorkerRegistrationActive,
+} from "../../src/utils/firebaseMessagingSw";
 import { getNominatimSelectionAudit } from "../../src/utils/getLocationNameFromCoords";
 
 const require = createRequire(import.meta.url);
@@ -3315,6 +3318,78 @@ test("version reload unregisters only the app shell service worker", async () =>
   );
 
   assert.deepEqual(unregistered, ["app"]);
+});
+
+class FakeServiceWorker extends EventTarget {
+  state: ServiceWorkerState;
+
+  constructor(state: ServiceWorkerState) {
+    super();
+    this.state = state;
+  }
+
+  setState(state: ServiceWorkerState) {
+    this.state = state;
+    this.dispatchEvent(new Event("statechange"));
+  }
+}
+
+class FakeServiceWorkerRegistration extends EventTarget {
+  active: FakeServiceWorker | null = null;
+  installing: FakeServiceWorker | null = null;
+  waiting: FakeServiceWorker | null = null;
+}
+
+test("Firebase Messaging service worker wait returns immediately when registration is active", async () => {
+  const registration = new FakeServiceWorkerRegistration();
+  registration.active = new FakeServiceWorker("activated");
+
+  const result = await waitForServiceWorkerRegistrationActive(
+    registration as unknown as ServiceWorkerRegistration,
+    1
+  );
+
+  assert.equal(result, registration);
+});
+
+test("Firebase Messaging service worker wait resolves when installing worker activates", async () => {
+  const registration = new FakeServiceWorkerRegistration();
+  const worker = new FakeServiceWorker("installing");
+  registration.installing = worker;
+
+  const wait = waitForServiceWorkerRegistrationActive(
+    registration as unknown as ServiceWorkerRegistration,
+    50
+  );
+
+  queueMicrotask(() => worker.setState("activated"));
+
+  const result = await wait;
+  assert.equal(result, registration);
+});
+
+test("Firebase Messaging service worker wait times out instead of waiting indefinitely", async () => {
+  const registration = new FakeServiceWorkerRegistration();
+  registration.installing = new FakeServiceWorker("installing");
+
+  await assert.rejects(
+    () =>
+      waitForServiceWorkerRegistrationActive(
+        registration as unknown as ServiceWorkerRegistration,
+        1
+      ),
+    /Timeout esperant l'activació/
+  );
+});
+
+test("push subscription waits for the concrete FCM registration instead of global serviceWorker.ready", () => {
+  const subscribeSource = readFileSync(
+    new URL("../../src/push/subscribe.ts", import.meta.url),
+    "utf8"
+  );
+
+  assert.doesNotMatch(subscribeSource, /navigator\.serviceWorker\.ready/);
+  assert.match(subscribeSource, /waitForServiceWorkerRegistrationActive\(reg\)/);
 });
 
 test("diagnostics copy text does not expose sensitive token data", () => {

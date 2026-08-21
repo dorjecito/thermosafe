@@ -16,6 +16,7 @@ import {
   saveTokenLastSyncedLocally,
   writeWithOptionalTokenSyncFallback,
 } from "../utils/tokenSyncMetadata";
+import { waitForServiceWorkerRegistrationActive } from "../utils/firebaseMessagingSw";
 
 type Level = "moderate" | "high" | "very_high";
 type Lang = "ca" | "es" | "eu" | "gl" | "en";
@@ -162,13 +163,49 @@ function warnNotifications(message: string, error?: unknown) {
   }
 }
 
+function getNotificationErrorDetails(stage: string, error: unknown) {
+  return {
+    stage,
+    name: error instanceof Error ? error.name : undefined,
+    code:
+      typeof error === "object" && error !== null && "code" in error
+        ? String((error as { code?: unknown }).code)
+        : undefined,
+    message: error instanceof Error ? error.message : String(error),
+  };
+}
+
+function warnNotificationStageError(stage: string, error: unknown) {
+  warnNotifications(
+    "Error de diagnòstic en activar notificacions push.",
+    getNotificationErrorDetails(stage, error)
+  );
+}
+
 async function writeSubDocWithOptionalTokenSync<T extends Record<string, unknown>>(
   ref: ReturnType<typeof doc>,
-  payload: T
+  payload: T,
+  stage = "setDoc"
 ) {
   return writeWithOptionalTokenSyncFallback(
     payload,
-    (payloadToWrite) => setDoc(ref, payloadToWrite, { merge: true }),
+    async (payloadToWrite) => {
+      logNotifications("Just abans de setDoc().", {
+        stage,
+        hasTokenLastSyncedAt: "tokenLastSyncedAt" in payloadToWrite,
+      });
+
+      try {
+        await setDoc(ref, payloadToWrite, { merge: true });
+        logNotifications("setDoc() OK.", {
+          stage,
+          hasTokenLastSyncedAt: "tokenLastSyncedAt" in payloadToWrite,
+        });
+      } catch (error) {
+        warnNotificationStageError(stage, error);
+        throw error;
+      }
+    },
     rememberSuccessfulTokenSync,
     (error) =>
       warnNotifications(
@@ -188,7 +225,7 @@ async function getFirebaseMessagingSwRegistration(): Promise<ServiceWorkerRegist
     updateViaCache: "none",
   });
 
-  await navigator.serviceWorker.ready;
+  await waitForServiceWorkerRegistrationActive(reg);
 
   logNotifications("Firebase Messaging SW registrat.", { scope: reg.scope });
   return reg;
@@ -382,97 +419,143 @@ export async function enableRiskAlerts({
   lang,
   place,
 }: { threshold?: Level; lang?: Lang; place?: string } = {}) {
-  logNotifications("Iniciant activació de notificacions push.");
+  let stage = "start";
 
-  const ok = await askNotifPerm();
-  if (!ok) throw new Error("Has denegat el permís de notificacions");
+  try {
+    logNotifications("Iniciant activació de notificacions push.");
 
-  const loc = await getCoords();
-  if (!loc) throw new Error("No s'ha pogut obtenir la ubicació (GPS)");
+    stage = "Notification.requestPermission";
+    const ok = await askNotifPerm();
+    if (!ok) throw new Error("Has denegat el permís de notificacions");
+    logNotifications("Permís de notificacions OK.", {
+      permission: Notification.permission,
+    });
 
-  const swReg = await getFirebaseMessagingSwRegistration();
+    stage = "geolocation.getCurrentPosition";
+    const loc = await getCoords();
+    if (!loc) throw new Error("No s'ha pogut obtenir la ubicació (GPS)");
+    logNotifications("GPS OK.", {
+      latAvailable: Number.isFinite(loc.lat),
+      lonAvailable: Number.isFinite(loc.lon),
+    });
 
-  const messaging = await messagingPromise;
-  if (!messaging) throw new Error("El navegador no suporta Web Push");
+    stage = "serviceWorker.register";
+    const swReg = await getFirebaseMessagingSwRegistration();
 
-  const vapidKey =
-    "BNh8R1YOsrnV58xNBIOVi-aMIYCvTsPpdmn7hcKJ3lldQUZ8BF6qP_wEa84TnIwZ765YQxHGWc7fAdpegzgH184";
+    stage = "messaging.isSupported";
+    const messaging = await messagingPromise;
+    if (!messaging) throw new Error("El navegador no suporta Web Push");
 
-  const token = await getToken(messaging, {
-    vapidKey,
-    serviceWorkerRegistration: swReg,
-  });
+    const vapidKey =
+      "BNh8R1YOsrnV58xNBIOVi-aMIYCvTsPpdmn7hcKJ3lldQUZ8BF6qP_wEa84TnIwZ765YQxHGWc7fAdpegzgH184";
 
-  if (!token || token.length < 50) {
-    throw new Error("Token FCM invàlid o buit");
-  }
+    stage = "getToken";
+    logNotifications("Just abans de getToken().", {
+      serviceWorkerScope: swReg.scope,
+      hasVapidKey: Boolean(vapidKey),
+    });
+    const token = await getToken(messaging, {
+      vapidKey,
+      serviceWorkerRegistration: swReg,
+    });
 
-  const langNorm = lang ? normalizeLangValue(lang) : normalizeLang("ca");
-  const placeNorm = normalizePlaceValue(place);
-  const ref = doc(db, "subs", token);
-  const snap = await getDoc(ref);
-  const now = Date.now();
-
-  if (!snap.exists()) {
-    await writeSubDocWithOptionalTokenSync(
-      ref,
-      {
-        token,
-        lat: loc.lat,
-        lon: loc.lon,
-        threshold,
-        lang: langNorm,
-        ...(placeNorm ? { place: placeNorm } : {}),
-        createdAt: now,
-        updatedAt: now,
-        ...tokenLastSyncedPayload(),
-        ...resetRiskLevelsPayload(),
-      }
-    );
-
-    logNotifications("Subscripció nova creada a Firestore.");
-  } else {
-    const prev = snap.data() as SubDoc;
-
-    const prevLat = Number(prev.lat);
-    const prevLon = Number(prev.lon);
-
-    const distanceKm =
-      Number.isFinite(prevLat) && Number.isFinite(prevLon)
-        ? haversineKm(prevLat, prevLon, loc.lat, loc.lon)
-        : Infinity;
-
-    const mustResetLevels = distanceKm >= RESET_DISTANCE_KM;
-
-    await writeSubDocWithOptionalTokenSync(
-      ref,
-      {
-        token,
-        lat: loc.lat,
-        lon: loc.lon,
-        threshold,
-        lang: langNorm,
-        ...(placeNorm ? { place: placeNorm } : {}),
-        updatedAt: now,
-        ...tokenLastSyncedPayload(),
-        ...(mustResetLevels ? resetRiskLevelsPayload() : {}),
-      }
-    );
-
-    if (import.meta.env.DEV) {
-      logNotifications("Subscripció existent actualitzada a Firestore.", {
-        tokenAvailable: true,
-        tokenLength: token.length,
-        distanceKm: Math.round(distanceKm * 100) / 100,
-        mustResetLevels,
-      });
+    if (!token || token.length < 50) {
+      throw new Error("Token FCM invàlid o buit");
     }
+
+    logNotifications("getToken() OK.", {
+      tokenAvailable: true,
+      tokenLength: token.length,
+    });
+
+    const langNorm = lang ? normalizeLangValue(lang) : normalizeLang("ca");
+    const placeNorm = normalizePlaceValue(place);
+    const ref = doc(db, "subs", token);
+
+    stage = "getDoc";
+    logNotifications("Just abans de getDoc().");
+    const snap = await getDoc(ref);
+    logNotifications("getDoc() OK.", {
+      exists: snap.exists(),
+    });
+
+    const now = Date.now();
+
+    if (!snap.exists()) {
+      stage = "setDoc:create";
+      await writeSubDocWithOptionalTokenSync(
+        ref,
+        {
+          token,
+          lat: loc.lat,
+          lon: loc.lon,
+          threshold,
+          lang: langNorm,
+          ...(placeNorm ? { place: placeNorm } : {}),
+          createdAt: now,
+          updatedAt: now,
+          ...tokenLastSyncedPayload(),
+          ...resetRiskLevelsPayload(),
+        },
+        stage
+      );
+
+      logNotifications("Subscripció nova creada a Firestore.");
+    } else {
+      const prev = snap.data() as SubDoc;
+
+      const prevLat = Number(prev.lat);
+      const prevLon = Number(prev.lon);
+
+      const distanceKm =
+        Number.isFinite(prevLat) && Number.isFinite(prevLon)
+          ? haversineKm(prevLat, prevLon, loc.lat, loc.lon)
+          : Infinity;
+
+      const mustResetLevels = distanceKm >= RESET_DISTANCE_KM;
+
+      stage = "setDoc:update";
+      await writeSubDocWithOptionalTokenSync(
+        ref,
+        {
+          token,
+          lat: loc.lat,
+          lon: loc.lon,
+          threshold,
+          lang: langNorm,
+          ...(placeNorm ? { place: placeNorm } : {}),
+          updatedAt: now,
+          ...tokenLastSyncedPayload(),
+          ...(mustResetLevels ? resetRiskLevelsPayload() : {}),
+        },
+        stage
+      );
+
+      if (import.meta.env.DEV) {
+        logNotifications("Subscripció existent actualitzada a Firestore.", {
+          tokenAvailable: true,
+          tokenLength: token.length,
+          distanceKm: Math.round(distanceKm * 100) / 100,
+          mustResetLevels,
+        });
+      }
+    }
+
+    stage = "localStorage.setItem";
+    localStorage.setItem("fcmToken", token);
+    logNotifications("localStorage fcmToken guardat.", {
+      tokenAvailable: true,
+      tokenLength: token.length,
+    });
+
+    stage = "complete";
+    logNotifications("Final correcte de enableRiskAlerts().");
+    logNotifications("Activació completada correctament.");
+    return token;
+  } catch (error) {
+    warnNotificationStageError(stage, error);
+    throw error;
   }
-
-  localStorage.setItem("fcmToken", token);
-
-  logNotifications("Activació completada correctament.");
-  return token;
 }
 
 export async function disableRiskAlerts(token: string | null) {
