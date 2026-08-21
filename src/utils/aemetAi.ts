@@ -230,13 +230,146 @@ const IA_FULL: Record<string, Record<LangKey, string>> = {
   ...IA_KNOWLEDGE_EXTENDED,
 };
 
+function normalizeKnownAemetDescription(text: string, lang: LangKey): string | null {
+  const normalized = text.trim();
+  const windGustMatch = normalized.match(
+    /^Rachas fuertes o muy fuertes(?:\s*\(de\s*([^)]+?)\))?\.$/i
+  );
+
+  if (windGustMatch) {
+    const value = windGustMatch[1]?.trim();
+    const base: Record<LangKey, string> = {
+      ca: "Ratxes fortes o molt fortes",
+      es: "Rachas fuertes o muy fuertes",
+      eu: "Haize-bolada gogorrak edo oso gogorrak",
+      gl: "Refachos fortes ou moi fortes",
+      en: "Strong or very strong wind gusts",
+    };
+    const suffix: Record<LangKey, string> = value
+      ? {
+          ca: ` (de ${value})`,
+          es: ` (de ${value})`,
+          eu: ` (${value}-koak)`,
+          gl: ` (de ${value})`,
+          en: ` (${value})`,
+        }
+      : { ca: "", es: "", eu: "", gl: "", en: "" };
+
+    return `${base[lang]}${suffix[lang]}.`;
+  }
+
+  const specialWindGustMatch = normalized.match(
+    /^Especial atención a las rachas que pueden alcanzar los\s+([^)]+?km\/h)\.$/i
+  );
+
+  if (specialWindGustMatch) {
+    const value = specialWindGustMatch[1].trim();
+    const template: Record<LangKey, string> = {
+      ca: `Atenció especial a les ratxes que poden arribar als ${value}.`,
+      es: `Especial atención a las rachas que pueden alcanzar los ${value}.`,
+      eu: `Arreta berezia ${value}-ra irits daitezkeen haize-boladei.`,
+      gl: `Especial atención aos refachos que poden alcanzar os ${value}.`,
+      en: `Special attention to wind gusts that may reach ${value}.`,
+    };
+
+    return template[lang];
+  }
+
+  const hailAndWindGustsSource = normalized.replace(/\s+/g, " ");
+  const hailAndWindGustsMatch =
+    /^Pueden ir acompañadas de .+\.$/i.test(hailAndWindGustsSource) &&
+    /\bgranizo\b/i.test(hailAndWindGustsSource) &&
+    /\b(?:rachas|ratxes)\b/i.test(hailAndWindGustsSource) &&
+    /(?:\b(?:rachas|ratxes) de viento muy fuertes\b|\b(?:rachas|ratxes) muy fuertes de viento\b)/i.test(
+      hailAndWindGustsSource
+    );
+
+  if (hailAndWindGustsMatch) {
+    const template: Record<LangKey, string> = {
+      ca: "Poden anar acompanyades de calamarsa i ratxes de vent molt fortes.",
+      es: "Pueden ir acompañadas de granizo y rachas de viento muy fuertes.",
+      eu: "Txingorra eta haize-bolada oso gogorrak izan ditzakete.",
+      gl: "Poden ir acompañadas de sarabia e refachos de vento moi fortes.",
+      en: "They may be accompanied by hail and very strong wind gusts.",
+    };
+
+    return template[lang];
+  }
+
+  const maxTemperatureMatch = normalized.match(/^Maximum temperature:\s*([^.]*)\.$/i);
+  if (maxTemperatureMatch) {
+    const value = maxTemperatureMatch[1].trim();
+    const label: Record<LangKey, string> = {
+      ca: "Temperatura màxima",
+      es: "Temperatura máxima",
+      eu: "Gehieneko tenperatura",
+      gl: "Temperatura máxima",
+      en: "Maximum temperature",
+    };
+
+    return `${label[lang]}: ${value}.`;
+  }
+
+  const twelveHourPrecipitationMatch = normalized.match(
+    /^Twelve[- ]hours accumulated precipitation:\s*([^.]*)\.$/i
+  );
+  if (twelveHourPrecipitationMatch) {
+    const value = twelveHourPrecipitationMatch[1].trim();
+    const label: Record<LangKey, string> = {
+      ca: "Precipitació acumulada en dotze hores",
+      es: "Precipitación acumulada en doce horas",
+      eu: "Hamabi ordutako prezipitazio metatua",
+      gl: "Precipitación acumulada en doce horas",
+      en: "Twelve-hours accumulated precipitation",
+    };
+
+    return `${label[lang]}: ${value}.`;
+  }
+
+  const oneHourPrecipitationMatch = normalized.match(
+    /^One[- ]hour accumulated precipitation:\s*([^.]*)\.$/i
+  );
+  if (oneHourPrecipitationMatch) {
+    const value = oneHourPrecipitationMatch[1].trim();
+    const label: Record<LangKey, string> = {
+      ca: "Precipitació acumulada en una hora",
+      es: "Precipitación acumulada en una hora",
+      eu: "Ordubeteko prezipitazio metatua",
+      gl: "Precipitación acumulada nunha hora",
+      en: "One-hour accumulated precipitation",
+    };
+
+    return `${label[lang]}: ${value}.`;
+  }
+
+  return null;
+}
+
+function hasKnownAemetDescriptionPrefixOnly(text: string, lang: LangKey): boolean {
+  const normalized = text.trim();
+  if (normalizeKnownAemetDescription(normalized, lang)) return false;
+
+  const firstSentenceMatch = normalized.match(/^.+?\./);
+  if (!firstSentenceMatch) return false;
+
+  const firstSentence = firstSentenceMatch[0].trim();
+  if (firstSentence.length === normalized.length) return false;
+
+  return normalizeKnownAemetDescription(firstSentence, lang) !== null;
+}
+
 // ---------------------------------------------------------
 // ✅ ÚNICA translateWithIA (NO la dupliquis)
 // ---------------------------------------------------------
 function translateWithIA(text: string, lang: LangKey): string {
   if (!text) return "";
 
-  // coherent amb la teva lògica: només “traducció IA” quan és català
+  const knownDescription = normalizeKnownAemetDescription(text, lang);
+  if (knownDescription) return knownDescription;
+
+  if (hasKnownAemetDescriptionPrefixOnly(text, lang)) return text;
+
+  // Conserva el comportament anterior: el fallback parcial només s'aplicava al català.
   if (lang !== "ca") return text;
 
   let t = text;
@@ -323,6 +456,11 @@ function translateWithIA(text: string, lang: LangKey): string {
   return t.trim();
 }
 
+export function isKnownAemetDescription(text: string, langInput: LangKey): boolean {
+  const lang = normalizeLang(langInput);
+  return normalizeKnownAemetDescription(cleanAemetDescription(text || ""), lang) !== null;
+}
+
 // ---------------------------------------------------------
 // Builder principal AEMET (amb fallback anti-undefined)
 // ---------------------------------------------------------
@@ -367,7 +505,7 @@ export function buildAemetAiAlert(
     : GENERIC_BODY;
 
   const body =
-    (lang === "ca" ? translateWithIA(desc, lang) : desc) ||
+    translateWithIA(desc, lang) ||
     genericBodyBySource[lang] ||
     genericBodyBySource.es;
 

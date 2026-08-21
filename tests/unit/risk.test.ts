@@ -216,6 +216,8 @@ const functionsTranslationProvider = require("../../functions/translationProvide
 
 const mixedTemperatureDescription =
   "Temperatura máxima: 36 °C. En los litorales de Valencia y sur de Castellón, no se descarta que se alcancen los 38-39 °C de forma local.";
+const mixedPrecipitationDescription =
+  "Twelve-hours accumulated precipitation: 60 mm. Los 60 mm se podrán acumular en pocas horas por sucesivos chubascos.";
 
 function createOpenWeatherTestResponse() {
   const headers = new Map([["content-type", "application/json"]]);
@@ -1513,6 +1515,128 @@ test("AEMET UI auto-translation sends the complete original unknown description 
       assert.doesNotMatch(result.text, /^Maximum temperature:/);
     }
   }
+});
+
+test("AEMET mixed twelve-hour precipitation detail is unknown and not partially resolved locally", () => {
+  for (const lang of ["ca", "es", "eu", "gl", "en"] as LangKey[]) {
+    assert.equal(isKnownAemetDescription(mixedPrecipitationDescription, lang), false, lang);
+    assert.equal(
+      buildAemetAiAlert("Rain warning", mixedPrecipitationDescription, lang).body,
+      mixedPrecipitationDescription,
+      lang
+    );
+  }
+
+  assert.notEqual(
+    buildAemetAiAlert("Rain warning", mixedPrecipitationDescription, "ca").body,
+    "Precipitació acumulada en dotze hores: 60 mm. Los 60 mm se podrán acumular en pocas horas por sucesivos chubascos."
+  );
+});
+
+test("AEMET UI auto-translation sends complete mixed precipitation original and uses provider output", async () => {
+  const expected: Record<LangKey, string> = {
+    ca: "Precipitació acumulada en dotze hores: 60 mm. Els 60 mm es podran acumular en poques hores per ruixats successius.",
+    es: "Precipitación acumulada en doce horas: 60 mm. Los 60 mm se podrán acumular en pocas horas por sucesivos chubascos.",
+    eu: "Hamabi ordutako prezipitazio metatua: 60 mm. 60 mm-ak ordu gutxitan metatu ahal izango dira zaparrada jarraituen ondorioz.",
+    gl: "Precipitación acumulada en doce horas: 60 mm. Os 60 mm poderanse acumular en poucas horas por sucesivos chuvascos.",
+    en: "Twelve-hours accumulated precipitation: 60 mm. The 60 mm may accumulate in a few hours due to successive showers.",
+  };
+
+  for (const lang of ["ca", "es", "eu", "gl", "en"] as LangKey[]) {
+    clearAemetDescriptionTranslationSessionCache();
+    let fetchCalls = 0;
+    let sentBody: any = null;
+
+    if (!isKnownAemetDescription(mixedPrecipitationDescription, lang)) {
+      const result = await translateAemetDescriptionForUi(mixedPrecipitationDescription, lang, {
+        enabled: true,
+        endpoint: "/translateAemetDescription",
+        getAppCheckTokenFn: async () => "valid-app-check-token",
+        fetchFn: async (_url, init) => {
+          fetchCalls += 1;
+          sentBody = JSON.parse(String(init?.body));
+          return {
+            ok: true,
+            json: async () => ({
+              text: expected[lang],
+              source: "provider",
+              cached: false,
+              valid: true,
+            }),
+          } as Response;
+        },
+      });
+
+      assert.equal(fetchCalls, 1, lang);
+      assert.equal(sentBody.text, mixedPrecipitationDescription, lang);
+      assert.equal(sentBody.targetLang, lang);
+      assert.notEqual(
+        sentBody.text,
+        "Precipitació acumulada en dotze hores: 60 mm. Los 60 mm se podrán acumular en pocas horas por sucesivos chubascos.",
+        lang
+      );
+      assert.equal(result.text, expected[lang], lang);
+      assert.equal(result.valid, true, lang);
+      assert.match(result.text, /60 mm/, lang);
+
+      if (lang !== "es") {
+        assert.doesNotMatch(result.text, /Los 60 mm se podrán acumular|sucesivos chubascos/, lang);
+      }
+      if (lang === "es") {
+        assert.doesNotMatch(result.text, /^Twelve-hours accumulated precipitation:/, lang);
+      }
+    }
+  }
+});
+
+test("AEMET complete twelve-hour precipitation remains known and local", async () => {
+  clearAemetDescriptionTranslationSessionCache();
+  const description = "Twelve-hours accumulated precipitation: 60 mm.";
+  let fetchCalls = 0;
+
+  assert.equal(isKnownAemetDescription(description, "es"), true);
+  assert.equal(
+    buildAemetAiAlert("Rain warning", description, "es").body,
+    "Precipitación acumulada en doce horas: 60 mm."
+  );
+
+  if (!isKnownAemetDescription(description, "es")) {
+    await translateAemetDescriptionForUi(description, "es", {
+      enabled: true,
+      endpoint: "/translateAemetDescription",
+      getAppCheckTokenFn: async () => "valid-app-check-token",
+      fetchFn: async () => {
+        fetchCalls += 1;
+        return {
+          ok: true,
+          json: async () => ({ text: "unused", source: "provider", cached: false, valid: true }),
+        } as Response;
+      },
+    });
+  }
+
+  assert.equal(fetchCalls, 0);
+});
+
+test("AEMET mixed precipitation translation flag off keeps current fallback without request", async () => {
+  clearAemetDescriptionTranslationSessionCache();
+  let fetchCalls = 0;
+
+  const result = await translateAemetDescriptionForUi(mixedPrecipitationDescription, "es", {
+    enabled: false,
+    endpoint: "/translateAemetDescription",
+    fetchFn: async () => {
+      fetchCalls += 1;
+      return {
+        ok: true,
+        json: async () => ({ text: "unused", source: "provider", cached: false, valid: true }),
+      } as Response;
+    },
+  });
+
+  assert.equal(result.text, mixedPrecipitationDescription);
+  assert.equal(result.valid, false);
+  assert.equal(fetchCalls, 0);
 });
 
 test("AEMET UI auto-translation keeps original on backend fallback or network error", async () => {
