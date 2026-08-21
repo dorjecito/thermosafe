@@ -494,7 +494,9 @@
   "active": "Vigent",
   "ended": "Finalitzat",
   "remaining_hours": "Queden {{hours}}h {{minutes}}min",
-  "remaining_minutes": "Queden {{minutes}} min"
+  "remaining_minutes": "Queden {{minutes}} min",
+  "starts_in_hours": "Comença en {{hours}}h {{minutes}}min",
+  "starts_in_minutes": "Comença en {{minutes}} min"
 },
 "uvTitle": "Avís ThermoSafe",
 "uvLow": "Índex UV baix.",

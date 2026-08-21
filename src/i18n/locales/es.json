@@ -501,7 +501,9 @@
   "active": "Vigente",
   "ended": "Finalizado",
   "remaining_hours": "Quedan {{hours}}h {{minutes}}min",
-  "remaining_minutes": "Quedan {{minutes}} min"
+  "remaining_minutes": "Quedan {{minutes}} min",
+  "starts_in_hours": "Comienza en {{hours}}h {{minutes}}min",
+  "starts_in_minutes": "Comienza en {{minutes}} min"
 },
   "uvTitle": "Aviso ThermoSafe",
   "uvLow": "Índice UV bajo.",

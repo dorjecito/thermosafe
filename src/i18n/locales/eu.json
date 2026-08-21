@@ -473,7 +473,9 @@
   "active": "Indarrean",
   "ended": "Amaituta",
   "remaining_hours": "{{hours}}h {{minutes}}min geratzen dira",
-  "remaining_minutes": "{{minutes}} min geratzen dira"
+  "remaining_minutes": "{{minutes}} min geratzen dira",
+  "starts_in_hours": "{{hours}}h {{minutes}}min barru hasiko da",
+  "starts_in_minutes": "{{minutes}} min barru hasiko da"
 },
   "uvTitle": "ThermoSafe abisua",
   "uvLow": "UV indize baxua.",

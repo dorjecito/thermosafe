@@ -512,7 +512,9 @@
     "active": "Active",
     "ended": "Ended",
     "remaining_hours": "{{hours}}h {{minutes}}m left",
-    "remaining_minutes": "{{minutes}}m left"
+    "remaining_minutes": "{{minutes}}m left",
+    "starts_in_hours": "Starts in {{hours}}h {{minutes}}m",
+    "starts_in_minutes": "Starts in {{minutes}}m"
   },
 
   "uvTitle": "ThermoSafe alert",
