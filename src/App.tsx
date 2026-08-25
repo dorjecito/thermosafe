@@ -587,6 +587,7 @@ useEffect(() => {
 
   /* state */
   const [data, setData] = useState<any | null>(null);
+  const dataRef = useRef<any | null>(null);
   const [temp, setTemp] = useState<number | null>(null);
   const [hum, setHum] = useState<number | null>(null);
   const [hi, setHi] = useState<number | null>(null);
@@ -1101,6 +1102,10 @@ const fetchWeather = async (cityName: string) => {
   }
 };
 
+  useEffect(() => {
+    dataRef.current = data;
+  }, [data]);
+
   /* 🌍 Auto-refresh i inicialització segura de localització */
 useEffect(() => {
   const initLocate = async () => {
@@ -1133,11 +1138,12 @@ useEffect(() => {
   // ♻️ Auto-refresh cada 30 min + actualització dia/nit cada 10 min
   const id1 = setInterval(() => locate(true), 30 * 60 * 1000);
   const id2 = setInterval(() => {
-  if (!data) return;
+  const currentData = dataRef.current;
+  if (!currentData) return;
   const nowUtc = Math.floor(Date.now() / 1000);
-  const tz = data.timezone ?? 0;
-  const sunrise = data.sys?.sunrise;
-  const sunset = data.sys?.sunset;
+  const tz = currentData.timezone ?? 0;
+  const sunrise = currentData.sys?.sunrise;
+  const sunset = currentData.sys?.sunset;
   setDay(isDayAtLocation(nowUtc, tz, sunrise, sunset));
 }, 10 * 60 * 1000);
 
