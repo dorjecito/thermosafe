@@ -148,6 +148,28 @@ const functionsApiUsage = require("../../functions/apiUsage.js") as {
   getOpenWeatherUsageFieldForFunction: (fnName: string) => OpenWeatherUsageField | null;
   shouldDeleteApiUsageDoc: (id: string, data: any, now?: Date) => boolean;
 };
+const functionsCleanupSubs = require("../../functions/cleanupSubs.js") as {
+  getCleanupDocLabel: (docId: string) => string;
+  getCleanupValidationErrorCategory: (error: unknown) => "invalid-token" | "validation-error";
+  getLastActivityMs: (data: Record<string, unknown>) => number;
+  processCleanupSubDoc: (options: {
+    doc: {
+      id: string;
+      data: () => Record<string, unknown>;
+      ref: { delete: () => Promise<void> };
+    };
+    validateToken: (token: string) => Promise<{ status: "valid" | "invalid" | "error"; reason?: string }>;
+    inactivityDays: number;
+    nowMs?: number;
+    logger?: Pick<Console, "log" | "warn">;
+  }) => Promise<{
+    classification: "missing-token" | "invalid" | "valid-recent" | "valid-stale";
+    deleted: boolean;
+    stale: boolean;
+    error: boolean;
+  }>;
+  toMillis: (value: unknown) => number;
+};
 const functionsAemetAlerts = require("../../functions/aemetAlerts.js") as {
   getAemetAlertSeverity: (alert: any) => number;
   getAemetLevelFromAlerts: (
@@ -3085,6 +3107,248 @@ test("token sync fallback fails when the critical subscription write fails", asy
       ),
     /Firestore unavailable/
   );
+});
+
+test("cleanupSubs toMillis normalizes supported timestamp shapes", () => {
+  assert.equal(functionsCleanupSubs.toMillis(123456789), 123456789);
+  assert.equal(functionsCleanupSubs.toMillis({ toMillis: () => 987654321 }), 987654321);
+  assert.equal(functionsCleanupSubs.toMillis({ seconds: 1234 }), 1234000);
+  assert.equal(functionsCleanupSubs.toMillis(null), 0);
+  assert.equal(functionsCleanupSubs.toMillis(undefined), 0);
+  assert.equal(functionsCleanupSubs.toMillis("not-a-date"), 0);
+  assert.equal(functionsCleanupSubs.toMillis(Number.NaN), 0);
+});
+
+test("cleanupSubs last activity uses tokenLastSyncedAt when recent", () => {
+  assert.equal(
+    functionsCleanupSubs.getLastActivityMs({
+      createdAt: 1000,
+      updatedAt: 2000,
+      tokenLastSyncedAt: { toMillis: () => 9000 },
+    }),
+    9000
+  );
+});
+
+test("cleanupSubs last activity falls back to updatedAt for old docs without token sync", () => {
+  assert.equal(
+    functionsCleanupSubs.getLastActivityMs({
+      createdAt: 1000,
+      updatedAt: 8000,
+      lastHeatAt: 3000,
+    }),
+    8000
+  );
+});
+
+test("cleanupSubs last activity includes lastAemetAt", () => {
+  assert.equal(
+    functionsCleanupSubs.getLastActivityMs({
+      createdAt: 1000,
+      updatedAt: 2000,
+      lastAemetAt: 7000,
+    }),
+    7000
+  );
+});
+
+test("cleanupSubs last activity supports only createdAt and absent dates", () => {
+  assert.equal(functionsCleanupSubs.getLastActivityMs({ createdAt: 1234 }), 1234);
+  assert.equal(functionsCleanupSubs.getLastActivityMs({}), 0);
+});
+
+function makeCleanupDoc(data: Record<string, unknown>) {
+  let deleted = false;
+  return {
+    doc: {
+      id: String(data.token || "missing-doc-id"),
+      data: () => data,
+      ref: {
+        async delete() {
+          deleted = true;
+        },
+      },
+    },
+    wasDeleted: () => deleted,
+  };
+}
+
+function makeCleanupLogger() {
+  const logs: unknown[] = [];
+  const warns: unknown[] = [];
+  return {
+    logger: {
+      log: (...args: unknown[]) => logs.push(args),
+      warn: (...args: unknown[]) => warns.push(args),
+    },
+    logs,
+    warns,
+  };
+}
+
+test("cleanupSubs keeps a valid recent token", async () => {
+  const nowMs = Date.UTC(2026, 7, 26);
+  const { doc, wasDeleted } = makeCleanupDoc({
+    token: "valid_recent_token",
+    updatedAt: nowMs - 5 * 24 * 60 * 60 * 1000,
+  });
+
+  const result = await functionsCleanupSubs.processCleanupSubDoc({
+    doc,
+    validateToken: async () => ({ status: "valid" }),
+    inactivityDays: 30,
+    nowMs,
+    logger: makeCleanupLogger().logger,
+  });
+
+  assert.equal(result.classification, "valid-recent");
+  assert.equal(result.deleted, false);
+  assert.equal(wasDeleted(), false);
+});
+
+test("cleanupSubs keeps a valid stale token and counts it as valid-stale", async () => {
+  const nowMs = Date.UTC(2026, 7, 26);
+  const { doc, wasDeleted } = makeCleanupDoc({
+    token: "valid_stale_token",
+    updatedAt: nowMs - 45 * 24 * 60 * 60 * 1000,
+  });
+
+  const result = await functionsCleanupSubs.processCleanupSubDoc({
+    doc,
+    validateToken: async () => ({ status: "valid" }),
+    inactivityDays: 30,
+    nowMs,
+    logger: makeCleanupLogger().logger,
+  });
+
+  assert.equal(result.classification, "valid-stale");
+  assert.equal(result.deleted, false);
+  assert.equal(result.stale, true);
+  assert.equal(wasDeleted(), false);
+});
+
+test("cleanupSubs invalid token criterion matches the previous dry-run patterns only", () => {
+  assert.equal(
+    functionsCleanupSubs.getCleanupValidationErrorCategory({
+      errorInfo: { code: "messaging/registration-token-not-registered" },
+    }),
+    "invalid-token"
+  );
+  assert.equal(
+    functionsCleanupSubs.getCleanupValidationErrorCategory(
+      new Error("FirebaseError: invalid-argument")
+    ),
+    "invalid-token"
+  );
+  assert.equal(
+    functionsCleanupSubs.getCleanupValidationErrorCategory({
+      errorInfo: { code: "messaging/invalid-registration-token" },
+    }),
+    "validation-error"
+  );
+  assert.equal(
+    functionsCleanupSubs.getCleanupValidationErrorCategory(new Error("unavailable")),
+    "validation-error"
+  );
+});
+
+test("cleanupSubs keeps a valid token without dates and counts it as valid-stale", async () => {
+  const { doc, wasDeleted } = makeCleanupDoc({ token: "valid_without_dates_token" });
+
+  const result = await functionsCleanupSubs.processCleanupSubDoc({
+    doc,
+    validateToken: async () => ({ status: "valid" }),
+    inactivityDays: 30,
+    nowMs: Date.UTC(2026, 7, 26),
+    logger: makeCleanupLogger().logger,
+  });
+
+  assert.equal(result.classification, "valid-stale");
+  assert.equal(result.deleted, false);
+  assert.equal(result.stale, true);
+  assert.equal(wasDeleted(), false);
+});
+
+test("cleanupSubs deletes a definitively invalid token", async () => {
+  const { doc, wasDeleted } = makeCleanupDoc({ token: "invalid_token", updatedAt: Date.now() });
+
+  const result = await functionsCleanupSubs.processCleanupSubDoc({
+    doc,
+    validateToken: async () => ({ status: "invalid", reason: "registration-token-not-registered" }),
+    inactivityDays: 30,
+    nowMs: Date.UTC(2026, 7, 26),
+    logger: makeCleanupLogger().logger,
+  });
+
+  assert.equal(result.classification, "invalid");
+  assert.equal(result.deleted, true);
+  assert.equal(wasDeleted(), true);
+});
+
+test("cleanupSubs deletes a document without token", async () => {
+  const { doc, wasDeleted } = makeCleanupDoc({ updatedAt: Date.now() });
+
+  const result = await functionsCleanupSubs.processCleanupSubDoc({
+    doc,
+    validateToken: async () => {
+      throw new Error("should not validate missing tokens");
+    },
+    inactivityDays: 30,
+    nowMs: Date.UTC(2026, 7, 26),
+    logger: makeCleanupLogger().logger,
+  });
+
+  assert.equal(result.classification, "missing-token");
+  assert.equal(result.deleted, true);
+  assert.equal(wasDeleted(), true);
+});
+
+test("cleanupSubs keeps a token on temporary FCM errors and counts an error", async () => {
+  const { doc, wasDeleted } = makeCleanupDoc({ token: "temporary_error_token", updatedAt: 1 });
+
+  const result = await functionsCleanupSubs.processCleanupSubDoc({
+    doc,
+    validateToken: async () => ({ status: "error", reason: "unavailable" }),
+    inactivityDays: 30,
+    nowMs: Date.UTC(2026, 7, 26),
+    logger: makeCleanupLogger().logger,
+  });
+
+  assert.equal(result.classification, "valid-stale");
+  assert.equal(result.deleted, false);
+  assert.equal(result.error, true);
+  assert.equal(wasDeleted(), false);
+});
+
+test("cleanupSubs does not write raw validation reasons or secrets to logs", async () => {
+  const secret = "secret_token_value_that_must_not_appear";
+  const { doc } = makeCleanupDoc({ token: secret, updatedAt: 1 });
+  const { logger, logs, warns } = makeCleanupLogger();
+
+  await functionsCleanupSubs.processCleanupSubDoc({
+    doc,
+    validateToken: async () => ({
+      status: "error",
+      reason: `Firebase temporary failure for ${secret}`,
+    }),
+    inactivityDays: 30,
+    nowMs: Date.UTC(2026, 7, 26),
+    logger,
+  });
+
+  const serializedLogs = JSON.stringify({ logs, warns });
+  assert.doesNotMatch(serializedLogs, new RegExp(secret));
+  assert.doesNotMatch(serializedLogs, /Firebase temporary failure/);
+  assert.match(serializedLogs, /validation-error/);
+});
+
+test("cleanupSubs log document labels are hashed and do not expose full token ids", () => {
+  const token = "long_fcm_token_value_that_should_not_be_logged_as_plain_text";
+  const label = functionsCleanupSubs.getCleanupDocLabel(token);
+
+  assert.equal(label.length, 12);
+  assert.notEqual(label, token.slice(0, 12));
+  assert.doesNotMatch(label, /long_fcm/);
 });
 
 test("chunk load recovery detects dynamic import chunk failures", () => {

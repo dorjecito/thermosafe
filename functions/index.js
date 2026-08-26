@@ -16,6 +16,11 @@ const {
   isAemetHeatRelatedAlert,
 } = require("./aemetAlerts");
 const { handleAemetTranslationRequest } = require("./aemetTranslations");
+const {
+  getCleanupDocLabel,
+  getCleanupValidationErrorCategory,
+  processCleanupSubDoc,
+} = require("./cleanupSubs");
 
 admin.initializeApp();
 const db = admin.firestore();
@@ -86,8 +91,8 @@ function chunk(arr, n) {
   return out;
 }
 
-async function isTokenValid(token) {
-  if (!token) return false;
+async function validateTokenForCleanup(token) {
+  if (!token) return { status: "invalid", reason: "missing token" };
 
   try {
     await admin.messaging().send(
@@ -97,31 +102,23 @@ async function isTokenValid(token) {
       },
       true
     );
-    return true;
+    return { status: "valid" };
   } catch (e) {
-    const msg = String(e?.errorInfo?.code || e?.message || "");
-    if (msg.includes("registration-token-not-registered")) return false;
-    if (msg.includes("invalid-argument")) return false;
+    const category = getCleanupValidationErrorCategory(e);
+    if (category === "invalid-token") {
+      return { status: "invalid" };
+    }
 
-    console.warn("[cleanup] dry-run error no definitiu:", msg);
-    return true;
+    console.warn("[cleanup] dry-run error no definitiu", {
+      category: "validation-error",
+    });
+    return { status: "error" };
   }
 }
 
-function daysBetweenNow(ms) {
-  const age = Date.now() - Number(ms || 0);
-  return age / (1000 * 60 * 60 * 24);
-}
-
-function getLastActivityMs(d) {
-  return Math.max(
-    Number(d.lastNotified || 0),
-    Number(d.lastUvAt || 0),
-    Number(d.lastHeatAt || 0),
-    Number(d.lastColdAt || 0),
-    Number(d.lastWindAt || 0),
-    Number(d.createdAt || 0)
-  );
+async function isTokenValid(token) {
+  const validation = await validateTokenForCleanup(token);
+  return validation.status !== "invalid";
 }
 
 exports.cleanupSubs = functions
@@ -132,10 +129,12 @@ exports.cleanupSubs = functions
     console.log("[cleanup] start");
 
     let lastDoc = null;
-    let totalChecked = 0;
-    let totalDeleted = 0;
-    let totalInvalid = 0;
-    let totalStale = 0;
+    let scanned = 0;
+    let validRecent = 0;
+    let validStaleKept = 0;
+    let invalidDeleted = 0;
+    let missingTokenDeleted = 0;
+    let errors = 0;
 
     while (true) {
       let q = db.collection("subs").orderBy("__name__").limit(PAGE_SIZE);
@@ -149,27 +148,27 @@ exports.cleanupSubs = functions
 
       for (const batch of chunk(docs, VALIDATION_CONC)) {
         const validations = batch.map(async (doc) => {
-          const d = doc.data() || {};
-          const token = d.token;
-          totalChecked++;
+          scanned++;
 
-          const lastActivity = getLastActivityMs(d);
-          const stale = daysBetweenNow(lastActivity) > INACTIVITY_DAYS;
-          const valid = await isTokenValid(token);
+          try {
+            const result = await processCleanupSubDoc({
+              doc,
+              validateToken: validateTokenForCleanup,
+              inactivityDays: INACTIVITY_DAYS,
+              logger: console,
+            });
 
-          if (!token || !valid || stale) {
-            const why = !token
-              ? "missing token"
-              : !valid
-              ? "invalid token"
-              : `stale > ${INACTIVITY_DAYS}d`;
-
-            if (!valid) totalInvalid++;
-            if (stale) totalStale++;
-
-            console.log("[cleanup] delete", doc.id, why);
-            await doc.ref.delete();
-            totalDeleted++;
+            if (result.error) errors++;
+            if (result.classification === "missing-token") missingTokenDeleted++;
+            if (result.classification === "invalid") invalidDeleted++;
+            if (result.classification === "valid-stale") validStaleKept++;
+            if (result.classification === "valid-recent") validRecent++;
+          } catch (e) {
+            errors++;
+            console.error("[cleanup] doc error", {
+              docLabel: getCleanupDocLabel(doc.id),
+              category: "validation-error",
+            });
           }
         });
 
@@ -178,10 +177,12 @@ exports.cleanupSubs = functions
     }
 
     console.log("[cleanup] done", {
-      totalChecked,
-      totalDeleted,
-      totalInvalid,
-      totalStale,
+      scanned,
+      validRecent,
+      validStaleKept,
+      invalidDeleted,
+      missingTokenDeleted,
+      errors,
     });
 
     return null;
