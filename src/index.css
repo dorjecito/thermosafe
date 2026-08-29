@@ -2371,6 +2371,113 @@ body,
   font-size: 0.92rem;
 }
 
+.uv-solar-visual {
+  display: none;
+}
+
+@media (min-width: 760px) {
+  .uv-summary-compact {
+    display: grid !important;
+    grid-template-columns: minmax(260px, 0.75fr) minmax(300px, 1.25fr);
+    align-items: center;
+    column-gap: 0.85rem;
+  }
+
+  .uv-solar-visual {
+    display: block;
+    justify-self: center;
+    align-self: center;
+    inline-size: min(100%, 300px);
+    max-inline-size: 300px;
+    margin-inline: 0;
+    color: var(--card-text);
+  }
+
+  .uv-solar-arc {
+    display: block;
+    inline-size: 100%;
+    block-size: auto;
+    aspect-ratio: 360 / 220;
+    overflow: hidden;
+  }
+
+  .uv-solar-horizon {
+    stroke: currentColor;
+    stroke-width: 0.8;
+    opacity: 0.18;
+  }
+
+  .uv-solar-arc-elapsed,
+  .uv-solar-arc-remaining {
+    fill: none;
+    stroke-width: 3;
+    stroke-linecap: round;
+  }
+
+  .uv-solar-arc-elapsed {
+    stroke: #f5b301;
+  }
+
+  .uv-solar-arc-remaining {
+    stroke: #cbd5e1;
+  }
+
+  .uv-solar-end-mark {
+    stroke: currentColor;
+    stroke-width: 1.4;
+    stroke-linecap: round;
+    opacity: 0.42;
+  }
+
+  .uv-solar-sun {
+    fill: #facc15;
+    stroke: #92400e;
+    stroke-width: 1.6;
+    stroke-linecap: round;
+  }
+
+  .uv-solar-now-label,
+  .uv-solar-time-label,
+  .uv-solar-max-caption,
+  .uv-solar-max-value {
+    fill: currentColor;
+  }
+
+  .uv-solar-now-label {
+    font-size: 12px;
+    font-weight: 700;
+  }
+
+  .uv-solar-max-caption {
+    font-size: 12px;
+    font-weight: 700;
+    opacity: 0.62;
+  }
+
+  .uv-solar-max-value {
+    fill: #d97706;
+    font-size: 27px;
+    font-weight: 800;
+  }
+
+  .uv-solar-time-label {
+    font-size: 12px;
+    font-weight: 600;
+    opacity: 0.78;
+  }
+}
+
+@media (min-width: 760px) and (max-width: 899px) {
+  .uv-summary-compact {
+    grid-template-columns: minmax(210px, 0.75fr) minmax(260px, 1.25fr);
+    column-gap: 0.75rem;
+  }
+
+  .uv-solar-visual {
+    inline-size: min(100%, 286px);
+  }
+}
+
 .uv-skin-exposure-summary {
   margin: 0.28rem var(--uv-summary-inline-padding) 0.58rem;
   font-size: 0.9rem;

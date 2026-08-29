@@ -1,5 +1,6 @@
 import * as React from "react";
 import { getUVDetailFromOpenUV } from "../services/openUV";
+import { formatUvDetailTime } from "../utils/uvDetailTime";
 
 type Lang = "ca" | "es" | "eu" | "gl" | "en";
 
@@ -130,13 +131,6 @@ type UVDetailShape = {
   } | null;
 };
 
-function fmtTime(iso?: string | null): string | null {
-  if (!iso) return null;
-  const d = new Date(iso);
-  if (Number.isNaN(d.getTime())) return null;
-  return d.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
-}
-
 function toNum(x: unknown): number | null {
   if (typeof x === "number" && Number.isFinite(x)) return x;
   if (typeof x === "string" && x.trim() !== "" && Number.isFinite(Number(x))) return Number(x);
@@ -195,21 +189,21 @@ export default function UVDetailPanel({ lat, lon, lang, sourceNote }: Props) {
   }, [lat, lon]);
 
   const sunrise =
-    fmtTime(
+    formatUvDetailTime(
       (detail?.sun_info?.sun_times?.sunrise ??
         detail?.sunInfo?.sunTimes?.sunrise ??
         null) as any
     ) ?? t.na;
 
   const sunset =
-    fmtTime(
+    formatUvDetailTime(
       (detail?.sun_info?.sun_times?.sunset ??
         detail?.sunInfo?.sunTimes?.sunset ??
         null) as any
     ) ?? t.na;
 
   const ozone = typeof detail?.ozone === "number" ? Math.round(detail.ozone) : null;
-  const ozoneTime = fmtTime((detail?.ozone_time ?? detail?.ozoneTime ?? null) as any);
+  const ozoneTime = formatUvDetailTime((detail?.ozone_time ?? detail?.ozoneTime ?? null) as any);
   const ozoneMeasurementText = formatOzoneMeasurement(ozone, ozoneTime, t);
 
   return (

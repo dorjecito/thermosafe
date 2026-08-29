@@ -49,7 +49,7 @@ import { getUVDetailFromOpenUV, getUVFromOpenUV } from "./services/openUV";
    import { formatLastUpdate } from "./utils/formatLastUpdate";
 	   import { getAlertTimeCountdown } from "./utils/getRemainingTime";
 	   import { normalizeLang } from "./utils/normalizeLang";
-	   import { getUvText, normalizeUviForDisplay } from "./utils/uv";
+   import { getUvLevelIndex, getUvText, normalizeUviForDisplay } from "./utils/uv";
      import { getTimeAwareUvAdvice } from "./utils/uvAdviceMessage";
 	   import { buildRiskTrend, type RiskTrendResult } from "./utils/riskTrend";
 	   import { getCoords, type Coords } from "./utils/geolocation";
@@ -100,6 +100,8 @@ import { getUVDetailFromOpenUV, getUVFromOpenUV } from "./services/openUV";
    import SkyConditionCard from "./components/SkyConditionCard";
    import UpdateBanner from "./components/UpdateBanner";
    import { useScrollCompactHeader } from "./hooks/useScrollCompactHeader";
+   import { formatUvDetailTime } from "./utils/uvDetailTime";
+   import { getUvSolarNowLabelPosition } from "./utils/uvSolarLabelPosition";
 
    /* —— analítica (opcional) ———————————— */
    import { inject } from '@vercel/analytics';
@@ -202,6 +204,13 @@ const UI_LABELS = {
     exposureSummary: "Exposició orientativa",
     skinSummaryType: "Pell tipus",
     moreThanMaxExposure: "> 8 h",
+    solarNow: "Ara",
+    solarMax: "Màxim",
+    solarUvMaxShort: "Màxim UV",
+    solarSunrise: "Sortida",
+    solarSunset: "Posta",
+    solarArcLabel: "Progressió solar i índex UV",
+    compactLowUvAdvice: "Protecció solar mínima en condicions habituals.",
   },
   es: {
     viewAllAlerts: "Ver todas las alertas",
@@ -219,6 +228,13 @@ const UI_LABELS = {
     exposureSummary: "Exposición orientativa",
     skinSummaryType: "Piel tipo",
     moreThanMaxExposure: "> 8 h",
+    solarNow: "Ahora",
+    solarMax: "Máximo",
+    solarUvMaxShort: "Máximo UV",
+    solarSunrise: "Salida",
+    solarSunset: "Puesta",
+    solarArcLabel: "Progresión solar e índice UV",
+    compactLowUvAdvice: "Protección solar mínima en condiciones habituales.",
   },
   eu: {
     viewAllAlerts: "Ikusi alerta guztiak",
@@ -236,6 +252,13 @@ const UI_LABELS = {
     exposureSummary: "Gutxi gorabeherako esposizioa",
     skinSummaryType: "Azal mota",
     moreThanMaxExposure: "> 8 h",
+    solarNow: "Orain",
+    solarMax: "Maximoa",
+    solarUvMaxShort: "UV maximoa",
+    solarSunrise: "Irteera",
+    solarSunset: "Ilunabarra",
+    solarArcLabel: "Eguzkiaren progresioa eta UV indizea",
+    compactLowUvAdvice: "Eguzki-babes minimoa ohiko baldintzetan.",
   },
   gl: {
     viewAllAlerts: "Ver {{count}} alertas máis",
@@ -253,6 +276,13 @@ const UI_LABELS = {
     exposureSummary: "Exposición orientativa",
     skinSummaryType: "Pel tipo",
     moreThanMaxExposure: "> 8 h",
+    solarNow: "Agora",
+    solarMax: "Máximo",
+    solarUvMaxShort: "Máximo UV",
+    solarSunrise: "Saída",
+    solarSunset: "Posta",
+    solarArcLabel: "Progresión solar e índice UV",
+    compactLowUvAdvice: "Protección solar mínima en condicións habituais.",
   },
   en: {
     viewAllAlerts: "View {{count}} more alerts",
@@ -270,8 +300,103 @@ const UI_LABELS = {
     exposureSummary: "Estimated exposure",
     skinSummaryType: "Skin type",
     moreThanMaxExposure: "> 8 h",
+    solarNow: "Now",
+    solarMax: "Max",
+    solarUvMaxShort: "Max UV",
+    solarSunrise: "Sunrise",
+    solarSunset: "Sunset",
+    solarArcLabel: "Solar progress and UV index",
+    compactLowUvAdvice: "Minimal sun protection under normal conditions.",
   },
 } as const;
+
+type UiLabels = (typeof UI_LABELS)[keyof typeof UI_LABELS];
+
+type UvSolarArcProps = {
+  currentUv: number;
+  maxUv: number;
+  progress: number;
+  sunriseTime: string;
+  sunsetTime: string;
+  labels: UiLabels;
+};
+
+const clampSolarProgress = (value: number) => Math.min(1, Math.max(0, value));
+
+function UvSolarArc({
+  currentUv,
+  maxUv,
+  progress,
+  sunriseTime,
+  sunsetTime,
+  labels,
+}: UvSolarArcProps) {
+  const radius = 125;
+  const centerX = 180;
+  const centerY = 185;
+  const startX = centerX - radius;
+  const endX = centerX + radius;
+  const angle = Math.PI * (1 - clampSolarProgress(progress));
+  const sunX = centerX + radius * Math.cos(angle);
+  const sunY = centerY - radius * Math.sin(angle);
+  const nowLabelPosition = getUvSolarNowLabelPosition(
+    clampSolarProgress(progress),
+    sunX,
+    sunY
+  );
+  const elapsedArc = `M ${startX} ${centerY} A ${radius} ${radius} 0 0 1 ${sunX} ${sunY}`;
+  const remainingArc = `M ${sunX} ${sunY} A ${radius} ${radius} 0 0 1 ${endX} ${centerY}`;
+  const ariaLabel = `${labels.solarArcLabel}: ${labels.solarNow}: ${currentUv.toFixed(1)}, ${labels.solarMax}: ${maxUv.toFixed(1)}, ${labels.solarSunrise}: ${sunriseTime}, ${labels.solarSunset}: ${sunsetTime}`;
+
+  return (
+    <div className="uv-solar-visual" aria-label={ariaLabel} role="img">
+      <svg
+        className="uv-solar-arc"
+        viewBox="0 0 360 220"
+        preserveAspectRatio="xMidYMid meet"
+        focusable="false"
+        aria-hidden="true"
+      >
+        <line className="uv-solar-horizon" x1={startX} y1={centerY} x2={endX} y2={centerY} />
+        <path className="uv-solar-arc-elapsed" d={elapsedArc} />
+        <path className="uv-solar-arc-remaining" d={remainingArc} />
+        <line className="uv-solar-end-mark" x1={startX} y1={centerY - 5} x2={startX} y2={centerY + 5} />
+        <line className="uv-solar-end-mark" x1={endX} y1={centerY - 5} x2={endX} y2={centerY + 5} />
+        <text className="uv-solar-max-caption" x={centerX} y="18" textAnchor="middle">
+          {labels.solarUvMaxShort}
+        </text>
+        <text className="uv-solar-max-value" x={centerX} y="44" textAnchor="middle">
+          {maxUv.toFixed(1)}
+        </text>
+        <text
+          className="uv-solar-now-label"
+          x={nowLabelPosition.x}
+          y={nowLabelPosition.y}
+          textAnchor={nowLabelPosition.textAnchor}
+        >
+          {labels.solarNow}: {currentUv.toFixed(1)}
+        </text>
+        <g className="uv-solar-sun" transform={`translate(${sunX} ${sunY})`}>
+          <line x1="0" y1="-14" x2="0" y2="-10" />
+          <line x1="0" y1="10" x2="0" y2="14" />
+          <line x1="-14" y1="0" x2="-10" y2="0" />
+          <line x1="10" y1="0" x2="14" y2="0" />
+          <line x1="-10" y1="-10" x2="-7" y2="-7" />
+          <line x1="7" y1="7" x2="10" y2="10" />
+          <line x1="10" y1="-10" x2="7" y2="-7" />
+          <line x1="-7" y1="7" x2="-10" y2="10" />
+          <circle r="8" />
+        </g>
+        <text className="uv-solar-time-label" x="62" y="214" textAnchor="start">
+          {labels.solarSunrise}: {sunriseTime}
+        </text>
+        <text className="uv-solar-time-label" x="298" y="214" textAnchor="end">
+          {labels.solarSunset}: {sunsetTime}
+        </text>
+      </svg>
+    </div>
+  );
+}
 
 /* ──────── component ──────── */
 export default function App() {
@@ -594,6 +719,12 @@ useEffect(() => {
   const [irr, setIrr] = useState<number | null>(null);
   const [uvi, setUvi] = useState<number | null>(null);
   const [uvMaxToday, setUvMaxToday] = useState<number | null>(null);
+  const [uvDetailSunTimes, setUvDetailSunTimes] = useState<{
+    sunriseIso: string;
+    sunsetIso: string;
+    sunriseTime: string;
+    sunsetTime: string;
+  } | null>(null);
   const [wc, setWc] = useState<number | null>(null); // wind-chill
   const [clouds, setClouds] = useState<number | null>(null);
   const [weatherMain, setWeatherMain] = useState<string | null>(null);
@@ -775,10 +906,27 @@ async function loadUvMaxToday(nextLat: number, nextLon: number) {
       typeof detail?.uv_max === "number" && Number.isFinite(detail.uv_max)
         ? detail.uv_max
         : null;
+    const sunriseIso =
+      typeof detail?.sun_info?.sun_times?.sunrise === "string"
+        ? detail.sun_info.sun_times.sunrise
+        : null;
+    const sunsetIso =
+      typeof detail?.sun_info?.sun_times?.sunset === "string"
+        ? detail.sun_info.sun_times.sunset
+        : null;
+    const sunriseTime = formatUvDetailTime(sunriseIso);
+    const sunsetTime = formatUvDetailTime(sunsetIso);
+
     setUvMaxToday(maxToday);
+    setUvDetailSunTimes(
+      sunriseIso && sunsetIso && sunriseTime && sunsetTime
+        ? { sunriseIso, sunsetIso, sunriseTime, sunsetTime }
+        : null
+    );
   } catch (err) {
     console.warn("[UV] Error carregant UV màxim:", err);
     setUvMaxToday(null);
+    setUvDetailSunTimes(null);
   }
 }
 
@@ -2257,9 +2405,38 @@ const uvSummaryAdvice = useMemo(
   () => getTimeAwareUvAdvice(uvSummaryValue, currentLang, locationCurrentHour),
   [uvSummaryValue, currentLang, locationCurrentHour]
 );
+const compactUvAdvice =
+  uvSummaryValue !== null && getUvLevelIndex(uvSummaryValue) === 0
+    ? localUi.compactLowUvAdvice
+    : uvSummaryAdvice;
 const isRiskRenderReady = Boolean(data && isInitialRiskReady && !loading);
 const locationTimezoneOffsetSec =
   typeof data?.timezone === "number" ? data.timezone : null;
+const uvSolarArcData = useMemo(() => {
+  const currentUv = uvSummaryValue;
+  const maxUv = normalizeUviForDisplay(uvMaxToday);
+  const sunriseMs = uvDetailSunTimes ? Date.parse(uvDetailSunTimes.sunriseIso) : Number.NaN;
+  const sunsetMs = uvDetailSunTimes ? Date.parse(uvDetailSunTimes.sunsetIso) : Number.NaN;
+
+  if (
+    currentUv == null ||
+    maxUv == null ||
+    !uvDetailSunTimes ||
+    !Number.isFinite(sunriseMs) ||
+    !Number.isFinite(sunsetMs) ||
+    sunsetMs <= sunriseMs
+  ) {
+    return null;
+  }
+
+  return {
+    currentUv,
+    maxUv,
+    progress: clampSolarProgress((Date.now() - sunriseMs) / (sunsetMs - sunriseMs)),
+    sunriseTime: uvDetailSunTimes.sunriseTime,
+    sunsetTime: uvDetailSunTimes.sunsetTime,
+  };
+}, [uvDetailSunTimes, uvMaxToday, uvSummaryValue]);
 const browserTimezoneOffsetSec = -new Date().getTimezoneOffset() * 60;
 const trendUsesDifferentTimezone =
   locationTimezoneOffsetSec !== null &&
@@ -2955,14 +3132,14 @@ return (
 	        i18n.resolvedLanguage || i18n.language || "ca"
 	      ) as any;
 	      const uvCompactLevel = uvSummaryText.replace(/\s*\([^)]*\)/g, "");
-	      const uvCompactAdvice = uvSummaryAdvice;
+	      const uvCompactAdvice = compactUvAdvice;
 
 	      return (
 	        <>
 		          {/* ☀️ Durant el dia */}
 		          {day && (
 		            <>
-		              <div className="uv-context-card uv-context-card--info uv-summary-compact">
+			              <div className="uv-context-card uv-context-card--info uv-summary-compact">
                     <div
                       className="uv-context-text"
                       style={{ display: "grid", gap: "0.35rem" }}
@@ -2981,7 +3158,17 @@ return (
                         <span className="uv-compact-advice">{uvCompactAdvice}</span>
                       )}
                     </div>
-		              </div>
+                    {uvSolarArcData && (
+                      <UvSolarArc
+                        currentUv={uvSolarArcData.currentUv}
+                        maxUv={uvSolarArcData.maxUv}
+                        progress={uvSolarArcData.progress}
+                        sunriseTime={uvSolarArcData.sunriseTime}
+                        sunsetTime={uvSolarArcData.sunsetTime}
+                        labels={localUi}
+                      />
+                    )}
+			              </div>
 
                   {configuredSkinExposureSummary && (
                     <p className="uv-skin-exposure-summary">

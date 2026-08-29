@@ -89,6 +89,8 @@ import {
   UV_BLOCKING_CLOUDINESS_THRESHOLD,
 } from "../../src/utils/weatherContext";
 import { formatOzoneMeasurement } from "../../src/components/UVDetailPanel";
+import { formatUvDetailTime } from "../../src/utils/uvDetailTime";
+import { getUvSolarNowLabelPosition } from "../../src/utils/uvSolarLabelPosition";
 import {
   buildDiagnosticsCopyText,
   createDiagnosticsSnapshot,
@@ -2572,6 +2574,50 @@ test("UV ozone detail text avoids redundant update wording and source in the sum
   assert.doesNotMatch(uvDetailPanelSource, /updated:\s*string|Actualitzat|Updated/);
   assert.doesNotMatch(uvDetailPanelSource, /font OpenUV|fuente OpenUV|OpenUV source/);
   assert.doesNotMatch(uvDetailPanelSource, /ozoneDataTime|Mesura de les|Measurement from/);
+});
+
+test("UV solar arc and day information share the OpenUV detail time formatter", () => {
+  const sunriseIso = "2026-08-29T05:15:00.000Z";
+  const sunsetIso = "2026-08-29T18:26:00.000Z";
+
+  assert.equal(
+    formatUvDetailTime(sunriseIso),
+    new Date(sunriseIso).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })
+  );
+  assert.equal(
+    formatUvDetailTime(sunsetIso),
+    new Date(sunsetIso).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })
+  );
+  assert.equal(formatUvDetailTime(null), null);
+  assert.equal(formatUvDetailTime("not-a-date"), null);
+});
+
+test("UV solar now label moves around the sun across the arc", () => {
+  assert.deepEqual(getUvSolarNowLabelPosition(0.25, 100, 100), {
+    x: 114,
+    y: 90,
+    textAnchor: "start",
+  });
+  assert.deepEqual(getUvSolarNowLabelPosition(0.5, 180, 60), {
+    x: 180,
+    y: 88,
+    textAnchor: "middle",
+  });
+  assert.deepEqual(getUvSolarNowLabelPosition(0.75, 260, 100), {
+    x: 246,
+    y: 90,
+    textAnchor: "end",
+  });
+  assert.deepEqual(getUvSolarNowLabelPosition(0.01, 56, 185), {
+    x: 70,
+    y: 175,
+    textAnchor: "start",
+  });
+  assert.deepEqual(getUvSolarNowLabelPosition(0.99, 304, 185), {
+    x: 290,
+    y: 175,
+    textAnchor: "end",
+  });
 });
 
 const diagnosticCopyLabels: DiagnosticsCopyLabels = {
