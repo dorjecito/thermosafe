@@ -1109,7 +1109,7 @@ export default function Recommendations({
   suppressUv;
 
   if (
-    import.meta.env.DEV &&
+    import.meta.env?.DEV &&
     coldRisk &&
     coldRisk !== recommendationsColdRisk
   ) {
@@ -1182,32 +1182,29 @@ export default function Recommendations({
     const riskObj = getHeatRisk(effectiveTemp, activity || "rest");
     const heatKey = mapHeatLevelToKey(riskObj.level);
     const heatRecommendationKey = getHeatRecommendationKey(heatKey, heatDayPhase, currentHour);
+    const showUvRecommendation = uvActive && !!uvRecommendationText && !suppressUv;
 
     return (
       <RecommendationBox
         className={`recommendation-box ${heatKey}`}
         title={`${getIcon(heatKey)} ${t.title}`}
         body={t[heatRecommendationKey]}
-        items={factorItems(
-          riskFactors,
-          { factor: "heat", icon: "🌡️", label: t.factorHeat, text: t[heatRecommendationKey] },
-          humid && { factor: "humidity", icon: "💧", label: t.factorHumidity, text: t.humid },
-          uvActive && uvKey === "uvHigh" && uvRecommendationText && { factor: "uv", icon: "☀️", label: t.factorUv, text: uvRecommendationText },
-          uvActive && uvKey === "uvVeryHigh" && uvRecommendationText && { factor: "uv", icon: "☀️", label: t.factorUv, text: uvRecommendationText },
-          uvActive && uvKey === "uvExtreme" && uvRecommendationText && { factor: "uv", icon: "☀️", label: t.factorUv, text: uvRecommendationText },
-          showWindModerate && { factor: "wind", icon: "🌬️", label: t.factorWind, text: t.windModerate },
-          showWindStrong && { factor: "wind", icon: "🌬️", label: t.factorWind, text: t.windStrong },
-          ...contextualItems
-        )}
-        extra={joinExtras(
-          humid && t.humid,
-          uvActive && uvKey === "uvHigh" && uvRecommendationText,
-          uvActive && uvKey === "uvVeryHigh" && uvRecommendationText,
-          uvActive && uvKey === "uvExtreme" && uvRecommendationText,
-          showWindModerate && t.windModerate,
-          showWindStrong && t.windStrong,
-          contextualText
-        )}
+	        items={factorItems(
+	          riskFactors,
+	          { factor: "heat", icon: "🌡️", label: t.factorHeat, text: t[heatRecommendationKey] },
+	          humid && { factor: "humidity", icon: "💧", label: t.factorHumidity, text: t.humid },
+	          showUvRecommendation && uvKey && { factor: "uv", icon: "☀️", label: t.factorUv, text: uvRecommendationText },
+	          showWindModerate && { factor: "wind", icon: "🌬️", label: t.factorWind, text: t.windModerate },
+	          showWindStrong && { factor: "wind", icon: "🌬️", label: t.factorWind, text: t.windStrong },
+	          ...contextualItems
+	        )}
+	        extra={joinExtras(
+	          humid && t.humid,
+	          showUvRecommendation && uvRecommendationText,
+	          showWindModerate && t.windModerate,
+	          showWindStrong && t.windStrong,
+	          contextualText
+	        )}
       />
     );
   }

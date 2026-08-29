@@ -65,6 +65,7 @@ import {
   type RiskEngineInput,
 } from "../../src/utils/riskScoreEngine";
 import {
+  default as Recommendations,
   factorItems,
   getRecommendationColdKey,
   getRecommendationFactorState,
@@ -4088,6 +4089,70 @@ test("risk score engine sorted active factors omit inactive risks", () => {
   assert.deepEqual(
     result.activeFactorsSorted.map((factor) => factor.factor),
     ["uv"]
+  );
+});
+
+function renderRecommendationLabelsForObservedUvScenario(
+  uvi: number,
+  weatherContext = getWeatherContext({
+    weatherMain: "Clear",
+    effectiveTemp: 31.9,
+    cloudiness: 4,
+  })
+): string[] {
+  const riskFactors = evaluateRiskScore({
+    heatIndex: 31.9,
+    coldEffectiveTemp: 30.5,
+    uvi,
+    windKmh: 25.9,
+  }).activeFactorsSorted;
+
+  const element = Recommendations({
+    temp: 31.9,
+    lang: "ca",
+    isDay: true,
+    activity: "rest",
+    humidity: 50,
+    uvi,
+    weatherMain: "Clear",
+    cloudiness: 4,
+    windKmh: 25.9,
+    currentHour: 15,
+    heatDayPhase: "day",
+    coldRisk: "cap",
+    coldEffectiveTemp: 30.5,
+    riskFactors,
+    weatherContext,
+  });
+
+  return ((element as any).props.items as RecommendationItem[]).map((item) => item.label);
+}
+
+test("recommendations keep moderate UV visible with heat and moderate wind", () => {
+  assert.deepEqual(
+    renderRecommendationLabelsForObservedUvScenario(5.8),
+    ["Vent", "Calor", "Radiació UV"]
+  );
+});
+
+test("recommendations do not show UV below the moderate threshold with heat and wind", () => {
+  assert.deepEqual(
+    renderRecommendationLabelsForObservedUvScenario(2.9),
+    ["Vent", "Calor"]
+  );
+});
+
+test("recommendations keep UV suppressed by weather context in the heat branch", () => {
+  assert.deepEqual(
+    renderRecommendationLabelsForObservedUvScenario(
+      5.8,
+      getWeatherContext({
+        weatherMain: "Clouds",
+        effectiveTemp: 31.9,
+        cloudiness: 80,
+      })
+    ),
+    ["Vent", "Calor"]
   );
 });
 
