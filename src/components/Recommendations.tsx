@@ -1416,19 +1416,21 @@ if (isDay && uvActive && uvKey) {
     );
   }
 
-  if (slipperySurface) {
-    return (
-      <RecommendationBox
-        className="recommendation-box safe"
-        title={`${getIcon("safe")} ${t.title}`}
-        body={joinLines(
-          t.safe,
-          stormy ? t.storm : t.rain,
-          contextualText
-        )}
+  if (slipperySurface) {
+    const weatherSafetyText = stormy ? t.storm : t.rain;
+
+    return (
+      <RecommendationBox
+        className="recommendation-box safe"
+        title={`${getIcon("safe")} ${t.title}`}
+        body={
+          rainy
+            ? joinLines(weatherSafetyText, contextualText)
+            : joinLines(t.safe, weatherSafetyText, contextualText)
+        }
         items={factorItems(
           riskFactors,
-          thermalComfortItem(t),
+          !rainy && thermalComfortItem(t),
           stormy
             ? { factor: "storm", icon: "⛈️", label: t.factorStorm, text: t.storm }
             : { factor: "rain", icon: "🌧️", label: t.factorRain, text: t.rain },

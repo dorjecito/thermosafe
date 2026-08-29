@@ -2375,6 +2375,77 @@ body,
   display: none;
 }
 
+.uv-solar-horizon {
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 0.8;
+  opacity: 0.18;
+}
+
+.uv-solar-arc-elapsed,
+.uv-solar-arc-remaining {
+  fill: none;
+  stroke-width: 3;
+  stroke-linecap: round;
+}
+
+.uv-solar-arc-elapsed {
+  stroke: #f5b301;
+}
+
+.uv-solar-arc-remaining {
+  stroke: #cbd5e1;
+}
+
+.uv-solar-end-mark {
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.4;
+  stroke-linecap: round;
+  opacity: 0.42;
+}
+
+.uv-solar-sun {
+  fill: #facc15;
+  stroke: #92400e;
+  stroke-width: 1.6;
+  stroke-linecap: round;
+}
+
+.uv-solar-sun line {
+  fill: none;
+}
+
+.uv-solar-now-label,
+.uv-solar-time-label,
+.uv-solar-max-caption,
+.uv-solar-max-value {
+  fill: currentColor;
+}
+
+.uv-solar-now-label {
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.uv-solar-max-caption {
+  font-size: 12px;
+  font-weight: 700;
+  opacity: 0.62;
+}
+
+.uv-solar-max-value {
+  fill: #d97706;
+  font-size: 27px;
+  font-weight: 800;
+}
+
+.uv-solar-time-label {
+  font-size: 12px;
+  font-weight: 600;
+  opacity: 0.78;
+}
+
 @media (min-width: 760px) {
   .uv-summary-compact {
     display: grid !important;
@@ -2401,70 +2472,6 @@ body,
     overflow: hidden;
   }
 
-  .uv-solar-horizon {
-    stroke: currentColor;
-    stroke-width: 0.8;
-    opacity: 0.18;
-  }
-
-  .uv-solar-arc-elapsed,
-  .uv-solar-arc-remaining {
-    fill: none;
-    stroke-width: 3;
-    stroke-linecap: round;
-  }
-
-  .uv-solar-arc-elapsed {
-    stroke: #f5b301;
-  }
-
-  .uv-solar-arc-remaining {
-    stroke: #cbd5e1;
-  }
-
-  .uv-solar-end-mark {
-    stroke: currentColor;
-    stroke-width: 1.4;
-    stroke-linecap: round;
-    opacity: 0.42;
-  }
-
-  .uv-solar-sun {
-    fill: #facc15;
-    stroke: #92400e;
-    stroke-width: 1.6;
-    stroke-linecap: round;
-  }
-
-  .uv-solar-now-label,
-  .uv-solar-time-label,
-  .uv-solar-max-caption,
-  .uv-solar-max-value {
-    fill: currentColor;
-  }
-
-  .uv-solar-now-label {
-    font-size: 12px;
-    font-weight: 700;
-  }
-
-  .uv-solar-max-caption {
-    font-size: 12px;
-    font-weight: 700;
-    opacity: 0.62;
-  }
-
-  .uv-solar-max-value {
-    fill: #d97706;
-    font-size: 27px;
-    font-weight: 800;
-  }
-
-  .uv-solar-time-label {
-    font-size: 12px;
-    font-weight: 600;
-    opacity: 0.78;
-  }
 }
 
 @media (min-width: 760px) and (max-width: 899px) {

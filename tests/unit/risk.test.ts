@@ -91,6 +91,7 @@ import {
 import { formatOzoneMeasurement } from "../../src/components/UVDetailPanel";
 import { formatUvDetailTime } from "../../src/utils/uvDetailTime";
 import { getUvSolarNowLabelPosition } from "../../src/utils/uvSolarLabelPosition";
+import { shouldShowUvBlock } from "../../src/utils/uvBlockVisibility";
 import {
   buildDiagnosticsCopyText,
   createDiagnosticsSnapshot,
@@ -2580,16 +2581,40 @@ test("UV solar arc and day information share the OpenUV detail time formatter", 
   const sunriseIso = "2026-08-29T05:15:00.000Z";
   const sunsetIso = "2026-08-29T18:26:00.000Z";
 
-  assert.equal(
-    formatUvDetailTime(sunriseIso),
-    new Date(sunriseIso).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })
-  );
-  assert.equal(
-    formatUvDetailTime(sunsetIso),
-    new Date(sunsetIso).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })
-  );
+  assert.equal(formatUvDetailTime(sunriseIso, 10 * 60 * 60), "15:15");
+  assert.equal(formatUvDetailTime(sunsetIso, 10 * 60 * 60), "04:26");
   assert.equal(formatUvDetailTime(null), null);
   assert.equal(formatUvDetailTime("not-a-date"), null);
+});
+
+test("UV detail time formatting is deterministic for location offsets", () => {
+  const timestamp = "2026-08-29T12:18:00.000Z";
+
+  assert.equal(formatUvDetailTime(timestamp, 10 * 60 * 60), "22:18");
+  assert.equal(formatUvDetailTime(timestamp, -4 * 60 * 60), "08:18");
+  assert.equal(formatUvDetailTime("2026-08-29T23:30:00.000Z", 2 * 60 * 60), "01:30");
+  assert.equal(formatUvDetailTime("2026-08-29T00:30:00.000Z", -3 * 60 * 60), "21:30");
+  assert.equal(formatUvDetailTime("not-a-date", 10 * 60 * 60), null);
+});
+
+test("UV arc and detail panel use the same explicit location offset", () => {
+  const appSource = readFileSync(new URL("../../src/App.tsx", import.meta.url), "utf8");
+  const panelSource = readFileSync(
+    new URL("../../src/components/UVDetailPanel.tsx", import.meta.url),
+    "utf8"
+  );
+
+  assert.match(appSource, /formatUvDetailTime\(sunriseIso,\s*timezoneOffsetSec\)/);
+  assert.match(appSource, /timezoneOffsetSec=\{locationTimezoneOffsetSec\}/);
+  assert.match(panelSource, /formatUvDetailTime\([\s\S]*?timezoneOffsetSec/);
+});
+
+test("UV solar SVG explicitly disables fills on non-surface elements", () => {
+  const appSource = readFileSync(new URL("../../src/App.tsx", import.meta.url), "utf8");
+
+  assert.match(appSource, /<path fill="none" className="uv-solar-arc-elapsed"/);
+  assert.match(appSource, /<path fill="none" className="uv-solar-arc-remaining"/);
+  assert.match(appSource, /<line fill="none" className="uv-solar-horizon"/);
 });
 
 test("UV solar now label moves around the sun across the arc", () => {
@@ -2618,6 +2643,71 @@ test("UV solar now label moves around the sun across the arc", () => {
     y: 175,
     textAnchor: "end",
   });
+});
+
+test("UV information block visibility depends only on local day and finite current UV", () => {
+  for (const weatherState of ["Rain", "Drizzle", "Thunderstorm", "Clear"]) {
+    assert.equal(shouldShowUvBlock(true, 1.7), true, weatherState);
+  }
+  assert.equal(shouldShowUvBlock(true, 0), true);
+  assert.equal(shouldShowUvBlock(true, 1.7), true);
+  assert.equal(shouldShowUvBlock(true, null), false);
+  assert.equal(shouldShowUvBlock(true, undefined), false);
+  assert.equal(shouldShowUvBlock(true, Number.NaN), false);
+  assert.equal(shouldShowUvBlock(true, Number.POSITIVE_INFINITY), false);
+  assert.equal(shouldShowUvBlock(false, 1.7), false);
+});
+
+test("UV solar arc stays hidden below 760px, including expanded UV details", () => {
+  const appSource = readFileSync(new URL("../../src/App.tsx", import.meta.url), "utf8");
+  const cssSource = readFileSync(new URL("../../src/index.css", import.meta.url), "utf8");
+
+  assert.doesNotMatch(appSource, /className="uv-solar-detail-mobile"/);
+  assert.doesNotMatch(
+    appSource,
+    /uvDetailsOpen\s*&&\s*\(\s*<React\.Suspense[\s\S]*?<UvSolarArc/
+  );
+  assert.match(cssSource, /\.uv-solar-visual\s*\{\s*display:\s*none;\s*\}/);
+  assert.doesNotMatch(cssSource, /\.uv-solar-detail-mobile/);
+  assert.doesNotMatch(
+    cssSource,
+    /@media\s*\(max-width:\s*759px\)[\s\S]*?\.uv-solar-visual\s*\{[\s\S]*?display:\s*(?:block|flex|grid|inline-block|inline-flex)/
+  );
+});
+
+test("desktop UV solar arc remains in the UV summary and tolerates missing arc data", () => {
+  const appSource = readFileSync(new URL("../../src/App.tsx", import.meta.url), "utf8");
+  const cssSource = readFileSync(new URL("../../src/index.css", import.meta.url), "utf8");
+
+  assert.match(
+    appSource,
+    /<div className="uv-context-card uv-context-card--info uv-summary-compact">[\s\S]*?\{uvSolarArcData && \(\s*<UvSolarArc/
+  );
+  assert.match(
+    appSource,
+    /\{uvSolarArcData && \(\s*<UvSolarArc[\s\S]*?currentUv=\{uvSolarArcData\.currentUv\}[\s\S]*?labels=\{localUi\}/
+  );
+  assert.match(
+    cssSource,
+    /@media\s*\(min-width:\s*760px\)[\s\S]*?\.uv-solar-visual\s*\{[\s\S]*?display:\s*block;/
+  );
+  assert.match(
+    appSource,
+    /<span>\s*<strong>\{localUi\.currentUv\}:<\/strong>[\s\S]*?uvSummaryValue != null \? uvSummaryValue\.toFixed\(1\) : "—"/
+  );
+});
+
+test("shared solar SVG styles are not restricted to desktop media queries", () => {
+  const cssSource = readFileSync(new URL("../../src/index.css", import.meta.url), "utf8");
+  const sharedStyles = cssSource.slice(
+    cssSource.indexOf(".uv-solar-horizon"),
+    cssSource.indexOf("@media (min-width: 760px)")
+  );
+
+  assert.match(sharedStyles, /\.uv-solar-arc-elapsed[\s\S]*stroke:\s*#f5b301/);
+  assert.match(sharedStyles, /\.uv-solar-arc-remaining[\s\S]*stroke:\s*#cbd5e1/);
+  assert.match(sharedStyles, /\.uv-solar-sun[\s\S]*fill:\s*#facc15/);
+  assert.doesNotMatch(sharedStyles, /@media/);
 });
 
 const diagnosticCopyLabels: DiagnosticsCopyLabels = {
@@ -4173,6 +4263,91 @@ function renderRecommendationLabelsForObservedUvScenario(
 
   return ((element as any).props.items as RecommendationItem[]).map((item) => item.label);
 }
+
+function renderRecommendationForRainScenario(
+  weatherMain: "Rain" | "Drizzle" | "Thunderstorm",
+  uvi: number | null = null
+) {
+  const weatherContext = getWeatherContext({
+    weatherMain,
+    effectiveTemp: 10,
+    humidity: 73,
+    cloudiness: 100,
+  });
+  const riskFactors = evaluateRiskScore({
+    heatIndex: 10.9,
+    coldEffectiveTemp: 10,
+    windKmh: 17.7,
+    uvi,
+  }).activeFactorsSorted;
+
+  return Recommendations({
+    temp: 10.9,
+    lang: "ca",
+    isDay: true,
+    activity: "rest",
+    humidity: 73,
+    uvi,
+    weatherMain,
+    cloudiness: 100,
+    windKmh: 17.7,
+    currentHour: 13,
+    heatDayPhase: "day",
+    coldRisk: "cap",
+    coldEffectiveTemp: 10,
+    riskFactors,
+    weatherContext,
+  }) as any;
+}
+
+test("rain recommendations keep contextual rain and omit generic thermal comfort", () => {
+  for (const weatherMain of ["Rain", "Drizzle", "Thunderstorm"] as const) {
+    const element = renderRecommendationForRainScenario(weatherMain);
+    const items = element.props.items as RecommendationItem[];
+
+    assert.deepEqual(items.map((item) => item.label), [
+      weatherMain === "Thunderstorm" ? "Tempestes" : "Pluja",
+    ]);
+    assert.doesNotMatch(element.props.body, /confort tèrmic|beu aigua/i);
+    assert.match(element.props.body, /pluja|precipitació|tempesta/i);
+  }
+});
+
+test("dry safe recommendations keep generic thermal comfort text", () => {
+  const weatherContext = getWeatherContext({
+    weatherMain: "Clear",
+    effectiveTemp: 10,
+    humidity: 50,
+    cloudiness: 0,
+  });
+  const element = Recommendations({
+    temp: 10.9,
+    lang: "ca",
+    isDay: true,
+    humidity: 50,
+    uvi: null,
+    weatherMain: "Clear",
+    cloudiness: 0,
+    windKmh: 5,
+    coldRisk: "cap",
+    coldEffectiveTemp: 10,
+    riskFactors: [],
+    weatherContext,
+  }) as any;
+  const items = element.props.items as RecommendationItem[];
+
+  assert.equal(items[0]?.label, "Confort tèrmic");
+  assert.match(element.props.body, /El confort tèrmic és favorable/);
+  assert.match(element.props.body, /Beu aigua amb regularitat/);
+});
+
+test("rain suppresses active UV advice before the rain branch", () => {
+  const element = renderRecommendationForRainScenario("Rain", 8);
+  const labels = (element.props.items as RecommendationItem[]).map((item) => item.label);
+
+  assert.doesNotMatch(labels.join(" "), /Radiació UV/i);
+  assert.doesNotMatch(element.props.body, /protecció solar|gorra|ulleres/i);
+});
 
 test("recommendations keep moderate UV visible with heat and moderate wind", () => {
   assert.deepEqual(

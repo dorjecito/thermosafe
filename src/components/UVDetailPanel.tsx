@@ -8,6 +8,7 @@ type Props = {
   lat: number | null;
   lon: number | null;
   lang: Lang;
+  timezoneOffsetSec?: number | null;
   sourceNote?: string;
 };
 
@@ -153,7 +154,13 @@ export function formatOzoneMeasurement(
   return `${labels.ozoneMeasurement}: ${ozone} DU${ozoneTime ? ` (${ozoneTime})` : ""}`;
 }
 
-export default function UVDetailPanel({ lat, lon, lang, sourceNote }: Props) {
+export default function UVDetailPanel({
+  lat,
+  lon,
+  lang,
+  timezoneOffsetSec = 0,
+  sourceNote,
+}: Props) {
   const t = TXT[lang] ?? TXT.ca;
 
   const [detail, setDetail] = React.useState<UVDetailShape | null>(null);
@@ -192,18 +199,23 @@ export default function UVDetailPanel({ lat, lon, lang, sourceNote }: Props) {
     formatUvDetailTime(
       (detail?.sun_info?.sun_times?.sunrise ??
         detail?.sunInfo?.sunTimes?.sunrise ??
-        null) as any
+      null) as any,
+      timezoneOffsetSec
     ) ?? t.na;
 
   const sunset =
     formatUvDetailTime(
       (detail?.sun_info?.sun_times?.sunset ??
         detail?.sunInfo?.sunTimes?.sunset ??
-        null) as any
+      null) as any,
+      timezoneOffsetSec
     ) ?? t.na;
 
   const ozone = typeof detail?.ozone === "number" ? Math.round(detail.ozone) : null;
-  const ozoneTime = formatUvDetailTime((detail?.ozone_time ?? detail?.ozoneTime ?? null) as any);
+  const ozoneTime = formatUvDetailTime(
+    (detail?.ozone_time ?? detail?.ozoneTime ?? null) as any,
+    timezoneOffsetSec
+  );
   const ozoneMeasurementText = formatOzoneMeasurement(ozone, ozoneTime, t);
 
   return (

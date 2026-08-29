@@ -102,6 +102,7 @@ import { getUVDetailFromOpenUV, getUVFromOpenUV } from "./services/openUV";
    import { useScrollCompactHeader } from "./hooks/useScrollCompactHeader";
    import { formatUvDetailTime } from "./utils/uvDetailTime";
    import { getUvSolarNowLabelPosition } from "./utils/uvSolarLabelPosition";
+   import { shouldShowUvBlock } from "./utils/uvBlockVisibility";
 
    /* —— analítica (opcional) ———————————— */
    import { inject } from '@vercel/analytics';
@@ -357,11 +358,11 @@ function UvSolarArc({
         focusable="false"
         aria-hidden="true"
       >
-        <line className="uv-solar-horizon" x1={startX} y1={centerY} x2={endX} y2={centerY} />
-        <path className="uv-solar-arc-elapsed" d={elapsedArc} />
-        <path className="uv-solar-arc-remaining" d={remainingArc} />
-        <line className="uv-solar-end-mark" x1={startX} y1={centerY - 5} x2={startX} y2={centerY + 5} />
-        <line className="uv-solar-end-mark" x1={endX} y1={centerY - 5} x2={endX} y2={centerY + 5} />
+        <line fill="none" className="uv-solar-horizon" x1={startX} y1={centerY} x2={endX} y2={centerY} />
+        <path fill="none" className="uv-solar-arc-elapsed" d={elapsedArc} />
+        <path fill="none" className="uv-solar-arc-remaining" d={remainingArc} />
+        <line fill="none" className="uv-solar-end-mark" x1={startX} y1={centerY - 5} x2={startX} y2={centerY + 5} />
+        <line fill="none" className="uv-solar-end-mark" x1={endX} y1={centerY - 5} x2={endX} y2={centerY + 5} />
         <text className="uv-solar-max-caption" x={centerX} y="18" textAnchor="middle">
           {labels.solarUvMaxShort}
         </text>
@@ -377,14 +378,14 @@ function UvSolarArc({
           {labels.solarNow}: {currentUv.toFixed(1)}
         </text>
         <g className="uv-solar-sun" transform={`translate(${sunX} ${sunY})`}>
-          <line x1="0" y1="-14" x2="0" y2="-10" />
-          <line x1="0" y1="10" x2="0" y2="14" />
-          <line x1="-14" y1="0" x2="-10" y2="0" />
-          <line x1="10" y1="0" x2="14" y2="0" />
-          <line x1="-10" y1="-10" x2="-7" y2="-7" />
-          <line x1="7" y1="7" x2="10" y2="10" />
-          <line x1="10" y1="-10" x2="7" y2="-7" />
-          <line x1="-7" y1="7" x2="-10" y2="10" />
+          <line fill="none" x1="0" y1="-14" x2="0" y2="-10" />
+          <line fill="none" x1="0" y1="10" x2="0" y2="14" />
+          <line fill="none" x1="-14" y1="0" x2="-10" y2="0" />
+          <line fill="none" x1="10" y1="0" x2="14" y2="0" />
+          <line fill="none" x1="-10" y1="-10" x2="-7" y2="-7" />
+          <line fill="none" x1="7" y1="7" x2="10" y2="10" />
+          <line fill="none" x1="10" y1="-10" x2="7" y2="-7" />
+          <line fill="none" x1="-7" y1="7" x2="-10" y2="10" />
           <circle r="8" />
         </g>
         <text className="uv-solar-time-label" x="62" y="214" textAnchor="start">
@@ -899,7 +900,11 @@ async function loadAlertsIfNeeded(
   }
 }
 
-async function loadUvMaxToday(nextLat: number, nextLon: number) {
+async function loadUvMaxToday(
+  nextLat: number,
+  nextLon: number,
+  timezoneOffsetSec: number | null = 0
+) {
   try {
     const detail = await getUVDetailFromOpenUV(nextLat, nextLon);
     const maxToday =
@@ -914,8 +919,8 @@ async function loadUvMaxToday(nextLat: number, nextLon: number) {
       typeof detail?.sun_info?.sun_times?.sunset === "string"
         ? detail.sun_info.sun_times.sunset
         : null;
-    const sunriseTime = formatUvDetailTime(sunriseIso);
-    const sunsetTime = formatUvDetailTime(sunsetIso);
+    const sunriseTime = formatUvDetailTime(sunriseIso, timezoneOffsetSec);
+    const sunsetTime = formatUvDetailTime(sunsetIso, timezoneOffsetSec);
 
     setUvMaxToday(maxToday);
     setUvDetailSunTimes(
@@ -930,8 +935,12 @@ async function loadUvMaxToday(nextLat: number, nextLon: number) {
   }
 }
 
-function loadUvMaxTodayInBackground(nextLat: number, nextLon: number) {
-  loadUvMaxToday(nextLat, nextLon).catch((err) => {
+function loadUvMaxTodayInBackground(
+  nextLat: number,
+  nextLon: number,
+  timezoneOffsetSec: number | null = 0
+) {
+  loadUvMaxToday(nextLat, nextLon, timezoneOffsetSec).catch((err) => {
     console.warn("[UV] Error carregant UV màxim en segon pla:", err);
   });
 }
@@ -1207,7 +1216,7 @@ const fetchWeather = async (cityName: string) => {
 
 	      console.log("[SEARCH] UV rebut:", uv);
 	      setUvi(uv);
-	      await loadUvMaxToday(newLat, newLon);
+	      await loadUvMaxToday(newLat, newLon, data.timezone ?? 0);
 
 		      if (import.meta.env.DEV) {
 		        console.log("[DEBUG] Coordenades ciutat cercada:", newLat, newLon);
@@ -1567,7 +1576,7 @@ const uvTask = (async () => {
 
   setUvi(uv);
   startupMark("uv-visible", { hasValue: typeof uv === "number" });
-  loadUvMaxTodayInBackground(lat, lon);
+  loadUvMaxTodayInBackground(lat, lon, d.timezone ?? 0);
   console.log("[DEBUG] UVI actual (nou):", uv);
   console.log("[TEST] Tipus UV (nou):", typeof uv, "Valor:", uv);
   return uv;
@@ -1770,7 +1779,7 @@ const handleSuggestionSelect = async (s: any) => {
     setIcon(data.weather?.[0]?.icon || "");
 	    const uv = await getUVFromOpenUV(s.lat, s.lon);
 	    setUvi(uv);
-	    await loadUvMaxToday(s.lat, s.lon);
+	    await loadUvMaxToday(s.lat, s.lon, data.timezone ?? 0);
 
 	    await loadAlertsIfNeeded(
 	      s.lat,
@@ -2095,29 +2104,12 @@ const primaryAdvice = useMemo(
   [primary, coldRisk, heatRisk, hi, temp, uvi, windRisk, t]
 );
 
-const isRainy = useMemo(
-  () =>
-    weatherMain === "Rain" ||
-    weatherMain === "Drizzle" ||
-    weatherMain === "Thunderstorm",
-  [weatherMain]
-);
-
-const isVeryCloudy = useMemo(() => (clouds ?? 0) >= 85, [clouds]);
-
-const isClearlyColdNow = currentFeelTemp < 8;
-
-const isColdRisk = typeof risk === "string" && risk.startsWith("cold_");
-
-const shouldHideUVBlock = useMemo(
-  () => !day || isRainy || (isVeryCloudy && isClearlyColdNow) || isColdRisk,
-  [day, isRainy, isVeryCloudy, isClearlyColdNow, isColdRisk]
-);
+const shouldShowUVBlock = shouldShowUvBlock(day, uvi);
 
 useEffect(() => {
-  if (!showSkinTypePrompt || shouldHideUVBlock) return;
+  if (!showSkinTypePrompt || !shouldShowUVBlock) return;
   localStorage.setItem(SKIN_TYPE_PROMPT_SEEN_STORAGE_KEY, "true");
-}, [showSkinTypePrompt, shouldHideUVBlock]);
+}, [showSkinTypePrompt, shouldShowUVBlock]);
 
 const contextualUVMessage = useMemo(
   () =>
@@ -3123,7 +3115,7 @@ return (
 )}
 
 {/* 🌞 INFORMACIÓ SOLAR */}
-{!shouldHideUVBlock && (
+{shouldShowUVBlock && (
   <div className={`uv-block ${day ? "" : "uv-night"}`}>
     <h3 className="uv-title">{t("solar_info")}</h3>
 
@@ -3246,6 +3238,7 @@ return (
 	                    lat={lat}
 	                    lon={lon}
 	                    lang={lang}
+                    timezoneOffsetSec={locationTimezoneOffsetSec}
                       sourceNote={
                         t("uv_source_note") ??
                         "Els valors d’índex UV poden variar segons l’hora i la font meteorològica (OpenUV, NASA o OpenWeather)."
