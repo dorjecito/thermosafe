@@ -60,6 +60,10 @@ type TextKeys =
   | "nightCool"
   | "nightSafe"
   | "nightHeat"
+  | "coolPositiveLabel"
+  | "coolPositiveText"
+  | "positiveColdLabel"
+  | "positiveColdText"
   | "cold_low"
   | "cold_mod"
   | "cold_high"
@@ -89,6 +93,7 @@ type RecommendationFactor =
   | "rain"
   | "storm"
   | "night"
+  | "coolComfort"
   | "snow"
   | "fog"
   | "hail"
@@ -242,6 +247,12 @@ const TXT: TxtDict = {
       "Condicions nocturnes agradables i estables. No calen mesures especials.",
     nightHeat:
       "Temperatura nocturna elevada. Afavoreix la ventilació creuada, hidrata’t i utilitza roba lleugera i transpirable.",
+    coolPositiveLabel: "Ambient fresc",
+    coolPositiveText:
+      "Porta roba adequada si has d’estar molta estona a l’exterior.",
+    positiveColdLabel: "Fred",
+    positiveColdText:
+      "Abriga’t bé i protegeix les extremitats si l’exposició és prolongada.",
     cold_low:
       "Vesteix per capes lleugeres, sobretot si estàs quiet o fa vent.",
     cold_mod:
@@ -338,6 +349,12 @@ const TXT: TxtDict = {
       "Condiciones nocturnas agradables y estables. No se requieren medidas especiales.",
     nightHeat:
       "Temperatura nocturna elevada. Favorece la ventilación cruzada, hidrátate y utiliza ropa ligera y transpirable.",
+    coolPositiveLabel: "Ambiente fresco",
+    coolPositiveText:
+      "Lleva ropa adecuada si vas a estar mucho tiempo al aire libre.",
+    positiveColdLabel: "Frío",
+    positiveColdText:
+      "Abrígate bien y protege las extremidades si la exposición es prolongada.",
     cold_low:
       "Viste por capas ligeras, sobre todo si permaneces quieto o hace viento.",
     cold_mod:
@@ -434,6 +451,12 @@ const TXT: TxtDict = {
       "Gaueko baldintzak atseginak eta egonkorrak dira. Ez da neurri berezirik behar.",
     nightHeat:
       "Gaueko tenperatura altua. Bultzatu aireztapen gurutzatua, hidratatu eta erabili arropa arina eta transpiragarria.",
+    coolPositiveLabel: "Giro freskoa",
+    coolPositiveText:
+      "Jantzi arropa egokia kanpoan denbora luzez egon behar baduzu.",
+    positiveColdLabel: "Hotza",
+    positiveColdText:
+      "Ondo berotu eta babestu gorputz-adarrak esposizioa luzea bada.",
     cold_low:
       "Jantzi geruza arinak, batez ere geldirik bazaude edo haizea badabil.",
     cold_mod:
@@ -530,6 +553,12 @@ const TXT: TxtDict = {
       "Condicións nocturnas agradables e estables. Non se requiren medidas especiais.",
     nightHeat:
       "Temperatura nocturna elevada. Favorece a ventilación cruzada, hidrátate e emprega roupa lixeira e transpirable.",
+    coolPositiveLabel: "Ambiente fresco",
+    coolPositiveText:
+      "Leva roupa axeitada se vas pasar moito tempo ao aire libre.",
+    positiveColdLabel: "Frío",
+    positiveColdText:
+      "Abrígate ben e protexe as extremidades se a exposición é prolongada.",
     cold_low:
       "Viste por capas lixeiras, sobre todo se permaneces quieto ou hai vento.",
     cold_mod:
@@ -626,6 +655,12 @@ const TXT: TxtDict = {
       "Night conditions are pleasant and stable. No special measures are needed.",
     nightHeat:
       "Elevated nighttime temperatures. Ensure cross-ventilation, stay hydrated and wear light, breathable clothing.",
+    coolPositiveLabel: "Cool conditions",
+    coolPositiveText:
+      "Wear suitable clothing if you will be outdoors for a long time.",
+    positiveColdLabel: "Cold",
+    positiveColdText:
+      "Dress warmly and protect extremities if exposure is prolonged.",
     cold_low:
       "Wear light layers, especially if you remain still or it is windy.",
     cold_mod:
@@ -683,6 +718,7 @@ type HeatRecommendationKey =
   | "highLateDay"
   | "highEvening";
 type ColdKey = "cold_low" | "cold_mod" | "cold_high" | "cold_ext";
+type PositiveCoolKey = "coolPositive" | "positiveCold";
 type UvKey = "uvModerate" | "uvHigh" | "uvVeryHigh" | "uvExtreme";
 type NightKey = "nightCool" | "nightSafe" | "nightHeat" | "tropicalNight" | "torridNight";
 
@@ -744,6 +780,12 @@ const getNightKey = (nightHeatLevel: NightHeatLevel): NightKey | "torridNight" =
   if (nightHeatLevel === "torrid") return "torridNight";
   if (nightHeatLevel === "tropical") return "tropicalNight";
   return "nightSafe";
+};
+
+const getPositiveCoolKey = (temp: number): PositiveCoolKey | null => {
+  if (temp > 0 && temp < 5) return "positiveCold";
+  if (temp >= 5 && temp < 10) return "coolPositive";
+  return null;
 };
 
 const isCentralHeatHour = (hour?: number): boolean =>
@@ -1028,6 +1070,11 @@ export default function Recommendations({
   const uvRecommendationText = uvRecommendationKey
     ? t[uvRecommendationKey]
     : null;
+  const contextualColdTemp =
+    typeof coldEffectiveTemp === "number" && Number.isFinite(coldEffectiveTemp)
+      ? coldEffectiveTemp
+      : effectiveTemp;
+  const positiveCoolKey = getPositiveCoolKey(contextualColdTemp);
   const recommendationsColdRisk = getColdRisk(effectiveTemp, null);
   const coldKey = getRecommendationColdKey(coldRisk, effectiveTemp);
   const legacyRainy = isRainyWeather(weatherMain);
@@ -1102,6 +1149,8 @@ export default function Recommendations({
       },
   ].filter(Boolean) as RecommendationItem[];
   const contextualText = contextualItems.map((item) => item.text).join("\n\n");
+  const contextualWeatherPrimary =
+    slipperySurface || rainy || stormy || contextualItems.length > 0;
   const uvSuppressedByWeather =
   isDay &&
   uvActive &&
@@ -1271,7 +1320,7 @@ export default function Recommendations({
   );
 } 
 
-if (isDay && uvActive && uvKey) {
+  if (isDay && uvActive && uvKey) {
     return (
       <RecommendationBox
         className={`recommendation-box ${uvKey}`}
@@ -1298,6 +1347,30 @@ if (isDay && uvActive && uvKey) {
       />
     );
   }
+
+  if (positiveCoolKey && nightHeatLevel === "none" && !contextualWeatherPrimary) {
+    const label =
+      positiveCoolKey === "positiveCold"
+        ? t.positiveColdLabel
+        : t.coolPositiveLabel;
+    const text =
+      positiveCoolKey === "positiveCold"
+        ? t.positiveColdText
+        : t.coolPositiveText;
+
+    return (
+      <RecommendationBox
+        className="recommendation-box nightCool"
+        title={`${getIcon(positiveCoolKey)} ${t.title}`}
+        body={text}
+        items={factorItems(
+          riskFactors,
+          { factor: "coolComfort", icon: "🧥", label, text },
+          showWindModerate && { factor: "wind", icon: "🌬️", label: t.factorWind, text: t.windModerate }
+        )}
+      />
+    );
+  }
 
   /* =========================================================
      4️⃣ RECOMANACIONS NOCTURNES

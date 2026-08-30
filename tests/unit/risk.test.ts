@@ -4349,6 +4349,280 @@ test("rain suppresses active UV advice before the rain branch", () => {
   assert.doesNotMatch(element.props.body, /protecció solar|gorra|ulleres/i);
 });
 
+function renderCoolRecommendationScenario({
+  temp,
+  coldEffectiveTemp,
+  isDay = true,
+  windKmh = 6.4,
+  uvi = 0,
+  weatherMain = "Clear",
+  cloudiness = 15,
+  humidity = 79,
+  nightHeatLevel = "none" as const,
+  weatherContext,
+  lang = "ca",
+}: {
+  temp: number;
+  coldEffectiveTemp?: number | null;
+  isDay?: boolean;
+  windKmh?: number;
+  uvi?: number | null;
+  weatherMain?: string;
+  cloudiness?: number;
+  humidity?: number;
+  nightHeatLevel?: "none" | "tropical" | "torrid";
+  weatherContext?: ReturnType<typeof getWeatherContext>;
+  lang?: "ca" | "es" | "eu" | "gl" | "en";
+}) {
+  const coldRisk = getColdRisk(coldEffectiveTemp ?? temp, windKmh);
+  const riskFactors = evaluateRiskScore({
+    heatIndex: temp,
+    coldEffectiveTemp: coldEffectiveTemp ?? temp,
+    windKmh,
+    uvi,
+    isNightAtLocation: !isDay,
+    nightReferenceTemperature: temp,
+  }).activeFactorsSorted;
+
+  return Recommendations({
+    temp,
+    lang,
+    isDay,
+    activity: "rest",
+    humidity,
+    uvi,
+    weatherMain,
+    cloudiness,
+    windKmh,
+    currentHour: isDay ? 13 : 23,
+    heatDayPhase: isDay ? "day" : "night",
+    coldRisk,
+    coldEffectiveTemp,
+    riskFactors,
+    nightHeatLevel,
+    weatherContext:
+      weatherContext ??
+      getWeatherContext({
+        weatherMain,
+        effectiveTemp: temp,
+        humidity,
+        cloudiness,
+      }),
+  }) as any;
+}
+
+test("recommendations replace safe night text with positive cold advice for Dudinka", () => {
+  const element = renderCoolRecommendationScenario({
+    temp: 4,
+    coldEffectiveTemp: 3.9,
+    isDay: false,
+    windKmh: 6.4,
+    uvi: 0,
+    weatherMain: "Clear",
+    cloudiness: 15,
+    humidity: 79,
+  });
+  const items = element.props.items as RecommendationItem[];
+
+  assert.equal(items[0]?.label, "Fred");
+  assert.match(element.props.body, /Abriga’t bé i protegeix les extremitats/);
+  assert.doesNotMatch(items.map((item) => item.label).join(" "), /\bNit\b/);
+  assert.doesNotMatch(element.props.body, /No calen mesures especials/);
+});
+
+test("positive cold recommendation prefers coldEffectiveTemp over component temperature", () => {
+  const element = renderCoolRecommendationScenario({
+    temp: 6.2,
+    coldEffectiveTemp: 4.9,
+    isDay: false,
+  });
+  const items = element.props.items as RecommendationItem[];
+
+  assert.equal(items[0]?.label, "Fred");
+  assert.match(element.props.body, /Abriga’t bé/);
+});
+
+test("positive cool contextual recommendation follows exact boundaries without changing cold risk", () => {
+  const cases = [
+    { temp: 10.0, expectedLabel: "Confort tèrmic", expectedBody: /confort tèrmic/i },
+    { temp: 9.9, expectedLabel: "Ambient fresc", expectedBody: /Porta roba adequada/ },
+    { temp: 5.0, expectedLabel: "Ambient fresc", expectedBody: /Porta roba adequada/ },
+    { temp: 4.9, expectedLabel: "Fred", expectedBody: /Abriga’t bé/ },
+    { temp: 0.1, expectedLabel: "Fred", expectedBody: /Abriga’t bé/ },
+    { temp: 0.0, expectedLabel: "Fred", expectedBody: /Vesteix per capes lleugeres/ },
+    { temp: -0.1, expectedLabel: "Fred", expectedBody: /Vesteix per capes lleugeres/ },
+  ] as const;
+
+  for (const scenario of cases) {
+    const coldRisk = getColdRisk(scenario.temp, 6.4);
+    const element = renderCoolRecommendationScenario({
+      temp: scenario.temp,
+      coldEffectiveTemp: scenario.temp,
+      isDay: true,
+    });
+    const items = element.props.items as RecommendationItem[];
+
+    assert.equal(items[0]?.label, scenario.expectedLabel, String(scenario.temp));
+    assert.match(element.props.body, scenario.expectedBody, String(scenario.temp));
+    if (scenario.temp > 0) assert.equal(coldRisk, "cap", String(scenario.temp));
+    else assert.equal(coldRisk, "lleu", String(scenario.temp));
+  }
+});
+
+test("dry daytime conditions between 5 and 10 degrees show cool ambient advice", () => {
+  const element = renderCoolRecommendationScenario({
+    temp: 8,
+    coldEffectiveTemp: 8,
+    isDay: true,
+    humidity: 50,
+    cloudiness: 0,
+  });
+  const items = element.props.items as RecommendationItem[];
+
+  assert.equal(items[0]?.label, "Ambient fresc");
+  assert.match(element.props.body, /Porta roba adequada/);
+});
+
+test("rain remains the main recommendation and does not reintroduce generic safe text", () => {
+  const element = renderCoolRecommendationScenario({
+    temp: 4,
+    coldEffectiveTemp: 4,
+    isDay: true,
+    weatherMain: "Rain",
+    cloudiness: 100,
+    weatherContext: getWeatherContext({
+      weatherMain: "Rain",
+      effectiveTemp: 4,
+      humidity: 79,
+      cloudiness: 100,
+    }),
+  });
+  const labels = (element.props.items as RecommendationItem[]).map((item) => item.label);
+
+  assert.deepEqual(labels, ["Pluja"]);
+  assert.match(element.props.body, /pluja|relliscades/i);
+  assert.doesNotMatch(element.props.body, /El confort tèrmic és favorable|Beu aigua/i);
+  assert.doesNotMatch(labels.join(" "), /Ambient fresc|Fred/);
+});
+
+test("high UV and suppressed UV keep their existing priority over positive cool advice", () => {
+  const uvElement = renderCoolRecommendationScenario({
+    temp: 8,
+    coldEffectiveTemp: 8,
+    isDay: true,
+    uvi: 6,
+    cloudiness: 0,
+    humidity: 50,
+  });
+
+  assert.deepEqual(
+    (uvElement.props.items as RecommendationItem[]).map((item) => item.label),
+    ["Radiació UV"]
+  );
+  assert.match(uvElement.props.body, /protecció solar|gorra|ulleres/i);
+
+  const suppressedElement = renderCoolRecommendationScenario({
+    temp: 8,
+    coldEffectiveTemp: 8,
+    isDay: true,
+    uvi: 6,
+    weatherMain: "Clouds",
+    cloudiness: 90,
+    weatherContext: getWeatherContext({
+      weatherMain: "Clouds",
+      effectiveTemp: 8,
+      humidity: 50,
+      cloudiness: 90,
+    }),
+  });
+
+  assert.doesNotMatch(suppressedElement.props.body, /gorra|ulleres|crema|SPF/i);
+  assert.doesNotMatch(
+    (suppressedElement.props.items as RecommendationItem[]).map((item) => item.label).join(" "),
+    /Ambient fresc|Fred/
+  );
+});
+
+test("strong wind keeps priority over positive cool advice", () => {
+  const element = renderCoolRecommendationScenario({
+    temp: 8,
+    coldEffectiveTemp: 8,
+    isDay: true,
+    windKmh: 45,
+  });
+  const items = element.props.items as RecommendationItem[];
+
+  assert.equal(items[0]?.label, "Vent");
+  assert.match(element.props.body, /Revalora tasques exposades/);
+  assert.doesNotMatch(items.map((item) => item.label).join(" "), /Ambient fresc|Fred/);
+});
+
+test("tropical and torrid nights keep priority over positive cool fallback", () => {
+  for (const nightHeatLevel of ["tropical", "torrid"] as const) {
+    const element = renderCoolRecommendationScenario({
+      temp: nightHeatLevel === "torrid" ? 25 : 22,
+      coldEffectiveTemp: 4,
+      isDay: false,
+      nightHeatLevel,
+      humidity: 50,
+    });
+    const labels = (element.props.items as RecommendationItem[]).map((item) => item.label);
+
+    assert.equal(labels[0], nightHeatLevel === "torrid" ? "Nit tòrrida" : "Nit tropical");
+    assert.doesNotMatch(labels.join(" "), /Ambient fresc|Fred/);
+  }
+});
+
+test("real cold at or below zero keeps existing cold recommendation buckets", () => {
+  const zero = renderCoolRecommendationScenario({
+    temp: 0,
+    coldEffectiveTemp: 0,
+    isDay: false,
+  });
+  const belowZero = renderCoolRecommendationScenario({
+    temp: -0.1,
+    coldEffectiveTemp: -0.1,
+    isDay: false,
+  });
+
+  assert.equal((zero.props.items as RecommendationItem[])[0]?.label, "Fred");
+  assert.equal((belowZero.props.items as RecommendationItem[])[0]?.label, "Fred");
+  assert.equal(zero.props.body, "Vesteix per capes lleugeres, sobretot si estàs quiet o fa vent.");
+  assert.equal(belowZero.props.body, "Vesteix per capes lleugeres, sobretot si estàs quiet o fa vent.");
+});
+
+test("positive cool recommendation has complete strings in all supported languages", () => {
+  const expected = {
+    ca: ["Ambient fresc", "Fred"],
+    es: ["Ambiente fresco", "Frío"],
+    eu: ["Giro freskoa", "Hotza"],
+    gl: ["Ambiente fresco", "Frío"],
+    en: ["Cool conditions", "Cold"],
+  } as const;
+
+  for (const lang of Object.keys(expected) as Array<keyof typeof expected>) {
+    const cool = renderCoolRecommendationScenario({
+      temp: 9.9,
+      coldEffectiveTemp: 9.9,
+      lang,
+    });
+    const cold = renderCoolRecommendationScenario({
+      temp: 4.9,
+      coldEffectiveTemp: 4.9,
+      lang,
+    });
+    const coolItem = (cool.props.items as RecommendationItem[])[0];
+    const coldItem = (cold.props.items as RecommendationItem[])[0];
+
+    assert.equal(coolItem.label, expected[lang][0], lang);
+    assert.equal(coldItem.label, expected[lang][1], lang);
+    assert.ok(coolItem.text.length > 20, lang);
+    assert.ok(coldItem.text.length > 20, lang);
+    assert.doesNotMatch(`${coolItem.label} ${coolItem.text}`, /coolPositive|positiveCold/);
+    assert.doesNotMatch(`${coldItem.label} ${coldItem.text}`, /coolPositive|positiveCold/);
+  }
+});
+
 test("recommendations keep moderate UV visible with heat and moderate wind", () => {
   assert.deepEqual(
     renderRecommendationLabelsForObservedUvScenario(5.8),
