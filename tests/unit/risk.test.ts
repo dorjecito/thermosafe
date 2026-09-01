@@ -3,6 +3,7 @@ import { createHash } from "node:crypto";
 import { readFileSync } from "node:fs";
 import { createRequire } from "node:module";
 import test from "node:test";
+import vm from "node:vm";
 import { handleOpenWeatherRequest } from "../../api/openweather";
 import {
   buildOpenWeatherUsagePayload,
@@ -344,6 +345,270 @@ const quietAemetTranslationLogger = {
   log: () => undefined,
   warn: () => undefined,
 };
+
+type MockSubData = Record<string, any>;
+
+function createMockFunctionsDb(initialSubs: MockSubData[]) {
+  const collections = new Map<string, Map<string, any>>();
+  const writes: Array<{ path: string; data: any; options?: any }> = [];
+  const deletes: string[] = [];
+
+  function getCollection(path: string) {
+    if (!collections.has(path)) collections.set(path, new Map());
+    return collections.get(path)!;
+  }
+
+  function makeDocRef(path: string) {
+    const [collectionPath, id] = splitDocPath(path);
+
+    return {
+      id,
+      async get() {
+        const value = getCollection(collectionPath).get(id);
+        return {
+          exists: value !== undefined,
+          data: () => value,
+        };
+      },
+      async set(data: any, options?: any) {
+        writes.push({ path, data, options });
+        const collection = getCollection(collectionPath);
+        const previous = collection.get(id) || {};
+        collection.set(id, options?.merge ? { ...previous, ...data } : data);
+      },
+      async delete() {
+        deletes.push(path);
+        getCollection(collectionPath).delete(id);
+      },
+      collection(subPath: string) {
+        return makeCollectionRef(`${path}/${subPath}`);
+      },
+    };
+  }
+
+  function makeCollectionRef(path: string) {
+    return {
+      doc(id: string) {
+        return makeDocRef(`${path}/${id}`);
+      },
+      limit() {
+        return this;
+      },
+      orderBy() {
+        return this;
+      },
+      startAfter() {
+        return this;
+      },
+      where() {
+        return this;
+      },
+      async get() {
+        const docs = [...getCollection(path).entries()].map(([id, data]) => ({
+          id,
+          data: () => data,
+          ref: makeDocRef(`${path}/${id}`),
+        }));
+        return {
+          empty: docs.length === 0,
+          size: docs.length,
+          docs,
+        };
+      },
+    };
+  }
+
+  function splitDocPath(path: string) {
+    const parts = path.split("/");
+    return [parts.slice(0, -1).join("/"), parts[parts.length - 1]] as const;
+  }
+
+  initialSubs.forEach((sub, index) => {
+    const token = sub.token || `mock-token-${index}`;
+    getCollection("subs").set(token, { threshold: "moderate", lang: "ca", ...sub, token });
+  });
+
+  return {
+    writes,
+    deletes,
+    collection: makeCollectionRef,
+    getSub(token: string) {
+      return getCollection("subs").get(token);
+    },
+  };
+}
+
+function createFunctionsIndexHarness(options: {
+  subs: MockSubData[];
+  weather?: Partial<{
+    temp: number;
+    hum: number;
+    wind: number;
+    tzOffset: number;
+    place: string;
+    weatherMain: string;
+    clouds: number;
+  }>;
+  uvi?: number;
+  sendError?: Error;
+  nowMs?: number;
+}) {
+  const db = createMockFunctionsDb(options.subs);
+  const sends: any[] = [];
+  const NativeDate = Date;
+  const weather = {
+    temp: 33,
+    hum: 55,
+    wind: 1,
+    tzOffset: 7200,
+    place: "Test place",
+    weatherMain: "Clear",
+    clouds: 0,
+    ...options.weather,
+  };
+
+  const adminStub = {
+    initializeApp: () => undefined,
+    firestore: () => db,
+    appCheck: () => ({ verifyToken: async () => ({ appId: "test" }) }),
+    messaging: () => ({
+      send: async (payload: any) => {
+        if (options.sendError) throw options.sendError;
+        sends.push(payload);
+        return `message-${sends.length}`;
+      },
+    }),
+  };
+
+  const functionsChain = {
+    runWith() {
+      return this;
+    },
+    pubsub: {
+      schedule: () => ({
+        timeZone: () => ({
+          onRun: (handler: () => Promise<unknown>) => ({ __handler: handler }),
+        }),
+      }),
+    },
+    https: {
+      onRequest: (handler: unknown) => ({ __handler: handler }),
+    },
+  };
+
+  const functionsStub = {
+    region: () => functionsChain,
+    https: functionsChain.https,
+  };
+
+  const context: any = {
+    console: {
+      log: () => undefined,
+      warn: () => undefined,
+      error: () => undefined,
+    },
+    process: { env: {} },
+    Buffer,
+    URL,
+    setTimeout,
+    clearTimeout,
+    Date: class extends NativeDate {
+      constructor(value?: any) {
+        super(value ?? options.nowMs ?? NativeDate.now());
+      }
+
+      static now() {
+        return options.nowMs ?? NativeDate.now();
+      }
+    },
+    globalThis: {
+      fetch: async (url: string) => {
+        if (url.includes("/data/2.5/weather")) {
+          return {
+            ok: true,
+            status: 200,
+            json: async () => ({
+              main: { temp: weather.temp, humidity: weather.hum },
+              wind: { speed: weather.wind },
+              timezone: weather.tzOffset,
+              name: weather.place,
+              weather: [{ main: weather.weatherMain, description: "" }],
+              clouds: { all: weather.clouds },
+            }),
+          };
+        }
+
+        if (url.includes("/data/3.0/onecall")) {
+          return {
+            ok: true,
+            status: 200,
+            json: async () => ({ current: { uvi: options.uvi ?? 7 }, alerts: [] }),
+          };
+        }
+
+        if (url.includes("openuv.io")) {
+          return {
+            ok: true,
+            status: 200,
+            json: async () => ({ result: { uv: options.uvi ?? 7 } }),
+          };
+        }
+
+        throw new Error(`unexpected fetch ${url}`);
+      },
+    },
+    require: (id: string) => {
+      if (id === "firebase-admin") return adminStub;
+      if (id === "firebase-functions") return functionsStub;
+      if (id === "firebase-functions/v2/https") {
+        return { onRequest: (_opts: unknown, handler: unknown) => ({ __handler: handler }) };
+      }
+      if (id === "firebase-functions/v2/scheduler") {
+        return { onSchedule: (_opts: unknown, handler: unknown) => ({ __handler: handler }) };
+      }
+      if (id === "firebase-functions/params") {
+        return { defineSecret: () => ({ value: () => "test-secret" }) };
+      }
+      if (id === "./apiUsage") {
+        return {
+          cleanupOldApiUsageCounters: async () => undefined,
+          fetchTrackedOpenWeather: async (fetchFn: (url: string) => Promise<any>, _db: any, _admin: any, url: string) =>
+            fetchFn(url),
+        };
+      }
+      if (id === "./aemetAlerts") {
+        return {
+          getAemetLevelFromAlerts: () => ({ level: 0, event: "", sender: "", description: "", timing: "active" }),
+          isAemetHeatRelatedAlert: () => false,
+        };
+      }
+      if (id === "./aemetTranslations") {
+        return { handleAemetTranslationRequest: async () => undefined };
+      }
+      if (id === "./cleanupSubs") {
+        return functionsCleanupSubs;
+      }
+      throw new Error(`unexpected require ${id}`);
+    },
+    exports: {},
+    module: { exports: {} },
+  };
+
+  context.global = context;
+  context.module.exports = context.exports;
+
+  const source = readFileSync(new URL("../../functions/index.js", import.meta.url), "utf8");
+  vm.runInNewContext(source, context, { filename: "functions/index.js" });
+
+  return {
+    db,
+    sends,
+    exports: context.exports,
+    runWeatherV2: () => context.exports.cronCheckWeatherRiskV2.__handler(),
+    runUvV2: () => context.exports.cronCheckUvRiskV2.__handler(),
+    runAemetV2: () => context.exports.cronCheckAemetRiskV2.__handler(),
+  };
+}
 
 const validAemetAppCheckHeaders = {
   "content-type": "application/json",
@@ -6887,4 +7152,280 @@ test("Tokyo fixture marks future trend times as local time when timezone differs
   assert.notEqual(trend.direction, "stable");
   assert.equal(shouldShowTrendLocalTime, true);
   assert.equal(seasonalTranslations["riskTrend.localTimeSuffix"] || "(hora local)", "(hora local)");
+});
+
+test("weather V2 combined heat UV updates the shared UV zone level", async () => {
+  const nowMs = Date.UTC(2026, 7, 20, 7);
+  const harness = createFunctionsIndexHarness({
+    nowMs,
+    subs: [{ token: "weather-combined-zone", lat: 39.49, lon: 2.91, lastHeatLevel: 0, lastUvLevel: 0 }],
+  });
+
+  await harness.runWeatherV2();
+
+  const sub = harness.db.getSub("weather-combined-zone");
+  assert.equal(harness.sends.length, 1);
+  assert.equal(harness.sends[0].data.type, "combined");
+  assert.equal(sub.lastHeatLevel, 2);
+  assert.equal(sub.lastUvLevel, 2);
+  assert.equal(sub.lastUvAt, nowMs);
+  assert.equal(sub.uvLevelsByZone["39.5,2.9"], 2);
+  assert.equal(sub.lastUvResetDay, "2026-08-20");
+});
+
+test("weather V2 followed by UV V2 sends only one combined notification for the same episode", async () => {
+  const harness = createFunctionsIndexHarness({
+    nowMs: Date.UTC(2026, 7, 20, 7),
+    subs: [{ token: "weather-before-uv", lat: 39.49, lon: 2.91, lastHeatLevel: 0, lastUvLevel: 0 }],
+  });
+
+  await harness.runWeatherV2();
+  await harness.runUvV2();
+
+  const sub = harness.db.getSub("weather-before-uv");
+  assert.equal(harness.sends.length, 1);
+  assert.equal(harness.sends[0].data.type, "combined");
+  assert.equal(sub.uvLevelsByZone["39.5,2.9"], 2);
+});
+
+test("UV V2 followed by weather V2 sends only one combined notification for the same episode", async () => {
+  const harness = createFunctionsIndexHarness({
+    nowMs: Date.UTC(2026, 7, 20, 7),
+    subs: [
+      {
+        token: "uv-before-weather",
+        lat: 39.49,
+        lon: 2.91,
+        lastHeatLevel: 0,
+        lastUvLevel: 0,
+        lastDailyResetDay: "2026-08-20",
+      },
+    ],
+  });
+
+  await harness.runUvV2();
+  await harness.runWeatherV2();
+
+  const sub = harness.db.getSub("uv-before-weather");
+  assert.equal(harness.sends.length, 1);
+  assert.equal(harness.sends[0].data.type, "combined");
+  assert.equal(sub.lastHeatLevel, 2);
+  assert.equal(sub.uvLevelsByZone["39.5,2.9"], 2);
+});
+
+test("a later real UV increase still sends a legitimate UV escalation", async () => {
+  const harness = createFunctionsIndexHarness({
+    nowMs: Date.UTC(2026, 7, 20, 9),
+    uvi: 8.2,
+    subs: [
+      {
+        token: "uv-escalation",
+        lat: 39.49,
+        lon: 2.91,
+        lastHeatLevel: 2,
+        lastUvLevel: 2,
+        lastUvResetDay: "2026-08-20",
+        uvLevelsByZone: { "39.5,2.9": 2 },
+      },
+    ],
+  });
+
+  await harness.runUvV2();
+
+  const sub = harness.db.getSub("uv-escalation");
+  assert.equal(harness.sends.length, 1);
+  assert.equal(harness.sends[0].data.type, "combined");
+  assert.equal(harness.sends[0].data.uvLevel, "3");
+  assert.equal(sub.uvLevelsByZone["39.5,2.9"], 3);
+});
+
+test("a later real heat increase keeps the existing weather V2 escalation behavior", async () => {
+  const harness = createFunctionsIndexHarness({
+    nowMs: Date.UTC(2026, 7, 20, 9),
+    subs: [
+      {
+        token: "heat-escalation",
+        lat: 39.49,
+        lon: 2.91,
+        lastHeatLevel: 1,
+        lastUvLevel: 2,
+        lastUvResetDay: "2026-08-20",
+        uvLevelsByZone: { "39.5,2.9": 2 },
+      },
+    ],
+  });
+
+  await harness.runWeatherV2();
+
+  const sub = harness.db.getSub("heat-escalation");
+  assert.equal(harness.sends.length, 1);
+  assert.equal(harness.sends[0].data.type, "combined");
+  assert.equal(harness.sends[0].data.heatLevel, "2");
+  assert.equal(sub.lastHeatLevel, 2);
+  assert.equal(sub.uvLevelsByZone["39.5,2.9"], 2);
+});
+
+test("weather V2 heat-only send does not mark UV zone state", async () => {
+  const harness = createFunctionsIndexHarness({
+    nowMs: Date.UTC(2026, 7, 20, 7),
+    uvi: 0,
+    subs: [{ token: "heat-only", lat: 39.49, lon: 2.91, lastHeatLevel: 0 }],
+  });
+
+  await harness.runWeatherV2();
+
+  const sub = harness.db.getSub("heat-only");
+  assert.equal(harness.sends.length, 1);
+  assert.equal(harness.sends[0].data.type, "heat");
+  assert.equal(sub.lastHeatLevel, 2);
+  assert.equal(sub.lastUvLevel, undefined);
+  assert.equal(sub.uvLevelsByZone, undefined);
+});
+
+test("failed weather V2 combined send does not mark heat or UV as notified", async () => {
+  const harness = createFunctionsIndexHarness({
+    nowMs: Date.UTC(2026, 7, 20, 7),
+    sendError: new Error("temporary fcm failure"),
+    subs: [{ token: "failed-combined", lat: 39.49, lon: 2.91, lastHeatLevel: 0, lastUvLevel: 0 }],
+  });
+
+  await harness.runWeatherV2();
+
+  const sub = harness.db.getSub("failed-combined");
+  assert.equal(harness.sends.length, 0);
+  assert.equal(sub.lastHeatLevel, 0);
+  assert.equal(sub.lastUvLevel, 0);
+  assert.equal(sub.uvLevelsByZone, undefined);
+});
+
+test("weather V2 quiet hours do not falsely mark a combined episode as sent", async () => {
+  const harness = createFunctionsIndexHarness({
+    nowMs: Date.UTC(2026, 7, 20, 20),
+    subs: [
+      {
+        token: "quiet-combined",
+        lat: 39.49,
+        lon: 2.91,
+        lastHeatLevel: 0,
+        lastUvLevel: 0,
+        lastDailyResetDay: "2026-08-20",
+      },
+    ],
+  });
+
+  await harness.runWeatherV2();
+
+  const sub = harness.db.getSub("quiet-combined");
+  assert.equal(harness.sends.length, 0);
+  assert.equal(sub.lastHeatLevel, 0);
+  assert.equal(sub.lastUvLevel, 0);
+  assert.equal(sub.uvLevelsByZone, undefined);
+});
+
+test("UV deduplication remains independent by zone", async () => {
+  const harness = createFunctionsIndexHarness({
+    nowMs: Date.UTC(2026, 7, 20, 7),
+    subs: [
+      {
+        token: "zone-change",
+        lat: 40.24,
+        lon: -6.22,
+        lastHeatLevel: 2,
+        lastUvLevel: 0,
+        lastUvResetDay: "2026-08-20",
+        uvLevelsByZone: { "39.5,2.9": 2 },
+      },
+    ],
+  });
+
+  await harness.runUvV2();
+
+  const sub = harness.db.getSub("zone-change");
+  assert.equal(harness.sends.length, 1);
+  assert.equal(harness.sends[0].data.type, "combined");
+  assert.equal(sub.uvLevelsByZone["39.5,2.9"], 2);
+  assert.equal(sub.uvLevelsByZone["40.2,-6.2"], 2);
+});
+
+test("UV V2 daily reset still clears stale UV zone state at 06:00 local and can notify after reset", async () => {
+  const harness = createFunctionsIndexHarness({
+    nowMs: Date.UTC(2026, 7, 20, 7),
+    subs: [
+      {
+        token: "uv-reset",
+        lat: 39.49,
+        lon: 2.91,
+        lastHeatLevel: 2,
+        lastUvLevel: 2,
+        lastUvResetDay: "2026-08-19",
+        uvLevelsByZone: { "39.5,2.9": 2 },
+      },
+    ],
+  });
+
+  await harness.runUvV2();
+
+  const sub = harness.db.getSub("uv-reset");
+  assert.equal(harness.sends.length, 1);
+  assert.equal(harness.sends[0].data.type, "combined");
+  assert.equal(Object.keys(sub.uvLevelsByZone).length, 1);
+  assert.equal(sub.uvLevelsByZone["39.5,2.9"], 2);
+  assert.equal(sub.lastUvResetDay, "2026-08-20");
+});
+
+test("UV-only notifications continue to work without heat", async () => {
+  const harness = createFunctionsIndexHarness({
+    nowMs: Date.UTC(2026, 7, 20, 7),
+    weather: { temp: 24, hum: 50 },
+    subs: [{ token: "uv-only", lat: 39.49, lon: 2.91, lastUvLevel: 0 }],
+  });
+
+  await harness.runUvV2();
+
+  const sub = harness.db.getSub("uv-only");
+  assert.equal(harness.sends.length, 1);
+  assert.equal(harness.sends[0].data.type, "uv");
+  assert.equal(sub.lastUvLevel, 2);
+  assert.equal(sub.uvLevelsByZone["39.5,2.9"], 2);
+});
+
+test("weather V2 cold and wind notifications are unchanged by heat UV dedup state", async () => {
+  const harness = createFunctionsIndexHarness({
+    nowMs: Date.UTC(2026, 0, 20, 8),
+    uvi: 0,
+    weather: { temp: -6, hum: 60, wind: 13 },
+    subs: [
+      {
+        token: "cold-wind",
+        lat: 39.49,
+        lon: 2.91,
+        lastColdLevel: 0,
+        lastWindLevel: 0,
+        uvLevelsByZone: { "39.5,2.9": 2 },
+      },
+    ],
+  });
+
+  await harness.runWeatherV2();
+
+  const sub = harness.db.getSub("cold-wind");
+  assert.deepEqual(
+    harness.sends.map((send) => send.data.type).sort(),
+    ["cold", "wind"]
+  );
+  assert.equal(sub.lastColdLevel, 3);
+  assert.equal(sub.lastWindLevel, 2);
+  assert.equal(Object.keys(sub.uvLevelsByZone).length, 1);
+  assert.equal(sub.uvLevelsByZone["39.5,2.9"], 2);
+});
+
+test("AEMET V2 source remains isolated from heat UV dedup state", () => {
+  const functionsSource = readFileSync(new URL("../../functions/index.js", import.meta.url), "utf8");
+  const start = functionsSource.indexOf("exports.cronCheckAemetRiskV2 = onSchedule");
+  const end = functionsSource.indexOf("exports.sendTestNotification", start);
+  const aemetV2Source = functionsSource.slice(start, end);
+
+  assert.ok(start >= 0);
+  assert.ok(end > start);
+  assert.doesNotMatch(aemetV2Source, /uvLevelsByZone/);
 });

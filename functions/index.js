@@ -76,6 +76,10 @@ function shouldRunDailyReset(nowUtcMs, tzOffsetSec, lastDailyResetDay, resetHour
   };
 }
 
+function makeNotificationZoneKey(lat, lon) {
+  return `${Number(lat).toFixed(1)},${Number(lon).toFixed(1)}`;
+}
+
 // ─────────────────────────────────────────────
 // Neteja de subscripcions velles o invàlides
 // ─────────────────────────────────────────────
@@ -1421,7 +1425,7 @@ exports.cronCheckWeatherRiskV2 = onSchedule(
     const zoneStats = new Map();
 
     function makeZoneKey(lat, lon) {
-      return `${Number(lat).toFixed(1)},${Number(lon).toFixed(1)}`;
+      return makeNotificationZoneKey(lat, lon);
     }
 
     function getZoneStats(zoneKey, place = "") {
@@ -1518,6 +1522,10 @@ exports.cronCheckWeatherRiskV2 = onSchedule(
               let currentLastHeatLevel = Number(sub.lastHeatLevel ?? 0);
               let currentLastColdLevel = Number(sub.lastColdLevel ?? 0);
               let currentLastWindLevel = Number(sub.lastWindLevel ?? 0);
+              let uvLevelsByZone =
+                sub.uvLevelsByZone && typeof sub.uvLevelsByZone === "object"
+                  ? { ...sub.uvLevelsByZone }
+                  : {};
 
               if (shouldReset) {
                 await doc.ref.set(
@@ -1680,11 +1688,14 @@ exports.cronCheckWeatherRiskV2 = onSchedule(
                     },
                   });
 
-                  updates.lastHeatAt = now;
-                  updates.lastHeatLevel = heatInfo.level;
-                  updates.lastUvAt = now;
-                  updates.lastUvLevel = currentUvInfo.level;
-                  updates.lastNotified = now;
+                  updates.lastHeatAt = now;
+                  updates.lastHeatLevel = heatInfo.level;
+                  updates.lastUvAt = now;
+                  updates.lastUvLevel = currentUvInfo.level;
+                  uvLevelsByZone[zoneKey] = currentUvInfo.level;
+                  updates.uvLevelsByZone = uvLevelsByZone;
+                  updates.lastUvResetDay = todayKey;
+                  updates.lastNotified = now;
 
                   heatSent = true;
                   heatCombinedSent = true;
@@ -3540,7 +3551,7 @@ exports.cronCheckUvRiskV2 = onSchedule(
     const zoneStats = new Map();
 
     function makeZoneKey(lat, lon) {
-      return `${Number(lat).toFixed(1)},${Number(lon).toFixed(1)}`;
+      return makeNotificationZoneKey(lat, lon);
     }
 
     function getZoneStats(zoneKey, place = "") {
