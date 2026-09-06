@@ -176,6 +176,15 @@ const functionsCleanupSubs = require("../../functions/cleanupSubs.js") as {
   toMillis: (value: unknown) => number;
 };
 const functionsAemetAlerts = require("../../functions/aemetAlerts.js") as {
+  buildAemetEpisodeKey: (info: any, zoneKey?: string) => string;
+  buildAemetNotifiedState: (options: {
+    info: any;
+    episodeKey: string;
+    notifiedLevel: number;
+    nowMs: number;
+    todayKey?: string;
+  }) => any;
+  buildLegacyAemetEventKey: (info: any) => string;
   getAemetAlertSeverity: (alert: any) => number;
   getAemetLevelFromAlerts: (
     alerts: any[],
@@ -186,8 +195,27 @@ const functionsAemetAlerts = require("../../functions/aemetAlerts.js") as {
     sender: string;
     description: string;
     timing: string;
+    start?: number | null;
+    end?: number | null;
+  };
+  getAemetNotificationDecision: (options: {
+    sub?: any;
+    info: any;
+    zoneKey?: string;
+    nowMs?: number;
+  }) => {
+    shouldNotify: boolean;
+    episodeKey: string;
+    notifiedLevel: number;
+    nextNotifiedLevel: number;
+    reason: string;
   };
   isAemetHeatRelatedAlert: (...values: unknown[]) => boolean;
+  isLegacyAemetEventKeyForEpisode: (
+    legacyKey: string,
+    info: any,
+    nowMs?: number
+  ) => boolean;
 };
 const functionsAemetTranslations = require("../../functions/aemetTranslations.js") as {
   AEMET_TRANSLATION_CACHE_VERSION: string;
@@ -5879,6 +5907,243 @@ test("Cloud Functions and frontend AEMET ordering agree for equivalent scenarios
   assert.equal(backendInfo.event, frontendState.activeAlert?.event);
   assert.equal(backendInfo.level, getAemetAlertSeverity(frontendState.activeAlert || {}));
   assert.equal(backendInfo.timing, "active");
+});
+
+function makeBackendAemetInfo(overrides: Record<string, unknown> = {}) {
+  return {
+    level: 1,
+    event: "Yellow wind warning",
+    sender: "AEMET",
+    description: "Rachas fuertes.",
+    timing: "soon",
+    start: 2_000,
+    end: 3_000,
+    ...overrides,
+  };
+}
+
+function markAemetNotified(sub: any, info: any, zoneKey = "39.5,2.9", nowMs = 2_000_000) {
+  const decision = functionsAemetAlerts.getAemetNotificationDecision({
+    sub,
+    info,
+    zoneKey,
+    nowMs,
+  });
+
+  return {
+    ...sub,
+    ...functionsAemetAlerts.buildAemetNotifiedState({
+      info,
+      episodeKey: decision.episodeKey,
+      notifiedLevel: decision.nextNotifiedLevel,
+      nowMs,
+      todayKey: "2026-09-06",
+    }),
+  };
+}
+
+test("AEMET V2 episode key excludes timing, severity and description text", () => {
+  const soon = makeBackendAemetInfo();
+  const activeEscalatedWithTextChange = makeBackendAemetInfo({
+    level: 3,
+    description: "Rachas fuertes. Actualizado.",
+    timing: "active",
+  });
+
+  assert.equal(
+    functionsAemetAlerts.buildAemetEpisodeKey(soon, "39.5,2.9"),
+    functionsAemetAlerts.buildAemetEpisodeKey(activeEscalatedWithTextChange, "39.5,2.9")
+  );
+});
+
+test("AEMET V2 nearby level 1 alert sends once and soon to active does not resend", () => {
+  const soon = makeBackendAemetInfo({ level: 1, timing: "soon" });
+  const first = functionsAemetAlerts.getAemetNotificationDecision({
+    sub: {},
+    info: soon,
+    zoneKey: "39.5,2.9",
+  });
+
+  assert.equal(first.shouldNotify, true);
+  assert.equal(first.reason, "newEpisode");
+
+  const sub = markAemetNotified({}, soon);
+  const active = makeBackendAemetInfo({ level: 1, timing: "active" });
+  const second = functionsAemetAlerts.getAemetNotificationDecision({
+    sub,
+    info: active,
+    zoneKey: "39.5,2.9",
+  });
+
+  assert.equal(second.shouldNotify, false);
+  assert.equal(second.reason, "repeatedAlert");
+});
+
+test("AEMET V2 same episode sends on real escalation", () => {
+  const sub = markAemetNotified({}, makeBackendAemetInfo({ level: 1 }));
+  const escalated = makeBackendAemetInfo({ level: 2, timing: "active" });
+  const decision = functionsAemetAlerts.getAemetNotificationDecision({
+    sub,
+    info: escalated,
+    zoneKey: "39.5,2.9",
+  });
+
+  assert.equal(decision.shouldNotify, true);
+  assert.equal(decision.reason, "escalatedAlert");
+  assert.equal(decision.nextNotifiedLevel, 2);
+});
+
+test("AEMET V2 downgrade and return to previous notified level does not resend", () => {
+  let sub = markAemetNotified({}, makeBackendAemetInfo({ level: 3 }));
+  const downgraded = makeBackendAemetInfo({ level: 2, timing: "active" });
+  let decision = functionsAemetAlerts.getAemetNotificationDecision({
+    sub,
+    info: downgraded,
+    zoneKey: "39.5,2.9",
+  });
+
+  assert.equal(decision.shouldNotify, false);
+  assert.equal(decision.nextNotifiedLevel, 3);
+  sub = markAemetNotified(sub, downgraded);
+
+  decision = functionsAemetAlerts.getAemetNotificationDecision({
+    sub,
+    info: makeBackendAemetInfo({ level: 3, timing: "active" }),
+    zoneKey: "39.5,2.9",
+  });
+
+  assert.equal(decision.shouldNotify, false);
+});
+
+test("AEMET V2 same text with different start/end is a new episode", () => {
+  const sub = markAemetNotified({}, makeBackendAemetInfo({ level: 1 }));
+  const nextEpisode = makeBackendAemetInfo({ start: 4_000, end: 5_000 });
+  const decision = functionsAemetAlerts.getAemetNotificationDecision({
+    sub,
+    info: nextEpisode,
+    zoneKey: "39.5,2.9",
+  });
+
+  assert.equal(decision.shouldNotify, true);
+  assert.equal(decision.reason, "newEpisode");
+});
+
+test("AEMET V2 daily reset preserves active episode dedup state", () => {
+  const info = makeBackendAemetInfo({ timing: "active" });
+  const subBeforeReset = markAemetNotified({}, info);
+  const subAfterReset = { ...subBeforeReset, lastAemetResetDay: "2026-09-07" };
+  const decision = functionsAemetAlerts.getAemetNotificationDecision({
+    sub: subAfterReset,
+    info,
+    zoneKey: "39.5,2.9",
+  });
+
+  assert.equal(decision.shouldNotify, false);
+});
+
+test("AEMET V2 temporary empty alerts response does not require clearing episode state", () => {
+  const info = makeBackendAemetInfo({ timing: "active" });
+  const sub = markAemetNotified({}, info);
+  const decisionAfterReappearance = functionsAemetAlerts.getAemetNotificationDecision({
+    sub,
+    info,
+    zoneKey: "39.5,2.9",
+  });
+
+  assert.equal(decisionAfterReappearance.shouldNotify, false);
+});
+
+test("AEMET V2 RECENT_UV_COMBINED marks episode as covered and blocks it after 120 minutes", () => {
+  const info = makeBackendAemetInfo({ level: 2 });
+  const covered = markAemetNotified({}, info, "39.5,2.9", 2_000_000);
+  const decisionAfterWindow = functionsAemetAlerts.getAemetNotificationDecision({
+    sub: covered,
+    info,
+    zoneKey: "39.5,2.9",
+    nowMs: 2_000_000 + 121 * 60_000,
+  });
+
+  assert.equal(covered.lastAemetNotifiedLevel, 2);
+  assert.equal(decisionAfterWindow.shouldNotify, false);
+});
+
+test("AEMET V2 escalation after RECENT_UV_COMBINED coverage sends", () => {
+  const covered = markAemetNotified({}, makeBackendAemetInfo({ level: 2 }));
+  const escalated = makeBackendAemetInfo({ level: 3, timing: "active" });
+  const decision = functionsAemetAlerts.getAemetNotificationDecision({
+    sub: covered,
+    info: escalated,
+    zoneKey: "39.5,2.9",
+  });
+
+  assert.equal(decision.shouldNotify, true);
+  assert.equal(decision.reason, "escalatedAlert");
+});
+
+test("AEMET V2 send error leaves state unchanged until successful send state is built", () => {
+  const sub = {};
+  const info = makeBackendAemetInfo();
+  const decision = functionsAemetAlerts.getAemetNotificationDecision({
+    sub,
+    info,
+    zoneKey: "39.5,2.9",
+  });
+
+  assert.equal(decision.shouldNotify, true);
+  assert.deepEqual(sub, {});
+});
+
+test("AEMET V2 legacy key compatibility avoids rollout resend for same episode", () => {
+  const info = makeBackendAemetInfo({ timing: "active", start: 2_000, end: 3_000 });
+  const legacySoonKey = functionsAemetAlerts.buildLegacyAemetEventKey({
+    ...info,
+    timing: "soon",
+  });
+  const decision = functionsAemetAlerts.getAemetNotificationDecision({
+    sub: {
+      lastAemetEventKey: legacySoonKey,
+      lastAemetLevel: 1,
+      lastAemetAt: 2_100_000,
+    },
+    info,
+    zoneKey: "39.5,2.9",
+  });
+
+  assert.equal(decision.shouldNotify, false);
+  assert.equal(decision.reason, "repeatedAlert");
+});
+
+test("AEMET V2 legacy compatibility does not block a real later episode", () => {
+  const previous = makeBackendAemetInfo({ start: 2_000, end: 3_000, timing: "soon" });
+  const current = makeBackendAemetInfo({ start: 20_000, end: 21_000, timing: "soon" });
+  const decision = functionsAemetAlerts.getAemetNotificationDecision({
+    sub: {
+      lastAemetEventKey: functionsAemetAlerts.buildLegacyAemetEventKey(previous),
+      lastAemetLevel: 1,
+      lastAemetAt: 2_100_000,
+    },
+    info: current,
+    zoneKey: "39.5,2.9",
+  });
+
+  assert.equal(decision.shouldNotify, true);
+  assert.equal(decision.reason, "newEpisode");
+});
+
+test("AEMET V2 zone is part of episode identity", () => {
+  const info = makeBackendAemetInfo();
+  const sub = markAemetNotified({}, info, "39.5,2.9");
+  const decision = functionsAemetAlerts.getAemetNotificationDecision({
+    sub,
+    info,
+    zoneKey: "39.6,3.0",
+  });
+
+  assert.equal(decision.shouldNotify, true);
+  assert.notEqual(
+    functionsAemetAlerts.buildAemetEpisodeKey(info, "39.5,2.9"),
+    functionsAemetAlerts.buildAemetEpisodeKey(info, "39.6,3.0")
+  );
 });
 
 test("Cloud Functions heat suppression keeps official heat alerts blocking ThermoSafe heat", () => {

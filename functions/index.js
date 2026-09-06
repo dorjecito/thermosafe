@@ -12,7 +12,9 @@ const {
   fetchTrackedOpenWeather,
 } = require("./apiUsage");
 const {
+  buildAemetNotifiedState,
   getAemetLevelFromAlerts,
+  getAemetNotificationDecision,
   isAemetHeatRelatedAlert,
 } = require("./aemetAlerts");
 const { handleAemetTranslationRequest } = require("./aemetTranslations");
@@ -2787,16 +2789,6 @@ exports.cronCheckAemetRiskV2 = onSchedule(
       return `${Number(lat).toFixed(1)},${Number(lon).toFixed(1)}`;
     }
 
-    function makeAemetEventKey(info) {
-      return [
-        info.level ?? 0,
-        info.event ?? "",
-        info.sender ?? "",
-        info.timing ?? "",
-        String(info.description ?? "").slice(0, 120),
-      ].join("|");
-    }
-
     function getZoneStats(zoneKey, place = "") {
       if (!zoneStats.has(zoneKey)) {
         zoneStats.set(zoneKey, {
@@ -2860,21 +2852,10 @@ exports.cronCheckAemetRiskV2 = onSchedule(
             { merge: true }
           );
 
-          await doc.ref.set(
-            {
-              lastAemetLevel: 0,
-              lastAemetEvent: "",
-              lastAemetSender: "",
-              lastAemetEventKey: "",
-              lastAemetAt: now,
-            },
-            { merge: true }
-          );
-
           stats.tokensSkipped++;
           stats.reasons.noAlerts++;
 
-          console.log("[AEMET V2][ZONE SAVE NO ALERT][SUB RESET]", {
+          console.log("[AEMET V2][ZONE SAVE NO ALERT][KEEP SUB STATE]", {
             docId: doc.id,
             zoneKey,
             level: 0,
@@ -2918,9 +2899,6 @@ exports.cronCheckAemetRiskV2 = onSchedule(
 
         if (!stats.place && place) stats.place = place;
 
-        const eventKey = makeAemetEventKey(info);
-        let prevEventKey = sub.lastAemetEventKey || "";
-
         const { shouldReset, todayKey } = shouldRunDailyReset(
           now,
           w.tzOffset,
@@ -2929,13 +2907,8 @@ exports.cronCheckAemetRiskV2 = onSchedule(
         );
 
         if (shouldReset) {
-          prevEventKey = "";
-
           await doc.ref.set(
             {
-              lastAemetEventKey: "",
-              lastAemetLevel: 0,
-              lastAemetAt: 0,
               lastAemetResetDay: todayKey,
             },
             { merge: true }
@@ -2951,6 +2924,13 @@ exports.cronCheckAemetRiskV2 = onSchedule(
           });
         }
 
+        const decision = getAemetNotificationDecision({
+          sub,
+          info,
+          zoneKey,
+          nowMs: now,
+        });
+
         const recentUvCombinedSnap = await db
           .collection("notificationState")
           .doc("aemetContextByZone")
@@ -2962,14 +2942,32 @@ exports.cronCheckAemetRiskV2 = onSchedule(
           ? recentUvCombinedSnap.data() || {}
           : null;
         const lastUvCombinedAt = Number(recentUvCombined?.sentAt ?? 0);
+        const uvCombinedWasSent =
+          recentUvCombined?.source === "uvCombined" &&
+          recentUvCombined?.reason === "uvWithAemet" &&
+          lastUvCombinedAt > 0;
         const minutesSince =
           lastUvCombinedAt > 0 ? (now - lastUvCombinedAt) / 60000 : null;
 
         if (
+          uvCombinedWasSent &&
+          decision.episodeKey &&
+          decision.reason !== "escalatedAlert" &&
           typeof minutesSince === "number" &&
           minutesSince >= 0 &&
           minutesSince < 120
         ) {
+          await doc.ref.set(
+            buildAemetNotifiedState({
+              info,
+              episodeKey: decision.episodeKey,
+              notifiedLevel: decision.nextNotifiedLevel,
+              nowMs: now,
+              todayKey,
+            }),
+            { merge: true }
+          );
+
           stats.tokensSkipped++;
           stats.reasons.suppressedByRecentUvCombined++;
 
@@ -2984,7 +2982,7 @@ exports.cronCheckAemetRiskV2 = onSchedule(
           return;
         }
 
-        if (prevEventKey === eventKey) {
+        if (!decision.shouldNotify) {
           stats.tokensSkipped++;
           stats.reasons.repeatedAlert++;
 
@@ -3004,13 +3002,14 @@ exports.cronCheckAemetRiskV2 = onSchedule(
 
           await doc.ref.set(
             {
-              lastAemetAt: now,
+              ...buildAemetNotifiedState({
+                info,
+                episodeKey: decision.episodeKey,
+                notifiedLevel: decision.nextNotifiedLevel,
+                nowMs: now,
+                todayKey,
+              }),
               lastNotified: now,
-              lastAemetLevel: info.level,
-              lastAemetEvent: info.event || "",
-              lastAemetSender: info.sender || "",
-              lastAemetEventKey: eventKey,
-              lastAemetResetDay: todayKey,
             },
             { merge: true }
           );
