@@ -479,6 +479,7 @@ function createFunctionsIndexHarness(options: {
   }>;
   uvi?: number;
   sendError?: Error;
+  beforeSend?: () => void;
   nowMs?: number;
 }) {
   const db = createMockFunctionsDb(options.subs);
@@ -501,6 +502,7 @@ function createFunctionsIndexHarness(options: {
     appCheck: () => ({ verifyToken: async () => ({ appId: "test" }) }),
     messaging: () => ({
       send: async (payload: any) => {
+        options.beforeSend?.();
         if (options.sendError) throw options.sendError;
         sends.push(payload);
         return `message-${sends.length}`;
@@ -592,7 +594,7 @@ function createFunctionsIndexHarness(options: {
         return { onRequest: (_opts: unknown, handler: unknown) => ({ __handler: handler }) };
       }
       if (id === "firebase-functions/v2/scheduler") {
-        return { onSchedule: (_opts: unknown, handler: unknown) => ({ __handler: handler }) };
+        return { onSchedule: (opts: unknown, handler: unknown) => ({ __handler: handler, __options: opts }) };
       }
       if (id === "firebase-functions/params") {
         return { defineSecret: () => ({ value: () => "test-secret" }) };
@@ -7419,6 +7421,84 @@ test("Tokyo fixture marks future trend times as local time when timezone differs
   assert.equal(seasonalTranslations["riskTrend.localTimeSuffix"] || "(hora local)", "(hora local)");
 });
 
+test("UV and Weather V2 use staggered Madrid schedules without changing AEMET", () => {
+  const { exports } = createFunctionsIndexHarness({ subs: [] });
+  assert.equal(exports.cronCheckUvRiskV2.__options.schedule, "11 * * * *");
+  assert.equal(exports.cronCheckWeatherRiskV2.__options.schedule, "16 * * * *");
+  assert.equal(exports.cronCheckAemetRiskV2.__options.schedule, "every 60 minutes");
+  for (const name of ["cronCheckUvRiskV2", "cronCheckWeatherRiskV2", "cronCheckAemetRiskV2"]) {
+    assert.equal(exports[name].__options.timeZone, "Europe/Madrid");
+    assert.equal(exports[name].__options.region, "europe-west1");
+  }
+});
+
+test("UV combined records heat only after successful FCM", async () => {
+  const nowMs = Date.UTC(2026, 7, 20, 7, 11);
+  let checkedBeforeSend = false;
+  const harness = createFunctionsIndexHarness({
+    nowMs,
+    subs: [{ token: "uv-send-order", lat: 39.49, lon: 2.91, lastHeatLevel: 0, lastHeatAt: 123 }],
+    beforeSend: () => {
+      const sub = harness.db.getSub("uv-send-order");
+      assert.equal(sub.lastHeatLevel, 0);
+      assert.equal(sub.lastHeatAt, 123);
+      checkedBeforeSend = true;
+    },
+  });
+  await harness.runUvV2();
+  assert.equal(checkedBeforeSend, true);
+  assert.equal(harness.sends.length, 1);
+  const sub = harness.db.getSub("uv-send-order");
+  assert.equal(sub.lastHeatLevel, Number(harness.sends[0].data.heatLevel));
+  assert.equal(sub.lastHeatAt, nowMs);
+});
+
+test("failed UV FCM preserves notification state and Weather sends five minutes later", async () => {
+  const initial = {
+    token: "uv-failure", lat: 39.49, lon: 2.91,
+    lastHeatLevel: 0, lastHeatAt: 123, lastUvLevel: 1, lastUvAt: 456,
+    lastUvResetDay: "2026-08-20", lastDailyResetDay: "2026-08-20",
+    uvLevelsByZone: { "39.5,2.9": 1 },
+  };
+  const options = {
+    nowMs: Date.UTC(2026, 7, 20, 7, 11),
+    sendError: new Error("temporary fcm failure") as Error | undefined,
+    subs: [initial],
+  };
+  const harness = createFunctionsIndexHarness(options);
+  await harness.runUvV2();
+  const failed = harness.db.getSub(initial.token);
+  assert.equal(harness.sends.length, 0);
+  for (const key of ["lastHeatLevel", "lastHeatAt", "lastUvLevel", "lastUvAt"] as const) {
+    assert.equal(failed[key], initial[key]);
+  }
+  assert.equal(failed.uvLevelsByZone["39.5,2.9"], 1);
+  options.sendError = undefined;
+  options.nowMs += 5 * 60 * 1000;
+  await harness.runWeatherV2();
+  assert.equal(harness.sends.length, 1);
+  assert.equal(harness.db.getSub(initial.token).lastHeatLevel, 2);
+  assert.equal(harness.db.getSub(initial.token).lastHeatAt, options.nowMs);
+});
+
+test("UV without an increase leaves heat available for Weather five minutes later", async () => {
+  const options = {
+    nowMs: Date.UTC(2026, 7, 20, 7, 11),
+    subs: [{ token: "uv-skipped", lat: 39.49, lon: 2.91,
+      lastHeatLevel: 0, lastHeatAt: 123, lastUvLevel: 2,
+      lastUvResetDay: "2026-08-20", lastDailyResetDay: "2026-08-20" }],
+  };
+  const harness = createFunctionsIndexHarness(options);
+  await harness.runUvV2();
+  assert.equal(harness.sends.length, 0);
+  assert.equal(harness.db.getSub("uv-skipped").lastHeatLevel, 0);
+  assert.equal(harness.db.getSub("uv-skipped").lastHeatAt, 123);
+  options.nowMs += 5 * 60 * 1000;
+  await harness.runWeatherV2();
+  assert.equal(harness.sends.length, 1);
+  assert.equal(harness.db.getSub("uv-skipped").lastHeatLevel, 2);
+});
+
 test("weather V2 combined heat UV updates the shared UV zone level", async () => {
   const nowMs = Date.UTC(2026, 7, 20, 7);
   const harness = createFunctionsIndexHarness({
@@ -7454,8 +7534,8 @@ test("weather V2 followed by UV V2 sends only one combined notification for the 
 });
 
 test("UV V2 followed by weather V2 sends only one combined notification for the same episode", async () => {
-  const harness = createFunctionsIndexHarness({
-    nowMs: Date.UTC(2026, 7, 20, 7),
+  const options = {
+    nowMs: Date.UTC(2026, 7, 20, 7, 11),
     subs: [
       {
         token: "uv-before-weather",
@@ -7466,16 +7546,119 @@ test("UV V2 followed by weather V2 sends only one combined notification for the 
         lastDailyResetDay: "2026-08-20",
       },
     ],
-  });
+  };
+  const harness = createFunctionsIndexHarness(options);
 
   await harness.runUvV2();
+  const uvSentAt = options.nowMs;
+  options.nowMs += 5 * 60 * 1000;
   await harness.runWeatherV2();
 
   const sub = harness.db.getSub("uv-before-weather");
   assert.equal(harness.sends.length, 1);
   assert.equal(harness.sends[0].data.type, "combined");
   assert.equal(sub.lastHeatLevel, 2);
+  assert.equal(sub.lastHeatAt, uvSentAt);
+  assert.equal(sub.lastUvLevel, 2);
+  assert.equal(sub.lastUvAt, uvSentAt);
   assert.equal(sub.uvLevelsByZone["39.5,2.9"], 2);
+});
+
+test("pending Weather daily reset preserves today's combined UV heat", async (t) => {
+  for (const lastDailyResetDay of [undefined, "2026-08-19"]) {
+    await t.test(`reset key ${lastDailyResetDay ?? "absent"}`, async () => {
+      const options = {
+        nowMs: Date.UTC(2026, 7, 20, 7, 11),
+        subs: [{ token: "pending-reset", lat: 39.49, lon: 2.91,
+          lastDailyResetDay, lastHeatLevel: 0, lastColdLevel: 3, lastWindLevel: 2 }],
+      };
+      const harness = createFunctionsIndexHarness(options);
+      await harness.runUvV2();
+      assert.equal(harness.sends.length, 1);
+      assert.equal(harness.sends[0].data.type, "combined");
+      const notified = { ...harness.db.getSub("pending-reset") };
+      assert.equal(notified.lastHeatLevel, 2);
+      assert.equal(notified.lastHeatAt, options.nowMs);
+
+      options.nowMs += 5 * 60 * 1000;
+      await harness.runWeatherV2();
+
+      const sub = harness.db.getSub("pending-reset");
+      assert.equal(harness.sends.length, 1);
+      assert.equal(sub.lastDailyResetDay, "2026-08-20");
+      assert.equal(sub.lastHeatLevel, notified.lastHeatLevel);
+      assert.equal(sub.lastHeatAt, notified.lastHeatAt);
+      assert.equal(sub.lastUvLevel, notified.lastUvLevel);
+      assert.equal(sub.lastUvAt, notified.lastUvAt);
+      assert.deepEqual(sub.uvLevelsByZone, notified.uvLevelsByZone);
+      assert.equal(sub.lastColdLevel, 0);
+      assert.equal(sub.lastWindLevel, 0);
+    });
+  }
+});
+
+test("Weather heat reset uses the local day rather than the UTC date", async () => {
+  // 22:30 UTC yesterday is 00:30 today at the token's +02:00 offset.
+  const lastHeatAt = Date.UTC(2026, 7, 19, 22, 30);
+  const harness = createFunctionsIndexHarness({
+    nowMs: Date.UTC(2026, 7, 20, 7, 16),
+    subs: [{ token: "local-heat-day", lat: 39.49, lon: 2.91,
+      lastHeatLevel: 2, lastHeatAt, lastDailyResetDay: "2026-08-19" }],
+  });
+  await harness.runWeatherV2();
+  const sub = harness.db.getSub("local-heat-day");
+  assert.equal(harness.sends.length, 0);
+  assert.equal(sub.lastHeatLevel, 2);
+  assert.equal(sub.lastHeatAt, lastHeatAt);
+  assert.equal(sub.lastDailyResetDay, "2026-08-20");
+});
+
+test("Weather resets old or missing heat notification state and can notify today", async (t) => {
+  for (const lastHeatAt of [Date.UTC(2026, 7, 19, 21, 59), null, undefined]) {
+    await t.test(`lastHeatAt ${lastHeatAt}`, async () => {
+      const nowMs = Date.UTC(2026, 7, 20, 7, 16);
+      const harness = createFunctionsIndexHarness({
+        nowMs,
+        subs: [{ token: "old-heat-day", lat: 39.49, lon: 2.91,
+          lastHeatLevel: 2, lastHeatAt, lastDailyResetDay: "2026-08-19" }],
+      });
+      await harness.runWeatherV2();
+      const reset = harness.db.writes.find((write) =>
+        write.path === "subs/old-heat-day" && write.data.lastDailyResetDay);
+      assert.ok(reset);
+      assert.equal(reset.data.lastHeatLevel, 0);
+      assert.equal(reset.data.lastDailyResetDay, "2026-08-20");
+      assert.equal(harness.sends.length, 1);
+      const sub = harness.db.getSub("old-heat-day");
+      assert.equal(sub.lastHeatLevel, 2);
+      assert.equal(sub.lastHeatAt, nowMs);
+    });
+  }
+});
+
+test("Weather daily reset still allows cold and wind notifications with today's heat preserved", async () => {
+  const nowMs = Date.UTC(2026, 0, 20, 8, 16);
+  const lastHeatAt = nowMs - 5 * 60 * 1000;
+  const harness = createFunctionsIndexHarness({
+    nowMs, uvi: 0,
+    weather: { temp: -6, hum: 60, wind: 13 },
+    subs: [{ token: "cold-wind-reset", lat: 39.49, lon: 2.91,
+      lastHeatLevel: 2, lastHeatAt, lastColdLevel: 3, lastWindLevel: 2,
+      lastDailyResetDay: "2026-01-19" }],
+  });
+  await harness.runWeatherV2();
+  const reset = harness.db.writes.find((write) =>
+    write.path === "subs/cold-wind-reset" && write.data.lastDailyResetDay);
+  assert.ok(reset);
+  assert.equal(reset.data.lastColdLevel, 0);
+  assert.equal(reset.data.lastWindLevel, 0);
+  assert.deepEqual(harness.sends.map((send) => send.data.type).sort(), ["cold", "wind"]);
+  const sub = harness.db.getSub("cold-wind-reset");
+  assert.equal(sub.lastDailyResetDay, "2026-01-20");
+  assert.equal(sub.lastHeatLevel, 2);
+  assert.equal(sub.lastHeatAt, lastHeatAt);
+  assert.equal(sub.lastColdLevel, 3);
+  assert.equal(sub.lastWindLevel, 2);
 });
 
 test("a later real UV increase still sends a legitimate UV escalation", async () => {
@@ -7642,7 +7825,7 @@ test("UV-only notifications continue to work without heat", async () => {
   const harness = createFunctionsIndexHarness({
     nowMs: Date.UTC(2026, 7, 20, 7),
     weather: { temp: 24, hum: 50 },
-    subs: [{ token: "uv-only", lat: 39.49, lon: 2.91, lastUvLevel: 0 }],
+    subs: [{ token: "uv-only", lat: 39.49, lon: 2.91, lastUvLevel: 0, lastHeatLevel: 2, lastHeatAt: 123 }],
   });
 
   await harness.runUvV2();
@@ -7651,6 +7834,8 @@ test("UV-only notifications continue to work without heat", async () => {
   assert.equal(harness.sends.length, 1);
   assert.equal(harness.sends[0].data.type, "uv");
   assert.equal(sub.lastUvLevel, 2);
+  assert.equal(sub.lastHeatLevel, 2);
+  assert.equal(sub.lastHeatAt, 123);
   assert.equal(sub.uvLevelsByZone["39.5,2.9"], 2);
 });
 

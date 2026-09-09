@@ -1407,7 +1407,7 @@ async function getCachedUV(lat, lon) {
 
 exports.cronCheckWeatherRiskV2 = onSchedule(
   {
-    schedule: "every 60 minutes",
+    schedule: "16 * * * *",
     timeZone: "Europe/Madrid",
     region: REGION,
     secrets: [OPENWEATHER_KEY],
@@ -1530,9 +1530,16 @@ exports.cronCheckWeatherRiskV2 = onSchedule(
                   : {};
 
               if (shouldReset) {
+                const lastHeatAt = Number(sub.lastHeatAt ?? 0);
+                // UV may have already notified heat before Weather's daily reset.
+                const heatNotifiedToday =
+                  Number.isFinite(lastHeatAt) &&
+                  lastHeatAt > 0 &&
+                  makeLocalDayKey(lastHeatAt, w.tzOffset) === todayKey;
+
                 await doc.ref.set(
                   {
-                    lastHeatLevel: 0,
+                    ...(heatNotifiedToday ? {} : { lastHeatLevel: 0 }),
                     lastColdLevel: 0,
                     lastWindLevel: 0,
                     lastDailyResetDay: todayKey,
@@ -1540,7 +1547,7 @@ exports.cronCheckWeatherRiskV2 = onSchedule(
                   { merge: true }
                 );
 
-                currentLastHeatLevel = 0;
+                if (!heatNotifiedToday) currentLastHeatLevel = 0;
                 currentLastColdLevel = 0;
                 currentLastWindLevel = 0;
 
@@ -3529,7 +3536,7 @@ exports.runUvNowV2 = onRequest(
 
 exports.cronCheckUvRiskV2 = onSchedule(
   {
-    schedule: "every 60 minutes",
+    schedule: "11 * * * *",
     timeZone: "Europe/Madrid",
     region: REGION,
     secrets: [OPENUV_KEY, OPENWEATHER_KEY],
