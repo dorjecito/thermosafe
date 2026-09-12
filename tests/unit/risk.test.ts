@@ -468,6 +468,7 @@ function createMockFunctionsDb(initialSubs: MockSubData[]) {
 
 function createFunctionsIndexHarness(options: {
   subs: MockSubData[];
+  source?: string;
   weather?: Partial<{
     temp: number;
     hum: number;
@@ -627,13 +628,15 @@ function createFunctionsIndexHarness(options: {
   context.global = context;
   context.module.exports = context.exports;
 
-  const source = readFileSync(new URL("../../functions/index.js", import.meta.url), "utf8");
+  const source = options.source ?? readFileSync(new URL("../../functions/index.js", import.meta.url), "utf8");
   vm.runInNewContext(source, context, { filename: "functions/index.js" });
 
   return {
     db,
     sends,
+    weather,
     exports: context.exports,
+    buildCombinedRiskMessage: (input: any) => context.buildCombinedRiskMessage(input),
     runWeatherV2: () => context.exports.cronCheckWeatherRiskV2.__handler(),
     runUvV2: () => context.exports.cronCheckUvRiskV2.__handler(),
     runAemetV2: () => context.exports.cronCheckAemetRiskV2.__handler(),
@@ -6550,7 +6553,7 @@ test("night heat status avoids daytime shade advice", () => {
     "officialAdviceDynamic.heat.moderate": "Evita esforços intensos i busca ombra regularment.",
     "primaryStatus.heat.tropicalNight": "Nit tropical",
     "primaryStatus.heat.tropicalNightText":
-      "La temperatura continua elevada durant la nit, fet que pot dificultar el descans i la recuperació tèrmica.",
+      "La temperatura nocturna es manté per damunt dels 20 °C.",
   };
 
   const result = getPrimaryStatusBlock({
@@ -6569,7 +6572,7 @@ test("night heat status avoids daytime shade advice", () => {
   });
 
   assert.equal(result.title, "Nit tropical");
-  assert.match(result.text, /nit/i);
+  assert.equal(result.text, "La temperatura nocturna es manté per damunt dels 20 °C.");
   assert.doesNotMatch(result.text, /ombra/i);
   assert.doesNotMatch(result.text, /sol/i);
   assert.notEqual(result.title, "Nit calorosa");
@@ -6595,8 +6598,7 @@ test("tropical night is not presented as safe primary status", () => {
   assert.equal(result.title, "Nit tropical");
   assert.notEqual(result.title, "Condicions segures");
   assert.notEqual(result.title, "Nit calorosa");
-  assert.match(result.text, /nit/i);
-  assert.match(result.text, /calor|nit|recuperació/i);
+  assert.equal(result.text, "La temperatura nocturna es manté per damunt dels 20 °C.");
 });
 
 test("torrid night is distinct from tropical night in primary status", () => {
@@ -6638,7 +6640,7 @@ test("night recommendations are action-focused and do not repeat primary descrip
     "utf8"
   );
 
-  assert.match(recommendationsSource, /Ventila els espais abans d.anar a dormir/);
+  assert.match(recommendationsSource, /Mantén una bona ventilació i hidrata.t amb normalitat/);
   assert.match(recommendationsSource, /Refresca i ventila els espais/);
   assert.match(recommendationsSource, /factorTropicalNight:\s*"Nit tropical"/);
   assert.match(recommendationsSource, /factorTorridNight:\s*"Nit tòrrida"/);
@@ -6647,7 +6649,7 @@ test("night recommendations are action-focused and do not repeat primary descrip
   assert.doesNotMatch(recommendationsSource, /clean\.length\s*<=\s*1/);
   assert.doesNotMatch(
     recommendationsSource,
-    /tropicalNight:\s*["']La temperatura continua elevada durant la nit/
+    /tropicalNight:\s*["']La temperatura nocturna es manté/
   );
   assert.doesNotMatch(
     recommendationsSource,
@@ -6901,7 +6903,7 @@ const seasonalTranslations: Record<string, string> = {
   "primaryStatus.heat.hotNightText":
     "La calor acumulada durant la nit pot dificultar el descans i la recuperació tèrmica. Hidrata't i evita esforços físics intensos fins que refresqui.",
   "primaryStatus.heat.tropicalNightText":
-    "La temperatura continua elevada durant la nit, fet que pot dificultar el descans i la recuperació tèrmica.",
+    "La temperatura nocturna es manté per damunt dels 20 °C.",
   "primaryStatus.heat.torridNightText":
     "La temperatura es manté molt elevada durant la nit i pot dificultar notablement el descans i la recuperació tèrmica.",
   "primaryStatus.heat.moderateLateDayText":
@@ -7878,4 +7880,127 @@ test("AEMET V2 source remains isolated from heat UV dedup state", () => {
   assert.ok(start >= 0);
   assert.ok(end > start);
   assert.doesNotMatch(aemetV2Source, /uvLevelsByZone/);
+});
+
+const combinedEscalationTitles = {
+  ca: ["Augmenta el risc UV – ThermoSafe", "Augmenta el risc de calor – ThermoSafe"],
+  es: ["Aumenta el riesgo UV – ThermoSafe", "Aumenta el riesgo por calor – ThermoSafe"],
+  eu: ["UV arriskua handitu da – ThermoSafe", "Bero-arriskua handitu da – ThermoSafe"],
+  gl: ["Aumenta o risco UV – ThermoSafe", "Aumenta o risco por calor – ThermoSafe"],
+  en: ["UV risk has increased – ThermoSafe", "Heat risk has increased – ThermoSafe"],
+};
+
+// JSON normalizes objects from separate VM contexts before comparing payloads/state.
+const plainNotificationValue = (value: any) => JSON.parse(JSON.stringify(value));
+
+test("combined escalation presentation changes only title in all five languages", () => {
+  const harness = createFunctionsIndexHarness({ subs: [] });
+  for (const [lang, titles] of Object.entries(combinedEscalationTitles)) {
+    for (const [index, increasedRisk] of ["uv", "heat"].entries()) {
+      const input = { lang, uvInfo: { level: 2 }, uvi: 6.2, heatInfo: { level: 2 }, hi: 35, aemetLevel: 0 };
+      const baseline = plainNotificationValue(harness.buildCombinedRiskMessage(input));
+      const changed = plainNotificationValue(harness.buildCombinedRiskMessage({ ...input, increasedRisk }));
+      assert.equal(changed.title, titles[index]);
+      assert.deepEqual({ ...changed, title: baseline.title }, baseline);
+      for (const context of [
+        { aemetLevel: 2 },
+        { heatInfo: { level: 0 } },
+        { uvInfo: { level: 0 } },
+      ]) {
+        assert.deepEqual(
+          plainNotificationValue(harness.buildCombinedRiskMessage({ ...input, ...context, increasedRisk })),
+          plainNotificationValue(harness.buildCombinedRiskMessage({ ...input, ...context })),
+        );
+      }
+      for (const increasedRisk of [null, "unknown"]) {
+        assert.deepEqual(plainNotificationValue(harness.buildCombinedRiskMessage({ ...input, increasedRisk })), baseline);
+      }
+    }
+  }
+});
+
+test("combined titles preserve sends and Firestore state against previous presentation", async (t) => {
+  const source = readFileSync(new URL("../../functions/index.js", import.meta.url), "utf8");
+  // An optional saved pre-change source permits a full before/after comparison.
+  // Otherwise preserve the old presentation by omitting the new optional argument.
+  const baselineSource = process.env.THERMOSAFE_TITLE_BASELINE
+    ? readFileSync(process.env.THERMOSAFE_TITLE_BASELINE, "utf8")
+    : source + `\nconst currentCombinedMessage = buildCombinedRiskMessage;
+        buildCombinedRiskMessage = ({ increasedRisk, ...input }) => currentCombinedMessage(input);`;
+  const generic = "Riscos combinats – ThermoSafe";
+  const [uvTitle, heatTitle] = combinedEscalationTitles.ca;
+  const scenarios = [
+    { name: "UV 1 -> 2", steps: ["uv"], uv: 1, heat: 2, titles: [uvTitle] },
+    { name: "heat 1 -> 2", steps: ["weather"], uv: 2, heat: 1, titles: [heatTitle] },
+    { name: "UV 0 -> 1", steps: ["uv"], uv: 0, heat: 2, uvi: 3.2, titles: [generic] },
+    { name: "heat 0 -> 1", steps: ["weather"], uv: 2, heat: 0, temp: 28, titles: [generic] },
+    { name: "stable UV with numeric variation", steps: ["uv", "uv"], uv: 2, heat: 2, uvi: 6.2, nextUvi: 7.2, titles: [] },
+    { name: "stable heat with numeric variation", steps: ["weather", "weather"], uv: 2, heat: 2, temp: 32, nextTemp: 33, titles: [] },
+    { name: "UV decrease", steps: ["uv"], uv: 3, heat: 2, titles: [] },
+    { name: "heat decrease", steps: ["weather"], uv: 2, heat: 3, titles: [] },
+    { name: "AEMET priority", steps: ["uv"], uv: 1, heat: 2, aemet: true, titles: ["🚨 ThermoSafe — Avís oficial actiu"] },
+    { name: "Weather -> UV", steps: ["weather", "uv"], uv: 1, heat: 1, titles: [heatTitle] },
+    { name: "UV -> Weather", steps: ["uv", "weather"], uv: 1, heat: 1, titles: [uvTitle] },
+    { name: "daily UV reset", steps: ["uv", "weather"], uv: 3, heat: 3, reset: true, titles: [generic] },
+    { name: "daily Weather reset", steps: ["weather", "uv"], uv: 3, heat: 3, reset: true, titles: [generic] },
+    { name: "UV FCM failure", steps: ["uv"], uv: 1, heat: 2, fail: true, titles: [] },
+    { name: "Weather FCM failure", steps: ["weather"], uv: 2, heat: 1, fail: true, titles: [] },
+  ];
+  for (const scenario of scenarios) {
+    await t.test(scenario.name, async () => {
+      async function run(source: string) {
+        const options = {
+          source,
+          nowMs: Date.UTC(2026, 7, 20, 7, 11),
+          uvi: scenario.uvi ?? 7,
+          weather: { temp: scenario.temp ?? 33 },
+          sendError: scenario.fail ? new Error("temporary fcm failure") : undefined,
+          subs: [{ token: "title-regression", lat: 39.49, lon: 2.91,
+            lastHeatLevel: scenario.heat, lastUvLevel: scenario.uv,
+            uvLevelsByZone: { "39.5,2.9": scenario.uv },
+            lastDailyResetDay: scenario.reset ? "2026-08-19" : "2026-08-20",
+            lastUvResetDay: scenario.reset ? "2026-08-19" : "2026-08-20" }],
+        };
+        const harness = createFunctionsIndexHarness(options);
+        if (scenario.aemet) {
+          await harness.db.collection("aemetZones").doc("39.5,2.9").set({
+            level: 2, event: "Heat", updatedAt: options.nowMs,
+          });
+        }
+        for (const [index, step] of scenario.steps.entries()) {
+          if (index > 0) {
+            // Expire the 45-minute caches when exercising changed measurements.
+            options.nowMs += (scenario.nextUvi !== undefined || scenario.nextTemp !== undefined ? 60 : 5) * 60 * 1000;
+            options.uvi = scenario.nextUvi ?? options.uvi;
+            harness.weather.temp = scenario.nextTemp ?? harness.weather.temp;
+          }
+          if (step === "uv") await harness.runUvV2();
+          else await harness.runWeatherV2();
+        }
+        if (scenario.nextUvi !== undefined) {
+          assert.deepEqual(harness.db.writes.filter((write) => write.path.startsWith("uvCache/"))
+            .map((write) => write.data.uvi), [scenario.uvi, scenario.nextUvi]);
+        }
+        if (scenario.nextTemp !== undefined) {
+          assert.deepEqual(harness.db.writes.filter((write) => write.path.startsWith("weatherCache/"))
+            .map((write) => write.data.weather.temp), [scenario.temp, scenario.nextTemp]);
+        }
+        return plainNotificationValue({
+          sends: harness.sends, writes: harness.db.writes, deletes: harness.db.deletes,
+          sub: harness.db.getSub("title-regression"),
+        });
+      }
+      const baseline = await run(baselineSource);
+      const actual = await run(source);
+      assert.deepEqual(actual.sends.map((send: any) => send.data.title), scenario.titles);
+      assert.equal(actual.sends.length, baseline.sends.length);
+      assert.deepEqual(actual.writes, baseline.writes);
+      assert.deepEqual(actual.deletes, baseline.deletes);
+      assert.deepEqual(actual.sub, baseline.sub);
+      const normalizedSends = actual.sends.map((send: any, index: number) => ({
+        ...send, data: { ...send.data, title: baseline.sends[index].data.title },
+      }));
+      assert.deepEqual(normalizedSends, baseline.sends);
+    });
+  }
 });

@@ -274,7 +274,7 @@ const TXT: TxtDict = {
     safeUvCloudy:
       "Pot existir radiació UV significativa encara que hi hagi núvols o pluja. Si passes temps a l’exterior, utilitza protecció solar bàsica i adapta l’activitat segons l’evolució del temps.",
     tropicalNight:
-      "Ventila els espais abans d’anar a dormir, hidrata’t amb regularitat i evita esforços físics innecessaris durant la nit.",
+      "Mantén una bona ventilació i hidrata’t amb normalitat. Si notes calor durant el descans, procura refrescar l’habitació.",
     torridNight:
       "Refresca i ventila els espais, hidrata’t amb freqüència i procura dormir en l’entorn més fresc possible.",
     snow: "La neu pot reduir la visibilitat i fer relliscoses les superfícies.",
@@ -376,7 +376,7 @@ const TXT: TxtDict = {
     safeUvCloudy:
       "Puede existir radiación UV significativa aunque haya nubes o lluvia. Si pasas tiempo al aire libre, utiliza protección solar básica y adapta la actividad según la evolución del tiempo.",
     tropicalNight:
-      "Ventila los espacios antes de dormir, hidrátate con regularidad y evita esfuerzos físicos innecesarios durante la noche.",
+      "Mantén una buena ventilación e hidrátate con normalidad. Si notas calor mientras descansas, procura refrescar la habitación.",
     torridNight:
       "Refresca y ventila los espacios, hidrátate con frecuencia y procura dormir en el entorno más fresco posible.",
     snow: "La nieve puede reducir la visibilidad y hacer que las superficies sean resbaladizas.",
@@ -478,7 +478,7 @@ const TXT: TxtDict = {
     safeUvCloudy:
       "Hodeiak edo euria egon arren, UV erradiazio esanguratsua egon daiteke. Kanpoan denbora ematen baduzu, erabili oinarrizko eguzki-babesa eta egokitu jarduera eguraldiaren bilakaeraren arabera.",
     tropicalNight:
-      "Aireztatu espazioak lo egin aurretik, hidratatu erregularki eta saihestu gauean beharrezkoak ez diren ahalegin fisikoak.",
+      "Mantendu aireztapen ona eta hidratatu ohi bezala. Atseden hartzean beroa nabaritzen baduzu, saiatu gela freskatzen.",
     torridNight:
       "Freskatu eta aireztatu espazioak, hidratatu maiz eta saiatu ahalik eta ingurunerik freskoenean lo egiten.",
     snow: "Elurrak ikuspena murriztu eta gainazalak irristakor bihur ditzake.",
@@ -580,7 +580,7 @@ const TXT: TxtDict = {
     safeUvCloudy:
       "Pode existir radiación UV significativa aínda que haxa nubes ou choiva. Se permaneces ao aire libre, usa protección solar básica e adapta a actividade segundo a evolución do tempo.",
     tropicalNight:
-      "Ventila os espazos antes de durmir, hidrátate con regularidade e evita esforzos físicos innecesarios durante a noite.",
+      "Mantén unha boa ventilación e hidrátate con normalidade. Se notas calor mentres descansas, procura refrescar o cuarto.",
     torridNight:
       "Refresca e ventila os espazos, hidrátate con frecuencia e procura durmir no ambiente máis fresco posible.",
     snow: "A neve pode reducir a visibilidade e facer esvaradías as superficies.",
@@ -682,7 +682,7 @@ const TXT: TxtDict = {
     safeUvCloudy:
       "Significant UV radiation may still be present even with clouds or rain. If you stay outdoors, use basic sun protection and adapt activity as the weather evolves.",
     tropicalNight:
-      "Ventilate indoor spaces before going to sleep, hydrate regularly and avoid unnecessary physical effort overnight.",
+      "Keep the room well ventilated and stay hydrated as usual. If you feel warm while resting, try to cool the room.",
     torridNight:
       "Cool and ventilate indoor spaces, hydrate often and try to sleep in the coolest environment available.",
     snow: "Snow may reduce visibility and make surfaces slippery.",

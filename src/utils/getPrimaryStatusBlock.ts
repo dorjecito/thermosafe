@@ -88,7 +88,7 @@ export function getPrimaryStatusBlock({
       title: tr("primaryStatus.heat.tropicalNight", "Nit tropical"),
       text: tr(
         "primaryStatus.heat.tropicalNightText",
-        "La temperatura continua elevada durant la nit, fet que pot dificultar el descans i la recuperació tèrmica."
+        "La temperatura nocturna es manté per damunt dels 20 °C."
       ),
     };
   };
