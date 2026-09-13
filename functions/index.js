@@ -688,6 +688,7 @@ function buildCombinedRiskMessage({
   hi,
   aemetLevel,
   aemetEvent,
+  increasedRisk = null,
 }) {
   const l = normalizeLang(lang);
 
@@ -700,6 +701,8 @@ function buildCombinedRiskMessage({
   const txt = {
     ca: {
       combinedTitle: "Riscos combinats – ThermoSafe",
+      uvIncreaseTitle: "Augmenta el risc UV – ThermoSafe",
+      heatIncreaseTitle: "Augmenta el risc de calor – ThermoSafe",
       officialTitle: "🚨 ThermoSafe — Avís oficial actiu",
       official: "Avís oficial actiu",
       uv: "Índex UV",
@@ -713,6 +716,8 @@ function buildCombinedRiskMessage({
     },
     es: {
       combinedTitle: "Riesgos combinados – ThermoSafe",
+      uvIncreaseTitle: "Aumenta el riesgo UV – ThermoSafe",
+      heatIncreaseTitle: "Aumenta el riesgo por calor – ThermoSafe",
       officialTitle: "🚨 ThermoSafe — Aviso oficial activo",
       official: "Aviso oficial activo",
       uv: "Índice UV",
@@ -726,6 +731,8 @@ function buildCombinedRiskMessage({
     },
     eu: {
       combinedTitle: "Arrisku konbinatuak – ThermoSafe",
+      uvIncreaseTitle: "UV arriskua handitu da – ThermoSafe",
+      heatIncreaseTitle: "Bero-arriskua handitu da – ThermoSafe",
       officialTitle: "🚨 ThermoSafe — Abisu ofiziala aktibo",
       official: "Abisu ofiziala aktibo",
       uv: "UV indizea",
@@ -739,6 +746,8 @@ function buildCombinedRiskMessage({
     },
     gl: {
       combinedTitle: "Riscos combinados – ThermoSafe",
+      uvIncreaseTitle: "Aumenta o risco UV – ThermoSafe",
+      heatIncreaseTitle: "Aumenta o risco por calor – ThermoSafe",
       officialTitle: "🚨 ThermoSafe — Aviso oficial activo",
       official: "Aviso oficial activo",
       uv: "Índice UV",
@@ -752,6 +761,8 @@ function buildCombinedRiskMessage({
     },
     en: {
       combinedTitle: "Combined risks – ThermoSafe",
+      uvIncreaseTitle: "UV risk has increased – ThermoSafe",
+      heatIncreaseTitle: "Heat risk has increased – ThermoSafe",
       officialTitle: "🚨 ThermoSafe — Active official alert",
       official: "Active official alert",
       uv: "UV index",
@@ -791,6 +802,12 @@ function buildCombinedRiskMessage({
   } else if (hasHeat && hasUv) {
     type = "heat_uv";
     advice = t.adviceHeatUv;
+    if (increasedRisk === "uv") {
+      title = t.uvIncreaseTitle;
+    }
+    if (increasedRisk === "heat") {
+      title = t.heatIncreaseTitle;
+    }
   } else if (hasHeat) {
     type = "heat_only_context";
   } else if (hasUv) {
@@ -1653,6 +1670,10 @@ exports.cronCheckWeatherRiskV2 = onSchedule(
                 });
 
                 const combined = buildCombinedRiskMessage({
+                  increasedRisk:
+                    prevHeatLevel > 0 && heatInfo.level > prevHeatLevel
+                      ? "heat"
+                      : null,
                   lang,
                   uvInfo: currentUvInfo,
                   uvi: currentUvi,
@@ -3848,6 +3869,10 @@ exports.cronCheckUvRiskV2 = onSchedule(
             } else {
               try {
                 const combined = buildCombinedRiskMessage({
+                  increasedRisk:
+                    prevLevel > 0 && currentUvLevel > prevLevel
+                      ? "uv"
+                      : null,
                   lang,
                   uvInfo: info,
                   uvi,
