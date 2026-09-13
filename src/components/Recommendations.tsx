@@ -1003,7 +1003,7 @@ function RecommendationBox({
 }) {
   return (
     <div className={className}>
-      <p className="recommendation-title">{title}</p>
+      <h3 className="recommendation-title">{title}</h3>
       {items?.length ? (
         <div className="recommendation-factor-list">
           {items.map((item, index) => (

@@ -2791,6 +2791,7 @@ return (
     }}
   >
     <button
+      className={`push-control-button ${pushEnabled ? "is-enabled" : ""}`}
       onClick={() => onTogglePush(!pushEnabled)}
       style={{
         backgroundColor: pushEnabled ? "#2f9e44" : "#555",
@@ -3262,14 +3263,17 @@ return (
 	      />
 
 	      <div className="uv-skin-toggle-wrap">
-	        <button
-	          className="secondary-toggle-btn uv-skin-toggle"
-	          onClick={() => setShowSkinInfo(v => !v)}
-	        >
-	          🧴 {localUi.skinType}
-	        </button>
+        <button
+          className="secondary-toggle-btn uv-skin-toggle"
+          onClick={() => setShowSkinInfo(v => !v)}
+          aria-expanded={showSkinInfo}
+          aria-controls="uv-skin-panel"
+        >
+          🧴 {localUi.skinType}
+        </button>
 
-	        {showSkinInfo && (
+        <div id="uv-skin-panel">
+          {showSkinInfo && (
             <React.Suspense fallback={null}>
 	            <SkinTypeInfo
 	              lang={currentLang as "ca" | "es" | "eu" | "gl" | "en"}
@@ -3277,7 +3281,8 @@ return (
 	              onChange={handleSkinTypeChange}
 	            />
             </React.Suspense>
-	        )}
+          )}
+        </div>
 	      </div>
 	    </div>
 	  </div>

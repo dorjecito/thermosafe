@@ -76,6 +76,7 @@ export default function LanguageSwitcher() {
             key={l.code}
             onClick={() => setLang(l.code)}
             aria-label={l.label}
+            aria-pressed={active}
             title={l.label}
             style={{
               border: active ? "2px solid #0ea5e9" : "1px solid #444",

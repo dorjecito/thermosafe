@@ -125,12 +125,14 @@ export default function UVScale({ lang, uvi, lat, lon }: UVScaleProps) {
       <button
         className="secondary-toggle-btn uv-scale-toggle"
         onClick={() => setVisible(!visible)}
+        aria-expanded={visible}
+        aria-controls="uv-scale-panel"
       >
         {toggle}
       </button>
 
       {visible && (
-        <>
+        <div id="uv-scale-panel">
           {isDaylight ? (
             <>
               <h2 style={{ marginBottom: '1rem' }}>{heading}</h2>
@@ -160,7 +162,7 @@ export default function UVScale({ lang, uvi, lat, lon }: UVScaleProps) {
           ) : (
             <p>{night}</p>
           )}
-        </>
+        </div>
       )}
     </div>
   );

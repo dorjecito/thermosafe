@@ -6877,6 +6877,32 @@ test("dark theme keeps recommendation variants readable", () => {
   assert.match(darkModeBlock, /color:\s*#ffedd5\s*!important/);
 });
 
+test("accessibility micro-improvements keep controls and heading semantics wired", () => {
+  const uvScaleSource = readFileSync(`${process.cwd()}/src/components/UVScale.tsx`, "utf8");
+  const appSource = readFileSync(`${process.cwd()}/src/App.tsx`, "utf8");
+  const languageSource = readFileSync(
+    `${process.cwd()}/src/components/LanguageSwitcher.tsx`,
+    "utf8"
+  );
+  const recommendationsSource = readFileSync(
+    `${process.cwd()}/src/components/Recommendations.tsx`,
+    "utf8"
+  );
+  const css = readFileSync(`${process.cwd()}/src/index.css`, "utf8");
+
+  assert.match(uvScaleSource, /aria-expanded=\{visible\}/);
+  assert.match(uvScaleSource, /aria-controls="uv-scale-panel"/);
+  assert.match(uvScaleSource, /<div id="uv-scale-panel">/);
+  assert.match(appSource, /aria-expanded=\{showSkinInfo\}/);
+  assert.match(appSource, /aria-controls="uv-skin-panel"/);
+  assert.match(appSource, /<div id="uv-skin-panel">/);
+  assert.match(languageSource, /aria-pressed=\{active\}/);
+  assert.match(recommendationsSource, /<h3 className="recommendation-title">/);
+  assert.match(css, /\.safety-share-btn\s*\{[\s\S]*?background:\s*#1769aa/);
+  assert.match(css, /\.push-control-wrap > \.push-control-button\.is-enabled\s*\{[\s\S]*?#237a3b/);
+  assert.match(css, /\.recommendation-box \.recommendation-title\s*\{[\s\S]*?color:\s*#b45309/);
+});
+
 const seasonalTranslations: Record<string, string> = {
   "safe_conditions": "Condicions segures",
   "safe_conditions_text_day": "No s'observen riscos destacables en aquest moment.",

@@ -1499,8 +1499,12 @@ text-align: left;
 }
 
 .safety-share-btn {
-  background: #1e88e5;
+  background: #1769aa;
   color: #fff;
+}
+
+.push-control-wrap > .push-control-button.is-enabled {
+  background-color: #237a3b !important;
 }
 
 .safety-112-btn {
@@ -2825,6 +2829,23 @@ body,
 
 .recommendation-box .recommendation-title {
   margin-bottom: 0.55rem;
+}
+
+/* Keep the semantic heading's previous paragraph spacing and theme-specific contrast. */
+.recommendation-box .recommendation-title {
+  margin-top: 1rem;
+}
+
+@media (prefers-color-scheme: light), (prefers-color-scheme: no-preference) {
+  .recommendation-box .recommendation-title {
+    color: #b45309;
+  }
+}
+
+@media (prefers-color-scheme: dark) {
+  .recommendation-box .recommendation-title {
+    color: #ffffff !important;
+  }
 }
 
 .recommendation-factor-list {
