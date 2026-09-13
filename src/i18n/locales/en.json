@@ -494,6 +494,9 @@
   },
 
   "official_advice_title": "Official safety recommendations",
+  "share_title": "Risk summary – ThermoSafe",
+  "share_copied": "Text copied to clipboard",
+  "share_failed": "Could not share or copy the text",
   "official_advice_footer": "Based on INSST and AEMET guidance.",
   "data_sources_footer": "Data sources: OpenWeather · OpenUV · NASA POWER · AEMET (official alerts) · OpenStreetMap/Nominatim",
 

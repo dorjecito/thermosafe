@@ -473,6 +473,9 @@
   },
 
   "official_advice_title": "Recomanacions oficials de seguretat",
+  "share_title": "Resum de risc – ThermoSafe",
+  "share_copied": "Text copiat al porta-retalls",
+  "share_failed": "No s’ha pogut compartir ni copiar el text",
   "official_advice_footer": "Basat en guies de l’INSST i AEMET.",
   "data_sources_footer": "Fonts de dades: OpenWeather · OpenUV · NASA POWER · AEMET (avisos oficials) · OpenStreetMap/Nominatim",
 

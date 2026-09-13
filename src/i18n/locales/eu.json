@@ -466,6 +466,9 @@
   "symptomsCold": "Dardarak edo konfusioa badituzu, bilatu babeslekua."
 },
 "official_advice_title": "Segurtasun gomendio ofizialak",
+"share_title": "Arriskuaren laburpena – ThermoSafe",
+"share_copied": "Testua arbelean kopiatu da",
+"share_failed": "Ezin izan da testua partekatu edo kopiatu",
 "official_advice_footer": "INSST eta AEMET-en gomendioetan oinarritua.",
 "data_sources_footer": "Datu-iturriak: OpenWeather · OpenUV · NASA POWER · AEMET (abisu ofizialak) · OpenStreetMap/Nominatim",
 

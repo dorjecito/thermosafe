@@ -13,6 +13,46 @@ type Props = {
   city?: string | null;       // opcional, per fer el share més útil
 };
 
+export type ShareNavigator = {
+  share?: (data: { title: string; text: string }) => Promise<void>;
+  clipboard?: { writeText: (text: string) => Promise<void> };
+};
+
+export type ShareMessages = { copied: string; failed: string };
+
+export async function shareTextWithFallback(
+  text: string,
+  title: string,
+  nav: ShareNavigator,
+  messages: ShareMessages,
+  setStatus: (status: string) => void,
+): Promise<void> {
+  setStatus("");
+  if (typeof nav.share === "function") {
+    try {
+      await nav.share({ title, text });
+      return;
+    } catch (error) {
+      if (
+        error &&
+        typeof error === "object" &&
+        "name" in error &&
+        (error as { name?: unknown }).name === "AbortError"
+      ) {
+        return;
+      }
+    }
+  }
+
+  try {
+    if (typeof nav.clipboard?.writeText !== "function") throw new Error("Clipboard unavailable");
+    await nav.clipboard.writeText(text);
+    setStatus(messages.copied);
+  } catch {
+    setStatus(messages.failed);
+  }
+}
+
 function normalizeLang(lng: string): LangKey {
   const s = (lng || "ca").slice(0, 2).toLowerCase();
   if (s === "ca" || s === "es" || s === "eu" || s === "gl" || s === "en") return s;
@@ -26,7 +66,8 @@ export default function SafetyActions({
   windRisk,
   city,
 }: Props) {
-  const { t } = useTranslation();
+  const { t } = useTranslation();
+  const [shareStatus, setShareStatus] = React.useState("");
 
   const l = normalizeLang(lang);
 
@@ -48,7 +89,7 @@ export default function SafetyActions({
   const share = async () => {
     const lines: string[] = [];
 
-    lines.push(`🛡️ ${t("official_advice_title")} – ThermoSafe`);
+    lines.push(`🛡️ ${t("share_title")}`);
     if (city) lines.push(`📍 ${city}`);
     lines.push("");
 
@@ -63,7 +104,7 @@ export default function SafetyActions({
     // ❄️ Fred
     if (risk.startsWith("cold_") && !risk.endsWith("_safe")) {
       const lvl = risk.replace("cold_", "");
-      riskLines.push(`• ${t("cold_risk")}: ${t(`risk_levels.${lvl}`, lvl)}`);
+      riskLines.push(`• ${t("cold_risk_title")}: ${t(`risk_levels.${lvl}`, lvl)}`);
     }
 
     // ☀️ UV
@@ -94,19 +135,25 @@ export default function SafetyActions({
 
     const text = lines.join("\n");
 
-    if (navigator.share) {
-      await navigator.share({ title: t("official_advice_title"), text });
-    } else {
-      await navigator.clipboard.writeText(text);
-      alert(t("copied_clipboard"));
-    }
+    await shareTextWithFallback(
+      text,
+      t("share_title"),
+      navigator,
+      { copied: t("share_copied"), failed: t("share_failed") },
+      setShareStatus,
+    );
   };
 
   return (
     <div className="safety-actions">
-      <button className="safety-share-btn" onClick={share}>
-        📤 {t("share")}
-      </button>
+      <button type="button" className="safety-share-btn" onClick={share}>
+        📤 {t("share")}
+      </button>
+      {shareStatus ? (
+        <div aria-live="polite" role="status" style={{ fontSize: "0.82rem" }}>
+          {shareStatus}
+        </div>
+      ) : null}
 
       <button
         className="safety-112-btn"

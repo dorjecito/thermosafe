@@ -511,6 +511,9 @@
   "symptomsCold": "Se tes tremores ou confusión, busca abrigo."
 },
 "official_advice_title": "Recomendacións oficiais de seguridade",
+"share_title": "Resumo de risco – ThermoSafe",
+"share_copied": "Texto copiado ao portapapeis",
+"share_failed": "Non se puido compartir nin copiar o texto",
 "official_advice_footer": "Baseado en guías do INSST e AEMET.",
 "data_sources_footer": "Fontes de datos: OpenWeather · OpenUV · NASA POWER · AEMET (avisos oficiais) · OpenStreetMap/Nominatim",
 "alert_time": {

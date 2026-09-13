@@ -58,6 +58,7 @@ import {
 } from "../../src/utils/aemetAlertTimeline";
 import { getAlertTimeCountdown } from "../../src/utils/getRemainingTime";
 import { getTopAlertBannerState } from "../../src/components/TopAlertBanner";
+import { shareTextWithFallback } from "../../src/components/SafetyActions";
 import { pickPrimaryRisk } from "../../src/utils/PickPrimaryRisk";
 import { getWorkWindow, getWorkWindowText } from "../../src/utils/workWindow";
 import { buildRiskTrend } from "../../src/utils/riskTrend";
@@ -699,6 +700,86 @@ function compareRiskEngineWithPrimaryPicker(input: RiskEngineInput) {
 
 test("OpenWeather proxy classifies weather as currentWeather usage", () => {
   assert.equal(getOpenWeatherUsageFieldForRoute("weather"), "currentWeather");
+});
+
+test("share uses Web Share and does not confirm native success", async () => {
+  let shared: { title: string; text: string } | undefined;
+  let copied = false;
+  let status = "stale";
+  await shareTextWithFallback(
+    "risk text",
+    "Risk summary – ThermoSafe",
+    {
+      share: async (data) => { shared = data; },
+      clipboard: { writeText: async () => { copied = true; } },
+    },
+    { copied: "copied", failed: "failed" },
+    (value) => { status = value; },
+  );
+  assert.deepEqual(shared, { title: "Risk summary – ThermoSafe", text: "risk text" });
+  assert.equal(copied, false);
+  assert.equal(status, "");
+});
+
+test("share cancellation is silent and does not use clipboard", async () => {
+  let copied = false;
+  let status = "stale";
+  await shareTextWithFallback(
+    "risk text",
+    "title",
+    {
+      share: async () => { throw Object.assign(new Error("cancelled"), { name: "AbortError" }); },
+      clipboard: { writeText: async () => { copied = true; } },
+    },
+    { copied: "copied", failed: "failed" },
+    (value) => { status = value; },
+  );
+  assert.equal(copied, false);
+  assert.equal(status, "");
+});
+
+test("share falls back to clipboard for unavailable or failed Web Share", async () => {
+  for (const nav of [
+    { share: async () => { throw new Error("share failed"); } },
+    {},
+  ]) {
+    let copiedText = "";
+    let status = "stale";
+    await shareTextWithFallback(
+      "exact text",
+      "title",
+      { ...nav, clipboard: { writeText: async (text) => { copiedText = text; } } },
+      { copied: "copied", failed: "failed" },
+      (value) => { status = value; },
+    );
+    assert.equal(copiedText, "exact text");
+    assert.equal(status, "copied");
+  }
+});
+
+test("share reports clipboard failure", async () => {
+  let status = "stale";
+  await shareTextWithFallback(
+    "risk text",
+    "title",
+    { clipboard: { writeText: async () => { throw new Error("denied"); } } },
+    { copied: "copied", failed: "failed" },
+    (value) => { status = value; },
+  );
+  assert.equal(status, "failed");
+});
+
+test("share translations exist and the visible share flow uses cold_risk_title", () => {
+  const locales = ["ca", "es", "eu", "gl", "en"];
+  const source = readFileSync(new URL("../../src/components/SafetyActions.tsx", import.meta.url), "utf8");
+  assert.doesNotMatch(source, /t\("cold_risk"\)/);
+  for (const locale of locales) {
+    const data = JSON.parse(readFileSync(new URL(`../../src/i18n/locales/${locale}.json`, import.meta.url), "utf8"));
+    assert.equal(typeof data.share_title, "string");
+    assert.equal(typeof data.share_copied, "string");
+    assert.equal(typeof data.share_failed, "string");
+    assert.equal(typeof data.cold_risk_title, "string");
+  }
 });
 
 test("OpenWeather proxy classifies onecall as oneCall usage", () => {
