@@ -12,6 +12,7 @@ import {
   getWeatherByCoords,
   getWeatherAlerts,
   getHourlyForecastByCoords,
+  type HourlyForecastResponse,
 } from "./services/weatherService";
 
 import {
@@ -96,7 +97,9 @@ import { getUVDetailFromOpenUV, getUVFromOpenUV } from "./services/openUV";
    import TopAlertBanner from "./components/TopAlertBanner";
    import CompactHeader from "./components/CompactHeader";
    import CurrentConditions from "./components/CurrentConditions";
-   import CurrentWeatherSummary from "./components/CurrentWeatherSummary";
+import CurrentWeatherSummary from "./components/CurrentWeatherSummary";
+import RainShortTermCard from "./components/RainShortTermCard";
+import { buildRainShortTermSummary } from "./utils/rainShortTerm";
    import SkyConditionCard from "./components/SkyConditionCard";
    import UpdateBanner from "./components/UpdateBanner";
    import { useScrollCompactHeader } from "./hooks/useScrollCompactHeader";
@@ -763,8 +766,9 @@ useEffect(() => {
 	  const [windKmh, setWindKmh] = useState<number | null>(null);
 	  const [lat, setLat] = useState<number | null>(null);
 	  const [lon, setLon] = useState<number | null>(null);
-		  const [riskTrend, setRiskTrend] = useState<RiskTrendResult | null>(null);
-		  const [riskTrendLoading, setRiskTrendLoading] = useState(false);
+  const [riskTrend, setRiskTrend] = useState<RiskTrendResult | null>(null);
+  const [riskTrendLoading, setRiskTrendLoading] = useState(false);
+  const [hourlyForecast, setHourlyForecast] = useState<HourlyForecastResponse | null>(null);
 		  const [searchPanelCollapsed, setSearchPanelCollapsed] = useState(false);
 		  const searchBoxRef = useRef<HTMLDivElement | null>(null);
 		  const showCompactHeader = useScrollCompactHeader(120);
@@ -1979,6 +1983,16 @@ const weatherContext = useMemo(
   [weatherMain, data?.weather?.[0]?.id, data?.main?.humidity, currentFeelTemp, data?.clouds?.all]
 );
 
+const rainShortTermSummary = useMemo(
+  () =>
+    buildRainShortTermSummary({
+      rainingNow: weatherContext.rainy,
+      currentMm: data?.rain?.["1h"],
+      hourly: hourlyForecast?.hourly,
+    }),
+  [weatherContext.rainy, data?.rain?.["1h"], hourlyForecast]
+);
+
 const locationCurrentHour = useMemo(() => {
   const timezoneOffset = data?.timezone;
   if (typeof timezoneOffset !== "number") return new Date().getHours();
@@ -2067,6 +2081,7 @@ useEffect(() => {
     (typeof document !== "undefined" && document.hidden)
   ) {
     setRiskTrend(null);
+    setHourlyForecast(null);
     setRiskTrendLoading(false);
     return;
   }
@@ -2079,6 +2094,7 @@ useEffect(() => {
         startupStart("risk-trend-post-render", { delayMs: 500 });
 	      const forecast = await getHourlyForecastByCoords(lat, lon, currentLang);
 	      if (cancelled) return;
+      setHourlyForecast(forecast);
 
       const trend = buildRiskTrend(forecast, {
         heatIndex: hi,
@@ -3138,6 +3154,12 @@ return (
   hi={hi}
   windKmh={windKmh}
   uvi={uvi}
+/>
+
+<RainShortTermCard
+  summary={rainShortTermSummary}
+  timezoneOffset={data?.timezone}
+  t={t}
 />
 
   {/* 🌡️ CONDICIONS ACTUALS */}

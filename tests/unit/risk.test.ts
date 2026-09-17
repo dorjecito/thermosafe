@@ -69,6 +69,7 @@ import {
 import { pickPrimaryRisk } from "../../src/utils/PickPrimaryRisk";
 import { getWorkWindow, getWorkWindowText } from "../../src/utils/workWindow";
 import { buildRiskTrend } from "../../src/utils/riskTrend";
+import { buildRainShortTermSummary } from "../../src/utils/rainShortTerm";
 import {
   evaluateRiskScore,
   type RiskEngineInput,
@@ -903,6 +904,58 @@ test("manual search refresh stays outside the search form and preserves the visi
   assert.match(source.slice(refreshButton - 180, refreshButton + 180), /type="button"/);
   assert.match(refreshBlock, /fetchWeather\(target\.city, true\)/);
   assert.doesNotMatch(refreshBlock, /window\.location\.(?:reload|href)/);
+});
+
+test("short-term rain card stays hidden without rain data", () => {
+  assert.equal(buildRainShortTermSummary({ rainingNow: false, hourly: [], nowSec: 1_000 }).visible, false);
+});
+
+test("short-term rain summary shows current and imminent rain", () => {
+  const now = 1_000;
+  const current = buildRainShortTermSummary({ rainingNow: true, currentMm: 0.8, nowSec: now });
+  assert.equal(current.visible, true);
+  assert.equal(current.rainingNow, true);
+  assert.equal(current.currentMm, 0.8);
+
+  const imminent = buildRainShortTermSummary({
+    rainingNow: false,
+    nowSec: now,
+    hourly: [{ dt: now + 3600, pop: 0.6 } as any],
+  });
+  assert.equal(imminent.visible, true);
+  assert.equal(imminent.endAt, null);
+});
+
+test("short-term rain end time is only inferred from a following dry hour", () => {
+  const now = 1_000;
+  const summary = buildRainShortTermSummary({
+    rainingNow: false,
+    nowSec: now,
+    hourly: [
+      { dt: now + 3600, rain: { "1h": 1.2 }, pop: 0.8 } as any,
+      { dt: now + 7200, pop: 0 } as any,
+    ],
+  });
+  assert.equal(summary.visible, true);
+  assert.equal(summary.endAt, now + 7200);
+
+  const unresolved = buildRainShortTermSummary({
+    rainingNow: false,
+    nowSec: now,
+    hourly: [{ dt: now + 3600, pop: 0.7 } as any],
+  });
+  assert.equal(unresolved.visible, true);
+  assert.equal(unresolved.endAt, null);
+});
+
+test("short-term rain summary tolerates missing precipitation fields", () => {
+  const summary = buildRainShortTermSummary({
+    rainingNow: false,
+    nowSec: 1_000,
+    hourly: [{ dt: 2_000 } as any],
+  });
+  assert.equal(summary.visible, false);
+  assert.doesNotThrow(() => buildRainShortTermSummary({ rainingNow: false }));
 });
 
 test("OpenWeather proxy classifies onecall as oneCall usage", () => {
