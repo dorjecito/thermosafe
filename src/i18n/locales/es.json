@@ -359,6 +359,8 @@
   },
 
   "last_update": "Actualizado hace",
+  "refresh_data": "Actualiza",
+  "refreshing_data": "Actualizando…",
   "alerts_title": "Avisos meteorológicos oficiales",
   "alerts_none": "No hay avisos meteorológicos activos actualmente.",
   "no_alerts": "No hay avisos meteorológicos actualmente.",

@@ -344,6 +344,8 @@
   },
 
   "last_update": "Eguneratua duela",
+  "refresh_data": "Eguneratu",
+  "refreshing_data": "Eguneratzen…",
   "alerts_title": "AEMET abisu ofizialak",
   "alerts_none": "Ez dago meteorologiako abisu aktiborik.",
   "no_alerts": "Ez dago abisurik une honetan.",

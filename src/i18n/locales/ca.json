@@ -333,6 +333,8 @@
   },
 
   "last_update": "Actualitzat fa",
+  "refresh_data": "Actualitza",
+  "refreshing_data": "Actualitzant…",
   "alerts_title": "Avisos meteorològics oficials",
   "alerts_none": "No hi ha avisos meteorològics actius actualment.",
   "no_alerts": "No hi ha avisos meteorològics actualment.",

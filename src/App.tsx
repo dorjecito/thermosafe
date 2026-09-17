@@ -110,6 +110,12 @@ import { getUVDetailFromOpenUV, getUVFromOpenUV } from "./services/openUV";
 
    import LanguageSwitcher from './components/LanguageSwitcher';
    import { getThermalRisk } from "./utils/getThermalRisk";
+   import {
+     createRefreshGate,
+     getRefreshCoords,
+     getRefreshTarget,
+     shouldRefreshOnVisible,
+   } from "./utils/dataRefresh";
 
    /* —— hooks ———————————— */
    import { useRiskNotifications } from "./hooks/useRiskNotifications";
@@ -405,6 +411,14 @@ export default function App() {
   const firstUsefulAuditRef = useRef(false);
   const fullDataAuditRef = useRef(false);
   const riskVisibleAuditRef = useRef(false);
+  const lastSuccessfulDataRefreshRef = useRef<number | null>(null);
+  const refreshCurrentDataRef = useRef<(() => Promise<boolean>) | null>(null);
+  const refreshGateRef = useRef<ReturnType<typeof createRefreshGate> | null>(null);
+  const [isRefreshing, setIsRefreshing] = useState(false);
+
+  if (!refreshGateRef.current) {
+    refreshGateRef.current = createRefreshGate();
+  }
 
   if (!firstRenderAuditRef.current) {
     startupMark("first-render");
@@ -616,6 +630,16 @@ useEffect(() => {
   const onVisibilityChange = () => {
     if (document.visibilityState === "visible") {
       checkForAppUpdate();
+      if (
+        shouldRefreshOnVisible(
+          Boolean(dataRef.current),
+          lastSuccessfulDataRefreshRef.current,
+          Date.now(),
+          refreshGateRef.current?.isRunning() ?? false,
+        )
+      ) {
+        void refreshCurrentDataRef.current?.();
+      }
     }
   };
 
@@ -1108,22 +1132,24 @@ async function onTogglePush(next: boolean) {
 }
 
 /* === FETCH WEATHER (ciutat cercada) === */
-const fetchWeather = async (cityName: string) => {
+const fetchWeather = async (cityName: string, preserveVisible = false): Promise<boolean> => {
   const requestId = startRequest("search");
 
   try {
-    setIsInitialRiskReady(false);
-    setLoading(true);
+    if (!preserveVisible) {
+      setIsInitialRiskReady(false);
+      setLoading(true);
+    }
     setCurrentSource("search");
     setDataSource("search");
 
     const data = await getWeatherByCity(cityName, lang);
 
-    if (isStaleRequest("search", requestId)) return;
+    if (isStaleRequest("search", requestId)) return false;
 
     if (!data || !data.coord) {
       setErr(t("errorCity"));
-      return;
+      return false;
     }
 
     setRealCity(cityName);
@@ -1150,7 +1176,7 @@ const fetchWeather = async (cityName: string) => {
       cityName ||
       "Ubicació desconeguda";
 
-    if (isStaleRequest("search", requestId)) return;
+    if (isStaleRequest("search", requestId)) return false;
 
     setCity(resolvedName);
     setRealCity(resolvedName);
@@ -1212,7 +1238,7 @@ const fetchWeather = async (cityName: string) => {
       // 🟣 UVI (OpenUV)
       const uv = await getUVFromOpenUV(newLat, newLon);
 
-      if (isStaleRequest("search", requestId)) return;
+      if (isStaleRequest("search", requestId)) return false;
 
 	      console.log("[SEARCH] UV rebut:", uv);
 	      setUvi(uv);
@@ -1246,13 +1272,16 @@ const fetchWeather = async (cityName: string) => {
 		      setUvi(null);
 		      setUvMaxToday(null);
 		      setAlerts([]);
-		    }
+      }
+      lastSuccessfulDataRefreshRef.current = Date.now();
     collapseSearchPanel();
-	  } catch (err) {
+	    return true;
+	    } catch (err) {
 	    console.error("[DEBUG] Error obtenint dades:", err);
 	    setErr("Error obtenint dades de ciutat");
+	    return false;
 	  } finally {
-    if (!isStaleRequest("search", requestId)) {
+    if (!preserveVisible && !isStaleRequest("search", requestId)) {
       setIsInitialRiskReady(true);
       setLoading(false);
     }
@@ -1293,7 +1322,9 @@ useEffect(() => {
   initLocate();
 
   // ♻️ Auto-refresh cada 30 min + actualització dia/nit cada 10 min
-  const id1 = setInterval(() => locate(true), 30 * 60 * 1000);
+  const id1 = setInterval(() => {
+    void refreshCurrentDataRef.current?.();
+  }, 30 * 60 * 1000);
   const id2 = setInterval(() => {
   const currentData = dataRef.current;
   if (!currentData) return;
@@ -1382,7 +1413,7 @@ setIrr(ir ?? null);
 };
 
 /* 📍 LOCALITZACIÓ ACTUAL */
-const locate = async (silent = false, initialCoords?: Coords) => {
+const locate = async (silent = false, initialCoords?: Coords): Promise<boolean> => {
 
   const requestId = startRequest("gps");
   const auditFlowName = silent ? "gps-refresh-flow" : "gps-cold-start-flow";
@@ -1418,14 +1449,14 @@ const locate = async (silent = false, initialCoords?: Coords) => {
               : "unknown",
         });
 
-		    if (isStaleRequest("gps", requestId)) {
+		if (isStaleRequest("gps", requestId)) {
           auditStatus = "stale-after-gps";
-          return;
+          return false;
         }
 		    if (!position) {
 		      if (!silent) setErr(t("errorGPS"));
           auditStatus = "gps-empty";
-		      return;
+		      return false;
 		    }
 
 	const lat = position.lat;
@@ -1452,7 +1483,7 @@ if (import.meta.env.DEV) {
 
 	if (isStaleRequest("gps", requestId)) {
     auditStatus = "stale-after-weather";
-    return;
+    return false;
   }
 	if (!d) {
 	  if (!silent) setErr(t("errorGPS"));
@@ -1672,13 +1703,15 @@ await Promise.allSettled([
 
 if (isStaleRequest("gps", requestId)) {
   auditStatus = auditStatus === "unknown" ? "stale-after-secondary" : auditStatus;
-  return;
+  return false;
 }
 
 setStartupFullDataReady(true);
 startupMark("full-data");
 logStartupSummary("gps-flow-finally");
 auditStatus = "ok";
+lastSuccessfulDataRefreshRef.current = Date.now();
+return true;
 
 		  } catch (error) {
       auditStatus = "error";
@@ -1693,6 +1726,7 @@ auditStatus = "ok";
 	    setLoading(false);
 	  }
 	}
+	return false;
 };
 
 const search = async () => {
@@ -1800,6 +1834,7 @@ const handleSuggestionSelect = async (s: any) => {
         }
       });
     }
+    lastSuccessfulDataRefreshRef.current = Date.now();
     collapseSearchPanel();
 	  } catch (err) {
 	    console.error("[DEBUG] Error obtenint dades del suggeriment:", err);
@@ -1809,6 +1844,29 @@ const handleSuggestionSelect = async (s: any) => {
     setLoading(false);
   }
 };
+
+const refreshCurrentData = (): Promise<boolean> => {
+  const gate = refreshGateRef.current;
+  if (!gate) return Promise.resolve(false);
+
+  return gate.run(async () => {
+    setIsRefreshing(true);
+    try {
+      const target = getRefreshTarget(dataSource, city, realCity);
+      if (target.source === "search") {
+        return await fetchWeather(target.city, true);
+      }
+      return await locate(true, getRefreshCoords(lat, lon));
+    } catch (error) {
+      console.error("[REFRESH] Error actualitzant dades:", error);
+      return false;
+    }
+  }).finally(() => {
+    setIsRefreshing(false);
+  });
+};
+
+refreshCurrentDataRef.current = refreshCurrentData;
 
 useEffect(() => {
   const tok = localStorage.getItem("fcmToken");
@@ -3102,6 +3160,14 @@ return (
     <span className="update-text">
       {t("last_update")}: {formatLastUpdate(data.dt)}
     </span>
+    <button
+      type="button"
+      className="update-refresh-btn"
+      onClick={() => void refreshCurrentData()}
+      disabled={isRefreshing}
+    >
+      {isRefreshing ? `↻ ${t("refreshing_data")}` : `↻ ${t("refresh_data")}`}
+    </button>
   </div>
 )}
 

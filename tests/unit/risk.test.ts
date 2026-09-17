@@ -59,6 +59,13 @@ import {
 import { getAlertTimeCountdown } from "../../src/utils/getRemainingTime";
 import { getTopAlertBannerState } from "../../src/components/TopAlertBanner";
 import { shareTextWithFallback } from "../../src/components/SafetyActions";
+import {
+  createRefreshGate,
+  getRefreshCoords,
+  getRefreshTarget,
+  shouldRefreshOnVisible,
+  DATA_REFRESH_MIN_INTERVAL_MS,
+} from "../../src/utils/dataRefresh";
 import { pickPrimaryRisk } from "../../src/utils/PickPrimaryRisk";
 import { getWorkWindow, getWorkWindowText } from "../../src/utils/workWindow";
 import { buildRiskTrend } from "../../src/utils/riskTrend";
@@ -780,6 +787,122 @@ test("share translations exist and the visible share flow uses cold_risk_title",
     assert.equal(typeof data.share_failed, "string");
     assert.equal(typeof data.cold_risk_title, "string");
   }
+});
+
+test("data refreshes on visibility only after ten minutes with loaded data", () => {
+  const now = 1_000_000;
+  assert.equal(
+    shouldRefreshOnVisible(true, now - DATA_REFRESH_MIN_INTERVAL_MS, now, false),
+    true,
+  );
+  assert.equal(
+    shouldRefreshOnVisible(true, now - DATA_REFRESH_MIN_INTERVAL_MS + 1, now, false),
+    false,
+  );
+  assert.equal(shouldRefreshOnVisible(false, now - DATA_REFRESH_MIN_INTERVAL_MS, now, false), false);
+  assert.equal(shouldRefreshOnVisible(true, now - DATA_REFRESH_MIN_INTERVAL_MS, now, true), false);
+});
+
+test("refresh gate coalesces simultaneous clicks and visibility refreshes", async () => {
+  const gate = createRefreshGate();
+  let calls = 0;
+  let resolveTask!: (value: boolean) => void;
+  const task = () => {
+    calls += 1;
+    return new Promise<boolean>((resolve) => { resolveTask = resolve; });
+  };
+
+  const first = gate.run(task);
+  const second = gate.run(task);
+  await Promise.resolve();
+  assert.equal(first, second);
+  assert.equal(calls, 1);
+  assert.equal(gate.isRunning(), true);
+  resolveTask(true);
+  assert.equal(await first, true);
+  await Promise.resolve();
+  assert.equal(gate.isRunning(), false);
+
+  const third = gate.run(async () => {
+    calls += 1;
+    return true;
+  });
+  assert.equal(await third, true);
+  assert.equal(calls, 2);
+});
+
+test("refresh target preserves GPS or the selected search city", () => {
+  assert.deepEqual(getRefreshTarget("gps", "Llucmajor", "Llucmajor"), { source: "gps" });
+  assert.deepEqual(getRefreshTarget("search", "Llucmajor", "Llucmajor"), {
+    source: "search",
+    city: "Llucmajor",
+  });
+  assert.deepEqual(getRefreshTarget("search", "  Palma  ", ""), {
+    source: "search",
+    city: "Palma",
+  });
+});
+
+test("manual refresh permits consecutive GPS and search operations after completion", async () => {
+  const gate = createRefreshGate();
+  let gpsCalls = 0;
+  let searchCalls = 0;
+  const appSource = readFileSync(new URL("../../src/App.tsx", import.meta.url), "utf8");
+
+  assert.deepEqual(getRefreshCoords(39.57, 2.65), { lat: 39.57, lon: 2.65 });
+  assert.match(appSource, /locate\(true, getRefreshCoords\(lat, lon\)\)/);
+  assert.equal(await gate.run(async () => { gpsCalls += 1; return true; }), true);
+  assert.equal(await gate.run(async () => { gpsCalls += 1; return true; }), true);
+  assert.equal(gpsCalls, 2);
+  assert.equal(gate.isRunning(), false);
+
+  assert.equal(await gate.run(async () => { searchCalls += 1; return true; }), true);
+  assert.equal(await gate.run(async () => { searchCalls += 1; return true; }), true);
+  assert.equal(searchCalls, 2);
+  assert.equal(gate.isRunning(), false);
+});
+
+test("city to GPS transition allows two completed GPS refreshes", async () => {
+  const gate = createRefreshGate();
+  const calls: string[] = [];
+
+  await gate.run(async () => { calls.push("city"); return true; });
+  await gate.run(async () => { calls.push("gps"); return true; });
+  await gate.run(async () => { calls.push("gps"); return true; });
+
+  assert.deepEqual(calls, ["city", "gps", "gps"]);
+  assert.equal(gate.isRunning(), false);
+});
+
+test("refresh failure unlocks the gate without changing existing data semantics", async () => {
+  const gate = createRefreshGate();
+  const result = await gate.run(async () => false);
+  assert.equal(result, false);
+  assert.equal(gate.isRunning(), false);
+
+  const source = readFileSync(new URL("../../src/App.tsx", import.meta.url), "utf8");
+  assert.match(source, /formatLastUpdate\(data\.dt\)/);
+  const refreshBlock = source.slice(
+    source.indexOf("const refreshCurrentData ="),
+    source.indexOf("refreshCurrentDataRef.current = refreshCurrentData;"),
+  );
+  assert.doesNotMatch(refreshBlock, /maybeNotify(?:Heat|Cold|Wind|UV)/);
+});
+
+test("manual search refresh stays outside the search form and preserves the visible page", () => {
+  const source = readFileSync(new URL("../../src/App.tsx", import.meta.url), "utf8");
+  const refreshButton = source.indexOf('className="update-refresh-btn"');
+  const searchForm = source.indexOf("<form");
+  const searchFormEnd = source.indexOf("</form>", searchForm);
+  const refreshBlock = source.slice(
+    source.indexOf("const refreshCurrentData ="),
+    source.indexOf("refreshCurrentDataRef.current = refreshCurrentData;"),
+  );
+
+  assert.ok(refreshButton > searchFormEnd);
+  assert.match(source.slice(refreshButton - 180, refreshButton + 180), /type="button"/);
+  assert.match(refreshBlock, /fetchWeather\(target\.city, true\)/);
+  assert.doesNotMatch(refreshBlock, /window\.location\.(?:reload|href)/);
 });
 
 test("OpenWeather proxy classifies onecall as oneCall usage", () => {

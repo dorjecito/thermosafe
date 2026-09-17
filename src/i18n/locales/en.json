@@ -325,6 +325,8 @@
   },
 
   "last_update": "Updated",
+  "refresh_data": "Refresh",
+  "refreshing_data": "Refreshing…",
   "alerts_title": "Official weather alerts",
   "alerts_none": "There are currently no active weather alerts.",
   "no_alerts": "No alerts at this time.",
