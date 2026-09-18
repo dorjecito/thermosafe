@@ -69,7 +69,13 @@ import {
 import { pickPrimaryRisk } from "../../src/utils/PickPrimaryRisk";
 import { getWorkWindow, getWorkWindowText } from "../../src/utils/workWindow";
 import { buildRiskTrend } from "../../src/utils/riskTrend";
-import { buildRainShortTermSummary, getRainTimingKey } from "../../src/utils/rainShortTerm";
+import {
+  buildRainShortTermSummary,
+  getCurrentRainMessageKey,
+  getRainTimingKey,
+  getUsableForecastHourly,
+  isForecastForLocation,
+} from "../../src/utils/rainShortTerm";
 import {
   evaluateRiskScore,
   type RiskEngineInput,
@@ -851,7 +857,7 @@ test("manual refresh permits consecutive GPS and search operations after complet
   const appSource = readFileSync(new URL("../../src/App.tsx", import.meta.url), "utf8");
 
   assert.deepEqual(getRefreshCoords(39.57, 2.65), { lat: 39.57, lon: 2.65 });
-  assert.match(appSource, /locate\(true, getRefreshCoords\(lat, lon\)\)/);
+  assert.match(appSource, /locate\(true, getRefreshCoords\(lat, lon\), manual\)/);
   assert.equal(await gate.run(async () => { gpsCalls += 1; return true; }), true);
   assert.equal(await gate.run(async () => { gpsCalls += 1; return true; }), true);
   assert.equal(gpsCalls, 2);
@@ -902,7 +908,7 @@ test("manual search refresh stays outside the search form and preserves the visi
 
   assert.ok(refreshButton > searchFormEnd);
   assert.match(source.slice(refreshButton - 180, refreshButton + 180), /type="button"/);
-  assert.match(refreshBlock, /fetchWeather\(target\.city, true\)/);
+  assert.match(refreshBlock, /fetchWeather\(target\.city, true, manual\)/);
   assert.doesNotMatch(refreshBlock, /window\.location\.(?:reload|href)/);
 });
 
@@ -984,6 +990,58 @@ test("short-term rain card omits the redundant forecast line when mm are unavail
 test("short-term rain card distinguishes current rain from future rain wording", () => {
   assert.equal(getRainTimingKey(true), "rain_ends_at");
   assert.equal(getRainTimingKey(false), "rain_expected_before");
+});
+
+test("current rain without a usable amount gets a non-empty fallback", () => {
+  const summary = buildRainShortTermSummary({ rainingNow: true, currentMm: undefined, hourly: [] });
+  assert.equal(summary.visible, true);
+  assert.equal(getCurrentRainMessageKey(summary.rainingNow, summary.currentMm), "rain_current_no_amount");
+  assert.equal(getCurrentRainMessageKey(true, 0.2), "rain_now_amount");
+});
+
+test("manual current-weather refresh bypasses cache while normal loads keep it", () => {
+  const weatherSource = readFileSync(
+    new URL("../../src/services/weatherService.ts", import.meta.url),
+    "utf8",
+  );
+  const appSource = readFileSync(new URL("../../src/App.tsx", import.meta.url), "utf8");
+
+  assert.match(weatherSource, /options\.forceRefresh \? null : getFromCache/);
+  assert.match(appSource, /forceRefresh \? \{ forceRefresh: true \} : undefined/);
+  assert.match(appSource, /const refreshCurrentData = \(manual = false\)/);
+  assert.match(appSource, /fetchWeather\(target\.city, true, manual\)/);
+  assert.match(appSource, /locate\(true, getRefreshCoords\(lat, lon\), manual\)/);
+  assert.match(appSource, /if \(!data \|\| !data\.coord\) \{[\s\S]*?\}\s*\s*setData\(data\);/);
+});
+
+test("rain forecast is scoped to its coordinates and stale data is excluded by the UI contract", () => {
+  assert.equal(isForecastForLocation({ lat: 38.9, lon: 1.4 }, 38.9, 1.4), true);
+  assert.equal(isForecastForLocation({ lat: 38.9, lon: 1.4 }, 39.0, 1.4), false);
+
+  const staleHourly = getUsableForecastHourly(
+    { stale: true, hourly: [{ dt: 2_000, pop: 0.7 } as any] },
+    { lat: 38.9, lon: 1.4 },
+    38.9,
+    1.4,
+  );
+  assert.equal(staleHourly, null);
+  const staleSummary = buildRainShortTermSummary({ rainingNow: false, hourly: staleHourly, nowSec: 1_000 });
+  assert.equal(staleSummary.visible, false);
+
+  const currentOnly = buildRainShortTermSummary({ rainingNow: true, hourly: null, nowSec: 1_000 });
+  assert.equal(currentOnly.visible, true);
+  assert.equal(currentOnly.forecastMm, null);
+});
+
+test("pop-only relevant forecast receives a body fallback", () => {
+  const summary = buildRainShortTermSummary({
+    rainingNow: false,
+    nowSec: 1_000,
+    hourly: [{ dt: 2_000, pop: 0.7 } as any],
+  });
+  assert.equal(summary.visible, true);
+  assert.equal(summary.forecastMm, null);
+  assert.equal(summary.futureFallback, true);
 });
 
 test("short-term rain summary tolerates missing precipitation fields", () => {

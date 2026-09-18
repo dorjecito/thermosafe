@@ -14,8 +14,12 @@ const normLang2 = (lang: string) => (lang || "en").slice(0, 2).toLowerCase();
 const CACHE_TTL = 10 * 60 * 1000; // 10 minuts
 
 type CacheEntry<T> = {
-  timestamp: number;
-  data: T;
+  timestamp: number;
+  data: T;
+};
+
+export type CurrentWeatherRequestOptions = {
+  forceRefresh?: boolean;
 };
 
 const weatherCache = new Map<string, CacheEntry<any>>();
@@ -166,12 +170,13 @@ export async function getWeatherByCoords(
   lat: number,
   lon: number,
   lang: string = "en",
-  apiKey?: string
+  apiKey?: string,
+  options: CurrentWeatherRequestOptions = {},
 ) {
   const lang2 = normLang2(lang);
 
   const cacheKey = getCacheKey("coords", lat.toFixed(4), lon.toFixed(4), lang2);
-  const cached = getFromCache<any>(cacheKey);
+  const cached = options.forceRefresh ? null : getFromCache<any>(cacheKey);
   if (cached) {
     startupStart("openweather-current", { source: "coords", cache: "memory-hit" });
     startupEnd("openweather-current", { status: "cache-hit" });
@@ -215,12 +220,13 @@ export async function getWeatherByCoords(
 export async function getWeatherByCity(
   cityName: string,
   lang: string = "en",
-  apiKey?: string
+  apiKey?: string,
+  options: CurrentWeatherRequestOptions = {},
 ) {
   const lang2 = normLang2(lang);
 
   const cacheKey = getCacheKey("city", cityName.trim().toLowerCase(), lang2);
-  const cached = getFromCache<any>(cacheKey);
+  const cached = options.forceRefresh ? null : getFromCache<any>(cacheKey);
   if (cached) {
     startupStart("openweather-city", { cache: "memory-hit" });
     startupEnd("openweather-city", { status: "cache-hit" });

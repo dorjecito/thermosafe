@@ -99,7 +99,10 @@ import { getUVDetailFromOpenUV, getUVFromOpenUV } from "./services/openUV";
    import CurrentConditions from "./components/CurrentConditions";
 import CurrentWeatherSummary from "./components/CurrentWeatherSummary";
 import RainShortTermCard from "./components/RainShortTermCard";
-import { buildRainShortTermSummary } from "./utils/rainShortTerm";
+import {
+  buildRainShortTermSummary,
+  getUsableForecastHourly,
+} from "./utils/rainShortTerm";
    import SkyConditionCard from "./components/SkyConditionCard";
    import UpdateBanner from "./components/UpdateBanner";
    import { useScrollCompactHeader } from "./hooks/useScrollCompactHeader";
@@ -769,6 +772,7 @@ useEffect(() => {
   const [riskTrend, setRiskTrend] = useState<RiskTrendResult | null>(null);
   const [riskTrendLoading, setRiskTrendLoading] = useState(false);
   const [hourlyForecast, setHourlyForecast] = useState<HourlyForecastResponse | null>(null);
+  const [hourlyForecastCoords, setHourlyForecastCoords] = useState<{ lat: number; lon: number } | null>(null);
 		  const [searchPanelCollapsed, setSearchPanelCollapsed] = useState(false);
 		  const searchBoxRef = useRef<HTMLDivElement | null>(null);
 		  const showCompactHeader = useScrollCompactHeader(120);
@@ -1136,7 +1140,11 @@ async function onTogglePush(next: boolean) {
 }
 
 /* === FETCH WEATHER (ciutat cercada) === */
-const fetchWeather = async (cityName: string, preserveVisible = false): Promise<boolean> => {
+const fetchWeather = async (
+  cityName: string,
+  preserveVisible = false,
+  forceRefresh = false,
+): Promise<boolean> => {
   const requestId = startRequest("search");
 
   try {
@@ -1147,7 +1155,12 @@ const fetchWeather = async (cityName: string, preserveVisible = false): Promise<
     setCurrentSource("search");
     setDataSource("search");
 
-    const data = await getWeatherByCity(cityName, lang);
+    const data = await getWeatherByCity(
+      cityName,
+      lang,
+      undefined,
+      forceRefresh ? { forceRefresh: true } : undefined,
+    );
 
     if (isStaleRequest("search", requestId)) return false;
 
@@ -1155,6 +1168,8 @@ const fetchWeather = async (cityName: string, preserveVisible = false): Promise<
       setErr(t("errorCity"));
       return false;
     }
+
+    setData(data);
 
     setRealCity(cityName);
     setCity(cityName);
@@ -1417,7 +1432,11 @@ setIrr(ir ?? null);
 };
 
 /* 📍 LOCALITZACIÓ ACTUAL */
-const locate = async (silent = false, initialCoords?: Coords): Promise<boolean> => {
+const locate = async (
+  silent = false,
+  initialCoords?: Coords,
+  forceRefresh = false,
+): Promise<boolean> => {
 
   const requestId = startRequest("gps");
   const auditFlowName = silent ? "gps-refresh-flow" : "gps-cold-start-flow";
@@ -1483,7 +1502,13 @@ if (import.meta.env.DEV) {
 }
 
 	// 🌦️ // 2. Obté dades del temps per coordenades
-	const d = await getWeatherByCoords(lat, lon, lang);
+	const d = await getWeatherByCoords(
+    lat,
+    lon,
+    lang,
+    undefined,
+    forceRefresh ? { forceRefresh: true } : undefined,
+  );
 
 	if (isStaleRequest("gps", requestId)) {
     auditStatus = "stale-after-weather";
@@ -1849,7 +1874,7 @@ const handleSuggestionSelect = async (s: any) => {
   }
 };
 
-const refreshCurrentData = (): Promise<boolean> => {
+const refreshCurrentData = (manual = false): Promise<boolean> => {
   const gate = refreshGateRef.current;
   if (!gate) return Promise.resolve(false);
 
@@ -1858,9 +1883,9 @@ const refreshCurrentData = (): Promise<boolean> => {
     try {
       const target = getRefreshTarget(dataSource, city, realCity);
       if (target.source === "search") {
-        return await fetchWeather(target.city, true);
+        return await fetchWeather(target.city, true, manual);
       }
-      return await locate(true, getRefreshCoords(lat, lon));
+      return await locate(true, getRefreshCoords(lat, lon), manual);
     } catch (error) {
       console.error("[REFRESH] Error actualitzant dades:", error);
       return false;
@@ -1988,9 +2013,9 @@ const rainShortTermSummary = useMemo(
     buildRainShortTermSummary({
       rainingNow: weatherContext.rainy,
       currentMm: data?.rain?.["1h"],
-      hourly: hourlyForecast?.hourly,
+      hourly: getUsableForecastHourly(hourlyForecast, hourlyForecastCoords, lat, lon),
     }),
-  [weatherContext.rainy, data?.rain?.["1h"], hourlyForecast]
+  [weatherContext.rainy, data?.rain?.["1h"], hourlyForecast, hourlyForecastCoords, lat, lon]
 );
 
 const locationCurrentHour = useMemo(() => {
@@ -2082,6 +2107,7 @@ useEffect(() => {
   ) {
     setRiskTrend(null);
     setHourlyForecast(null);
+    setHourlyForecastCoords(null);
     setRiskTrendLoading(false);
     return;
   }
@@ -2095,6 +2121,7 @@ useEffect(() => {
 	      const forecast = await getHourlyForecastByCoords(lat, lon, currentLang);
 	      if (cancelled) return;
       setHourlyForecast(forecast);
+      setHourlyForecastCoords({ lat, lon });
 
       const trend = buildRiskTrend(forecast, {
         heatIndex: hi,
@@ -3185,7 +3212,7 @@ return (
     <button
       type="button"
       className="update-refresh-btn"
-      onClick={() => void refreshCurrentData()}
+      onClick={() => void refreshCurrentData(true)}
       disabled={isRefreshing}
     >
       {isRefreshing ? `↻ ${t("refreshing_data")}` : `↻ ${t("refresh_data")}`}
