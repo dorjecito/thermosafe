@@ -6,7 +6,18 @@ export type RainShortTermSummary = {
   currentMm: number | null;
   forecastMm: number | null;
   endAt: number | null;
+  intensity: RainIntensity | null;
 };
+
+export type RainIntensity = "very_weak" | "weak" | "moderate" | "intense";
+
+export function getRainIntensity(mm: number | null): RainIntensity | null {
+  if (mm === null || !Number.isFinite(mm) || mm < 0.1) return null;
+  if (mm >= 10) return "intense";
+  if (mm >= 2) return "moderate";
+  if (mm >= 0.5) return "weak";
+  return "very_weak";
+}
 
 function finite(value: unknown): number | null {
   return typeof value === "number" && Number.isFinite(value) ? value : null;
@@ -51,5 +62,6 @@ export function buildRainShortTermSummary(input: {
     currentMm,
     forecastMm: relevant.length > 0 && forecastMm > 0 ? forecastMm : null,
     endAt,
+    intensity: getRainIntensity(relevant.length > 0 && forecastMm > 0 ? forecastMm : null),
   };
 }

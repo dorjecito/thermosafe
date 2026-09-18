@@ -20,16 +20,21 @@ export default function RainShortTermCard({ summary, timezoneOffset = 0, t }: Pr
     : null;
 
   return (
-    <section className="rain-short-term-card" aria-label={t("rain_short_term_title")}>
-      <strong className="rain-short-term-title">🌧️ {t("rain_short_term_title")}</strong>
+    <section className="rain-short-term-card" aria-label={t(summary.rainingNow ? "rain_current_title" : "rain_forecast_title")}>
+      <strong className="rain-short-term-title">
+        🌧️ {t(summary.rainingNow ? "rain_current_title" : "rain_forecast_title")}
+      </strong>
       <p className="rain-short-term-text">
-        {summary.rainingNow ? t("rain_now") : t("rain_expected")}
-        {summary.currentMm != null && summary.rainingNow ? ` · ${summary.currentMm.toFixed(1)} mm/h` : ""}
-        {summary.forecastMm != null ? ` · ${summary.forecastMm.toFixed(1)} mm` : ""}
+        {summary.forecastMm != null
+          ? t("rain_amount_next_hours", { amount: summary.forecastMm.toFixed(1) })
+          : null}
       </p>
-      <p className="rain-short-term-detail">
-        {endText ? t("rain_ends_at", { time: endText }) : t("rain_next_hours")}
-      </p>
+      {(summary.intensity || endText) && (
+        <p className="rain-short-term-detail">
+          {summary.intensity ? t(`rain_intensity_${summary.intensity}`) : null}
+          {endText ? ` ${t("rain_ends_at", { time: endText })}` : null}
+        </p>
+      )}
     </section>
   );
 }

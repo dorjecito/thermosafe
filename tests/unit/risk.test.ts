@@ -924,6 +924,26 @@ test("short-term rain summary shows current and imminent rain", () => {
   });
   assert.equal(imminent.visible, true);
   assert.equal(imminent.endAt, null);
+  assert.equal(imminent.intensity, null);
+});
+
+test("short-term rain intensity follows the requested accumulated thresholds", () => {
+  const make = (mm: number) =>
+    buildRainShortTermSummary({
+      rainingNow: false,
+      nowSec: 1_000,
+      hourly: [{ dt: 2_000, rain: { "1h": mm }, pop: 1 } as any],
+    }).intensity;
+
+  assert.equal(make(0.09), null);
+  assert.equal(make(0.1), "very_weak");
+  assert.equal(make(0.4), "very_weak");
+  assert.equal(make(0.49), "very_weak");
+  assert.equal(make(0.5), "weak");
+  assert.equal(make(1.9), "weak");
+  assert.equal(make(2), "moderate");
+  assert.equal(make(9.9), "moderate");
+  assert.equal(make(10), "intense");
 });
 
 test("short-term rain end time is only inferred from a following dry hour", () => {
@@ -946,6 +966,19 @@ test("short-term rain end time is only inferred from a following dry hour", () =
   });
   assert.equal(unresolved.visible, true);
   assert.equal(unresolved.endAt, null);
+});
+
+test("short-term rain card omits the redundant forecast line when mm are unavailable", () => {
+  const cardSource = readFileSync(
+    new URL("../../src/components/RainShortTermCard.tsx", import.meta.url),
+    "utf8",
+  );
+  assert.match(cardSource, /summary\.forecastMm != null/);
+  assert.doesNotMatch(
+    cardSource,
+    /summary\.forecastMm != null[\\s\\S]{0,220}rain_next_hours/,
+  );
+  assert.match(cardSource, /summary\.intensity \|\| endText/);
 });
 
 test("short-term rain summary tolerates missing precipitation fields", () => {
