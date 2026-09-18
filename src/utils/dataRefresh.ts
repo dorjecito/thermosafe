@@ -14,11 +14,18 @@ export function shouldRefreshOnVisible(
   );
 }
 
+export type RefreshTarget =
+  | { source: "gps" }
+  | { source: "search"; city: string }
+  | { source: "coords"; city: string; lat: number; lon: number };
+
 export function getRefreshTarget(
   source: "gps" | "search" | null,
   city: string | null | undefined,
   realCity: string | null | undefined,
-): { source: "gps" } | { source: "search"; city: string } {
+  selectedTarget: RefreshTarget | null = null,
+): RefreshTarget {
+  if (selectedTarget) return selectedTarget;
   const searchCity = (realCity || city || "").trim();
   if (source === "search" && searchCity) {
     return { source: "search", city: searchCity };

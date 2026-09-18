@@ -1,6 +1,10 @@
 import React from "react";
 import type { TFunction } from "i18next";
-import { getRainTimingKey, type RainShortTermSummary } from "../utils/rainShortTerm";
+import {
+  getCurrentRainMessageKey,
+  getRainTimingKey,
+  type RainShortTermSummary,
+} from "../utils/rainShortTerm";
 
 type Props = {
   summary: RainShortTermSummary;
@@ -18,23 +22,32 @@ export default function RainShortTermCard({ summary, timezoneOffset = 0, t }: Pr
         timeZone: "UTC",
       })
     : null;
+  const currentRainKey = getCurrentRainMessageKey(summary.rainingNow, summary.currentMm);
 
   return (
     <section className="rain-short-term-card" aria-label={t(summary.rainingNow ? "rain_current_title" : "rain_forecast_title")}>
       <strong className="rain-short-term-title">
         🌧️ {t(summary.rainingNow ? "rain_current_title" : "rain_forecast_title")}
       </strong>
-      <p className="rain-short-term-text">
-        {summary.forecastMm != null
-          ? t("rain_amount_next_hours", { amount: summary.forecastMm.toFixed(1) })
-          : null}
-      </p>
-      {(summary.intensity || endText) && (
+      {currentRainKey && (
+        <p className="rain-short-term-text">
+          {t(currentRainKey, {
+            amount: summary.currentMm?.toFixed(1),
+          })}
+        </p>
+      )}
+      {summary.forecastMm != null && (
+        <p className="rain-short-term-text">
+          {t("rain_amount_next_hours", { amount: summary.forecastMm.toFixed(1) })}
+        </p>
+      )}
+      {(summary.intensity || endText || summary.futureFallback) && (
         <p className="rain-short-term-detail">
           {summary.intensity ? t(`rain_intensity_${summary.intensity}`) : null}
           {endText
             ? ` ${t(getRainTimingKey(summary.rainingNow), { time: endText })}`
             : null}
+          {summary.futureFallback ? t("rain_possible_next_hours") : null}
         </p>
       )}
     </section>

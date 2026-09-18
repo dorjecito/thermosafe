@@ -1,4 +1,4 @@
-import type { HourlyForecastItem } from "../services/weatherService";
+import type { HourlyForecastItem, HourlyForecastResponse } from "../services/weatherService";
 
 export type RainShortTermSummary = {
   visible: boolean;
@@ -7,12 +7,45 @@ export type RainShortTermSummary = {
   forecastMm: number | null;
   endAt: number | null;
   intensity: RainIntensity | null;
+  futureFallback: boolean;
 };
 
 export type RainIntensity = "very_weak" | "weak" | "moderate" | "intense";
 
+export function isForecastForLocation(
+  forecastCoords: { lat: number; lon: number } | null,
+  lat: number | null,
+  lon: number | null,
+): boolean {
+  return Boolean(
+    forecastCoords &&
+      typeof lat === "number" &&
+      typeof lon === "number" &&
+      forecastCoords.lat === lat &&
+      forecastCoords.lon === lon,
+  );
+}
+
+export function getUsableForecastHourly(
+  forecast: HourlyForecastResponse | null,
+  forecastCoords: { lat: number; lon: number } | null,
+  lat: number | null,
+  lon: number | null,
+): HourlyForecastItem[] | null {
+  if (forecast?.stale || !isForecastForLocation(forecastCoords, lat, lon)) return null;
+  return forecast?.hourly ?? null;
+}
+
 export function getRainTimingKey(rainingNow: boolean): "rain_ends_at" | "rain_expected_before" {
   return rainingNow ? "rain_ends_at" : "rain_expected_before";
+}
+
+export function getCurrentRainMessageKey(
+  rainingNow: boolean,
+  currentMm: number | null,
+): "rain_now_amount" | "rain_current_no_amount" | null {
+  if (!rainingNow) return null;
+  return currentMm !== null ? "rain_now_amount" : "rain_current_no_amount";
 }
 
 export function getRainIntensity(mm: number | null): RainIntensity | null {
@@ -67,5 +100,6 @@ export function buildRainShortTermSummary(input: {
     forecastMm: relevant.length > 0 && forecastMm > 0 ? forecastMm : null,
     endAt,
     intensity: getRainIntensity(relevant.length > 0 && forecastMm > 0 ? forecastMm : null),
+    futureFallback: relevant.length > 0 && forecastMm <= 0 && endAt === null,
   };
 }

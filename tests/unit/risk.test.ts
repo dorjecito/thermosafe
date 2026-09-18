@@ -1,3 +1,4 @@
+import "./refreshTarget.test";
 import assert from "node:assert/strict";
 import { createHash } from "node:crypto";
 import { readFileSync } from "node:fs";
@@ -69,6 +70,7 @@ import {
 import { pickPrimaryRisk } from "../../src/utils/PickPrimaryRisk";
 import { getWorkWindow, getWorkWindowText } from "../../src/utils/workWindow";
 import { buildRiskTrend } from "../../src/utils/riskTrend";
+import { getWeatherByCity } from "../../src/services/weatherService";
 import {
   buildRainShortTermSummary,
   getCurrentRainMessageKey,
@@ -999,6 +1001,38 @@ test("current rain without a usable amount gets a non-empty fallback", () => {
   assert.equal(getCurrentRainMessageKey(true, 0.2), "rain_now_amount");
 });
 
+test("current rain remains visible from the new city data without a valid forecast", () => {
+  const appSource = readFileSync(new URL("../../src/App.tsx", import.meta.url), "utf8");
+  assert.match(appSource, /const currentWeatherMain = data\?\.weather\?\.\[0\]\?\.main \?\? null/);
+  assert.match(appSource, /rainingNow: currentRainingNow/);
+
+  const currentCityData = { weather: [{ main: "Rain" }] };
+  const currentRainingNow = ["Rain", "Drizzle", "Thunderstorm"].includes(
+    currentCityData.weather[0].main,
+  );
+
+  for (const invalidForecast of [
+    null,
+    { stale: true, hourly: [{ dt: 2_000, pop: 0.8 }] as any },
+    { stale: false, hourly: [{ dt: 2_000, pop: 0.8 }] as any },
+  ]) {
+    const hourly = getUsableForecastHourly(
+      invalidForecast as any,
+      { lat: 38.9, lon: 1.4 },
+      39.0,
+      1.4,
+    );
+    const summary = buildRainShortTermSummary({
+      rainingNow: currentRainingNow,
+      hourly,
+      nowSec: 1_000,
+    });
+    assert.equal(summary.visible, true);
+    assert.equal(summary.rainingNow, true);
+    assert.equal(summary.forecastMm, null);
+  }
+});
+
 test("manual current-weather refresh bypasses cache while normal loads keep it", () => {
   const weatherSource = readFileSync(
     new URL("../../src/services/weatherService.ts", import.meta.url),
@@ -1012,6 +1046,54 @@ test("manual current-weather refresh bypasses cache while normal loads keep it",
   assert.match(appSource, /fetchWeather\(target\.city, true, manual\)/);
   assert.match(appSource, /locate\(true, getRefreshCoords\(lat, lon\), manual\)/);
   assert.match(appSource, /if \(!data \|\| !data\.coord\) \{[\s\S]*?\}\s*\s*setData\(data\);/);
+});
+
+test("explicit city searches force current weather while normal loads retain the cache", async () => {
+  const appSource = readFileSync(new URL("../../src/App.tsx", import.meta.url), "utf8");
+  assert.match(appSource, /await fetchWeather\(q, false, true\)/);
+  assert.match(appSource, /fetchWeather\(q, false, true\)/);
+  assert.match(appSource, /getWeatherByCoords\([\s\S]*?\{ forceRefresh: true \}/);
+  assert.match(appSource, /fetchWeather\(target\.city, true, manual\)/);
+
+  const city = "eivissa-cache-regression-test";
+  const responses = [
+    {
+      coord: { lat: 39, lon: 1.4 },
+      weather: [{ main: "Clouds", id: 801, description: "scattered clouds" }],
+      rain: undefined,
+      dt: 100,
+      name: city,
+    },
+    {
+      coord: { lat: 39, lon: 1.4 },
+      weather: [{ main: "Rain", id: 500, description: "light rain" }],
+      rain: { "1h": 0.2 },
+      dt: 200,
+      name: city,
+    },
+  ];
+  const originalFetch = globalThis.fetch;
+  let networkCalls = 0;
+  globalThis.fetch = (async () =>
+    new Response(JSON.stringify(responses[Math.min(networkCalls++, responses.length - 1)]), {
+      status: 200,
+      headers: { "content-type": "application/json" },
+    })) as typeof globalThis.fetch;
+
+  try {
+    const first = await getWeatherByCity(city, "ca", "test-key");
+    const cached = await getWeatherByCity(city, "ca", "test-key");
+    const manual = await getWeatherByCity(city, "ca", "test-key", { forceRefresh: true });
+
+    assert.equal(networkCalls, 2);
+    assert.equal(first?.weather?.[0]?.main, "Clouds");
+    assert.equal(cached?.weather?.[0]?.main, "Clouds");
+    assert.equal(manual?.weather?.[0]?.main, "Rain");
+    assert.equal(manual?.rain?.["1h"], 0.2);
+    assert.equal(manual?.dt, 200);
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
 });
 
 test("rain forecast is scoped to its coordinates and stale data is excluded by the UI contract", () => {
@@ -4247,7 +4329,7 @@ test("GPS and suggestion weather fetches guard null responses before reading tim
 
   assert.match(appSource, /if \(!d\) \{[\s\S]*?if \(!silent\) setErr\(t\("errorGPS"\)\);[\s\S]*?return;[\s\S]*?\}/);
   assert.match(appSource, /if \(!d\) \{[\s\S]*?return;[\s\S]*?\}\s*[\s\S]*?setData\(d\);/);
-  assert.match(appSource, /const data = await getWeatherByCoords\(s\.lat, s\.lon, lang\);\s*if \(!data\) \{\s*setErr\(t\("errorCity"\)\);\s*return;\s*\}/);
+  assert.match(appSource, /const data = await getWeatherByCoords\(\s*s\.lat,\s*s\.lon,\s*lang,[\s\S]*?\{ forceRefresh: true \}[\s\S]*?\);\s*if \(!data\) \{\s*setErr\(t\("errorCity"\)\);\s*return;\s*\}/);
 });
 
 test("version reload prepares the service worker before reloading", async () => {

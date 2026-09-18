@@ -120,6 +120,7 @@ import {
      createRefreshGate,
      getRefreshCoords,
      getRefreshTarget,
+     type RefreshTarget,
      shouldRefreshOnVisible,
    } from "./utils/dataRefresh";
 
@@ -801,6 +802,7 @@ const [icon, setIcon] = useState<string>('');
 
 // 🛰️ Font de les dades (GPS o cerca manual)
 const [dataSource, setDataSource] = useState<'gps' | 'search' | null>(null);
+const refreshTargetRef = useRef<RefreshTarget | null>(null);
 
 // Font actual (GPS o cerca manual)
 const [currentSource, setCurrentSource] = useState<'gps' | 'search'>('gps');
@@ -1144,6 +1146,7 @@ const fetchWeather = async (
   cityName: string,
   preserveVisible = false,
   forceRefresh = false,
+  coords?: { lat: number; lon: number },
 ): Promise<boolean> => {
   const requestId = startRequest("search");
 
@@ -1155,12 +1158,20 @@ const fetchWeather = async (
     setCurrentSource("search");
     setDataSource("search");
 
-    const data = await getWeatherByCity(
-      cityName,
-      lang,
-      undefined,
-      forceRefresh ? { forceRefresh: true } : undefined,
-    );
+    const data = coords
+      ? await getWeatherByCoords(
+          coords.lat,
+          coords.lon,
+          lang,
+          undefined,
+          forceRefresh ? { forceRefresh: true } : undefined,
+        )
+      : await getWeatherByCity(
+          cityName,
+          lang,
+          undefined,
+          forceRefresh ? { forceRefresh: true } : undefined,
+        );
 
     if (isStaleRequest("search", requestId)) return false;
 
@@ -1170,14 +1181,17 @@ const fetchWeather = async (
     }
 
     setData(data);
+    refreshTargetRef.current = coords
+      ? { source: "coords", city: cityName, lat: coords.lat, lon: coords.lon }
+      : { source: "search", city: cityName };
 
     setRealCity(cityName);
     setCity(cityName);
     setInput("");
 
     // 🌞 Dia/nit REAL per la ciutat
-    const newLat = data.coord?.lat ?? null;
-    const newLon = data.coord?.lon ?? null;
+    const newLat = coords?.lat ?? data.coord?.lat ?? null;
+    const newLon = coords?.lon ?? data.coord?.lon ?? null;
 
     const nowUtc = Math.floor(Date.now() / 1000);
     const tz = data.timezone ?? 0;
@@ -1520,6 +1534,7 @@ if (import.meta.env.DEV) {
 	  return;
 	}
 	setData(d);
+  refreshTargetRef.current = { source: "gps" };
   startupMark("weather-visible", { source: "gps" });
 	setDataSource("gps");
 
@@ -1767,10 +1782,11 @@ const search = async () => {
   }
 
   setErr("");
-  await fetchWeather(q);
+  await fetchWeather(q, false, true);
 };
 
 const handleSuggestionSelect = async (s: any) => {
+  const requestId = startRequest("search");
   const label = [s.name, s.state, s.country].filter(Boolean).join(", ");
 
   setShowSuggestions(false);
@@ -1783,13 +1799,21 @@ const handleSuggestionSelect = async (s: any) => {
     setCurrentSource("search");
     setDataSource("search");
 
-    const data = await getWeatherByCoords(s.lat, s.lon, lang);
+    const data = await getWeatherByCoords(
+      s.lat,
+      s.lon,
+      lang,
+      undefined,
+      { forceRefresh: true },
+    );
     if (!data) {
       setErr(t("errorCity"));
       return;
     }
+    if (isStaleRequest("search", requestId)) return;
 
     setData(data);
+    refreshTargetRef.current = { source: "coords", city: label, lat: s.lat, lon: s.lon };
     setLat(s.lat);
     setLon(s.lon);
 
@@ -1881,7 +1905,10 @@ const refreshCurrentData = (manual = false): Promise<boolean> => {
   return gate.run(async () => {
     setIsRefreshing(true);
     try {
-      const target = getRefreshTarget(dataSource, city, realCity);
+      const target = getRefreshTarget(dataSource, city, realCity, refreshTargetRef.current);
+      if (target.source === "coords") {
+        return await fetchWeather(target.city, true, manual, target);
+      }
       if (target.source === "search") {
         return await fetchWeather(target.city, true, manual);
       }
@@ -1996,6 +2023,12 @@ const activeAlertEvent = useMemo(() => {
 
 const currentFeelTemp = hi ?? temp ?? 99;
 
+const currentWeatherMain = data?.weather?.[0]?.main ?? null;
+const currentRainingNow =
+  currentWeatherMain === "Rain" ||
+  currentWeatherMain === "Drizzle" ||
+  currentWeatherMain === "Thunderstorm";
+
 const weatherContext = useMemo(
   () =>
     getWeatherContext({
@@ -2011,11 +2044,11 @@ const weatherContext = useMemo(
 const rainShortTermSummary = useMemo(
   () =>
     buildRainShortTermSummary({
-      rainingNow: weatherContext.rainy,
+      rainingNow: currentRainingNow,
       currentMm: data?.rain?.["1h"],
       hourly: getUsableForecastHourly(hourlyForecast, hourlyForecastCoords, lat, lon),
     }),
-  [weatherContext.rainy, data?.rain?.["1h"], hourlyForecast, hourlyForecastCoords, lat, lon]
+  [currentRainingNow, data?.rain?.["1h"], hourlyForecast, hourlyForecastCoords, lat, lon]
 );
 
 const locationCurrentHour = useMemo(() => {
@@ -2757,7 +2790,7 @@ return (
       if (!q) return;
 
       setErr("");
-      fetchWeather(q);
+      fetchWeather(q, false, true);
     }}
 	    className="search-panel-form"
 	  >

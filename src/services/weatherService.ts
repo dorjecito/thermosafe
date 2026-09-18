@@ -176,8 +176,8 @@ export async function getWeatherByCoords(
   const lang2 = normLang2(lang);
 
   const cacheKey = getCacheKey("coords", lat.toFixed(4), lon.toFixed(4), lang2);
-  const cached = options.forceRefresh ? null : getFromCache<any>(cacheKey);
-  if (cached) {
+  const cached = options.forceRefresh ? null : getFromCache<any>(cacheKey);
+  if (cached) {
     startupStart("openweather-current", { source: "coords", cache: "memory-hit" });
     startupEnd("openweather-current", { status: "cache-hit" });
     return cached;
@@ -204,9 +204,9 @@ export async function getWeatherByCoords(
 
     // ❗ No posam country com a "name". Si falta name, millor deixar-ho buit
     // i resoldre-ho fora amb reverse geocoding.
-    if (typeof data.name !== "string") data.name = "";
+    if (typeof data.name !== "string") data.name = "";
 
-    saveToCache(cacheKey, data);
+    saveToCache(cacheKey, data);
     startupEnd("openweather-current", { status: "ok" });
     return data;
   } catch (err) {
@@ -226,8 +226,8 @@ export async function getWeatherByCity(
   const lang2 = normLang2(lang);
 
   const cacheKey = getCacheKey("city", cityName.trim().toLowerCase(), lang2);
-  const cached = options.forceRefresh ? null : getFromCache<any>(cacheKey);
-  if (cached) {
+  const cached = options.forceRefresh ? null : getFromCache<any>(cacheKey);
+  if (cached) {
     startupStart("openweather-city", { cache: "memory-hit" });
     startupEnd("openweather-city", { status: "cache-hit" });
     return cached;
@@ -284,11 +284,11 @@ export async function getWeatherByCity(
       }
     }
 
-    if (typeof data.name !== "string" || !data.name.trim()) {
-      data.name = cityName;
-    }
+    if (typeof data.name !== "string" || !data.name.trim()) {
+      data.name = cityName;
+    }
 
-    saveToCache(cacheKey, data);
+    saveToCache(cacheKey, data);
     startupEnd("openweather-city", { status: "ok" });
     return data;
   } catch (err) {
