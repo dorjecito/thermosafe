@@ -11,6 +11,10 @@ export type RainShortTermSummary = {
 
 export type RainIntensity = "very_weak" | "weak" | "moderate" | "intense";
 
+export function getRainTimingKey(rainingNow: boolean): "rain_ends_at" | "rain_expected_before" {
+  return rainingNow ? "rain_ends_at" : "rain_expected_before";
+}
+
 export function getRainIntensity(mm: number | null): RainIntensity | null {
   if (mm === null || !Number.isFinite(mm) || mm < 0.1) return null;
   if (mm >= 10) return "intense";

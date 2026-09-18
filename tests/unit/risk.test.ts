@@ -69,7 +69,7 @@ import {
 import { pickPrimaryRisk } from "../../src/utils/PickPrimaryRisk";
 import { getWorkWindow, getWorkWindowText } from "../../src/utils/workWindow";
 import { buildRiskTrend } from "../../src/utils/riskTrend";
-import { buildRainShortTermSummary } from "../../src/utils/rainShortTerm";
+import { buildRainShortTermSummary, getRainTimingKey } from "../../src/utils/rainShortTerm";
 import {
   evaluateRiskScore,
   type RiskEngineInput,
@@ -979,6 +979,11 @@ test("short-term rain card omits the redundant forecast line when mm are unavail
     /summary\.forecastMm != null[\\s\\S]{0,220}rain_next_hours/,
   );
   assert.match(cardSource, /summary\.intensity \|\| endText/);
+});
+
+test("short-term rain card distinguishes current rain from future rain wording", () => {
+  assert.equal(getRainTimingKey(true), "rain_ends_at");
+  assert.equal(getRainTimingKey(false), "rain_expected_before");
 });
 
 test("short-term rain summary tolerates missing precipitation fields", () => {

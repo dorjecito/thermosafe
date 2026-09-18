@@ -354,6 +354,7 @@
   "rain_intensity_moderate": "Euri moderatua aurreikusita. Kontuan izan kanpoan jarduera egingo baduzu.",
   "rain_intensity_intense": "Euri gogorra aurreikusita. Kanpoko jarduerak zail ditzake.",
   "rain_ends_at": "Euria {{time}} aldera amai liteke",
+  "rain_expected_before": "{{time}} baino lehen euria aurreikusten da",
   "rain_next_hours": "Datozen orduetan euria aurreikusita",
   "alerts_title": "AEMET abisu ofizialak",
   "alerts_none": "Ez dago meteorologiako abisu aktiborik.",

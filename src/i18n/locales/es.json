@@ -369,6 +369,7 @@
   "rain_intensity_moderate": "Lluvia moderada prevista. Tenlo en cuenta si vas a realizar actividad al aire libre.",
   "rain_intensity_intense": "Lluvia intensa prevista. Puede dificultar las actividades al aire libre.",
   "rain_ends_at": "La lluvia podría terminar hacia las {{time}}",
+  "rain_expected_before": "Se prevé lluvia antes de las {{time}}",
   "rain_next_hours": "Lluvia prevista durante las próximas horas",
   "alerts_title": "Avisos meteorológicos oficiales",
   "alerts_none": "No hay avisos meteorológicos activos actualmente.",

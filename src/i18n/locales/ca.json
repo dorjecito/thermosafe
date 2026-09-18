@@ -343,6 +343,7 @@
   "rain_intensity_moderate": "Pluja moderada prevista. Tingues-ho en compte si faràs activitat a l’exterior.",
   "rain_intensity_intense": "Pluja intensa prevista. Pot dificultar les activitats a l’exterior.",
   "rain_ends_at": "La pluja podria acabar cap a les {{time}}",
+  "rain_expected_before": "Es preveu pluja abans de les {{time}}",
   "rain_next_hours": "Pluja prevista durant les pròximes hores",
   "alerts_title": "Avisos meteorològics oficials",
   "alerts_none": "No hi ha avisos meteorològics actius actualment.",

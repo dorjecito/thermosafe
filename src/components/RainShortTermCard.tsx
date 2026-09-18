@@ -1,6 +1,6 @@
 import React from "react";
 import type { TFunction } from "i18next";
-import type { RainShortTermSummary } from "../utils/rainShortTerm";
+import { getRainTimingKey, type RainShortTermSummary } from "../utils/rainShortTerm";
 
 type Props = {
   summary: RainShortTermSummary;
@@ -32,7 +32,9 @@ export default function RainShortTermCard({ summary, timezoneOffset = 0, t }: Pr
       {(summary.intensity || endText) && (
         <p className="rain-short-term-detail">
           {summary.intensity ? t(`rain_intensity_${summary.intensity}`) : null}
-          {endText ? ` ${t("rain_ends_at", { time: endText })}` : null}
+          {endText
+            ? ` ${t(getRainTimingKey(summary.rainingNow), { time: endText })}`
+            : null}
         </p>
       )}
     </section>

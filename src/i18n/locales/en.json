@@ -335,6 +335,7 @@
   "rain_intensity_moderate": "Moderate rain expected. Keep this in mind if you will be active outdoors.",
   "rain_intensity_intense": "Heavy rain expected. It may make outdoor activities difficult.",
   "rain_ends_at": "Rain could end around {{time}}",
+  "rain_expected_before": "Rain is expected before {{time}}",
   "rain_next_hours": "Rain expected over the next few hours",
   "alerts_title": "Official weather alerts",
   "alerts_none": "There are currently no active weather alerts.",
