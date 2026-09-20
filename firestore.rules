@@ -29,98 +29,75 @@ service cloud.firestore {
         (data[key] is string && data[key].size() <= maxSize);
     }
 
-    function validOptionalMap(data, key) {
-      return !(key in data) || data[key] == null || data[key] is map;
-    }
-
-    function validOptionalStringOrMap(data, key, maxSize) {
-      return !(key in data) || data[key] == null ||
-        (data[key] is string && data[key].size() <= maxSize) ||
-        data[key] is map;
-    }
-
     function validOptionalTimestamp(data, key) {
       return !(key in data) || data[key] == null || data[key] is timestamp;
     }
 
-    function validSubKeys(data) {
-      return data.keys().hasOnly([
-        "token",
-        "lat",
-        "lon",
-        "place",
-        "threshold",
-        "lang",
-        "createdAt",
-        "updatedAt",
-        "lastNotified",
-        "lastNotifiedDay",
-        "lastDailyResetDay",
-        "lastHeatLevel",
-        "lastHeatAt",
-        "lastColdLevel",
-        "lastColdAt",
-        "lastWindLevel",
-        "lastWindAt",
-        "lastUvLevel",
-        "lastUvAt",
-        "lastUvResetDay",
-        "uvLevelsByZone",
-        "lastAemetLevel",
-        "lastAemetAt",
-        "lastAemetEvent",
-        "lastAemetSender",
-        "lastAemetEventKey",
-        "lastAemetResetDay",
-        "tokenLastSyncedAt"
-      ]);
+    function subClientUpdateKeys() {
+      return ["lat", "lon", "place", "threshold", "lang", "updatedAt", "tokenLastSyncedAt"];
     }
 
-    function validSubShape(data, token) {
-      return validSubKeys(data)
-        && validToken(token)
+    // Exactly resetRiskLevelsPayload() in src/push/subscribe.ts.
+    // These shared fields may only be reset by clients, never marked as notified.
+    function subResetKeys() {
+      return [
+        "lastNotified", "lastNotifiedDay", "lastDailyResetDay",
+        "lastHeatLevel", "lastHeatAt", "lastColdLevel", "lastColdAt",
+        "lastWindLevel", "lastWindAt", "lastUvLevel", "lastUvAt",
+        "lastAemetLevel", "lastAemetAt"
+      ];
+    }
+
+    function validSubReset(data) {
+      return data.keys().hasAll(subResetKeys())
+        && data.lastNotified == null
+        && data.lastNotifiedDay == null
+        && data.lastDailyResetDay == null
+        && data.lastHeatLevel == 0 && data.lastHeatAt == 0
+        && data.lastColdLevel == 0 && data.lastColdAt == 0
+        && data.lastWindLevel == 0 && data.lastWindAt == 0
+        && data.lastUvLevel == 0 && data.lastUvAt == 0
+        && data.lastAemetLevel == 0 && data.lastAemetAt == 0;
+    }
+
+    function validSubClientShape(data, token) {
+      return validToken(token)
         && data.token == token
-        && data.lat is number
-        && data.lat >= -90
-        && data.lat <= 90
-        && data.lon is number
-        && data.lon >= -180
-        && data.lon <= 180
+        && data.lat is number && data.lat >= -90 && data.lat <= 90
+        && data.lon is number && data.lon >= -180 && data.lon <= 180
         && (!("threshold" in data) || data.threshold == null || validThreshold(data.threshold))
         && (!("lang" in data) || data.lang == null || validLang(data.lang))
         && validOptionalString(data, "place", 200)
-        && validOptionalNumber(data, "createdAt")
         && validOptionalNumber(data, "updatedAt")
-        && validOptionalNumber(data, "lastNotified")
-        && validOptionalString(data, "lastNotifiedDay", 20)
-        && validOptionalString(data, "lastDailyResetDay", 20)
-        && validOptionalNumber(data, "lastHeatLevel")
-        && validOptionalNumber(data, "lastHeatAt")
-        && validOptionalNumber(data, "lastColdLevel")
-        && validOptionalNumber(data, "lastColdAt")
-        && validOptionalNumber(data, "lastWindLevel")
-        && validOptionalNumber(data, "lastWindAt")
-        && validOptionalNumber(data, "lastUvLevel")
-        && validOptionalNumber(data, "lastUvAt")
-        && validOptionalString(data, "lastUvResetDay", 20)
-        && validOptionalMap(data, "uvLevelsByZone")
-        && validOptionalNumber(data, "lastAemetLevel")
-        && validOptionalNumber(data, "lastAemetAt")
-        && validOptionalStringOrMap(data, "lastAemetEvent", 300)
-        && validOptionalString(data, "lastAemetSender", 300)
-        && validOptionalString(data, "lastAemetEventKey", 500)
-        && validOptionalString(data, "lastAemetResetDay", 20)
         && validOptionalTimestamp(data, "tokenLastSyncedAt");
+    }
+
+    function validSubCreate(data, token) {
+      return data.keys().hasOnly(subClientUpdateKeys().concat(subResetKeys()).concat(["token", "createdAt"]))
+        && validSubClientShape(data, token)
+        && validOptionalNumber(data, "createdAt")
+        && (!data.keys().hasAny(subResetKeys()) || validSubReset(data));
+    }
+
+    function validSubUpdate(data, token) {
+      let changed = data.diff(resource.data).affectedKeys();
+      // Admin fields may exist unchanged, including future fields. Clients cannot
+      // add, modify or delete them. In particular: lastAemetEpisodeKey,
+      // lastAemetNotifiedLevel, lastAemetEventKey/Event/Sender/ResetDay,
+      // uvLevelsByZone and lastUvResetDay. token/createdAt are immutable too.
+      return changed.hasOnly(subClientUpdateKeys().concat(subResetKeys()))
+        && validSubClientShape(data, token)
+        && (!changed.hasAny(subResetKeys()) || validSubReset(data));
     }
 
     match /subs/{token} {
       allow list: if false;
       allow get: if validToken(token);
-      allow create: if validSubShape(request.resource.data, token);
+      allow create: if validSubCreate(request.resource.data, token);
       allow update: if validToken(token)
         && resource.data.token == token
         && request.resource.data.token == token
-        && validSubShape(request.resource.data, token);
+        && validSubUpdate(request.resource.data, token);
       allow delete: if validToken(token) && resource.data.token == token;
     }
 

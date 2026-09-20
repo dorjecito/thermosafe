@@ -3,13 +3,14 @@
 import {
   doc,
   setDoc,
+  updateDoc,
   deleteDoc,
   getDoc,
   serverTimestamp,
   type FieldValue,
   type Timestamp,
 } from "firebase/firestore";
-import { getToken } from "firebase/messaging";
+import { deleteToken, getToken } from "firebase/messaging";
 import { db, messagingPromise } from "../firebase";
 import {
   buildTokenLastSyncedPayload,
@@ -185,19 +186,25 @@ function warnNotificationStageError(stage: string, error: unknown) {
 async function writeSubDocWithOptionalTokenSync<T extends Record<string, unknown>>(
   ref: ReturnType<typeof doc>,
   payload: T,
-  stage = "setDoc"
+  stage = "setDoc",
+  mode: "create" | "update" = "create"
 ) {
+  const operation = mode === "update" ? "updateDoc" : "setDoc";
   return writeWithOptionalTokenSyncFallback(
     payload,
     async (payloadToWrite) => {
-      logNotifications("Just abans de setDoc().", {
+      logNotifications(`Just abans de ${operation}().`, {
         stage,
         hasTokenLastSyncedAt: "tokenLastSyncedAt" in payloadToWrite,
       });
 
       try {
-        await setDoc(ref, payloadToWrite, { merge: true });
-        logNotifications("setDoc() OK.", {
+        if (mode === "update") {
+          await updateDoc(ref, payloadToWrite);
+        } else {
+          await setDoc(ref, payloadToWrite, { merge: true });
+        }
+        logNotifications(`${operation}() OK.`, {
           stage,
           hasTokenLastSyncedAt: "tokenLastSyncedAt" in payloadToWrite,
         });
@@ -256,12 +263,84 @@ export async function getCurrentFcmToken(): Promise<string | null> {
   return token;
 }
 
+// Keep a pending recovery across reloads: a cached rejected token must not become
+// a legitimate signup after deleteToken/getToken fails.
+const TOKEN_RECOVERY_KEY = "thermosafe_fcm_token_pending_recovery";
+let tokenRecovery: Promise<string | null> | null = null;
+
+function isMissingSubError(error: unknown): boolean {
+  return typeof error === "object" && error !== null &&
+    "code" in error && error.code === "not-found";
+}
+
+async function recoverRiskAlertToken(
+  oldToken: string,
+  location: SavedLocation,
+  threshold: Level = "moderate"
+): Promise<string | null> {
+  if (tokenRecovery) return tokenRecovery;
+
+  tokenRecovery = (async () => {
+    localStorage.setItem(TOKEN_RECOVERY_KEY, oldToken);
+    localStorage.removeItem("fcmToken");
+
+    const messaging = await messagingPromise;
+    if (!messaging) throw new Error("El navegador no suporta Web Push");
+    await deleteToken(messaging);
+    const newToken = await getCurrentFcmToken();
+    if (!newToken || newToken === oldToken) return null;
+
+    const ref = doc(db, "subs", newToken);
+    const snap = await getDoc(ref);
+    const now = Date.now();
+    const place = normalizePlaceValue(location.place);
+    const lang = location.lang ? normalizeLangValue(location.lang) : normalizeLang("ca");
+    const previous = snap.exists() ? snap.data() as SubDoc : null;
+    const distanceKm = previous && Number.isFinite(Number(previous.lat)) &&
+      Number.isFinite(Number(previous.lon))
+      ? haversineKm(Number(previous.lat), Number(previous.lon), location.lat, location.lon)
+      : Infinity;
+
+    await writeSubDocWithOptionalTokenSync(ref, {
+      token: newToken,
+      lat: location.lat,
+      lon: location.lon,
+      ...(place ? { place } : {}),
+      lang,
+      ...(previous ? {} : { threshold, createdAt: now }),
+      updatedAt: now,
+      ...tokenLastSyncedPayload(),
+      ...(distanceKm >= RESET_DISTANCE_KM ? resetRiskLevelsPayload() : {}),
+    }, "tokenRecovery", previous ? "update" : "create");
+
+    localStorage.setItem("fcmToken", newToken);
+    localStorage.removeItem(TOKEN_RECOVERY_KEY);
+    return newToken;
+  })();
+
+  try {
+    return await tokenRecovery;
+  } finally {
+    tokenRecovery = null;
+  }
+}
+
 export async function updateRiskAlertLocation({
   lat,
   lon,
   place,
   lang,
 }: SavedLocation): Promise<boolean> {
+  const location = { lat, lon, place, lang };
+  const pendingToken = localStorage.getItem(TOKEN_RECOVERY_KEY);
+  if (pendingToken) {
+    try {
+      return Boolean(await recoverRiskAlertToken(pendingToken, location));
+    } catch (error) {
+      warnNotifications("No s'ha pogut recuperar el token de notificacions.", error);
+      return false;
+    }
+  }
   const token =
     localStorage.getItem("fcmToken") || (await getCurrentFcmToken());
 
@@ -273,6 +352,9 @@ export async function updateRiskAlertLocation({
   try {
     const ref = doc(db, "subs", token);
     const snap = await getDoc(ref);
+    if (!snap.exists()) {
+      return Boolean(await recoverRiskAlertToken(token, location));
+    }
     const now = Date.now();
 
     let distanceKm = 0;
@@ -313,7 +395,9 @@ export async function updateRiskAlertLocation({
           token,
           updatedAt: now,
           ...tokenLastSyncedPayload(),
-        }
+        },
+        "updateDoc:location",
+        "update"
       );
 
       if (import.meta.env.DEV) {
@@ -341,7 +425,7 @@ export async function updateRiskAlertLocation({
       ...(mustResetLevels ? resetRiskLevelsPayload() : {}),
     };
 
-    await writeSubDocWithOptionalTokenSync(ref, payload as Record<string, unknown>);
+    await writeSubDocWithOptionalTokenSync(ref, payload as Record<string, unknown>, "updateDoc:location", "update");
 
     if (import.meta.env.DEV) {
       logNotifications("Ubicació de notificacions actualitzada.", {
@@ -355,8 +439,16 @@ export async function updateRiskAlertLocation({
 
     return true;
   } catch (e) {
+    if (isMissingSubError(e)) {
+      try {
+        return Boolean(await recoverRiskAlertToken(token, location));
+      } catch (error) {
+        warnNotifications("No s'ha pogut recuperar el token de notificacions.", error);
+        return false;
+      }
+    }
     warnNotifications(
-      "No s'ha pogut actualitzar la ubicació. La subscripció continua sent vàlida.",
+      "No s'ha pogut actualitzar la ubicació de notificacions.",
       e
     );
     return false;
@@ -386,7 +478,9 @@ export async function updateRiskAlertLanguage(lang: Lang): Promise<boolean> {
         lang: normalizeLangValue(lang),
         updatedAt: Date.now(),
         ...tokenLastSyncedPayload(),
-      }
+      },
+      "updateDoc:language",
+      "update"
     );
 
     logNotifications("Idioma de notificacions actualitzat.", { lang });
@@ -434,6 +528,12 @@ export async function enableRiskAlerts({
     stage = "geolocation.getCurrentPosition";
     const loc = await getCoords();
     if (!loc) throw new Error("No s'ha pogut obtenir la ubicació (GPS)");
+    const pendingToken = localStorage.getItem(TOKEN_RECOVERY_KEY);
+    if (pendingToken) {
+      const recovered = await recoverRiskAlertToken(pendingToken, { ...loc, lang, place }, threshold);
+      if (!recovered) throw new Error("No s'ha pogut renovar el token FCM");
+      return recovered;
+    }
     logNotifications("GPS OK.", {
       latAvailable: Number.isFinite(loc.lat),
       lonAvailable: Number.isFinite(loc.lon),
@@ -514,7 +614,7 @@ export async function enableRiskAlerts({
 
       const mustResetLevels = distanceKm >= RESET_DISTANCE_KM;
 
-      stage = "setDoc:update";
+      stage = "updateDoc:update";
       await writeSubDocWithOptionalTokenSync(
         ref,
         {
@@ -528,7 +628,8 @@ export async function enableRiskAlerts({
           ...tokenLastSyncedPayload(),
           ...(mustResetLevels ? resetRiskLevelsPayload() : {}),
         },
-        stage
+        stage,
+        "update"
       );
 
       if (import.meta.env.DEV) {
