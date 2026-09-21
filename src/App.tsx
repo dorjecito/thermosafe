@@ -1372,7 +1372,7 @@ useEffect(() => {
     clearInterval(id1);
     clearInterval(id2);
   };
-}, [lang]);
+}, []);
 
 // 💨 Actualitza el risc de vent quan canvia la velocitat i envia avís si és fort
 useEffect(() => {

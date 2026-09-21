@@ -7,7 +7,7 @@ import { createRefreshGate, getRefreshCoords, getRefreshTarget } from "../../src
 
 // Execute the actual App handlers with service spies, including responses whose
 // coordinates differ from the selected point and reverse-geocoded display names.
-function harness() {
+export function harness(options: { pushEnabled?: boolean } = {}) {
   const source = readFileSync(new URL("../../src/App.tsx", import.meta.url), "utf8");
   const handlers = [
     source.slice(source.indexOf("const fetchWeather = async ("), source.indexOf("  useEffect(() => {\n    dataRef.current = data;")),
@@ -33,7 +33,8 @@ function harness() {
     WINDCHILL_TEMP_MAX: 10, WINDCHILL_WIND_MIN: 4.8, COLD_THRESHOLD: 10,
     resolveSkyDescription: () => "Clouds", t: (key: string) => key,
     getUVFromOpenUV: async () => 0, loadUvMaxToday: async () => {},
-    loadAlertsIfNeeded: async () => {}, localStorage: { getItem: () => null },
+    loadAlertsIfNeeded: async () => {}, localStorage: { getItem: () => options.pushEnabled ? "test-token" : null },
+    updateRiskAlertLocationLazy: async (location: unknown) => { calls.push(["push-location", location]); },
     collapseSearchPanel() {}, locate: async () => { throw new Error("Unexpected GPS lookup"); },
   };
   for (const name of handlers.match(/\bset[A-Z]\w*/g) ?? []) context[name] = () => {};

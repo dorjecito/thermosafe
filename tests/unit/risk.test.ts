@@ -1,4 +1,5 @@
 import "./refreshTarget.test";
+import "./languageInitialization.test";
 import "./subscriptionLifecycle.test";
 import assert from "node:assert/strict";
 import { createHash } from "node:crypto";
