@@ -8117,7 +8117,7 @@ test("Weather daily reset still allows cold and wind notifications with today's 
   assert.ok(reset);
   assert.equal(reset.data.lastColdLevel, 0);
   assert.equal(reset.data.lastWindLevel, 0);
-  assert.deepEqual(harness.sends.map((send) => send.data.type).sort(), ["cold", "wind"]);
+  assert.deepEqual(harness.sends.map((send) => send.data.type).sort(), ["cold_wind"]);
   const sub = harness.db.getSub("cold-wind-reset");
   assert.equal(sub.lastDailyResetDay, "2026-01-20");
   assert.equal(sub.lastHeatLevel, 2);
@@ -8304,7 +8304,7 @@ test("UV-only notifications continue to work without heat", async () => {
   assert.equal(sub.uvLevelsByZone["39.5,2.9"], 2);
 });
 
-test("weather V2 cold and wind notifications are unchanged by heat UV dedup state", async () => {
+test("weather V2 cold wind combination preserves heat UV dedup state", async () => {
   const harness = createFunctionsIndexHarness({
     nowMs: Date.UTC(2026, 0, 20, 8),
     uvi: 0,
@@ -8326,7 +8326,7 @@ test("weather V2 cold and wind notifications are unchanged by heat UV dedup stat
   const sub = harness.db.getSub("cold-wind");
   assert.deepEqual(
     harness.sends.map((send) => send.data.type).sort(),
-    ["cold", "wind"]
+    ["cold_wind"]
   );
   assert.equal(sub.lastColdLevel, 3);
   assert.equal(sub.lastWindLevel, 2);
@@ -8466,4 +8466,208 @@ test("combined titles preserve sends and Firestore state against previous presen
       assert.deepEqual(normalizedSends, baseline.sends);
     });
   }
+});
+
+
+// All Cold + Wind tests run the actual handler with in-memory Firebase/FCM adapters.
+const coldWindNow = Date.UTC(2026, 0, 20, 8, 16);
+function coldWindHarness(options: Partial<Parameters<typeof createFunctionsIndexHarness>[0]> = {}) {
+  return createFunctionsIndexHarness({
+    nowMs: coldWindNow, uvi: 0,
+    weather: { temp: -6, hum: 60, wind: 13 },
+    subs: [{ token: "cw", lat: 39.49, lon: 2.91, lastDailyResetDay: "2026-01-20",
+      lastColdLevel: 0, lastWindLevel: 0 }],
+    ...options,
+  });
+}
+
+test("cold wind: only independently eligible factors notify", async (t) => {
+  for (const scenario of [
+    { name: "cold only", weather: { temp: -6, wind: 0 }, types: ["cold"] },
+    { name: "wind only", weather: { temp: 15, wind: 13 }, types: ["wind"] },
+    { name: "both", weather: { temp: -6, wind: 13 }, types: ["cold_wind"] },
+  ]) await t.test(scenario.name, async () => {
+    const h = coldWindHarness({ weather: scenario.weather });
+    await h.runWeatherV2();
+    assert.deepEqual(h.sends.map(p => p.data.type), scenario.types);
+  });
+});
+
+test("cold wind: successful combination records both levels and timestamps once", async () => {
+  const h = coldWindHarness();
+  await h.runWeatherV2();
+  assert.equal(h.sends.length, 1);
+  const p = h.sends[0];
+  assert.equal(p.data.type, "cold_wind");
+  assert.equal(p.data.coldLevel, "3");
+  assert.equal(p.data.windLevel, "2");
+  assert.equal(p.data.tag, "thermosafe-cold-wind");
+  assert.notEqual(p.data.tag, "thermosafe-combined");
+  assert.equal(p.webpush.headers.TTL, "3600");
+  assert.equal(p.data.url, "https://thermosafe.app");
+  const sub = h.db.getSub("cw");
+  assert.equal(sub.lastColdLevel, 3);
+  assert.equal(sub.lastWindLevel, 2);
+  for (const key of ["lastColdAt", "lastWindAt", "lastNotified"]) assert.equal(sub[key], coldWindNow);
+  await h.runWeatherV2();
+  assert.equal(h.sends.length, 1);
+});
+
+test("cold wind: asymmetric escalation remains individual; simultaneous escalation combines", async (t) => {
+  for (const [temp, wind, type, cold, windLevel] of [
+    [-20, 13, "cold", 4, 2], [-6, 20, "wind", 3, 3], [-20, 20, "cold_wind", 4, 3],
+  ] as const) await t.test(type, async () => {
+    const h = coldWindHarness();
+    await h.runWeatherV2();
+    h.weather.temp = temp;
+    h.weather.wind = wind;
+    // Clear the actual rounded weather cache keys without changing subscription state.
+    const cache = await h.db.collection("weatherCache").get();
+    for (const doc of cache.docs) await doc.ref.delete();
+    await h.runWeatherV2();
+    assert.deepEqual(h.sends.map(p => p.data.type), ["cold_wind", type]);
+    assert.equal(h.db.getSub("cw").lastColdLevel, cold);
+    assert.equal(h.db.getSub("cw").lastWindLevel, windLevel);
+  });
+});
+
+test("cold wind: descent and recovery never lower or repeat notified levels", async () => {
+  const h = coldWindHarness();
+  await h.runWeatherV2();
+  for (const [temp, wind] of [[15, 0], [-6, 13]]) {
+    h.weather.temp = temp; h.weather.wind = wind;
+    const cache = await h.db.collection("weatherCache").get();
+    for (const doc of cache.docs) await doc.ref.delete();
+    await h.runWeatherV2();
+    assert.equal(h.db.getSub("cw").lastColdLevel, 3);
+    assert.equal(h.db.getSub("cw").lastWindLevel, 2);
+  }
+  assert.equal(h.sends.length, 1);
+});
+
+test("cold wind: daily reset permits a new combined notification", async () => {
+  const h = coldWindHarness();
+  await h.runWeatherV2();
+  const next = coldWindHarness({ nowMs: coldWindNow + 86400000, subs: [h.db.getSub("cw")] });
+  await next.runWeatherV2();
+  assert.deepEqual(next.sends.map(p => p.data.type), ["cold_wind"]);
+  assert.equal(next.db.getSub("cw").lastDailyResetDay, "2026-01-21");
+});
+
+test("cold wind: quiet hours reset at six but do not notify", async () => {
+  const h = coldWindHarness({ nowMs: Date.UTC(2026, 0, 20, 4, 16),
+    subs: [{ token: "cw", lat: 39, lon: 2, lastDailyResetDay: "2026-01-19", lastColdLevel: 3, lastWindLevel: 2 }] });
+  await h.runWeatherV2();
+  assert.equal(h.sends.length, 0);
+  assert.equal(h.db.getSub("cw").lastColdLevel, 0);
+  assert.equal(h.db.getSub("cw").lastWindLevel, 0);
+});
+
+test("cold wind: failed FCM leaves notification state unchanged and retries next run", async () => {
+  let attempts = 0;
+  const h = coldWindHarness({ sendError: new Error("temporary FCM error"), beforeSend: () => attempts++ });
+  const before = JSON.stringify(h.db.getSub("cw"));
+  await h.runWeatherV2();
+  assert.equal(attempts, 1); // No unsafe individual fallback after combined failure.
+  assert.equal(h.sends.length, 0);
+  assert.equal(JSON.stringify(h.db.getSub("cw")), before);
+  const retry = coldWindHarness({ subs: [h.db.getSub("cw")] });
+  await retry.runWeatherV2();
+  assert.deepEqual(retry.sends.map(p => p.data.type), ["cold_wind"]);
+});
+
+test("cold wind: invalid token uses existing cleanup without fallback or notified writes", async () => {
+  let attempts = 0;
+  const h = coldWindHarness({
+    sendError: Object.assign(new Error("invalid token"), { code: "messaging/registration-token-not-registered" }),
+    beforeSend: () => attempts++,
+  });
+  await h.runWeatherV2();
+  assert.equal(attempts, 1);
+  assert.equal(h.db.getSub("cw"), undefined);
+  assert.deepEqual(h.db.deletes, ["subs/cw"]);
+  assert.equal(h.db.writes.filter(w => w.path === "subs/cw").length, 0);
+});
+
+test("cold wind: user threshold cannot make the other factor eligible", async (t) => {
+  for (const [temp, wind, expected] of [[-6, 13, "cold"], [3, 20, "wind"]] as const) {
+    await t.test(expected, async () => {
+      const h = coldWindHarness({ weather: { temp, wind }, subs: [{ token: "cw", lat: 39, lon: 2,
+        threshold: "very_high", lastDailyResetDay: "2026-01-20" }] });
+      await h.runWeatherV2();
+      assert.deepEqual(h.sends.map(p => p.data.type), [expected]);
+    });
+  }
+});
+
+test("cold wind: jobType wind boundaries and rounding remain unchanged", async (t) => {
+  const profiles = { altura: [20,35,55], poda: [25,40,60], obra: [28,45,65],
+    jardineria: [30,45,65], neteja: [30,50,70], trekking: [35,50,70], oci: [35,50,70], generic: [30,45,65] };
+  for (const [jobType, limits] of Object.entries(profiles)) await t.test(jobType, async () => {
+    for (const [i, boundary] of limits.entries()) for (const delta of [-0.6, -0.4, 0]) {
+      const h = coldWindHarness({ weather: { temp: -20, wind: (boundary + delta) / 3.6 },
+        subs: [{ token: "cw", lat: 39, lon: 2, jobType, lastDailyResetDay: "2026-01-20" }] });
+      await h.runWeatherV2();
+      const expected = delta === -0.6 ? i : i + 1;
+      assert.equal(h.db.getSub("cw").lastWindLevel ?? 0, expected);
+      assert.equal(h.sends[0].data.type, expected ? "cold_wind" : "cold");
+    }
+  });
+});
+
+test("cold wind: wind chill formula and cold boundaries are unchanged", async () => {
+  for (const [temp, speed] of [[0,0], [-5,0], [-15,0], [-25,0], [-40,0], [0,4.8], [0,4.9], [10,65], [10.1,65], [-6,46.8]]) {
+    const wc = temp <= 10 && speed > 4.8
+      ? 13.12 + 0.6215 * temp - 11.37 * speed ** 0.16 + 0.3965 * temp * speed ** 0.16 : temp;
+    const expected = wc <= -40 ? 5 : wc <= -25 ? 4 : wc <= -15 ? 3 : wc <= -5 ? 2 : wc <= 0 ? 1 : 0;
+    const h = coldWindHarness({ weather: { temp, wind: speed / 3.6 } });
+    await h.runWeatherV2();
+    assert.equal(h.db.getSub("cw").lastColdLevel ?? 0, expected);
+    const payload = h.sends.find(p => ["cold", "cold_wind"].includes(p.data.type));
+    if (expected) assert.equal(payload.data.windChill, String(Math.round(wc)));
+  }
+});
+
+test("cold wind: existing AEMET context does not suppress cold or wind", async () => {
+  const h = coldWindHarness();
+  await h.db.collection("aemetZones").doc("39.5,2.9").set({
+    level: 3, event: "Wind", description: "Severe wind", updatedAt: coldWindNow,
+  });
+  await h.runWeatherV2();
+  assert.deepEqual(h.sends.map(p => p.data.type), ["cold_wind"]);
+  assert.equal(h.db.writes.some(w => w.path.startsWith("notificationState/")), false);
+});
+
+test("cold wind: all five languages have their own title and body", async (t) => {
+  const languages = {
+    ca: ["Fred i vent", "Protegeix-te"], es: ["Frío y viento", "Protégete"],
+    eu: ["Hotza eta haizea", "Babestu"], gl: ["Frío e vento", "Protéxete"], en: ["Cold and wind", "Shelter"],
+  };
+  for (const [lang, [title, advice]] of Object.entries(languages)) await t.test(lang, async () => {
+    const h = coldWindHarness({ subs: [{ token: "cw", lat: 39, lon: 2, lang, place: "Selected place" }] });
+    await h.runWeatherV2();
+    assert.equal(h.sends.length, 1);
+    assert.equal(h.sends[0].data.title, `🥶💨 ThermoSafe – ${title}`);
+    assert.ok(h.sends[0].data.body.includes(advice));
+    assert.match(h.sends[0].data.body, /°C.*47 km\/h/);
+    assert.equal(h.sends[0].data.lang, lang);
+    assert.equal(h.sends[0].data.place, "Selected place");
+  });
+});
+
+
+test("cold wind: existing geographic reset payload re-arms both factors without new fields", async () => {
+  const h = coldWindHarness();
+  await h.runWeatherV2();
+  const source = readFileSync(new URL("../../src/push/subscribe.ts", import.meta.url), "utf8");
+  const resetFunction = source.match(/function resetRiskLevelsPayload\(\) \{[\s\S]*?\n\}/)?.[0];
+  assert.ok(resetFunction);
+  const reset = vm.runInNewContext(`${resetFunction}; resetRiskLevelsPayload()`);
+  assert.equal(reset.lastColdLevel, 0);
+  assert.equal(reset.lastWindLevel, 0);
+  await h.db.collection("subs").doc("cw").set({ ...reset, lat: 40, lon: 3 }, { merge: true });
+  await h.runWeatherV2();
+  assert.deepEqual(h.sends.map(p => p.data.type), ["cold_wind", "cold_wind"]);
+  assert.equal(h.db.getSub("cw").lastColdLevel, 3);
+  assert.equal(h.db.getSub("cw").lastWindLevel, 2);
 });

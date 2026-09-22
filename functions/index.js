@@ -680,6 +680,40 @@ async function sendColdPush(token, lang, info, windChill, place) {
   });
 }
 
+// Communication only: preserve the independently calculated cold/wind levels.
+async function sendColdWindPush(token, lang, coldInfo, windInfo, windChill, windKmh, place) {
+  const texts = {
+    ca: ["Fred i vent", "Sensació tèrmica", "Vent", "Protegeix-te del vent, abriga't i limita l'exposició prolongada."],
+    es: ["Frío y viento", "Sensación térmica", "Viento", "Protégete del viento, abrígate y limita la exposición prolongada."],
+    eu: ["Hotza eta haizea", "Sentsazio termikoa", "Haizea", "Babestu haizetik, jantzi arropa beroa eta mugatu esposizio luzea."],
+    gl: ["Frío e vento", "Sensación térmica", "Vento", "Protéxete do vento, abrígate e limita a exposición prolongada."],
+    en: ["Cold and wind", "Wind chill", "Wind", "Shelter from the wind, wear warm clothing and limit prolonged exposure."],
+  };
+  const [title, coldLabel, windLabel, advice] = texts[normalizeLang(lang)];
+  await admin.messaging().send({
+    token,
+    data: {
+      title: `🥶💨 ThermoSafe – ${title}`,
+      body: `${coldLabel}: ${windChill.toFixed(1)} °C · ${windLabel}: ${windKmh} km/h. ${advice}`,
+      icon: "https://thermosafe.app/icons/icon-192.png",
+      badge: "https://thermosafe.app/icons/badge-72.png",
+      tag: "thermosafe-cold-wind",
+      url: "https://thermosafe.app",
+      type: "cold_wind",
+      coldLevel: String(coldInfo.level),
+      windLevel: String(windInfo.level),
+      windChill: String(Math.round(windChill)),
+      windKmh: String(windKmh),
+      lang,
+      place: place || "",
+    },
+    webpush: {
+      headers: { TTL: "3600", Urgency: "high" },
+      fcmOptions: { link: "https://thermosafe.app" },
+    },
+  });
+}
+
 function buildCombinedRiskMessage({
   lang,
   uvInfo,
@@ -1829,7 +1863,64 @@ exports.cronCheckWeatherRiskV2 = onSchedule(
               sub.threshold
             );
 
+            // ───────── VENT ─────────
+            const windKmh = Math.round((w.wind ?? 0) * 3.6);
+            const jobType = sub.jobType || "generic";
+            const windInfo = getWindInfo(windKmh, jobType);
+            const prevWindLevel = currentLastWindLevel;
+
+            stats.wind.lastValue = windKmh;
+
+            const windLevelIncreases = shouldNotifyLevelIncrease(
+              prevWindLevel,
+              windInfo.level
+            );
+
+            const windThresholdOk = meetsUserThreshold(
+              windInfo.level,
+              sub.threshold
+            );
+
+            let windSent = false;
+
             let coldSent = false;
+
+            const coldWindCandidate =
+              coldInfo.level > 0 && coldLevelIncreases && coldThresholdOk &&
+              windInfo.level > 0 && windLevelIncreases && windThresholdOk;
+
+            if (coldWindCandidate) {
+              try {
+                await sendColdWindPush(sub.token, lang, coldInfo, windInfo, windChill, windKmh, place);
+                updates.lastColdAt = now;
+                updates.lastColdLevel = coldInfo.level;
+                updates.lastWindAt = now;
+                updates.lastWindLevel = windInfo.level;
+                updates.lastNotified = now;
+                coldSent = true;
+                windSent = true;
+                stats.cold.tokensSent++;
+                stats.wind.tokensSent++;
+                console.log("[WEATHER V2][COLD WIND SENT]", {
+                  docId: doc.id, zoneKey, place,
+                  coldLevel: coldInfo.level, windLevel: windInfo.level,
+                });
+              } catch (sendErr) {
+                // Same policy as heat + UV: no individual retry in this run and
+                // no notified state on failure. Invalid tokens use existing cleanup.
+                const removed = await removeInvalidSub(doc.ref, doc.id, sendErr, "WEATHER-V2-COLD-WIND");
+                stats.cold.skipped++;
+                stats.wind.skipped++;
+                if (removed) {
+                  stats.cold.reasons.removedInvalidToken++;
+                  stats.wind.reasons.removedInvalidToken++;
+                  return;
+                }
+                stats.cold.reasons.sendError++;
+                stats.wind.reasons.sendError++;
+                throw sendErr;
+              }
+            }
 
             if (coldInfo.level <= 0) {
               stats.cold.skipped++;
@@ -1840,7 +1931,7 @@ exports.cronCheckWeatherRiskV2 = onSchedule(
             } else if (!coldThresholdOk) {
               stats.cold.skipped++;
               stats.cold.reasons.belowThreshold++;
-            } else {
+            } else if (!coldSent) {
               try {
                 await sendColdPush(
                   sub.token,
@@ -1900,26 +1991,6 @@ exports.cronCheckWeatherRiskV2 = onSchedule(
               coldSent,
             });
 
-            // ───────── VENT ─────────
-            const windKmh = Math.round((w.wind ?? 0) * 3.6);
-            const jobType = sub.jobType || "generic";
-            const windInfo = getWindInfo(windKmh, jobType);
-            const prevWindLevel = currentLastWindLevel;
-
-            stats.wind.lastValue = windKmh;
-
-            const windLevelIncreases = shouldNotifyLevelIncrease(
-              prevWindLevel,
-              windInfo.level
-            );
-
-            const windThresholdOk = meetsUserThreshold(
-              windInfo.level,
-              sub.threshold
-            );
-
-            let windSent = false;
-
             if (windInfo.level <= 0) {
               stats.wind.skipped++;
               stats.wind.reasons.noRisk++;
@@ -1929,7 +2000,7 @@ exports.cronCheckWeatherRiskV2 = onSchedule(
             } else if (!windThresholdOk) {
               stats.wind.skipped++;
               stats.wind.reasons.belowThreshold++;
-            } else {
+            } else if (!windSent) {
               try {
                 await sendWindPush(
                   sub.token,
