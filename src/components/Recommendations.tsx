@@ -71,6 +71,7 @@ type TextKeys =
   | "rain"
   | "storm"
   | "humid"
+  | "humidNight"
   | "windModerate"
   | "windStrong"
   | "loading"
@@ -187,7 +188,7 @@ const TXT: TxtDict = {
   ca: {
     title: "Recomanacions preventives",
     safe:
-      "El confort tèrmic és favorable. Beu aigua amb regularitat i adapta l’activitat al teu ritme.",
+      "El confort tèrmic és favorable.",
     safeUvModerate:
       "Radiació UV moderada. Es recomana protecció solar si l’exposició és prolongada.",
     safeWind:
@@ -267,6 +268,8 @@ const TXT: TxtDict = {
       "Situació potencialment adversa per precipitació o tempesta. Limita l’activitat exterior si no és imprescindible.",
     humid:
       "Pot augmentar la sensació de xafogor i empitjorar el confort tèrmic. Adapta el ritme de l’activitat.",
+    humidNight:
+      "La humitat elevada pot dificultar el confort durant la nit. Mantén una bona ventilació i refresca l’espai si és necessari.",
     windModerate:
       "Vigila eines, materials lleugers i maniobres en zones exposades.",
     windStrong:
@@ -289,7 +292,7 @@ const TXT: TxtDict = {
   es: {
     title: "Recomendaciones preventivas",
     safe:
-      "El confort térmico es favorable. Bebe agua con regularidad y adapta la actividad a tu ritmo.",
+      "El confort térmico es favorable.",
     safeUvModerate:
       "Radiación UV moderada. Se recomienda protección solar si la exposición es prolongada.",
     safeWind:
@@ -369,6 +372,8 @@ const TXT: TxtDict = {
       "Situación potencialmente adversa por precipitación o tormenta. Limita la actividad exterior si no es imprescindible.",
     humid:
       "Puede aumentar la sensación de bochorno y empeorar el confort térmico. Adapta el ritmo de la actividad.",
+    humidNight:
+      "La humedad elevada puede dificultar el confort durante la noche. Mantén una buena ventilación y refresca el espacio si es necesario.",
     windModerate:
       "Vigila herramientas, materiales ligeros y maniobras en zonas expuestas.",
     windStrong:
@@ -391,7 +396,7 @@ const TXT: TxtDict = {
   eu: {
     title: "Prebentzio-gomendioak",
     safe:
-      "Erosotasun termikoa egokia da. Mantendu hidratazio egokia eta egokitu jarduera zure erritmora.",
+      "Erosotasun termikoa egokia da.",
     safeUvModerate:
       "UV erradiazio moderatua. Eguzki-babesa gomendatzen da esposizio luzea bada.",
     safeWind:
@@ -471,6 +476,8 @@ const TXT: TxtDict = {
       "Prezipitazio edo ekaitz egoera kaltegarria izan daiteke. Mugatu kanpoko jarduera beharrezkoa ez bada.",
     humid:
       "Sargoria handitu eta erosotasun termikoa okertu dezake. Egokitu jardueraren erritmoa.",
+    humidNight:
+      "Gauean, hezetasun handiak erosotasuna zaildu dezake. Mantendu aireztapen ona eta freskatu espazioa beharrezkoa bada.",
     windModerate:
       "Zaindu tresnak, material arinak eta eremu irekietan egindako maniobrak.",
     windStrong:
@@ -493,7 +500,7 @@ const TXT: TxtDict = {
   gl: {
     title: "Recomendacións preventivas",
     safe:
-      "O confort térmico é favorable. Bebe auga con regularidade e adapta a actividade ao teu ritmo.",
+      "O confort térmico é favorable.",
     safeUvModerate:
       "Radiación UV moderada. Recoméndase protección solar se a exposición é prolongada.",
     safeWind:
@@ -573,6 +580,8 @@ const TXT: TxtDict = {
       "Situación potencialmente adversa por precipitación ou treboada. Limita a actividade exterior se non é imprescindible.",
     humid:
       "Pode aumentar a sensación de abafamento e empeorar o confort térmico. Adapta o ritmo da actividade.",
+    humidNight:
+      "A humidade elevada pode dificultar o confort durante a noite. Mantén unha boa ventilación e refresca o espazo se é necesario.",
     windModerate:
       "Vixía ferramentas, materiais lixeiros e manobras en zonas expostas.",
     windStrong:
@@ -595,7 +604,7 @@ const TXT: TxtDict = {
   en: {
     title: "Preventive recommendations",
     safe:
-      "Thermal comfort is favourable. Drink water regularly and adapt activity to your pace.",
+      "Thermal comfort is favourable.",
     safeUvModerate:
       "Moderate UV radiation. Sun protection is recommended if exposure is prolonged.",
     safeWind:
@@ -675,6 +684,8 @@ const TXT: TxtDict = {
       "Potentially adverse weather due to precipitation or storm activity. Limit outdoor activity if not essential.",
     humid:
       "It may increase mugginess and worsen thermal comfort. Adapt the pace of activity.",
+    humidNight:
+      "At night, high humidity can make it harder to stay comfortable. Keep the space well ventilated and cool it if necessary.",
     windModerate:
       "Watch tools, light materials and manoeuvres in exposed areas.",
     windStrong:
@@ -1085,11 +1096,20 @@ export default function Recommendations({
     typeof humidity === "number" &&
     humidity >= 70 &&
     effectiveTemp >= 24;
-  const humid = getRecommendationHumid(legacyHumid, weatherContext);
   const windyModerate = typeof windKmh === "number" && windKmh >= 25 && windKmh < 45;
   const windyStrong = typeof windKmh === "number" && windKmh >= 45;
   const factorState = getRecommendationFactorState(riskFactors);
   const heatActive = factorState.heat ?? true;
+  // Humid weather alone is not a preventive thermal warning.
+  // Reuse the engine's heat factor (or its existing classifier without engine data).
+  const hasThermalPrecaution =
+    (factorState.heat ?? (getHeatRisk(effectiveTemp, activity || "rest").class !== "safe")) ||
+    nightHeatLevel !== "none";
+  const humid = getRecommendationHumid(legacyHumid, weatherContext) && hasThermalPrecaution;
+  const humidityText =
+    !isDay && (nightHeatLevel === "tropical" || nightHeatLevel === "torrid")
+      ? t.humidNight
+      : t.humid;
   const uvActive = factorState.uv ?? true;
   const windActive = factorState.wind ?? true;
   const showWindModerate = windActive && windyModerate;
@@ -1241,14 +1261,14 @@ export default function Recommendations({
 	        items={factorItems(
 	          riskFactors,
 	          { factor: "heat", icon: "🌡️", label: t.factorHeat, text: t[heatRecommendationKey] },
-	          humid && { factor: "humidity", icon: "💧", label: t.factorHumidity, text: t.humid },
+	          humid && { factor: "humidity", icon: "💧", label: t.factorHumidity, text: humidityText },
 	          showUvRecommendation && uvKey && { factor: "uv", icon: "☀️", label: t.factorUv, text: uvRecommendationText },
 	          showWindModerate && { factor: "wind", icon: "🌬️", label: t.factorWind, text: t.windModerate },
 	          showWindStrong && { factor: "wind", icon: "🌬️", label: t.factorWind, text: t.windStrong },
 	          ...contextualItems
 	        )}
 	        extra={joinExtras(
-	          humid && t.humid,
+	          humid && humidityText,
 	          showUvRecommendation && uvRecommendationText,
 	          showWindModerate && t.windModerate,
 	          showWindStrong && t.windStrong,
@@ -1270,7 +1290,7 @@ export default function Recommendations({
         items={factorItems(
           riskFactors,
           { factor: "wind", icon: "🌬️", label: t.factorWind, text: t.windStrong },
-          humid && { factor: "humidity", icon: "💧", label: t.factorHumidity, text: t.humid },
+          humid && { factor: "humidity", icon: "💧", label: t.factorHumidity, text: humidityText },
           uvActive && uvKey === "uvHigh" && uvRecommendationText && { factor: "uv", icon: "☀️", label: t.factorUv, text: uvRecommendationText },
           uvActive && uvKey === "uvVeryHigh" && uvRecommendationText && { factor: "uv", icon: "☀️", label: t.factorUv, text: uvRecommendationText },
           uvActive && uvKey === "uvExtreme" && uvRecommendationText && { factor: "uv", icon: "☀️", label: t.factorUv, text: uvRecommendationText },
@@ -1279,7 +1299,7 @@ export default function Recommendations({
           ...contextualItems
         )}
         extra={joinExtras(
-          humid && t.humid,
+          humid && humidityText,
           uvActive && uvKey === "uvHigh" && uvRecommendationText,
           uvActive && uvKey === "uvVeryHigh" && uvRecommendationText,
           uvActive && uvKey === "uvExtreme" && uvRecommendationText,
@@ -1301,7 +1321,7 @@ export default function Recommendations({
       title={`${getIcon("safe")} ${t.title}`}
       body={joinLines(
       stormy ? t.storm : rainy ? t.rain : t.safeUvCloudy,
-      humid && t.humid,
+      humid && humidityText,
 	      showWindModerate && t.windModerate,
         contextualText
     )}
@@ -1312,7 +1332,7 @@ export default function Recommendations({
           : rainy
             ? { factor: "rain", icon: "🌧️", label: t.factorRain, text: t.rain }
             : { factor: "uv", icon: "☀️", label: t.factorUv, text: t.safeUvCloudy },
-        humid && { factor: "humidity", icon: "💧", label: t.factorHumidity, text: t.humid },
+        humid && { factor: "humidity", icon: "💧", label: t.factorHumidity, text: humidityText },
         showWindModerate && { factor: "wind", icon: "🌬️", label: t.factorWind, text: t.windModerate },
         ...contextualItems
       )}
@@ -1329,7 +1349,7 @@ export default function Recommendations({
         items={factorItems(
           riskFactors,
 	          { factor: "uv", icon: "☀️", label: t.factorUv, text: uvRecommendationText ?? t[uvKey] },
-          humid && { factor: "humidity", icon: "💧", label: t.factorHumidity, text: t.humid },
+          humid && { factor: "humidity", icon: "💧", label: t.factorHumidity, text: humidityText },
           showWindModerate && { factor: "wind", icon: "🌬️", label: t.factorWind, text: t.windModerate },
           showWindStrong && { factor: "wind", icon: "🌬️", label: t.factorWind, text: t.windStrong },
           rainy && !stormy && { factor: "rain", icon: "🌧️", label: t.factorRain, text: t.rain },
@@ -1337,7 +1357,7 @@ export default function Recommendations({
           ...contextualItems
         )}
         extra={joinExtras(
-          humid && t.humid,
+          humid && humidityText,
           showWindModerate && t.windModerate,
           showWindStrong && t.windStrong,
           rainy && !stormy && t.rain,
@@ -1393,7 +1413,7 @@ export default function Recommendations({
         items={factorItems(
           riskFactors,
           { factor: "night", icon: "🌙", label: nightLabel, text: t[nightKey] },
-          humid && { factor: "humidity", icon: "💧", label: t.factorHumidity, text: t.humid },
+          humid && { factor: "humidity", icon: "💧", label: t.factorHumidity, text: humidityText },
           showWindModerate && { factor: "wind", icon: "🌬️", label: t.factorWind, text: t.windModerate },
           showWindStrong && { factor: "wind", icon: "🌬️", label: t.factorWind, text: t.windStrong },
           rainy && !stormy && { factor: "rain", icon: "🌧️", label: t.factorRain, text: t.rain },
@@ -1401,7 +1421,7 @@ export default function Recommendations({
           ...contextualItems
         )}
         extra={joinExtras(
-          humid && t.humid,
+          humid && humidityText,
           showWindModerate && t.windModerate,
           showWindStrong && t.windStrong,
           rainy && !stormy && t.rain,
@@ -1429,13 +1449,13 @@ export default function Recommendations({
         items={factorItems(
           riskFactors,
           { factor: "heat", icon: "🌡️", label: t.factorHeat, text: t[heatRecommendationKey] },
-          humid && { factor: "humidity", icon: "💧", label: t.factorHumidity, text: t.humid },
+          humid && { factor: "humidity", icon: "💧", label: t.factorHumidity, text: humidityText },
           showWindModerate && { factor: "wind", icon: "🌬️", label: t.factorWind, text: t.windModerate },
           showWindStrong && { factor: "wind", icon: "🌬️", label: t.factorWind, text: t.windStrong },
           ...contextualItems
         )}
         extra={joinExtras(
-          humid && t.humid,
+          humid && humidityText,
           showWindModerate && t.windModerate,
           showWindStrong && t.windStrong,
           contextualText
@@ -1454,14 +1474,14 @@ export default function Recommendations({
         title={`${getIcon("safe")} ${t.title}`}
         body={joinLines(
           t.safeUvModerate,
-          humid && t.humid,
+          humid && humidityText,
           showWindModerate && t.windModerate,
           contextualText
         )}
         items={factorItems(
           riskFactors,
           { factor: "uv", icon: "☀️", label: t.factorUv, text: t.safeUvModerate },
-          humid && { factor: "humidity", icon: "💧", label: t.factorHumidity, text: t.humid },
+          humid && { factor: "humidity", icon: "💧", label: t.factorHumidity, text: humidityText },
           showWindModerate && { factor: "wind", icon: "🌬️", label: t.factorWind, text: t.windModerate },
           ...contextualItems
         )}
@@ -1476,13 +1496,13 @@ export default function Recommendations({
         title={`${getIcon("safe")} ${t.title}`}
         body={joinLines(
           t.safeWind,
-          humid && t.humid,
+          humid && humidityText,
           contextualText
         )}
         items={factorItems(
           riskFactors,
           { factor: "wind", icon: "🌬️", label: t.factorWind, text: t.safeWind },
-          humid && { factor: "humidity", icon: "💧", label: t.factorHumidity, text: t.humid },
+          humid && { factor: "humidity", icon: "💧", label: t.factorHumidity, text: humidityText },
           ...contextualItems
         )}
       />
@@ -1520,13 +1540,13 @@ export default function Recommendations({
         title={`${getIcon("safe")} ${t.title}`}
         body={joinLines(
           t.safeCloudy,
-          humid && t.humid,
+          humid && humidityText,
           contextualText
         )}
         items={factorItems(
           riskFactors,
           thermalComfortItem(t, t.safeCloudy),
-          humid && { factor: "humidity", icon: "💧", label: t.factorHumidity, text: t.humid },
+          humid && { factor: "humidity", icon: "💧", label: t.factorHumidity, text: humidityText },
           ...contextualItems
         )}
       />
@@ -1542,13 +1562,13 @@ export default function Recommendations({
       title={`${getIcon("safe")} ${t.title}`}
       body={joinLines(
         t.safe,
-        humid && t.humid,
+        humid && humidityText,
         contextualText
       )}
       items={factorItems(
         riskFactors,
         thermalComfortItem(t),
-        humid && { factor: "humidity", icon: "💧", label: t.factorHumidity, text: t.humid },
+        humid && { factor: "humidity", icon: "💧", label: t.factorHumidity, text: humidityText },
         ...contextualItems
       )}
     />

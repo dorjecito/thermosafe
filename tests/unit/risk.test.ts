@@ -5073,7 +5073,7 @@ test("dry safe recommendations keep generic thermal comfort text", () => {
 
   assert.equal(items[0]?.label, "Confort tèrmic");
   assert.match(element.props.body, /El confort tèrmic és favorable/);
-  assert.match(element.props.body, /Beu aigua amb regularitat/);
+  assert.equal(element.props.body, "El confort tèrmic és favorable.");
 });
 
 test("rain suppresses active UV advice before the rain branch", () => {
@@ -8670,4 +8670,104 @@ test("cold wind: existing geographic reset payload re-arms both factors without 
   assert.deepEqual(h.sends.map(p => p.data.type), ["cold_wind", "cold_wind"]);
   assert.equal(h.db.getSub("cw").lastColdLevel, 3);
   assert.equal(h.db.getSub("cw").lastWindLevel, 2);
+});
+
+
+test("safe thermal comfort omits humidity prevention and generic advice in all five languages", () => {
+  const texts = {
+    ca: "El confort tèrmic és favorable.", es: "El confort térmico es favorable.",
+    eu: "Erosotasun termikoa egokia da.", gl: "O confort térmico é favorable.",
+    en: "Thermal comfort is favourable.",
+  } as const;
+  for (const lang of Object.keys(texts) as Array<keyof typeof texts>) {
+    const element = renderCoolRecommendationScenario({
+      temp: 25.4, coldEffectiveTemp: 25.1, humidity: 70, windKmh: 11.1, uvi: 0, lang,
+    });
+    assert.equal(element.props.body, texts[lang]);
+    assert.deepEqual(element.props.items.map((item: RecommendationItem) => item.factor), ["thermalComfort"]);
+    assert.equal(element.props.items[0].text, texts[lang]);
+  }
+});
+
+test("humidity prevention follows existing heat context, including activity and no-engine fallback", () => {
+  for (const temp of [25.4, 27, 32, 41, 54]) {
+    for (const activity of ["rest", "intense"] as const) {
+      for (const withEngine of [false, true]) {
+        const riskFactors = evaluateRiskScore({ heatIndex: temp, activity, coldEffectiveTemp: temp, windKmh: 0, uvi: 0 }).activeFactorsSorted;
+        const element = Recommendations({ temp, activity, lang: "ca", isDay: true,
+          humidity: 70, uvi: 0, windKmh: 0, weatherMain: "Clear",
+          riskFactors: withEngine ? riskFactors : undefined,
+        }) as any;
+        const items = element.props.items as RecommendationItem[];
+        const heatExpected = getHeatRisk(temp, activity).class !== "safe";
+        assert.equal(items.some(item => item.factor === "humidity"), heatExpected,
+          `${temp}, ${activity}, engine=${withEngine}`);
+        if (heatExpected) assert.ok(items.some(item => item.factor === "heat"));
+      }
+    }
+  }
+});
+
+test("humidity prevention preserves warm-night context and still requires humidity", () => {
+  for (const nightHeatLevel of ["tropical", "torrid"] as const) {
+    for (const humidity of [50, 70]) {
+      const element = renderCoolRecommendationScenario({ temp: 25.4, humidity, isDay: false, nightHeatLevel });
+      const items = element.props.items as RecommendationItem[];
+      assert.ok(items.some(item => item.factor === "night"));
+      assert.equal(items.some(item => item.factor === "humidity"), humidity >= 70);
+    }
+  }
+});
+
+test("humidity presentation does not remove independent wind UV cold or rain advice", () => {
+  for (const scenario of [
+    { temp: 25.4, windKmh: 50, factor: "wind" },
+    { temp: 25.4, uvi: 8, factor: "uv" },
+    { temp: -6, factor: "cold" },
+    { temp: 25.4, weatherMain: "Rain", factor: "rain" },
+  ]) {
+    const element = renderCoolRecommendationScenario({ ...scenario, humidity: 70 });
+    const items = element.props.items as RecommendationItem[];
+    assert.ok(items.some(item => item.factor === scenario.factor), scenario.factor);
+    assert.equal(items.some(item => item.factor === "humidity"), false);
+  }
+});
+
+
+test("humidity wording follows warm-night context in all five languages without changing visibility", () => {
+  const texts = {
+    ca: ["La humitat elevada pot dificultar el confort durant la nit. Mantén una bona ventilació i refresca l’espai si és necessari.", "Pot augmentar la sensació de xafogor i empitjorar el confort tèrmic. Adapta el ritme de l’activitat."],
+    es: ["La humedad elevada puede dificultar el confort durante la noche. Mantén una buena ventilación y refresca el espacio si es necesario.", "Puede aumentar la sensación de bochorno y empeorar el confort térmico. Adapta el ritmo de la actividad."],
+    eu: ["Gauean, hezetasun handiak erosotasuna zaildu dezake. Mantendu aireztapen ona eta freskatu espazioa beharrezkoa bada.", "Sargoria handitu eta erosotasun termikoa okertu dezake. Egokitu jardueraren erritmoa."],
+    gl: ["A humidade elevada pode dificultar o confort durante a noite. Mantén unha boa ventilación e refresca o espazo se é necesario.", "Pode aumentar a sensación de abafamento e empeorar o confort térmico. Adapta o ritmo da actividade."],
+    en: ["At night, high humidity can make it harder to stay comfortable. Keep the space well ventilated and cool it if necessary.", "It may increase mugginess and worsen thermal comfort. Adapt the pace of activity."],
+  } as const;
+  for (const lang of Object.keys(texts) as Array<keyof typeof texts>) {
+    for (const nightHeatLevel of ["none", "tropical", "torrid"] as const) {
+      for (const isDay of [true, false]) {
+        for (const temp of [25.4, 35]) {
+          for (const humidity of [50, 70]) {
+            const element = renderCoolRecommendationScenario({ temp, humidity, isDay, nightHeatLevel, lang });
+            const item = (element.props.items as RecommendationItem[]).find(item => item.factor === "humidity");
+            const visible = humidity >= 70 && (temp >= 27 || nightHeatLevel !== "none");
+            assert.equal(Boolean(item), visible);
+            if (item) {
+              const expected = texts[lang][!isDay && nightHeatLevel !== "none" ? 0 : 1];
+              assert.equal(item.text, expected);
+              assert.ok(`${element.props.body || ""} ${element.props.extra || ""}`.includes(expected));
+            }
+          }
+        }
+      }
+    }
+  }
+});
+
+test("warm-night humidity wording also applies with independent strong wind advice", () => {
+  const element = renderCoolRecommendationScenario({ temp: 25.4, humidity: 70,
+    isDay: false, nightHeatLevel: "tropical", windKmh: 50 });
+  const items = element.props.items as RecommendationItem[];
+  assert.ok(items.some(item => item.factor === "wind"));
+  assert.equal(items.find(item => item.factor === "humidity")?.text,
+    "La humitat elevada pot dificultar el confort durant la nit. Mantén una bona ventilació i refresca l’espai si és necessari.");
 });
