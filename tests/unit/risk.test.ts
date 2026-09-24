@@ -8771,3 +8771,48 @@ test("warm-night humidity wording also applies with independent strong wind advi
   assert.equal(items.find(item => item.factor === "humidity")?.text,
     "La humitat elevada pot dificultar el confort durant la nit. Mantén una bona ventilació i refresca l’espai si és necessari.");
 });
+
+
+test("safe cloudy thermal comfort stays thermal-only in all five languages", () => {
+  const expected = {
+    ca: "Les condicions són adequades per a l’activitat habitual.",
+    es: "Las condiciones son adecuadas para la actividad habitual.",
+    eu: "Baldintzak egokiak dira ohiko jarduerarako.",
+    gl: "As condicións son adecuadas para a actividade habitual.",
+    en: "Conditions are suitable for usual activity.",
+  } as const;
+  for (const lang of Object.keys(expected) as Array<keyof typeof expected>) {
+    for (const uvi of [0, 1]) {
+      const element = renderCoolRecommendationScenario({
+        temp: 18, humidity: 85, cloudiness: 80, windKmh: 5, uvi, lang,
+      });
+      assert.equal(element.props.body, expected[lang]);
+      assert.deepEqual(element.props.items.map((item: RecommendationItem) => item.factor), ["thermalComfort"]);
+      assert.equal(element.props.items[0].text, expected[lang]);
+    }
+  }
+});
+
+test("cloudy conditions retain heat and independent risk recommendations", () => {
+  for (const scenario of [
+    { temp: 35, factor: "heat" }, { temp: 45, factor: "heat" },
+    { temp: 18, windKmh: 50, factor: "wind" },
+    { temp: -6, factor: "cold" }, { temp: 18, weatherMain: "Rain", factor: "rain" },
+    { temp: 18, uvi: 8, factor: "uv" },
+  ]) {
+    const element = renderCoolRecommendationScenario({ ...scenario, humidity: 85, cloudiness: 80 });
+    const items = element.props.items as RecommendationItem[];
+    assert.ok(items.some(item => item.factor === scenario.factor), scenario.factor);
+    if (scenario.factor === "heat") assert.ok(items.some(item => item.factor === "humidity"));
+  }
+});
+
+
+test("future UV maximum remains independent of current low UV and thermal comfort copy", () => {
+  const app = readFileSync(new URL("../../src/App.tsx", import.meta.url), "utf8");
+  assert.match(app, /normalizeUviForDisplay\(uvMaxToday\) \?\? uvSummaryValue/);
+  assert.match(app, /<strong>\{localUi\.uvMaxToday\}:<\/strong>\{" "\}\s*\{uvMaxSummaryValue != null \? uvMaxSummaryValue\.toFixed\(1\) : "—"\}/);
+  const recommendationProps = app.slice(app.indexOf("<Recommendations"), app.indexOf("/>", app.indexOf("<Recommendations")));
+  assert.match(recommendationProps, /uvi=\{uvi\}/);
+  assert.doesNotMatch(recommendationProps, /uvMaxToday|uvMaxSummaryValue/);
+});
