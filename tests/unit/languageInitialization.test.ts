@@ -65,10 +65,11 @@ test("initial mount requests location; language changes do not repeat initializa
   h.render(); await flush();
   assert.equal(h.initializations, 1);
   assert.equal(h.gpsCalls, 1);
-  for (const lang of ["en", "es", "ca"]) await h.changeLanguage(lang);
+  for (const lang of ["es", "eu", "gl", "en", "ca"]) await h.changeLanguage(lang);
   assert.equal(h.initializations, 1);
   assert.equal(h.gpsCalls, 1);
-  assert.deepEqual(h.languageWrites, ["en", "es", "ca"]);
+  assert.deepEqual(h.languageWrites, ["es", "eu", "gl", "en", "ca"]);
+  assert.equal(h.calls.filter(call => call[0] === "coords" || call[0] === "city").length, 0);
   assert.equal(h.calls.filter(call => call[0] === "push-location").length, 0);
 });
 

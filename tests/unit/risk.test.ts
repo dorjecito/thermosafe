@@ -1,3 +1,4 @@
+import "./skyLanguage.test";
 import "./refreshTarget.test";
 import "./languageInitialization.test";
 import "./subscriptionLifecycle.test";
@@ -499,6 +500,8 @@ function createFunctionsIndexHarness(options: {
   }>;
   uvi?: number;
   sendError?: Error;
+  failTokens?: string[];
+  alerts?: any[];
   beforeSend?: () => void;
   nowMs?: number;
 }) {
@@ -524,6 +527,7 @@ function createFunctionsIndexHarness(options: {
       send: async (payload: any) => {
         options.beforeSend?.();
         if (options.sendError) throw options.sendError;
+        if (options.failTokens?.includes(payload.token)) throw new Error("temporary FCM failure");
         sends.push(payload);
         return `message-${sends.length}`;
       },
@@ -592,7 +596,7 @@ function createFunctionsIndexHarness(options: {
           return {
             ok: true,
             status: 200,
-            json: async () => ({ current: { uvi: options.uvi ?? 7 }, alerts: [] }),
+            json: async () => ({ current: { uvi: options.uvi ?? 7 }, alerts: options.alerts ?? [] }),
           };
         }
 
@@ -628,8 +632,9 @@ function createFunctionsIndexHarness(options: {
       }
       if (id === "./aemetAlerts") {
         return {
-          getAemetLevelFromAlerts: () => ({ level: 0, event: "", sender: "", description: "", timing: "active" }),
-          isAemetHeatRelatedAlert: () => false,
+          ...functionsAemetAlerts,
+          getAemetLevelFromAlerts: (alerts: any[]) => functionsAemetAlerts.getAemetLevelFromAlerts(
+            alerts, Math.floor((options.nowMs ?? Date.now()) / 1000)),
         };
       }
       if (id === "./aemetTranslations") {
@@ -8815,4 +8820,116 @@ test("future UV maximum remains independent of current low UV and thermal comfor
   const recommendationProps = app.slice(app.indexOf("<Recommendations"), app.indexOf("/>", app.indexOf("<Recommendations")));
   assert.match(recommendationProps, /uvi=\{uvi\}/);
   assert.doesNotMatch(recommendationProps, /uvMaxToday|uvMaxSummaryValue/);
+});
+
+// Coverage is per recipient and official episode, never inferred from zone traffic.
+const coverageNow = Date.UTC(2026, 8, 25, 10, 11);
+const coverageZone = "39.5,2.9";
+function coverageFixture(extra: Partial<Parameters<typeof createFunctionsIndexHarness>[0]> = {}) {
+  const options = {
+    nowMs: coverageNow, uvi: 7,
+    alerts: [{ event: "Wind", sender_name: "AEMET", description: "Orange wind warning",
+      severity: 2, start: coverageNow / 1000 - 3600, end: coverageNow / 1000 + 86400 }],
+    subs: ["A", "B"].map(token => ({ token, lat: 39.49, lon: 2.91,
+      lastUvResetDay: "2026-09-25", lastDailyResetDay: "2026-09-25" })),
+    ...extra,
+  };
+  const h = createFunctionsIndexHarness(options);
+  const info = () => functionsAemetAlerts.getAemetLevelFromAlerts(options.alerts, options.nowMs / 1000);
+  const seedZone = async () => h.db.collection("aemetZones").doc(coverageZone).set({
+    ...info(), episodeKey: functionsAemetAlerts.buildAemetEpisodeKey(info(), coverageZone), updatedAt: options.nowMs,
+  });
+  return { h, options, info, seedZone };
+}
+
+test("AEMET recipient coverage: A combined must not suppress B in the same zone", async () => {
+  const { h, seedZone } = coverageFixture();
+  await seedZone();
+  await h.db.collection("subs").doc("B").set({ lastUvLevel: 2, uvLevelsByZone: { [coverageZone]: 2 } }, { merge: true });
+  await h.runUvV2();
+  assert.deepEqual(h.sends.map(p => p.token), ["A"]);
+  assert.ok(h.db.getSub("A").uvAemetCoverage);
+  assert.equal(h.db.getSub("B").uvAemetCoverage, undefined);
+  await h.runAemetV2();
+  assert.deepEqual(h.sends.map(p => [p.token, p.data.type]), [["A", "combined"], ["B", "aemet"]]);
+});
+
+test("AEMET recipient coverage: both recipients covered, no duplicate even after window expires", async () => {
+  const { h, options, info, seedZone } = coverageFixture();
+  await seedZone(); await h.runUvV2();
+  for (const token of ["A", "B"]) {
+    const coverage = h.db.getSub(token).uvAemetCoverage;
+    assert.equal(coverage.episodeKey, functionsAemetAlerts.buildAemetEpisodeKey(info(), coverageZone));
+    assert.equal(coverage.level, 2);
+    assert.equal(coverage.sentAt, coverageNow);
+  }
+  await h.runAemetV2();
+  assert.equal(h.sends.length, 2);
+  options.nowMs += 121 * 60000;
+  await h.runAemetV2();
+  assert.equal(h.sends.length, 2);
+  assert.equal(h.db.getSub("B").lastAemetNotifiedLevel, 2);
+});
+
+test("AEMET recipient coverage: episode Y is never covered by X", async () => {
+  const { h, options, seedZone } = coverageFixture();
+  await seedZone(); await h.runUvV2();
+  options.alerts[0] = { ...options.alerts[0], event: "Rain", start: coverageNow / 1000 - 60 };
+  await h.runAemetV2();
+  assert.deepEqual(h.sends.filter(p => p.data.type === "aemet").map(p => p.token).sort(), ["A", "B"]);
+});
+
+test("AEMET recipient coverage: failed B FCM is not covered by successful A", async () => {
+  const failTokens = ["B"];
+  const { h, seedZone } = coverageFixture({ failTokens });
+  await seedZone(); await h.runUvV2();
+  assert.ok(h.db.getSub("A").uvAemetCoverage);
+  assert.equal(h.db.getSub("B").uvAemetCoverage, undefined);
+  failTokens.length = 0;
+  await h.runAemetV2();
+  assert.deepEqual(h.sends.map(p => [p.token, p.data.type]), [["A", "combined"], ["B", "aemet"]]);
+});
+
+test("AEMET recipient coverage: escalation sends before and after consuming coverage", async (t) => {
+  for (const consume of [false, true]) await t.test(`consume=${consume}`, async () => {
+    const { h, options, seedZone } = coverageFixture();
+    await seedZone(); await h.runUvV2();
+    if (consume) await h.runAemetV2();
+    options.alerts[0].severity = 3;
+    await h.runAemetV2();
+    assert.equal(h.sends.filter(p => p.data.type === "aemet").length, 2);
+    await h.runAemetV2();
+    assert.equal(h.sends.filter(p => p.data.type === "aemet").length, 2);
+  });
+});
+
+test("AEMET recipient coverage: unchanged 120 minute window and future timestamps rejected", async (t) => {
+  for (const minutes of [-1, 119, 120, 121]) await t.test(`${minutes} minutes`, async () => {
+    const { h, options, seedZone } = coverageFixture();
+    await seedZone(); await h.runUvV2();
+    options.nowMs += minutes * 60000;
+    await h.runAemetV2();
+    assert.equal(h.sends.filter(p => p.data.type === "aemet").length, minutes === 119 ? 0 : 2);
+  });
+});
+
+test("AEMET recipient coverage: legacy zone marker cannot suppress any recipient", async () => {
+  const { h } = coverageFixture();
+  await h.db.collection("notificationState").doc("aemetContextByZone").collection("zones").doc(coverageZone).set({
+    sentAt: coverageNow, source: "uvCombined", reason: "uvWithAemet",
+  });
+  await h.runAemetV2();
+  assert.equal(h.sends.filter(p => p.data.type === "aemet").length, 2);
+});
+
+test("AEMET recipient coverage: old zone without episode does not prove coverage; cron publishes identity", async () => {
+  const { h, info } = coverageFixture();
+  await h.db.collection("aemetZones").doc(coverageZone).set({ level: 2, event: "Wind", updatedAt: coverageNow });
+  await h.runUvV2();
+  assert.equal(h.sends.length, 2); // Existing UV behavior preserved.
+  assert.equal(h.db.getSub("A").uvAemetCoverage, undefined);
+  await h.runAemetV2();
+  assert.equal(h.sends.length, 4);
+  const zone = await h.db.collection("aemetZones").doc(coverageZone).get();
+  assert.equal(zone.data().episodeKey, functionsAemetAlerts.buildAemetEpisodeKey(info(), coverageZone));
 });

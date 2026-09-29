@@ -797,7 +797,6 @@ useEffect(() => {
 }, []);
 
 // ☁️ Estat del cel
-const [sky, setSky] = useState<string>('');
 const [icon, setIcon] = useState<string>('');
 
 // 🛰️ Font de les dades (GPS o cerca manual)
@@ -1259,8 +1258,6 @@ const fetchWeather = async (
     }
     setColdRisk(computedColdRisk as ColdRisk);
 
-    const rawDesc = data.weather?.[0]?.description || "";
-    setSky(resolveSkyDescription(rawDesc, (key) => t(key)));
     setIcon(data.weather?.[0]?.icon || "");
 
     // ✅ Coordenades reals de la ciutat cercada
@@ -1557,26 +1554,7 @@ setWeatherMain(d.weather?.[0]?.main ?? null);
 // 🔍 Mostra per consola per verificar
 console.log(`[DEBUG] Temperatura: ${d.main?.temp}°C, Humitat: ${d.main?.humidity}%, Sensació: ${d.main?.feels_like}°C`);
 
-function normalizeSky(desc: string): string {
-  return desc
-    .toLowerCase()
-    .normalize("NFD")                      // separa accents
-    .replace(/[\u0300-\u036f]/g, "")       // elimina accents
-    .replace(/\s+/g, "_")                  // espais → _
-    .replace(/[^\w_]/g, "")                // elimina caràcters rars
-    .trim();
-}
-
-const rawDesc = d.weather?.[0]?.description || "";
-const key = normalizeSky(rawDesc);
-
-// Si existeix al JSON → traducció
-// Si no existeix → fa servir el text normalitzat sense warnings
-const translatedDesc = t(`weather_desc.${key}`, key);
-
-setSky(translatedDesc);
 setIcon(d.weather?.[0]?.icon || "");
-console.log(`[SKY – locate] Actualitzat a: ${translatedDesc}`);
 
 /* ────────────────────────────────────────────────
    🌬️ VENT + ❄️ FRED (WINDCHILL & COLD RISK)
@@ -1861,8 +1839,6 @@ const handleSuggestionSelect = async (s: any) => {
     const coldRiskValue = getColdRisk(effForCold, wKmH);
     setColdRisk(coldRiskValue as ColdRisk);
 
-    const rawDesc = data.weather?.[0]?.description || "";
-    setSky(resolveSkyDescription(rawDesc, (key) => t(key)));
     setIcon(data.weather?.[0]?.icon || "");
 	    const uv = await getUVFromOpenUV(s.lat, s.lon);
 	    setUvi(uv);
@@ -2641,13 +2617,15 @@ const riskTrendDisplay = useMemo(() => {
 }, [riskTrend, riskTrendLoading, trendUsesDifferentTimezone, locationTimezoneOffsetSec, currentLang, t]);
 const riskTrendText = riskTrendDisplay.text;
 const riskTrendIcon = riskTrendDisplay.icon;
-const skyLabel = useMemo(() => {
-  if (!sky) return "";
-
-  const key = `weather_desc.${sky.toLowerCase()}`;
-  const translated = t(key);
-  return translated !== key ? translated : sky;
-}, [sky, t]);
+// Translate the neutral weather code at render time, never a stored translated label.
+const skyLabel = useMemo(
+  () => resolveSkyDescription(
+    data?.weather?.[0]?.description || "",
+    (key) => t(key),
+    data?.weather?.[0]?.id,
+  ),
+  [data?.weather?.[0]?.description, data?.weather?.[0]?.id, currentLang, t],
+);
 
 useEffect(() => {
   if (
@@ -3254,10 +3232,10 @@ return (
 )}
 
           {/* 🌤️ ESTAT DEL CEL */}
-{sky && (
+{skyLabel && (
   <SkyConditionCard
     title={t("sky_state")}
-    sky={sky}
+    sky={skyLabel}
     icon={icon}
     label={skyLabel}
   />
