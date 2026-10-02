@@ -38,6 +38,8 @@ export type HourlyForecastItem = {
 };
 
 export type HourlyForecastResponse = {
+  /** Original response acquisition time in milliseconds; cache reads never renew it. */
+  fetchedAt?: number;
   hourly: HourlyForecastItem[];
   timezone_offset?: number;
   stale?: boolean;
@@ -93,7 +95,7 @@ function getStoredForecast(key: string, ttlMs: number): HourlyForecastResponse |
     if (!Array.isArray(data?.hourly)) return null;
     if (Date.now() - timestamp > ttlMs) return null;
 
-    return data;
+    return { ...data, fetchedAt: timestamp };
   } catch (err) {
     console.warn("[FORECAST] Error llegint caché local:", err);
     return null;
@@ -123,7 +125,7 @@ function saveStoredForecast(key: string, data: HourlyForecastResponse) {
     window.localStorage.setItem(
       key,
       JSON.stringify({
-        timestamp: Date.now(),
+        timestamp: data.fetchedAt,
         data,
       })
     );
@@ -419,6 +421,7 @@ export async function getHourlyForecastByCoords(
       }
 
       const normalized: HourlyForecastResponse = {
+        fetchedAt: Date.now(),
         hourly,
         timezone_offset:
           typeof data?.timezone_offset === "number" ? data.timezone_offset : undefined,

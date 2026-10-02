@@ -1,3 +1,4 @@
+import "./nightForecast.test";
 import "./skyLanguage.test";
 import "./refreshTarget.test";
 import "./languageInitialization.test";
@@ -4645,7 +4646,8 @@ test("risk score engine mirrors wind and cold factors", () => {
   assert.equal(cold.primary?.level, "moderat");
 });
 
-test("risk score engine classifies tropical and torrid night heat levels", () => {
+// Deliberate semantic change: instantaneous readings no longer classify a whole night.
+test("risk score engine no longer classifies nights from instantaneous readings", () => {
   const cases = [
     { isNightAtLocation: false, nightReferenceTemperature: 28, expected: "none" },
     { isNightAtLocation: true, nightReferenceTemperature: 19.9, expected: "none" },
@@ -4665,7 +4667,7 @@ test("risk score engine classifies tropical and torrid night heat levels", () =>
       nightReferenceTemperature: scenario.nightReferenceTemperature,
     });
 
-    assert.equal(result.nightHeatLevel, scenario.expected);
+    assert.equal(result.nightHeatLevel, undefined);
   }
 });
 
@@ -4697,8 +4699,8 @@ test("night heat level is semantic and does not alter daytime heat severity", ()
   assert.equal(base.primary?.severity, tropical.primary?.severity);
   assert.equal(base.primary?.factor, torrid.primary?.factor);
   assert.equal(base.primary?.severity, torrid.primary?.severity);
-  assert.equal(tropical.nightHeatLevel, "tropical");
-  assert.equal(torrid.nightHeatLevel, "torrid");
+  assert.equal(tropical.nightHeatLevel, undefined);
+  assert.equal(torrid.nightHeatLevel, undefined);
 });
 
 test("risk score engine exposes active factors in combined heat UV wind conditions", () => {
@@ -5297,7 +5299,8 @@ test("strong wind keeps priority over positive cool advice", () => {
   assert.doesNotMatch(items.map((item) => item.label).join(" "), /Ambient fresc|Fred/);
 });
 
-test("tropical and torrid nights keep priority over positive cool fallback", () => {
+// Retired instantaneous labels must not suppress existing cool advice.
+test("legacy night labels no longer override positive cool fallback", () => {
   for (const nightHeatLevel of ["tropical", "torrid"] as const) {
     const element = renderCoolRecommendationScenario({
       temp: nightHeatLevel === "torrid" ? 25 : 22,
@@ -5308,8 +5311,8 @@ test("tropical and torrid nights keep priority over positive cool fallback", () 
     });
     const labels = (element.props.items as RecommendationItem[]).map((item) => item.label);
 
-    assert.equal(labels[0], nightHeatLevel === "torrid" ? "Nit tòrrida" : "Nit tropical");
-    assert.doesNotMatch(labels.join(" "), /Ambient fresc|Fred/);
+    assert.equal(labels[0], "Fred");
+    assert.doesNotMatch(labels.join(" "), /Nit tropical|Nit tòrrida/);
   }
 });
 
@@ -7013,14 +7016,15 @@ test("night heat status avoids daytime shade advice", () => {
     t: (key) => translations[key] || key,
   });
 
-  assert.equal(result.title, "Nit tropical");
-  assert.equal(result.text, "La temperatura nocturna es manté per damunt dels 20 °C.");
+  assert.equal(result.title, "Nit calorosa");
+  assert.match(result.text, /calor actual|calor acumulada/i);
   assert.doesNotMatch(result.text, /ombra/i);
   assert.doesNotMatch(result.text, /sol/i);
-  assert.notEqual(result.title, "Nit calorosa");
+  assert.equal(result.title, "Nit calorosa");
 });
 
-test("tropical night is not presented as safe primary status", () => {
+// Forecast/legacy labels are not current risk: no warning without a current factor.
+test("legacy tropical label cannot override safe primary status", () => {
   const result = getPrimaryStatusBlock({
     alerts: [],
     primary: { kind: "none", severity: 0, labelKey: "none" },
@@ -7037,13 +7041,11 @@ test("tropical night is not presented as safe primary status", () => {
     t: (key) => seasonalTranslations[key] || key,
   });
 
-  assert.equal(result.title, "Nit tropical");
-  assert.notEqual(result.title, "Condicions segures");
-  assert.notEqual(result.title, "Nit calorosa");
-  assert.equal(result.text, "La temperatura nocturna es manté per damunt dels 20 °C.");
+  assert.equal(result.title, "Condicions segures");
+  assert.doesNotMatch(result.text, /nocturna|20 °C/);
 });
 
-test("torrid night is distinct from tropical night in primary status", () => {
+test("legacy torrid label cannot override safe primary status", () => {
   const result = getPrimaryStatusBlock({
     alerts: [],
     primary: { kind: "none", severity: 0, labelKey: "none" },
@@ -7060,10 +7062,8 @@ test("torrid night is distinct from tropical night in primary status", () => {
     t: (key) => seasonalTranslations[key] || key,
   });
 
-  assert.equal(result.title, "Nit tòrrida");
-  assert.notEqual(result.title, "Nit tropical");
-  assert.notEqual(result.title, "Nit calorosa");
-  assert.match(result.text, /molt elevada|notablement/i);
+  assert.equal(result.title, "Condicions segures");
+  assert.doesNotMatch(result.text, /nocturna|20 °C/);
 });
 
 test("night heat thresholds are not recalculated inside visual consumers", () => {
@@ -7072,7 +7072,7 @@ test("night heat thresholds are not recalculated inside visual consumers", () =>
     "utf8"
   );
 
-  assert.match(recommendationsSource, /nightHeatLevel/);
+  assert.match(recommendationsSource, /nightForecast/);
   assert.doesNotMatch(recommendationsSource, /effectiveTemp\s*>=\s*25/);
 });
 
@@ -7140,7 +7140,7 @@ test("tropical night does not restrict outdoor activity without current heat ris
   });
   const text = getWorkWindowText(level, "ca", false, engineRisk.nightHeatLevel);
 
-  assert.equal(engineRisk.nightHeatLevel, "tropical");
+  assert.equal(engineRisk.nightHeatLevel, undefined);
   assert.equal(level, "optimal");
   assert.match(text, /adequades per a activitats/i);
   assert.doesNotMatch(text, /activitats suaus|evitar esforços/i);
@@ -8713,13 +8713,14 @@ test("humidity prevention follows existing heat context, including activity and 
   }
 });
 
-test("humidity prevention preserves warm-night context and still requires humidity", () => {
+// Forecast or obsolete night labels alone must not activate humidity precautions.
+test("humidity prevention ignores obsolete night labels without current heat", () => {
   for (const nightHeatLevel of ["tropical", "torrid"] as const) {
     for (const humidity of [50, 70]) {
       const element = renderCoolRecommendationScenario({ temp: 25.4, humidity, isDay: false, nightHeatLevel });
       const items = element.props.items as RecommendationItem[];
-      assert.ok(items.some(item => item.factor === "night"));
-      assert.equal(items.some(item => item.factor === "humidity"), humidity >= 70);
+      assert.equal(items.some(item => item.factor === "night"), false);
+      assert.equal(items.some(item => item.factor === "humidity"), false);
     }
   }
 });
@@ -8754,10 +8755,11 @@ test("humidity wording follows warm-night context in all five languages without 
           for (const humidity of [50, 70]) {
             const element = renderCoolRecommendationScenario({ temp, humidity, isDay, nightHeatLevel, lang });
             const item = (element.props.items as RecommendationItem[]).find(item => item.factor === "humidity");
-            const visible = humidity >= 70 && (temp >= 27 || nightHeatLevel !== "none");
+            // Visibility follows current heat, not the retired instantaneous night category.
+            const visible = humidity >= 70 && temp >= 27;
             assert.equal(Boolean(item), visible);
             if (item) {
-              const expected = texts[lang][!isDay && nightHeatLevel !== "none" ? 0 : 1];
+              const expected = texts[lang][!isDay ? 0 : 1];
               assert.equal(item.text, expected);
               assert.ok(`${element.props.body || ""} ${element.props.extra || ""}`.includes(expected));
             }
@@ -8769,7 +8771,7 @@ test("humidity wording follows warm-night context in all five languages without 
 });
 
 test("warm-night humidity wording also applies with independent strong wind advice", () => {
-  const element = renderCoolRecommendationScenario({ temp: 25.4, humidity: 70,
+  const element = renderCoolRecommendationScenario({ temp: 35, humidity: 70,
     isDay: false, nightHeatLevel: "tropical", windKmh: 50 });
   const items = element.props.items as RecommendationItem[];
   assert.ok(items.some(item => item.factor === "wind"));

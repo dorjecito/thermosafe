@@ -1,3 +1,4 @@
+import { buildNightForecast } from "./utils/nightForecast";
 /* ───────────────────────────────────────────
    src/App.tsx  —  100 % camins relatius
    ─────────────────────────────────────────── */
@@ -772,6 +773,7 @@ useEffect(() => {
 	  const [lon, setLon] = useState<number | null>(null);
   const [riskTrend, setRiskTrend] = useState<RiskTrendResult | null>(null);
   const [riskTrendLoading, setRiskTrendLoading] = useState(false);
+  const [nightForecastTick, setNightForecastTick] = useState(0);
   const [hourlyForecast, setHourlyForecast] = useState<HourlyForecastResponse | null>(null);
   const [hourlyForecastCoords, setHourlyForecastCoords] = useState<{ lat: number; lon: number } | null>(null);
 		  const [searchPanelCollapsed, setSearchPanelCollapsed] = useState(false);
@@ -2043,8 +2045,6 @@ const engineRisk = useMemo(() => {
     coldEffectiveTemp: wc ?? temp,
     windKmh,
     uvi,
-    isNightAtLocation: !day,
-    nightReferenceTemperature: currentFeelTemp,
   });
 }, [
   data,
@@ -2060,8 +2060,25 @@ const engineRisk = useMemo(() => {
   currentFeelTemp,
 ]);
 
-const nightHeatLevel = engineRisk?.nightHeatLevel ?? "none";
-const nocturnalHeat = nightHeatLevel !== "none";
+const nightForecast = buildNightForecast({
+  nowUtcSec: Date.now() / 1000,
+  coords: { lat: lat ?? NaN, lon: lon ?? NaN },
+  forecastCoords: hourlyForecastCoords,
+  forecast: hourlyForecast,
+});
+// Presentation clock only: no weather fetch, location update or risk synchronization.
+useEffect(() => {
+  const now = Date.now();
+  const boundaries = [
+    nightForecast.sunsetUtcSec === null ? NaN : nightForecast.sunsetUtcSec * 1000,
+    nightForecast.sunriseUtcSec === null ? NaN : nightForecast.sunriseUtcSec * 1000,
+    hourlyForecast?.fetchedAt === undefined ? NaN : hourlyForecast.fetchedAt + 3600001,
+  ].filter(time => Number.isFinite(time) && time > now);
+  if (!boundaries.length) return;
+  const timer = window.setTimeout(() => setNightForecastTick(tick => tick + 1), Math.min(...boundaries) - now + 1);
+  return () => window.clearTimeout(timer);
+}, [nightForecast.sunsetUtcSec, nightForecast.sunriseUtcSec, hourlyForecast?.fetchedAt, nightForecastTick]);
+
 
 const workWindow = useMemo(
   () =>
@@ -2074,8 +2091,6 @@ const workWindow = useMemo(
       aemetActive,
       weatherMain,
       activity: preventiveActivity,
-      nocturnalHeat,
-      nightHeatLevel,
       engineRisk,
       weatherContext,
     }),
@@ -2089,8 +2104,6 @@ const workWindow = useMemo(
     aemetSoon,
     weatherMain,
     preventiveActivity,
-    nocturnalHeat,
-    nightHeatLevel,
     engineRisk,
     weatherContext,
   ]
@@ -2099,8 +2112,8 @@ const workWindow = useMemo(
 const workWindowLang = currentLang;
 const workWindowTitle = useMemo(() => getWorkWindowTitle(workWindowLang), [workWindowLang]);
 const workWindowText = useMemo(
-  () => getWorkWindowText(workWindow, workWindowLang, aemetActive, nightHeatLevel),
-  [workWindow, workWindowLang, aemetActive, nightHeatLevel]
+  () => getWorkWindowText(workWindow, workWindowLang, aemetActive),
+  [workWindow, workWindowLang, aemetActive]
 );
 
 useEffect(() => {
@@ -2240,8 +2253,6 @@ const primaryStatusInput = useMemo(
     day,
     isLateDay,
     heatDayPhase,
-    nocturnalHeat,
-    nightHeatLevel,
     primaryAdvice,
     contextualUVMessage,
     t,
@@ -2256,8 +2267,6 @@ const primaryStatusInput = useMemo(
     day,
     isLateDay,
     heatDayPhase,
-    nocturnalHeat,
-    nightHeatLevel,
     primaryAdvice,
     contextualUVMessage,
     t,
@@ -3178,7 +3187,7 @@ return (
     coldRisk={coldRisk ?? undefined}
     coldEffectiveTemp={wc ?? temp}
     riskFactors={engineRisk?.activeFactorsSorted}
-    nightHeatLevel={nightHeatLevel}
+    nightForecast={nightForecast}
     weatherContext={weatherContext}
 
   />

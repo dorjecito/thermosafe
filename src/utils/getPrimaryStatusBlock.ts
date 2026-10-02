@@ -1,7 +1,6 @@
 import { getUvLevelIndex } from "./uv";
 import type { HeatDayPhase } from "./isDayAtLocation";
 import { detectAemetHazard, type HazardId } from "./aemetAi";
-import type { NightHeatLevel } from "./riskScoreEngine";
 
 type TFunctionLike = (key: string) => string;
 
@@ -29,8 +28,6 @@ type PrimaryStatusBlockArgs = {
   day: boolean;
   isLateDay?: boolean;
   heatDayPhase?: HeatDayPhase;
-  nocturnalHeat?: boolean;
-  nightHeatLevel?: NightHeatLevel;
   primaryAdvice: string | null;
   contextualUVMessage: string;
   t: TFunctionLike;
@@ -53,13 +50,10 @@ export function getPrimaryStatusBlock({
   day,
   isLateDay = false,
   heatDayPhase,
-  nocturnalHeat = false,
-  nightHeatLevel = "none",
   primaryAdvice,
   contextualUVMessage,
   t,
 }: PrimaryStatusBlockArgs): PrimaryStatusBlockResult {
-  const effectiveNocturnalHeat = nocturnalHeat || nightHeatLevel !== "none";
   const tr = (key: string, fallback: string) => {
     const text = t(key);
     return text && text !== key ? text : fallback;
@@ -70,28 +64,10 @@ export function getPrimaryStatusBlock({
     return text && text !== key ? text : null;
   };
 
-  const getNightHeatStatus = (): Pick<
-    PrimaryStatusBlockResult,
-    "title" | "text"
-  > => {
-    if (nightHeatLevel === "torrid") {
-      return {
-        title: tr("primaryStatus.heat.torridNight", "Nit tòrrida"),
-        text: tr(
-          "primaryStatus.heat.torridNightText",
-          "La temperatura es manté molt elevada durant la nit i pot dificultar notablement el descans i la recuperació tèrmica."
-        ),
-      };
-    }
-
-    return {
-      title: tr("primaryStatus.heat.tropicalNight", "Nit tropical"),
-      text: tr(
-        "primaryStatus.heat.tropicalNightText",
-        "La temperatura nocturna es manté per damunt dels 20 °C."
-      ),
-    };
-  };
+  const getNightHeatStatus = (): Pick<PrimaryStatusBlockResult, "title" | "text"> => ({
+    title: tr("primaryStatus.heat.hotNight", "Nit calorosa"),
+    text: tr("primaryStatus.heat.hotNightText", "La calor actual pot dificultar el descans. Hidrata’t i evita esforços intensos fins que refresqui."),
+  });
 
   const getOfficialAlertSummary = (alertList: any[], phase: "active" | "soon") => {
     const hazards = [
@@ -414,17 +390,6 @@ export function getPrimaryStatusBlock({
         t("highUVIWarning") ||
         "Utilitza protecció solar i redueix l’exposició directa.",
       className: "status-card status-uv",
-    };
-  }
-
-  // 🌙 CALOR NOCTURNA SUAU
-  if (effectiveNocturnalHeat) {
-    const nightStatus = getNightHeatStatus();
-    return {
-      icon: "🟡",
-      title: nightStatus.title,
-      text: nightStatus.text,
-      className: "status-card status-warning",
     };
   }
 

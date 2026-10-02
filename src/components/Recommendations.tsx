@@ -9,11 +9,12 @@
 // ===============================================================
 
 import * as React from "react";
+import type { NightForecast } from "../utils/nightForecast";
 import { getHeatRisk } from "../utils/heatRisk";
 import { getColdRisk, type ColdRisk } from "../utils/getColdRisk";
 import { getUvLevelIndex } from "../utils/uv";
 import type { HeatDayPhase } from "../utils/isDayAtLocation";
-import type { FactorRisk, NightHeatLevel } from "../utils/riskScoreEngine";
+import type { FactorRisk } from "../utils/riskScoreEngine";
 import type { WeatherContext } from "../utils/weatherContext";
 
 type Lang = "ca" | "es" | "eu" | "gl" | "en";
@@ -177,7 +178,7 @@ interface Props {
   coldRisk?: ColdRisk;
   coldEffectiveTemp?: number | null;
   riskFactors?: FactorRisk[];
-  nightHeatLevel?: NightHeatLevel;
+  nightForecast?: NightForecast;
   weatherContext?: WeatherContext;
 }
 
@@ -787,12 +788,6 @@ const getUvKey = (uvi: number | null | undefined): UvKey | null => {
   return null;
 };
 
-const getNightKey = (nightHeatLevel: NightHeatLevel): NightKey | "torridNight" => {
-  if (nightHeatLevel === "torrid") return "torridNight";
-  if (nightHeatLevel === "tropical") return "tropicalNight";
-  return "nightSafe";
-};
-
 const getPositiveCoolKey = (temp: number): PositiveCoolKey | null => {
   if (temp > 0 && temp < 5) return "positiveCold";
   if (temp >= 5 && temp < 10) return "coolPositive";
@@ -1046,7 +1041,7 @@ function RecommendationBox({
 /* =============================================================
    COMPONENT PRINCIPAL
 ============================================================= */
-export default function Recommendations({
+function CurrentRecommendations({
   temp,
   lang,
   isDay,
@@ -1066,7 +1061,7 @@ export default function Recommendations({
   coldRisk,
   coldEffectiveTemp,
   riskFactors,
-  nightHeatLevel = "none",
+
   weatherContext,
 }: Props) {
   const lng = normalizeLang(lang);
@@ -1099,17 +1094,12 @@ export default function Recommendations({
   const windyModerate = typeof windKmh === "number" && windKmh >= 25 && windKmh < 45;
   const windyStrong = typeof windKmh === "number" && windKmh >= 45;
   const factorState = getRecommendationFactorState(riskFactors);
-  const heatActive = factorState.heat ?? true;
+  const heatActive = factorState.heat ?? (getHeatRisk(effectiveTemp, activity || "rest").class !== "safe");
   // Humid weather alone is not a preventive thermal warning.
   // Reuse the engine's heat factor (or its existing classifier without engine data).
-  const hasThermalPrecaution =
-    (factorState.heat ?? (getHeatRisk(effectiveTemp, activity || "rest").class !== "safe")) ||
-    nightHeatLevel !== "none";
+  const hasThermalPrecaution = heatActive;
   const humid = getRecommendationHumid(legacyHumid, weatherContext) && hasThermalPrecaution;
-  const humidityText =
-    !isDay && (nightHeatLevel === "tropical" || nightHeatLevel === "torrid")
-      ? t.humidNight
-      : t.humid;
+  const humidityText = !isDay && heatActive ? t.humidNight : t.humid;
   const uvActive = factorState.uv ?? true;
   const windActive = factorState.wind ?? true;
   const showWindModerate = windActive && windyModerate;
@@ -1368,7 +1358,7 @@ export default function Recommendations({
     );
   }
 
-  if (positiveCoolKey && nightHeatLevel === "none" && !contextualWeatherPrimary) {
+  if (positiveCoolKey && !contextualWeatherPrimary) {
     const label =
       positiveCoolKey === "positiveCold"
         ? t.positiveColdLabel
@@ -1396,14 +1386,9 @@ export default function Recommendations({
      4️⃣ RECOMANACIONS NOCTURNES
   ========================================================== */
   if (!isDay) {
-    const nightKey = getNightKey(nightHeatLevel);
-    const nightClassKey = nightKey === "torridNight" ? "tropicalNight" : nightKey;
-    const nightLabel =
-      nightHeatLevel === "torrid"
-        ? t.factorTorridNight
-        : nightHeatLevel === "tropical"
-          ? t.factorTropicalNight
-          : t.factorNight;
+    const nightKey: NightKey = heatActive ? "nightHeat" : "nightSafe";
+    const nightClassKey = nightKey;
+    const nightLabel = heatActive ? t.factorHeat : t.factorThermalComfort;
 
     return (
       <RecommendationBox
@@ -1412,7 +1397,7 @@ export default function Recommendations({
         body={t[nightKey]}
         items={factorItems(
           riskFactors,
-          { factor: "night", icon: "🌙", label: nightLabel, text: t[nightKey] },
+          { factor: heatActive ? "heat" : "thermalComfort", icon: heatActive ? "🌡️" : "🌙", label: nightLabel, text: t[nightKey] },
           humid && { factor: "humidity", icon: "💧", label: t.factorHumidity, text: humidityText },
           showWindModerate && { factor: "wind", icon: "🌬️", label: t.factorWind, text: t.windModerate },
           showWindStrong && { factor: "wind", icon: "🌬️", label: t.factorWind, text: t.windStrong },
@@ -1573,4 +1558,43 @@ export default function Recommendations({
       )}
     />
   );
+}
+
+
+// Forecast information is appended after current advice, regardless of its return branch.
+const NIGHT_FORECAST_TEXT = {
+  ca: ["Previsió de nit tropical", "Previsió de nit tòrrida", "La mínima prevista entre la posta i la sortida del sol és de {{min}} °C.", "Prepara un espai fresc per descansar."],
+  es: ["Previsión de noche tropical", "Previsión de noche tórrida", "La mínima prevista entre la puesta y la salida del sol es de {{min}} °C.", "Prepara un espacio fresco para descansar."],
+  eu: ["Gau tropikalaren iragarpena", "Gau sargoriaren iragarpena", "Eguzki-sarreratik eguzki-irteerara bitartean aurreikusitako gutxieneko tenperatura {{min}} °C da.", "Prestatu atseden hartzeko leku fresko bat."],
+  gl: ["Previsión de noite tropical", "Previsión de noite tórrida", "A mínima prevista entre o solpor e o amencer é de {{min}} °C.", "Prepara un espazo fresco para descansar."],
+  en: ["Tropical night forecast", "Torrid night forecast", "The forecast minimum between sunset and sunrise is {{min}} °C.", "Prepare a cool place to rest."],
+} as const;
+
+const REMAINING_NIGHT_TEXT = {
+  ca: ["Resta de la nit: mínima prevista ≥{{threshold}} °C", "La mínima prevista des d’ara fins a la sortida del sol és de {{min}} °C."],
+  es: ["Resto de la noche: mínima prevista ≥{{threshold}} °C", "La mínima prevista desde ahora hasta la salida del sol es de {{min}} °C."],
+  eu: ["Gauaren gainerako zatia: aurreikusitako gutxienekoa ≥{{threshold}} °C", "Hemendik eguzki-irteerara bitartean aurreikusitako gutxieneko tenperatura {{min}} °C da."],
+  gl: ["Resto da noite: mínima prevista ≥{{threshold}} °C", "A mínima prevista desde agora ata o amencer é de {{min}} °C."],
+  en: ["Rest of the night: forecast minimum ≥{{threshold}} °C", "The forecast minimum from now until sunrise is {{min}} °C."],
+} as const;
+
+export default function Recommendations(props: Props) {
+  const current = CurrentRecommendations(props);
+  const forecast = props.nightForecast;
+  if (forecast?.status !== "ready" ||
+      (forecast.category !== "tropical" && forecast.category !== "torrid") ||
+      forecast.minForecastTemp === null || !Number.isFinite(forecast.minForecastTemp)) return current;
+  const lang = normalizeLang(props.lang);
+  const text = NIGHT_FORECAST_TEXT[lang];
+  const min = new Intl.NumberFormat(lang, { maximumFractionDigits: 1 }).format(forecast.minForecastTemp);
+  const remaining = forecast.scope === "remaining-night";
+  const label = remaining
+    ? REMAINING_NIGHT_TEXT[lang][0].replace("{{threshold}}", forecast.category === "torrid" ? "25" : "20")
+    : text[forecast.category === "torrid" ? 1 : 0];
+  const body = remaining ? REMAINING_NIGHT_TEXT[lang][1] : text[2];
+  const item: RecommendationItem = {
+    factor: "night", icon: "🌙", label,
+    text: `${body.replace("{{min}}", min)} ${text[3]}`,
+  };
+  return React.cloneElement(current, { items: [...(current.props.items ?? []), item] });
 }
