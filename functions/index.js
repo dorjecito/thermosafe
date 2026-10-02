@@ -12,6 +12,7 @@ const {
   fetchTrackedOpenWeather,
 } = require("./apiUsage");
 const {
+  buildAemetEpisodeKey,
   buildAemetNotifiedState,
   getAemetLevelFromAlerts,
   getAemetNotificationDecision,
@@ -2237,6 +2238,7 @@ exports.cronCheckAemetRiskV2 = onSchedule(
             {
               zoneKey,
               level: 0,
+            episodeKey: "",
               event: "",
               sender: "",
               description: "",
@@ -2263,6 +2265,7 @@ exports.cronCheckAemetRiskV2 = onSchedule(
           {
             zoneKey,
             level: info?.level ?? 0,
+            episodeKey: buildAemetEpisodeKey(info, zoneKey),
             event: info?.event || "",
             sender: info?.sender || "",
             description: info?.description || "",
@@ -2324,20 +2327,12 @@ exports.cronCheckAemetRiskV2 = onSchedule(
           nowMs: now,
         });
 
-        const recentUvCombinedSnap = await db
-          .collection("notificationState")
-          .doc("aemetContextByZone")
-          .collection("zones")
-          .doc(zoneKey)
-          .get();
-
-        const recentUvCombined = recentUvCombinedSnap.exists
-          ? recentUvCombinedSnap.data() || {}
-          : null;
+        // Only this subscription's successful send can cover this exact episode.
+        const recentUvCombined = sub.uvAemetCoverage;
         const lastUvCombinedAt = Number(recentUvCombined?.sentAt ?? 0);
         const uvCombinedWasSent =
-          recentUvCombined?.source === "uvCombined" &&
-          recentUvCombined?.reason === "uvWithAemet" &&
+          recentUvCombined?.episodeKey === decision.episodeKey &&
+          Number(recentUvCombined?.level ?? 0) >= Number(info.level) &&
           lastUvCombinedAt > 0;
         const minutesSince =
           lastUvCombinedAt > 0 ? (now - lastUvCombinedAt) / 60000 : null;
@@ -2638,274 +2633,6 @@ exports.sendTestNotification = functions
   });
 
 // ─────────────────────────────────────────────
-// ☀️ TEST MANUAL UV
-// - Llegeix subs
-// - Calcula UV actual
-// - Envia només si hi ha nivell > 0
-// - Respecta threshold usuari
-// - Neteja subs invàlides si fallen
-// ─────────────────────────────────────────────
-exports.runUvNow = functions
-  .region(REGION)
-  .runWith({ secrets: [OPENUV_KEY, OPENWEATHER_KEY] })
-  .https.onRequest(async (req, res) => {
-    console.log("[MANUAL UV] start");
-
-    try {
-      const snap = await db.collection("subs").limit(50).get();
-
-      if (snap.empty) {
-        console.log("[MANUAL UV] no subs");
-        return res.json({ ok: true, subs: 0 });
-      }
-
-      const tasks = [];
-
-      for (const doc of snap.docs) {
-        const sub = doc.data();
-
-        tasks.push(
-          (async () => {
-            try {
-              const lang = normalizeLang(sub.lang);
-              const place = sub.place || "";
-              let uvi = await getCachedUV(sub.lat, sub.lon);
-
-              if (uvi == null) {
-                const fallbackUvi = await getUVfromOpenWeather(sub.lat, sub.lon);
-
-                if (fallbackUvi != null) {
-                  uvi = fallbackUvi;
-
-                  const key = locationKey(sub.lat, sub.lon);
-
-                  await db.collection("uvCache").doc(key).set(
-                    {
-                      key,
-                      lat: Number(sub.lat),
-                      lon: Number(sub.lon),
-                      uvi,
-                      source: "openweather_fallback_manual",
-                      updatedAt: Date.now(),
-                    },
-                    { merge: true }
-                  );
-
-                  console.log("[MANUAL UV CACHE SAVE][fallback]", {
-                    key,
-                    uvi,
-                    source: "openweather_fallback_manual",
-                  });
-                }
-              }
-
-              if (uvi == null) uvi = 0;
-              const info = getUvInfo(uvi, {
-              cloudiness: Number(req.query.cloudiness || 0),
-              weatherMain: String(req.query.weatherMain || ""),
-            });
-
-              console.log("[MANUAL UV]", {
-                docId: doc.id,
-                place,
-                uvi,
-                level: info.level,
-                tokenPreview: String(sub.token || "").slice(0, 20),
-              });
-
-              if (!info || info.level === 0) return;
-              if (!meetsUserThreshold(info.level, sub.threshold)) return;
-
-              await sendUvPush(sub.token, lang, info, uvi, place);
-
-              console.log("[MANUAL UV][SENT]", {
-                docId: doc.id,
-                place,
-                uvi,
-                level: info.level,
-                tokenPreview: String(sub.token || "").slice(0, 20),
-              });
-            } catch (err) {
-              const removed = await removeInvalidSub(
-                doc.ref,
-                doc.id,
-                err,
-                "UV-MANUAL"
-              );
-
-              if (removed) return;
-
-              console.error("[MANUAL UV][ERROR]", doc.id, err);
-            }
-          })()
-        );
-      }
-
-      await Promise.allSettled(tasks);
-
-      console.log("[MANUAL UV] done");
-      return res.json({ ok: true });
-    } catch (e) {
-      console.error("[MANUAL UV][FATAL]", e);
-      return res.status(500).json({
-        ok: false,
-        error: e?.message || "manual uv error",
-      });
-    }
-  });
-
-  // ─────────────────────────────────────────────
-// ☀️ TEST MANUAL UV — V2
-// Prova de migració a Cloud Functions v2
-// No substitueix runUvNow actual
-// ─────────────────────────────────────────────
-exports.runUvNowV2 = onRequest(
-  {
-    region: REGION,
-    secrets: [OPENUV_KEY, OPENWEATHER_KEY],
-    cors: true,
-  },
-  async (req, res) => {
-    console.log("[MANUAL UV V2] start");
-
-    try {
-      const snap = await db.collection("subs").limit(50).get();
-
-      if (snap.empty) {
-        console.log("[MANUAL UV V2] no subs");
-        return res.json({ ok: true, subs: 0, version: "v2" });
-      }
-
-      const tasks = [];
-
-      for (const doc of snap.docs) {
-        const sub = doc.data();
-
-        tasks.push(
-          (async () => {
-            try {
-              const lang = normalizeLang(sub.lang);
-              const place = sub.place || "";
-              let uvi = await getCachedUV(sub.lat, sub.lon);
-
-              if (uvi == null) {
-                const fallbackUvi = await getUVfromOpenWeather(sub.lat, sub.lon);
-
-                if (fallbackUvi != null) {
-                  uvi = fallbackUvi;
-
-                  const key = locationKey(sub.lat, sub.lon);
-
-                  await db.collection("uvCache").doc(key).set(
-                    {
-                      key,
-                      lat: Number(sub.lat),
-                      lon: Number(sub.lon),
-                      uvi,
-                      source: "openweather_fallback_manual_v2",
-                      updatedAt: Date.now(),
-                    },
-                    { merge: true }
-                  );
-
-                  console.log("[MANUAL UV V2 CACHE SAVE][fallback]", {
-                    key,
-                    uvi,
-                    source: "openweather_fallback_manual_v2",
-                  });
-                }
-              }
-
-              if (uvi == null) uvi = 0;
-
-              const currentUvLevel = getUvLevel(uvi);
-              const info = getUvInfo(uvi, {
-                cloudiness: Number(req.query.cloudiness || 0),
-                weatherMain: String(req.query.weatherMain || ""),
-              });
-              const zoneKey = `${Number(sub.lat).toFixed(1)},${Number(
-                sub.lon
-              ).toFixed(1)}`;
-              const uvLevelsByZone =
-                sub.uvLevelsByZone && typeof sub.uvLevelsByZone === "object"
-                  ? { ...sub.uvLevelsByZone }
-                  : {};
-              const prevLevel = Number(
-                uvLevelsByZone[zoneKey] ?? sub.lastUvLevel ?? 0
-              );
-
-              console.log("[MANUAL UV V2]", {
-                docId: doc.id,
-                place,
-                uvi,
-                prevLevel,
-                nextLevel: currentUvLevel,
-                tokenPreview: String(sub.token || "").slice(0, 20),
-              });
-
-              if (!info || currentUvLevel === 0) return;
-              if (!shouldNotifyLevelIncrease(prevLevel, currentUvLevel)) return;
-              if (!meetsUserThreshold(currentUvLevel, sub.threshold)) return;
-
-              await sendUvPush(sub.token, lang, info, uvi, place);
-
-              uvLevelsByZone[zoneKey] = currentUvLevel;
-
-              await doc.ref.set(
-                {
-                  lastUvLevel: currentUvLevel,
-                  lastUvAt: Date.now(),
-                  uvLevelsByZone,
-                  lastNotified: Date.now(),
-                },
-                { merge: true }
-              );
-
-              console.log("[MANUAL UV V2][SENT]", {
-                docId: doc.id,
-                place,
-                uvi,
-                level: currentUvLevel,
-                tokenPreview: String(sub.token || "").slice(0, 20),
-              });
-            } catch (err) {
-              const removed = await removeInvalidSub(
-                doc.ref,
-                doc.id,
-                err,
-                "UV-MANUAL-V2"
-              );
-
-              if (removed) return;
-
-              console.error("[MANUAL UV V2][ERROR]", doc.id, err);
-            }
-          })()
-        );
-      }
-
-      await Promise.allSettled(tasks);
-
-      console.log("[MANUAL UV V2] done");
-
-      return res.json({
-        ok: true,
-        version: "v2",
-        function: "runUvNowV2",
-      });
-    } catch (e) {
-      console.error("[MANUAL UV V2][FATAL]", e);
-
-      return res.status(500).json({
-        ok: false,
-        version: "v2",
-        error: e?.message || "manual uv v2 error",
-      });
-    }
-  }
-);
-
-// ─────────────────────────────────────────────
 // ☀️ CRON UV — V2 REAL
 // Migració a Cloud Functions v2
 // ENVIA notificacions push
@@ -3147,6 +2874,7 @@ exports.cronCheckUvRiskV2 = onSchedule(
 
             let aemetLevel = 0;
             let aemetEvent = "";
+            let aemetEpisodeKey = "";
 
             try {
               const aemetSnap = await db
@@ -3162,6 +2890,7 @@ exports.cronCheckUvRiskV2 = onSchedule(
                 if (ageMinutes <= 90) {
                   aemetLevel = Number(aemetData.level ?? 0);
                   aemetEvent = aemetData.event || "";
+                  aemetEpisodeKey = typeof aemetData.episodeKey === "string" ? aemetData.episodeKey : "";
                 }
               }
             } catch (e) {
@@ -3295,32 +3024,15 @@ exports.cronCheckUvRiskV2 = onSchedule(
                     },
                    });
 
-                  if (hasAemetContextForUv) {
-                    try {
-                      await db
-                        .collection("notificationState")
-                        .doc("aemetContextByZone")
-                        .collection("zones")
-                        .doc(zoneKey)
-                        .set(
-                          {
-                            zoneKey,
-                            place: place || "",
-                            sentAt: now,
-                            source: "uvCombined",
-                            reason: "uvWithAemet",
-                          },
-                          { merge: true }
-                        );
-                    } catch (markErr) {
-                      console.warn("[UV V2][AEMET CONTEXT MARK ERROR]", {
-                        docId: doc.id,
-                        place,
-                        zoneKey,
-                        error: markErr.message,
-                      });
-                    }
-                  }
+                  // Persist with the normal post-FCM subscription update. Old zone
+                  // markers (or zones without an episode identity) are not proof.
+                  if (hasAemetContextForUv && aemetLevel > 0 && aemetEpisodeKey) {
+                    updates.uvAemetCoverage = {
+                      episodeKey: aemetEpisodeKey,
+                      level: aemetLevel,
+                      sentAt: now,
+                    };
+                  }
 
                   updates.lastHeatAt = now;
                   updates.lastHeatLevel = heatInfo.level;
