@@ -17,7 +17,14 @@ const pendingRequests = new Map<string, Promise<AemetDescriptionTranslationResul
 let appCheckInstancePromise: Promise<unknown> | null = null;
 
 function getClientEnv() {
-  return import.meta.env || {};
+  return {
+    VITE_AEMET_AUTO_TRANSLATION_ENABLED:
+      import.meta.env.VITE_AEMET_AUTO_TRANSLATION_ENABLED,
+    VITE_AEMET_TRANSLATION_ENDPOINT:
+      import.meta.env.VITE_AEMET_TRANSLATION_ENDPOINT,
+    VITE_FIREBASE_APPCHECK_SITE_KEY:
+      import.meta.env.VITE_FIREBASE_APPCHECK_SITE_KEY,
+  };
 }
 
 export function isAemetAutoTranslationEnabled(): boolean {
