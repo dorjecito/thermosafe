@@ -1,4 +1,6 @@
 {
+  "current_wind": "Wind",
+  "current_wind_gusts": "Gusts",
   "t": "ThermoSafe – Current Risk ☀️❄️💨",
   "ph": "Enter a city or town",
   "btn": "🔍 Search",

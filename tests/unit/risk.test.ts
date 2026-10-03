@@ -1,3 +1,4 @@
+import "./currentWindGust.test";
 import "./nightForecast.test";
 import "./skyLanguage.test";
 import "./refreshTarget.test";

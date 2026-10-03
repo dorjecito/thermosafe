@@ -3201,6 +3201,9 @@ return (
   hi={hi}
   windKmh={windKmh}
   uvi={uvi}
+  windLabel={t("current_wind")}
+  gustLabel={t("current_wind_gusts")}
+  gustMs={data?.wind?.gust}
 />
 
 <RainShortTermCard
