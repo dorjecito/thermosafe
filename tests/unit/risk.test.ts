@@ -944,7 +944,7 @@ test("short-term rain summary shows current and imminent rain", () => {
   assert.equal(imminent.intensity, null);
 });
 
-test("short-term rain intensity follows the requested accumulated thresholds", () => {
+test("short-term rain intensity retains the existing thresholds for an hourly rate", () => {
   const make = (mm: number) =>
     buildRainShortTermSummary({
       rainingNow: false,
@@ -5042,6 +5042,63 @@ function renderRecommendationForRainScenario(
     weatherContext,
   }) as any;
 }
+
+test("rain forecast separates multi-hour accumulation from peak hourly intensity", () => {
+  const now = 1_000;
+  const cases = [
+    [[0.2, 0.2, 0.2], 0.6, 0.2, "very_weak"],
+    [[0.8, 0.8, 0.8], 2.4, 0.8, "weak"],
+    [[2, 0, 0], 2, 2, "moderate"],
+    [[0.7, 0.7, 0.7], 2.1, 0.7, "weak"],
+    [[0.1, 3, 0.1], 3.2, 3, "moderate"],
+    [[5, 0, 0], 5, 5, "moderate"],
+  ] as const;
+  for (const [amounts, total, peak, intensity] of cases) {
+    const result = buildRainShortTermSummary({
+      nowSec: now, rainingNow: false,
+      hourly: amounts.map((amount, i) => ({dt: now + (i + 1) * 3600, rain: {"1h": amount}, pop: amount > 0 ? 0.8 : 0.1})),
+    });
+    assert.ok(Math.abs(result.forecastMm! - total) < 1e-12);
+    assert.equal(result.peakRainMmH, peak);
+    assert.equal(result.intensity, intensity);
+    // Regression: accumulated weak rainfall above 2 mm is not moderate intensity.
+    if (peak === 0.8) {
+      assert.ok(result.forecastMm! > 2);
+      assert.equal(result.forecastMm!.toFixed(1), "2.4");
+      assert.equal(result.intensity, "weak");
+    }
+  }
+});
+
+test("rain peak classification retains all existing intensity boundaries", () => {
+  for (const [amount, intensity] of [[0.09,null],[0.1,"very_weak"],[0.5,"weak"],[2,"moderate"],[10,"intense"]] as const) {
+    const result = buildRainShortTermSummary({rainingNow:false,nowSec:1000,
+      hourly:[{dt:4600,rain:{"1h":amount},pop:0.8}] as any});
+    assert.equal(result.peakRainMmH,amount);
+    assert.equal(result.intensity,intensity);
+  }
+});
+
+test("rain peak respects the existing window, probability, dry samples and current rain", () => {
+  const result = buildRainShortTermSummary({rainingNow:true,currentMm:15,nowSec:1000,
+    hourly:[
+      {dt:999,rain:{"1h":50},pop:1},
+      {dt:1000,rain:{"1h":0.8},pop:0.1},
+      {dt:4600,rain:{"1h":0.8},pop:0.8},
+      {dt:8200,rain:{"1h":0},pop:0.1},
+      {dt:11800,rain:{"1h":0},pop:0.1},
+      {dt:11801,rain:{"1h":50},pop:1},
+    ] as any});
+  assert.equal(result.currentMm,15); assert.equal(result.rainingNow,true);
+  assert.equal(result.forecastMm,1.6); assert.equal(result.peakRainMmH,0.8);
+  assert.equal(result.intensity,"weak"); assert.equal(result.endAt,8200);
+  const probabilityOnly=buildRainShortTermSummary({rainingNow:false,nowSec:1000,
+    hourly:[{dt:4600,pop:0.8}] as any});
+  assert.equal(probabilityOnly.visible,true); assert.equal(probabilityOnly.forecastMm,null);
+  assert.equal(probabilityOnly.peakRainMmH,0); assert.equal(probabilityOnly.intensity,null);
+  assert.equal(probabilityOnly.futureFallback,true);
+  assert.equal(buildRainShortTermSummary({rainingNow:false,hourly:[]}).peakRainMmH,null);
+});
 
 test("rain recommendations keep contextual rain and omit generic thermal comfort", () => {
   for (const weatherMain of ["Rain", "Drizzle", "Thunderstorm"] as const) {

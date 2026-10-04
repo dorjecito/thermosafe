@@ -5,6 +5,7 @@ export type RainShortTermSummary = {
   rainingNow: boolean;
   currentMm: number | null;
   forecastMm: number | null;
+  peakRainMmH: number | null;
   endAt: number | null;
   intensity: RainIntensity | null;
   futureFallback: boolean;
@@ -85,6 +86,8 @@ export function buildRainShortTermSummary(input: {
     .slice(0, 4);
   const relevant = upcoming.filter((item) => itemMm(item) > 0 || itemPop(item) >= 0.4);
   const forecastMm = relevant.reduce((sum, item) => sum + itemMm(item), 0);
+  // Accumulation is in mm; classify the peak hourly rate, in mm/h, separately.
+  const peakRainMmH = relevant.length > 0 ? Math.max(...relevant.map(itemMm)) : null;
 
   let endAt: number | null = null;
   if (relevant.length > 0) {
@@ -98,8 +101,9 @@ export function buildRainShortTermSummary(input: {
     rainingNow,
     currentMm,
     forecastMm: relevant.length > 0 && forecastMm > 0 ? forecastMm : null,
+    peakRainMmH,
     endAt,
-    intensity: getRainIntensity(relevant.length > 0 && forecastMm > 0 ? forecastMm : null),
+    intensity: getRainIntensity(peakRainMmH),
     futureFallback: relevant.length > 0 && forecastMm <= 0 && endAt === null,
   };
 }
