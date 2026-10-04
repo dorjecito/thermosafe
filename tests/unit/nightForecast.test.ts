@@ -102,20 +102,59 @@ const render = (temp:number, nightForecast?:NightForecast, extras:Record<string,
     riskFactors:risk.activeFactorsSorted, nightForecast,...extras} as any) as any;
 };
 test("night forecast is appended without removing any existing recommendation in five languages", () => {
+  // Existing titles now apply to the ongoing night; upcoming has explicit wording.
   const titles={ca:"Previsió de nit tropical",es:"Previsión de noche tropical",eu:"Gau tropikalaren iragarpena",gl:"Previsión de noite tropical",en:"Tropical night forecast"};
   const torridTitles: Record<string,string> = {ca:"Previsió de nit tòrrida",es:"Previsión de noche tórrida",eu:"Gau sargoriaren iragarpena",gl:"Previsión de noite tórrida",en:"Torrid night forecast"};
   for(const [lang,title] of Object.entries(titles)) {
     for(const extras of [{},{windKmh:50},{weatherMain:"Rain"},{weatherMain:"Thunderstorm"},{isDay:true,uvi:8},{aemetActive:true}] ) {
       const plain=render(23,undefined,{...extras,lang});
-      const withForecast=render(23,buildNightForecast(input()),{...extras,lang});
+      const withForecast=render(23,buildNightForecast(input(21, day + 23 * 3600)),{...extras,lang});
       assert.deepEqual(withForecast.props.items.slice(0,-1),plain.props.items);
       assert.equal(withForecast.props.items.at(-1).label,title);
       assert.ok(withForecast.props.items.at(-1).text.includes("21"));
-      assert.equal(render(23,buildNightForecast(input(25)),{lang}).props.items.at(-1).label,torridTitles[lang]);
+      assert.equal(render(23,buildNightForecast(input(25, day + 23 * 3600)),{lang}).props.items.at(-1).label,torridTitles[lang]);
     }
   }
-  const cold=render(-5); const coldForecast=render(-5,buildNightForecast(input()));
+  const cold=render(-5); const coldForecast=render(-5,buildNightForecast(input(21, day + 23 * 3600)));
   assert.deepEqual(coldForecast.props.items.slice(0,-1),cold.props.items);
+});
+test("daytime selects the upcoming night, never the past night's category or coverage", () => {
+  for (const [past, next, category] of [[21,18,"none"],[18,21,"tropical"]] as const) {
+    const d = input(next, day + (9 + 25 / 60) * 3600);
+    d.forecast.hourly = Array.from({length:60},(_,i)=>({
+      dt: day + (i-12)*3600, temp: i-12 < 12 ? past : next, feels_like:99,
+    }));
+    const result = buildNightForecast(d);
+    assert.equal(result.period,"upcoming"); assert.equal(result.scope,"full-night");
+    assert.equal(result.sunsetUtcSec,day+18.5*3600);
+    assert.equal(result.sunriseUtcSec,day+30.5*3600);
+    assert.equal(result.category,category);
+    assert.equal(render(23,result).props.items.some((item:any)=>item.factor==="night"),category!=="none");
+    d.forecast.hourly=d.forecast.hourly.filter(p=>p.dt<day+30*3600);
+    const incomplete=buildNightForecast(d);
+    assert.equal(incomplete.period,"upcoming");
+    assert.equal(incomplete.status,"incomplete"); assert.equal(incomplete.reason,"missing-end");
+    assert.equal(incomplete.category,null);
+    assert.deepEqual(render(23,incomplete).props.items,render(23).props.items);
+  }
+});
+test("upcoming tropical and torrid wording identifies tonight in all five languages", () => {
+  const expected = {
+    ca:["Previsió per a la pròxima nit: tropical","Previsió per a la pròxima nit: tòrrida","la posta d'avui i la sortida del sol de demà"],
+    es:["Previsión para la próxima noche: tropical","Previsión para la próxima noche: tórrida","la puesta de sol de hoy y el amanecer de mañana"],
+    eu:["Datorren gauerako iragarpena: gau tropikala","Datorren gauerako iragarpena: gau sargoria","Gaurko eguzki-sarreratik biharko eguzki-irteerara"],
+    gl:["Previsión para a próxima noite: tropical","Previsión para a próxima noite: tórrida","o solpor de hoxe e o amencer de mañá"],
+    en:["Forecast for tonight: tropical night","Forecast for tonight: torrid night","sunset today and sunrise tomorrow"],
+  };
+  for(const [lang,strings] of Object.entries(expected))for(const min of [21,25]) {
+    const forecast=buildNightForecast(input(min));
+    assert.equal(forecast.period,"upcoming");
+    const snapshot=structuredClone(forecast);
+    const item=render(23,forecast,{lang,isDay:true}).props.items.at(-1);
+    assert.equal(item.label,strings[min===25?1:0]);
+    assert.ok(item.text.includes(strings[2])); assert.ok(item.text.includes(`${min} °C`));
+    assert.deepEqual(forecast,snapshot);
+  }
 });
 test("current nocturnal heat advice and activity do not depend on the night forecast", () => {
   for(const min of [19,21,25]) {

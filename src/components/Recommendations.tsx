@@ -1570,6 +1570,14 @@ const NIGHT_FORECAST_TEXT = {
   en: ["Tropical night forecast", "Torrid night forecast", "The forecast minimum between sunset and sunrise is {{min}} °C.", "Prepare a cool place to rest."],
 } as const;
 
+const UPCOMING_NIGHT_TEXT = {
+  ca: ["Previsió per a la pròxima nit: tropical", "Previsió per a la pròxima nit: tòrrida", "La mínima prevista entre la posta d'avui i la sortida del sol de demà és de {{min}} °C."],
+  es: ["Previsión para la próxima noche: tropical", "Previsión para la próxima noche: tórrida", "La mínima prevista entre la puesta de sol de hoy y el amanecer de mañana es de {{min}} °C."],
+  eu: ["Datorren gauerako iragarpena: gau tropikala", "Datorren gauerako iragarpena: gau sargoria", "Gaurko eguzki-sarreratik biharko eguzki-irteerara bitartean aurreikusitako gutxieneko tenperatura {{min}} °C da."],
+  gl: ["Previsión para a próxima noite: tropical", "Previsión para a próxima noite: tórrida", "A mínima prevista entre o solpor de hoxe e o amencer de mañá é de {{min}} °C."],
+  en: ["Forecast for tonight: tropical night", "Forecast for tonight: torrid night", "The forecast minimum between sunset today and sunrise tomorrow is {{min}} °C."],
+} as const;
+
 const REMAINING_NIGHT_TEXT = {
   ca: ["Resta de la nit: mínima prevista ≥{{threshold}} °C", "La mínima prevista des d’ara fins a la sortida del sol és de {{min}} °C."],
   es: ["Resto de la noche: mínima prevista ≥{{threshold}} °C", "La mínima prevista desde ahora hasta la salida del sol es de {{min}} °C."],
@@ -1588,10 +1596,11 @@ export default function Recommendations(props: Props) {
   const text = NIGHT_FORECAST_TEXT[lang];
   const min = new Intl.NumberFormat(lang, { maximumFractionDigits: 1 }).format(forecast.minForecastTemp);
   const remaining = forecast.scope === "remaining-night";
+  const fullNightText = forecast.period === "upcoming" ? UPCOMING_NIGHT_TEXT[lang] : text;
   const label = remaining
     ? REMAINING_NIGHT_TEXT[lang][0].replace("{{threshold}}", forecast.category === "torrid" ? "25" : "20")
-    : text[forecast.category === "torrid" ? 1 : 0];
-  const body = remaining ? REMAINING_NIGHT_TEXT[lang][1] : text[2];
+    : fullNightText[forecast.category === "torrid" ? 1 : 0];
+  const body = remaining ? REMAINING_NIGHT_TEXT[lang][1] : fullNightText[2];
   const item: RecommendationItem = {
     factor: "night", icon: "🌙", label,
     text: `${body.replace("{{min}}", min)} ${text[3]}`,
