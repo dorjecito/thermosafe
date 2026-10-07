@@ -1,3 +1,4 @@
+import "./uvAdviceContext.test";
 import "./currentWindGust.test";
 import "./nightForecast.test";
 import "./skyLanguage.test";

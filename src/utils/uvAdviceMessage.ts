@@ -94,15 +94,68 @@ const messages: Record<
   },
 };
 
+export type UvAdviceWeather = {
+  weatherMain?: string | null;
+  weatherCode?: number | null;
+  rainMmH?: unknown;
+};
+
+/** Presentation only: never changes the UV value or classification. */
+export function usesContextualUvAdvice(weather?: UvAdviceWeather): boolean {
+  return Boolean(weather && (
+    (typeof weather.rainMmH === "number" && Number.isFinite(weather.rainMmH) && weather.rainMmH > 0) ||
+    ["Rain", "Drizzle", "Thunderstorm", "Snow", "Fog"].includes(weather.weatherMain ?? "") ||
+    weather.weatherCode === 804
+  ));
+}
+
+const contextualMessages: Record<Lang, readonly string[]> = {
+  ca: [
+    "Encara que el sol no sigui visible, cal tenir en compte l'índex UV. Si l'exposició exterior és prolongada, mantén una protecció solar adequada.",
+    "La radiació UV és alta, encara que el sol no sigui visible. Limita l'exposició exterior i utilitza protecció solar reforçada.",
+    "La radiació UV és molt alta, encara que el sol no sigui visible. Evita l'exposició prolongada a l'exterior i utilitza protecció solar màxima.",
+    "La radiació UV és extrema, encara que el sol no sigui visible. Evita l'exposició a l'exterior. Risc molt elevat.",
+  ],
+  es: [
+    "Aunque el sol no sea visible, hay que tener en cuenta el índice UV. Si la exposición al aire libre es prolongada, mantén una protección solar adecuada.",
+    "La radiación UV es alta, aunque el sol no sea visible. Limita la exposición al aire libre y utiliza protección solar reforzada.",
+    "La radiación UV es muy alta, aunque el sol no sea visible. Evita la exposición prolongada al aire libre y utiliza protección solar máxima.",
+    "La radiación UV es extrema, aunque el sol no sea visible. Evita la exposición al aire libre. Riesgo muy elevado.",
+  ],
+  eu: [
+    "Eguzkia ikusten ez bada ere, UV indizea kontuan hartu behar da. Kanpoan luzaroan egonez gero, mantendu eguzki-babes egokia.",
+    "UV erradiazioa handia da, eguzkia ikusten ez bada ere. Mugatu kanpoko esposizioa eta indartu eguzki-babesa.",
+    "UV erradiazioa oso handia da, eguzkia ikusten ez bada ere. Saihestu kanpoan luzaroan egotea eta erabili eguzki-babes handiena.",
+    "UV erradiazioa muturrekoa da, eguzkia ikusten ez bada ere. Saihestu kanpoko esposizioa. Arrisku oso handia.",
+  ],
+  gl: [
+    "Aínda que o sol non sexa visible, cómpre ter en conta o índice UV. Se a exposición ao aire libre é prolongada, mantén unha protección solar adecuada.",
+    "A radiación UV é alta, aínda que o sol non sexa visible. Limita a exposición ao aire libre e utiliza protección solar reforzada.",
+    "A radiación UV é moi alta, aínda que o sol non sexa visible. Evita a exposición prolongada ao aire libre e utiliza protección solar máxima.",
+    "A radiación UV é extrema, aínda que o sol non sexa visible. Evita a exposición ao aire libre. Risco moi elevado.",
+  ],
+  en: [
+    "Even when the sun is not visible, the UV index still matters. Use adequate sun protection if you spend a long time outdoors.",
+    "UV radiation is high, even when the sun is not visible. Limit outdoor exposure and use extra sun protection.",
+    "UV radiation is very high, even when the sun is not visible. Avoid prolonged outdoor exposure and use maximum sun protection.",
+    "UV radiation is extreme, even when the sun is not visible. Avoid outdoor exposure. Very high risk.",
+  ],
+};
+
 export const getTimeAwareUvAdvice = (
   uvi: number | null,
   lang: string,
-  currentHour?: number | null
+  currentHour?: number | null,
+  weather?: UvAdviceWeather
 ): string => {
   if (uvi === null) return "";
 
   const level = getUvLevelIndex(uvi);
   const t = messages[normalizeLang(lang)];
+
+  if (level > 0 && usesContextualUvAdvice(weather)) {
+    return contextualMessages[normalizeLang(lang)][level - 1];
+  }
 
   if (typeof currentHour === "number" && currentHour >= 18 && level >= 2) {
     return t.lateVeryHigh;

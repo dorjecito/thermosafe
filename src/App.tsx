@@ -2513,8 +2513,12 @@ const uvSummaryText = useMemo(
   [uvSummaryValue, currentLang]
 );
 const uvSummaryAdvice = useMemo(
-  () => getTimeAwareUvAdvice(uvSummaryValue, currentLang, locationCurrentHour),
-  [uvSummaryValue, currentLang, locationCurrentHour]
+  () => getTimeAwareUvAdvice(uvSummaryValue, currentLang, locationCurrentHour, {
+    weatherMain: data?.weather?.[0]?.main,
+    weatherCode: data?.weather?.[0]?.id,
+    rainMmH: data?.rain?.["1h"],
+  }),
+  [uvSummaryValue, currentLang, locationCurrentHour, data?.weather?.[0]?.main, data?.weather?.[0]?.id, data?.rain?.["1h"]]
 );
 const compactUvAdvice =
   uvSummaryValue !== null && getUvLevelIndex(uvSummaryValue) === 0
@@ -3357,6 +3361,8 @@ return (
 	                  cloudiness={data?.clouds?.all}
 	                  weatherContext={weatherContext}
                     currentHour={locationCurrentHour}
+                    weatherCode={data?.weather?.[0]?.id}
+                    rainMmH={data?.rain?.["1h"]}
                     summaryAdvice={uvSummaryAdvice}
 	                />
 

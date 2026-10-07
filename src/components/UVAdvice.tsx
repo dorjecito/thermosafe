@@ -1,7 +1,7 @@
 import React from "react";
 import type { WeatherContext } from "../utils/weatherContext";
 import { getUvLevelIndex, normalizeUviForDisplay } from "../utils/uv";
-import { getTimeAwareUvAdvice } from "../utils/uvAdviceMessage";
+import { getTimeAwareUvAdvice, usesContextualUvAdvice } from "../utils/uvAdviceMessage";
 
 type Lang = "ca" | "es" | "eu" | "gl" | "en";
 
@@ -10,6 +10,8 @@ interface UVAdviceProps {
   lang: string; // pot venir com "ca-ES", etc.
   weatherMain?: string | null;
   cloudiness?: number | null;
+  weatherCode?: number | null;
+  rainMmH?: unknown;
   weatherContext?: WeatherContext | null;
   currentHour?: number | null;
   summaryAdvice?: string | null;
@@ -136,14 +138,6 @@ const normalizeLang = (lang: string): Lang => {
   return (["ca", "es", "eu", "gl", "en"] as const).includes(primary) ? primary : "ca";
 };
 
-const isRainyWeather = (weatherMain?: string | null): boolean => {
-  return (
-    weatherMain === "Rain" ||
-    weatherMain === "Drizzle" ||
-    weatherMain === "Thunderstorm"
-  );
-};
-
 const isVeryCloudy = (cloudiness?: number | null): boolean => {
   return typeof cloudiness === "number" && cloudiness >= 85;
 };
@@ -153,7 +147,8 @@ const UVAdvice: React.FC<UVAdviceProps> = ({
   lang,
   weatherMain,
   cloudiness,
-  weatherContext,
+  weatherCode,
+  rainMmH,
   currentHour,
   summaryAdvice,
 }) => {
@@ -181,24 +176,11 @@ const UVAdvice: React.FC<UVAdviceProps> = ({
 
   const b = getUvLevelIndex(u);
 
-  const legacyRainy = isRainyWeather(weatherMain);
-  const rainy = weatherContext?.rainy ?? legacyRainy;
-  const veryCloudy = isVeryCloudy(cloudiness);
-  const legacySuppressUv = rainy || (veryCloudy && u >= 3);
-  const suppressUv = weatherContext?.suppressUv ?? legacySuppressUv;
-
-  let extraNote: string | null = null;
-
-  if (suppressUv && rainy) {
-    extraNote = L.rainyNote;
-  } else if (suppressUv && veryCloudy && u >= 3) {
-    extraNote = L.cloudyNote;
-  }
-
-  const mainMsg =
-    suppressUv && veryCloudy && u >= 3 && !rainy
-      ? L.cloudyMsgs[b]
-      : getTimeAwareUvAdvice(u, lng, currentHour);
+  const weather = { weatherMain, weatherCode, rainMmH };
+  const contextual = usesContextualUvAdvice(weather);
+  // Retain the distinct cloud-cover note, without duplicating contextual advice.
+  const extraNote = !contextual && isVeryCloudy(cloudiness) && u >= 3 ? L.cloudyNote : null;
+  const mainMsg = getTimeAwareUvAdvice(u, lng, currentHour, weather);
 
   if (!extraNote && summaryAdvice && mainMsg.trim() === summaryAdvice.trim()) {
     return null;
