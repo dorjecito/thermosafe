@@ -13,6 +13,7 @@ import type { NightForecast } from "../utils/nightForecast";
 import { getHeatRisk } from "../utils/heatRisk";
 import { getColdRisk, type ColdRisk } from "../utils/getColdRisk";
 import { getUvLevelIndex } from "../utils/uv";
+import { getTimeAwareUvAdvice, usesContextualUvAdvice } from "../utils/uvAdviceMessage";
 import type { HeatDayPhase } from "../utils/isDayAtLocation";
 import type { FactorRisk } from "../utils/riskScoreEngine";
 import type { WeatherContext } from "../utils/weatherContext";
@@ -107,6 +108,7 @@ export type RecommendationItem = {
   label: string;
   text: string;
   factor?: RecommendationFactor;
+  preserveText?: boolean;
 };
 
 export type RecommendationFactorState = {
@@ -170,6 +172,8 @@ interface Props {
   alertType?: string;
   uvi?: number | null;
   weatherMain?: string;
+  weatherCode?: number | null;
+  rainMmH?: unknown;
   weatherDescription?: string;
   cloudiness?: number | null;
   windKmh?: number | null;
@@ -866,6 +870,7 @@ const ucfirst = (text: string): string =>
 
 const compactGroupedRecommendationText = (item: RecommendationItem): string => {
   let text = item.text.trim();
+  if (item.preserveText) return text;
 
   const replacements: Array<[RegExp, string]> = [
     [/^Radiació UV\s+/i, ""],
@@ -1053,6 +1058,8 @@ function CurrentRecommendations({
   alertType,
   uvi,
   weatherMain,
+  weatherCode,
+  rainMmH,
   weatherDescription,
   cloudiness,
   windKmh,
@@ -1073,8 +1080,13 @@ function CurrentRecommendations({
   const uvRecommendationKey = uvKey
     ? getUvRecommendationKey(uvKey, heatDayPhase)
     : null;
+  const uvAdviceWeather = { weatherMain, weatherCode, rainMmH };
+  const contextualUvAdvice = usesContextualUvAdvice(uvAdviceWeather);
+  const uvTextOptions = contextualUvAdvice ? { preserveText: true } : {};
   const uvRecommendationText = uvRecommendationKey
-    ? t[uvRecommendationKey]
+    ? contextualUvAdvice
+      ? getTimeAwareUvAdvice(uvi ?? null, lng, currentHour, uvAdviceWeather)
+      : t[uvRecommendationKey]
     : null;
   const contextualColdTemp =
     typeof coldEffectiveTemp === "number" && Number.isFinite(coldEffectiveTemp)
@@ -1252,7 +1264,7 @@ function CurrentRecommendations({
 	          riskFactors,
 	          { factor: "heat", icon: "🌡️", label: t.factorHeat, text: t[heatRecommendationKey] },
 	          humid && { factor: "humidity", icon: "💧", label: t.factorHumidity, text: humidityText },
-	          showUvRecommendation && uvKey && { factor: "uv", icon: "☀️", label: t.factorUv, text: uvRecommendationText },
+	          showUvRecommendation && uvKey && { ...uvTextOptions, factor: "uv", icon: "☀️", label: t.factorUv, text: uvRecommendationText },
 	          showWindModerate && { factor: "wind", icon: "🌬️", label: t.factorWind, text: t.windModerate },
 	          showWindStrong && { factor: "wind", icon: "🌬️", label: t.factorWind, text: t.windStrong },
 	          ...contextualItems
@@ -1281,9 +1293,9 @@ function CurrentRecommendations({
           riskFactors,
           { factor: "wind", icon: "🌬️", label: t.factorWind, text: t.windStrong },
           humid && { factor: "humidity", icon: "💧", label: t.factorHumidity, text: humidityText },
-          uvActive && uvKey === "uvHigh" && uvRecommendationText && { factor: "uv", icon: "☀️", label: t.factorUv, text: uvRecommendationText },
-          uvActive && uvKey === "uvVeryHigh" && uvRecommendationText && { factor: "uv", icon: "☀️", label: t.factorUv, text: uvRecommendationText },
-          uvActive && uvKey === "uvExtreme" && uvRecommendationText && { factor: "uv", icon: "☀️", label: t.factorUv, text: uvRecommendationText },
+          uvActive && uvKey === "uvHigh" && uvRecommendationText && { ...uvTextOptions, factor: "uv", icon: "☀️", label: t.factorUv, text: uvRecommendationText },
+          uvActive && uvKey === "uvVeryHigh" && uvRecommendationText && { ...uvTextOptions, factor: "uv", icon: "☀️", label: t.factorUv, text: uvRecommendationText },
+          uvActive && uvKey === "uvExtreme" && uvRecommendationText && { ...uvTextOptions, factor: "uv", icon: "☀️", label: t.factorUv, text: uvRecommendationText },
           rainy && !stormy && { factor: "rain", icon: "🌧️", label: t.factorRain, text: t.rain },
           stormy && { factor: "storm", icon: "⛈️", label: t.factorStorm, text: t.storm },
           ...contextualItems
@@ -1338,7 +1350,7 @@ function CurrentRecommendations({
         body={uvRecommendationText ?? t[uvKey]}
         items={factorItems(
           riskFactors,
-	          { factor: "uv", icon: "☀️", label: t.factorUv, text: uvRecommendationText ?? t[uvKey] },
+	          { ...uvTextOptions, factor: "uv", icon: "☀️", label: t.factorUv, text: uvRecommendationText ?? t[uvKey] },
           humid && { factor: "humidity", icon: "💧", label: t.factorHumidity, text: humidityText },
           showWindModerate && { factor: "wind", icon: "🌬️", label: t.factorWind, text: t.windModerate },
           showWindStrong && { factor: "wind", icon: "🌬️", label: t.factorWind, text: t.windStrong },

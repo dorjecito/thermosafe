@@ -15,6 +15,7 @@ type Props = {
   skinType: SelectedSkinType;
   onSkinTypeChange: (skinType: SelectedSkinType) => void;
   showEstimateBadge?: boolean;
+  contextualAdvice?: boolean;
 };
 
 type SkinType = "1" | "2" | "3" | "4" | "5" | "6";
@@ -33,6 +34,7 @@ const TXT: Record<
     noteModerate: string;
     noteHigh: string;
     moreThanMax: string;
+    noteHighContextual: string;
     noLimitVeryLow: string;
     phototypes: Record<SkinType, string>;
   }
@@ -49,6 +51,7 @@ const TXT: Record<
       "Estimació orientativa basada en índex UV actual. Aplica protecció solar i organitza pauses en hores centrals.",
     noteHigh:
       "Estimació orientativa basada en índex UV actual. Redueix exposició, reforça protecció i prioritza ombra.",
+    noteHighContextual: "Estimació orientativa basada en l’índex UV actual. Redueix l’exposició i reforça la protecció solar.",
     moreThanMax: "> 8 h",
     noLimitVeryLow: "Sense límit orientatiu amb aquest nivell d’UV.",
     phototypes: {
@@ -72,6 +75,7 @@ const TXT: Record<
       "Estimación orientativa basada en el índice UV actual. Aplica protección solar y organiza pausas en horas centrales.",
     noteHigh:
       "Estimación orientativa basada en el índice UV actual. Reduce la exposición, refuerza la protección y prioriza la sombra.",
+    noteHighContextual: "Estimación orientativa basada en el índice UV actual. Reduce la exposición y refuerza la protección solar.",
     moreThanMax: "> 8 h",
     noLimitVeryLow: "Sin límite orientativo con este nivel de UV.",
     phototypes: {
@@ -95,6 +99,7 @@ const TXT: Record<
       "UV indize aktualean oinarritutako gutxi gorabeherako estimazioa. Aplikatu eguzki-babesa eta antolatu atsedenak erdiko orduetan.",
     noteHigh:
       "UV indize aktualean oinarritutako gutxi gorabeherako estimazioa. Murriztu esposizioa, indartu babesa eta lehenetsi itzala.",
+    noteHighContextual: "Uneko UV indizean oinarritutako gutxi gorabeherako estimazioa. Murriztu esposizioa eta indartu eguzki-babesa.",
     moreThanMax: "> 8 h",
     noLimitVeryLow: "UV maila honekin ez dago orientaziozko mugarik.",
     phototypes: {
@@ -118,6 +123,7 @@ const TXT: Record<
       "Estimación orientativa baseada no índice UV actual. Aplica protección solar e organiza pausas nas horas centrais.",
     noteHigh:
       "Estimación orientativa baseada no índice UV actual. Reduce a exposición, reforza a protección e prioriza a sombra.",
+    noteHighContextual: "Estimación orientativa baseada no índice UV actual. Reduce a exposición e reforza a protección solar.",
     moreThanMax: "> 8 h",
     noLimitVeryLow: "Sen límite orientativo con este nivel de UV.",
     phototypes: {
@@ -141,6 +147,7 @@ const TXT: Record<
       "Approximate estimate based on current UV index. Apply sun protection and organise breaks around midday.",
     noteHigh:
       "Approximate estimate based on current UV index. Reduce exposure, reinforce protection and prioritise shade.",
+    noteHighContextual: "Approximate estimate based on the current UV index. Reduce exposure and strengthen sun protection.",
     moreThanMax: "> 8 h",
     noLimitVeryLow: "No indicative limit with this UV level.",
     phototypes: {
@@ -160,6 +167,7 @@ export default function UVSafeTime({
   skinType,
   onSkinTypeChange,
   showEstimateBadge = true,
+  contextualAdvice = false,
 }: Props) {
   const t = TXT[lang] ?? TXT.ca;
 
@@ -178,7 +186,7 @@ export default function UVSafeTime({
     else if ((uvi as number) < MIN_UV_TO_SHOW_EXPOSURE_TIME) note = t.noRisk;
     else if ((uvi as number) < 6) note = t.noteLow;
     else if ((uvi as number) < 8) note = t.noteModerate;
-    else note = t.noteHigh;
+    else note = contextualAdvice ? t.noteHighContextual : t.noteHigh;
   }
 
   return (

@@ -30,6 +30,7 @@ type PrimaryStatusBlockArgs = {
   heatDayPhase?: HeatDayPhase;
   primaryAdvice: string | null;
   contextualUVMessage: string;
+  contextualPrimaryUvAdvice?: string | null;
   t: TFunctionLike;
 };
 
@@ -52,6 +53,7 @@ export function getPrimaryStatusBlock({
   heatDayPhase,
   primaryAdvice,
   contextualUVMessage,
+  contextualPrimaryUvAdvice,
   t,
 }: PrimaryStatusBlockArgs): PrimaryStatusBlockResult {
   const tr = (key: string, fallback: string) => {
@@ -385,6 +387,7 @@ export function getPrimaryStatusBlock({
       icon: "☀️",
       title: uvTitle,
       text:
+        contextualPrimaryUvAdvice ||
         primaryAdvice ||
         contextualUVMessage ||
         t("highUVIWarning") ||

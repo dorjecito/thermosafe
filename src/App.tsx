@@ -52,7 +52,7 @@ import { getUVDetailFromOpenUV, getUVFromOpenUV } from "./services/openUV";
 	   import { getAlertTimeCountdown } from "./utils/getRemainingTime";
 	   import { normalizeLang } from "./utils/normalizeLang";
    import { getUvLevelIndex, getUvText, normalizeUviForDisplay } from "./utils/uv";
-     import { getTimeAwareUvAdvice } from "./utils/uvAdviceMessage";
+     import { getTimeAwareUvAdvice, usesContextualUvAdvice } from "./utils/uvAdviceMessage";
 	   import { buildRiskTrend, type RiskTrendResult } from "./utils/riskTrend";
 	   import { getCoords, type Coords } from "./utils/geolocation";
 	   import { safeUVFetch } from "./utils/safeUVFetch";
@@ -2242,6 +2242,19 @@ const contextualUVMessage = useMemo(
   [uvi, currentLang]
 );
 
+const contextualUvAdvice = usesContextualUvAdvice({
+  weatherMain: data?.weather?.[0]?.main,
+  weatherCode: data?.weather?.[0]?.id,
+  rainMmH: data?.rain?.["1h"],
+});
+const contextualPrimaryUvAdvice = contextualUvAdvice
+  ? getTimeAwareUvAdvice(uvi, currentLang, locationCurrentHour, {
+      weatherMain: data?.weather?.[0]?.main,
+      weatherCode: data?.weather?.[0]?.id,
+      rainMmH: data?.rain?.["1h"],
+    })
+  : null;
+
 const primaryStatusInput = useMemo(
   () => ({
     alerts,
@@ -2255,6 +2268,7 @@ const primaryStatusInput = useMemo(
     heatDayPhase,
     primaryAdvice,
     contextualUVMessage,
+    contextualPrimaryUvAdvice,
     t,
   }),
   [
@@ -2269,6 +2283,7 @@ const primaryStatusInput = useMemo(
     heatDayPhase,
     primaryAdvice,
     contextualUVMessage,
+    contextualPrimaryUvAdvice,
     t,
   ]
 );
@@ -3183,6 +3198,8 @@ return (
     alertType={activeAlertEvent}
     uvi={uvi}
     weatherMain={data?.weather?.[0]?.main ?? ""}
+    weatherCode={data?.weather?.[0]?.id}
+    rainMmH={data?.rain?.["1h"]}
     weatherDescription={data?.weather?.[0]?.description ?? ""}
     cloudiness={data?.clouds?.all ?? null}
     windKmh={windKmh}
@@ -3375,6 +3392,7 @@ return (
 	                  skinType={skinType}
 	                  onSkinTypeChange={handleSkinTypeChange}
                     showEstimateBadge={!configuredSkinExposureSummary}
+                    contextualAdvice={contextualUvAdvice}
 	                />
 
 	                {/* 📊 Detall UV (OpenUV) */}
