@@ -5071,6 +5071,69 @@ test("rain forecast separates multi-hour accumulation from peak hourly intensity
   }
 });
 
+test("rain card filters small forecast totals before rounding without changing summary data", () => {
+  for (const [amount, visible, intensity] of [
+    [0.2, false, "very_weak"],
+    [0.49, false, "very_weak"],
+    [0.5, true, "weak"],
+    [0.51, true, "weak"],
+  ] as const) {
+    for (const pop of [0.1, 0.4, 1]) {
+      const result = buildRainShortTermSummary({
+        rainingNow: false, nowSec: 1000,
+        hourly: [
+          { dt: 4600, rain: { "1h": amount }, pop },
+          { dt: 8200, rain: { "1h": 0 }, pop: 0 },
+        ] as any,
+      });
+      assert.deepEqual(result, {
+        visible, rainingNow: false, currentMm: null,
+        forecastMm: amount, peakRainMmH: amount, intensity,
+        endAt: 8200, futureFallback: false,
+      });
+    }
+  }
+});
+
+test("rain card uses total accumulation rather than peak intensity for visibility", () => {
+  const result = buildRainShortTermSummary({
+    rainingNow: false, nowSec: 1000,
+    hourly: [0.2, 0.2, 0.2].map((amount, i) => ({
+      dt: 1000 + (i + 1) * 3600, rain: { "1h": amount }, pop: 0.8,
+    })) as any,
+  });
+  assert.equal(result.visible, true);
+  assert.ok(Math.abs(result.forecastMm! - 0.6) < 1e-12);
+  assert.equal(result.peakRainMmH, 0.2);
+  assert.equal(result.intensity, "very_weak");
+  assert.equal(result.endAt, null);
+});
+
+test("rain card always shows current rain with minimal zero or unknown amounts", () => {
+  for (const currentMm of [0.01, 0, null, undefined]) {
+    for (const hourly of [[], [{ dt: 4600, rain: { "1h": 0.2 }, pop: 1 }]]) {
+      const result = buildRainShortTermSummary({rainingNow: true, currentMm, hourly, nowSec: 1000});
+      assert.equal(result.visible, true);
+      assert.equal(result.currentMm, currentMm ?? null);
+    }
+  }
+});
+
+test("rain card preserves probability-only visibility including the 40 percent boundary", () => {
+  for (const pop of [0.39, 0.4, 0.8, 1]) {
+    for (const rain of [undefined, { "1h": 0 }]) {
+      const result = buildRainShortTermSummary({
+        rainingNow: false, nowSec: 1000,
+        hourly: [{dt: 4600, rain, pop}] as any,
+      });
+      assert.equal(result.visible, pop >= 0.4);
+      assert.equal(result.forecastMm, null);
+      assert.equal(result.futureFallback, pop >= 0.4);
+      assert.equal(result.intensity, null);
+    }
+  }
+});
+
 test("rain peak classification retains all existing intensity boundaries", () => {
   for (const [amount, intensity] of [[0.09,null],[0.1,"very_weak"],[0.5,"weak"],[2,"moderate"],[10,"intense"]] as const) {
     const result = buildRainShortTermSummary({rainingNow:false,nowSec:1000,

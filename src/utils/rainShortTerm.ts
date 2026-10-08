@@ -97,7 +97,8 @@ export function buildRainShortTermSummary(input: {
   }
 
   return {
-    visible: rainingNow || relevant.length > 0,
+    // Presentation-only minimum in accumulated mm; retain probability-only forecasts.
+    visible: rainingNow || (relevant.length > 0 && (forecastMm <= 0 || forecastMm >= 0.5)),
     rainingNow,
     currentMm,
     forecastMm: relevant.length > 0 && forecastMm > 0 ? forecastMm : null,
