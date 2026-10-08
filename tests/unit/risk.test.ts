@@ -24,6 +24,7 @@ import {
   translateAemetDescriptionForUi,
 } from "../../src/services/aemetDescriptionTranslation";
 
+import { formatLastUpdate } from "../../src/utils/formatLastUpdate";
 import { getBaseHeatRisk, getHeatRisk } from "../../src/utils/heatRisk";
 import { calcHI } from "../../src/utils/calcHI";
 import { getColdRisk, type ColdRisk } from "../../src/utils/getColdRisk";
@@ -9056,4 +9057,26 @@ test("AEMET recipient coverage: old zone without episode does not prove coverage
   assert.equal(h.sends.length, 4);
   const zone = await h.db.collection("aemetZones").doc(coverageZone).get();
   assert.equal(zone.data().episodeKey, functionsAemetAlerts.buildAemetEpisodeKey(info(), coverageZone));
+});
+
+
+test("last update clamps future timestamps while preserving seconds minutes and hours", (t) => {
+  const now = 1_800_000_000;
+  t.mock.method(Date, "now", () => now * 1000);
+  for (const [age, expected] of [
+    [-1, "0 s"], [-0.1, "0 s"], [0, "0 s"], [3, "3 s"],
+    [59, "59 s"], [59.9, "59 s"], [60, "1 min"],
+    [119, "1 min"], [120, "2 min"], [3599, "59 min"],
+    [3600, "1 h"], [7200, "2 h"],
+  ] as const) {
+    assert.equal(formatLastUpdate(now - age), expected, `age=${age}`);
+  }
+});
+
+test("last update retains the existing behavior for invalid timestamps", (t) => {
+  t.mock.method(Date, "now", () => 1_800_000_000_000);
+  assert.equal(formatLastUpdate(NaN), "NaN h");
+  assert.equal(formatLastUpdate(undefined as unknown as number), "NaN h");
+  assert.equal(formatLastUpdate(Infinity), "-Infinity s");
+  assert.equal(formatLastUpdate(-Infinity), "Infinity h");
 });
