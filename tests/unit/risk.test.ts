@@ -6,6 +6,7 @@ import "./refreshTarget.test";
 import "./languageInitialization.test";
 import "./subscriptionLifecycle.test";
 import assert from "node:assert/strict";
+import { createInstance } from "i18next";
 import { createHash } from "node:crypto";
 import { readFileSync } from "node:fs";
 import { createRequire } from "node:module";
@@ -6910,6 +6911,66 @@ test("risk trend detects UV rise inside the same risk category", () => {
 
   assert.equal(trend?.direction, "worsening");
   assert.deepEqual(trend?.factors, ["uv"]);
+});
+
+test("UV forecast copy describes change rather than absolute UV categories in all five languages", async () => {
+  const wording = {
+    ca: ["augment de la radiació UV", "augment clar de la radiació UV"],
+    es: ["aumento de la radiación UV", "aumento claro de la radiación UV"],
+    eu: ["UV erradiazioaren igoera", "UV erradiazioaren igoera nabarmena"],
+    gl: ["aumento da radiación UV", "aumento claro da radiación UV"],
+    en: ["rise in UV radiation", "clear rise in UV radiation"],
+  };
+  const absoluteUv = /(?:radiació|radiación) UV (?:molt |muy |moi )?(?:alta|elevada)|(?:very high|elevated) UV radiation|UV erradiazioa? (?:oso )?handia/i;
+
+  for (const [lang, phrases] of Object.entries(wording)) {
+    const translations = JSON.parse(readFileSync(`src/i18n/locales/${lang}.json`, "utf8"));
+    const i18n = createInstance();
+    await i18n.init({ lng: lang, fallbackLng: false, resources: { [lang]: { translation: translations } } });
+
+    // Exercise both production direction paths, including the observed 0.1 -> 6.7 case.
+    for (const [index, futureUv] of [4, 6.7].entries()) {
+      const trend = buildRiskTrend(
+        makeTrendForecast([
+          { offsetHours: 1, temp: 22, feels_like: 22, windKmh: 5, uvi: futureUv },
+          { offsetHours: 2, temp: 22, feels_like: 22, windKmh: 5, uvi: futureUv },
+        ]),
+        { temp: 22, heatIndex: 22, windKmh: 5, uvi: 0.1 },
+        trendNow
+      );
+      const direction = index === 0 ? "worsening" : "worsening_clearly";
+      assert.equal(trend?.direction, direction);
+      assert.deepEqual(trend?.factors, ["uv"]);
+      const message = i18n.t(`riskTrend.${trend!.direction}At_${trend!.factors.join("_")}`, { start: "14:00", end: "16:00" });
+      assert.ok(message.includes(phrases[index]), `${lang}: ${message}`);
+      assert.doesNotMatch(message, absoluteUv);
+      assert.ok(message.includes("14:00") && message.includes("16:00"));
+    }
+
+    for (const [index, direction] of ["worsening", "worsening_clearly"].entries()) {
+      for (const factors of ["uv", "heat_uv", "cold_uv", "wind_uv"]) {
+        const key = `${direction}At_${factors}`;
+        const template = translations.riskTrend[key];
+        assert.equal(typeof template, "string", `${lang}: missing ${key}`);
+        assert.match(template, /\{\{start\}\}/);
+        assert.match(template, /\{\{end\}\}/);
+        const message = i18n.t(`riskTrend.${key}`, { start: "14:00", end: "16:00" });
+        assert.ok(message.includes(phrases[index]), `${lang}/${key}: ${message}`);
+        if (index === 0) assert.ok(!message.includes(phrases[1]));
+        assert.doesNotMatch(message, absoluteUv);
+        assert.doesNotMatch(message, /\{\{/);
+      }
+    }
+  }
+});
+
+test("prospective UV wording leaves current high and very-high categories intact", () => {
+  assert.equal(getUvLevelIndex(6.7), 2);
+  assert.equal(getUvLevel(6.7), "high");
+  assert.equal(getUvText(6.7, "ca"), "Alt (6–7.9)");
+  assert.equal(getUvLevelIndex(8), 3);
+  assert.equal(getUvLevel(8), "very-high");
+  assert.equal(getUvText(8, "ca"), "Molt alt (8–10.9)");
 });
 
 test("risk trend detects wind rise inside the same risk category", () => {
