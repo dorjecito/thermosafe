@@ -3,6 +3,7 @@ import "./currentWindGust.test";
 import "./nightForecast.test";
 import "./skyLanguage.test";
 import "./refreshTarget.test";
+import "./citySuggestions.test";
 import "./languageInitialization.test";
 import "./subscriptionLifecycle.test";
 import assert from "node:assert/strict";

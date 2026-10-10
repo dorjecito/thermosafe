@@ -2857,6 +2857,9 @@ return (
 	    >
       {suggestions.map((s, i) => {
         const label = [s.name, s.state, s.country].filter(Boolean).join(", ");
+        const hasDuplicateLabel = suggestions.some((other, index) =>
+          index !== i && [other.name, other.state, other.country].filter(Boolean).join(", ") === label
+        );
 
         return (
   <button
@@ -2877,6 +2880,11 @@ return (
             }}
           >
             {label}
+            {hasDuplicateLabel && (
+              <span style={{ display: "block", fontSize: "0.8rem", color: "#666", marginTop: 3 }}>
+                {s.lat.toFixed(2)}, {s.lon.toFixed(2)}
+              </span>
+            )}
           </button>
         );
       })}

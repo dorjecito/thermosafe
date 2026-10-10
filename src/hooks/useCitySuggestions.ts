@@ -91,7 +91,10 @@ export function useCitySuggestions({ apiKey }: Params = {}) {
               (x: any) =>
                 x.name === item.name &&
                 x.state === item.state &&
-                x.country === item.country
+                x.country === item.country &&
+                // Exact coordinates: discard technical duplicates, never merge nearby points.
+                x.lat === item.lat &&
+                x.lon === item.lon
             )
         );
 
