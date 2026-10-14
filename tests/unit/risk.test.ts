@@ -1,3 +1,4 @@
+import "./precipitationPresentation.test";
 import "./uvAdviceContext.test";
 import "./currentWindGust.test";
 import "./nightForecast.test";
@@ -5090,7 +5091,7 @@ test("rain card filters small forecast totals before rounding without changing s
         ] as any,
       });
       assert.deepEqual(result, {
-        visible, rainingNow: false, currentMm: null,
+        forecastKind: "rain", visible, rainingNow: false, currentMm: null,
         forecastMm: amount, peakRainMmH: amount, intensity,
         endAt: 8200, futureFallback: false,
       });

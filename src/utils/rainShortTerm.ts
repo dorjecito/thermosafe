@@ -1,6 +1,7 @@
 import type { HourlyForecastItem, HourlyForecastResponse } from "../services/weatherService";
 
 export type RainShortTermSummary = {
+  forecastKind: ForecastPrecipitationKind;
   visible: boolean;
   rainingNow: boolean;
   currentMm: number | null;
@@ -71,6 +72,48 @@ function itemPop(item: HourlyForecastItem): number {
   return pop > 1 ? pop / 100 : pop;
 }
 
+export type ForecastPrecipitationKind = "rain" | "snow" | "precipitation";
+
+// Explicit codes only: mixed/sleet, freezing rain (511), and unknown codes
+// deliberately remain generic. Temperature never participates in classification.
+const RAIN_CODES = new Set([200, 201, 202, 230, 231, 232, 300, 301, 302,
+  310, 311, 312, 313, 314, 321, 500, 501, 502, 503, 504, 520, 521, 522, 531]);
+const SNOW_CODES = new Set([600, 601, 602, 620, 621, 622]);
+const PRECIPITATION_MAIN = new Set(["Rain", "Drizzle", "Snow", "Thunderstorm"]);
+
+function hasExplicitPrecipitation(item: HourlyForecastItem): boolean {
+  return (finite(item.snow?.["1h"]) ?? 0) > 0 || (item.weather ?? []).some(
+    ({ id, main }) => PRECIPITATION_MAIN.has(main ?? "") ||
+      (typeof id === "number" && id >= 200 && id < 700),
+  );
+}
+
+function classifyForecastItem(item: HourlyForecastItem): ForecastPrecipitationKind {
+  const evidence = new Set<ForecastPrecipitationKind>();
+  if ((finite(item.rain?.["1h"]) ?? 0) > 0) evidence.add("rain");
+  if ((finite(item.snow?.["1h"]) ?? 0) > 0) evidence.add("snow");
+  for (const { id, main } of item.weather ?? []) {
+    if (id !== undefined) {
+      evidence.add(RAIN_CODES.has(id) ? "rain" : SNOW_CODES.has(id) ? "snow" : "precipitation");
+    }
+    if (main === "Rain" || main === "Drizzle") evidence.add("rain");
+    else if (main === "Snow") evidence.add("snow");
+    // Thunderstorm alone does not confirm rain, but is compatible with rain codes.
+    else if (main && main !== "Thunderstorm") evidence.add("precipitation");
+  }
+  return evidence.size === 1 ? [...evidence][0] : "precipitation";
+}
+
+function classifyForecastWindow(upcoming: HourlyForecastItem[]): ForecastPrecipitationKind {
+  // Inspect explicit precipitation even below the visibility threshold, so a
+  // different phenomenon in this same window cannot be labelled as all rain/snow.
+  // This does not add samples to accumulation, timing, or visibility calculations.
+  const kinds = new Set(upcoming
+    .filter(item => itemMm(item) > 0 || itemPop(item) >= 0.4 || hasExplicitPrecipitation(item))
+    .map(classifyForecastItem));
+  return kinds.size === 1 ? [...kinds][0] : "precipitation";
+}
+
 export function buildRainShortTermSummary(input: {
   rainingNow: boolean;
   currentMm?: number | null;
@@ -97,6 +140,7 @@ export function buildRainShortTermSummary(input: {
   }
 
   return {
+    forecastKind: classifyForecastWindow(upcoming),
     // Presentation-only minimum in accumulated mm; retain probability-only forecasts.
     visible: rainingNow || (relevant.length > 0 && (forecastMm <= 0 || forecastMm >= 0.5)),
     rainingNow,

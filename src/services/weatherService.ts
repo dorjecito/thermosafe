@@ -34,7 +34,11 @@ export type HourlyForecastItem = {
   wind_gust?: number;
   clouds?: number;
   uvi?: number;
-  weather?: Array<{ main?: string; description?: string; icon?: string }>;
+  pop?: number;
+  rain?: { "1h"?: number };
+  snow?: { "1h"?: number };
+  precipitation?: number;
+  weather?: Array<{ id?: number; main?: string; description?: string; icon?: string }>;
 };
 
 export type HourlyForecastResponse = {
