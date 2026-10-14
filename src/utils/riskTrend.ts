@@ -164,7 +164,8 @@ function strongestIncrease(
   const currentHeatIndex = finiteNumber(current.heatIndex) ?? finiteNumber(current.temp);
   const futureHeatIndex = forecastHeatIndex(item);
   const heatDelta =
-    currentHeatIndex !== null && futureHeatIndex !== null
+    currentHeatIndex !== null && futureHeatIndex !== null &&
+    getHeatRisk(futureHeatIndex, current.activity || "rest").class !== "safe"
       ? futureHeatIndex - currentHeatIndex
       : null;
 
@@ -243,6 +244,7 @@ function buildSensitivityTrend(current: CurrentRiskInput, nextHours: HourlyForec
     .filter((value): value is number => value !== null);
   const heatImproves =
     currentHeatIndex !== null &&
+    getHeatRisk(currentHeatIndex, current.activity || "rest").class !== "safe" &&
     futureHeatValues.length > 0 &&
     Math.max(...futureHeatValues) <= currentHeatIndex - HEAT_TREND_DELTA;
 

@@ -9143,3 +9143,145 @@ test("last update retains the existing behavior for invalid timestamps", (t) => 
   assert.equal(formatLastUpdate(Infinity), "-Infinity s");
   assert.equal(formatLastUpdate(-Infinity), "Infinity h");
 });
+
+// Secondary heat sensitivity must use the same activity-aware heat context as
+// the existing classifier, without inventing sensitivity thresholds for cold.
+test("heat sensitivity never labels same-category cold changes as heat", () => {
+  for (const [current, future] of [
+    [-10, [-8, -6]], [-6, [-8, -10]], [-6, [-9, -10]],
+    [-8, [-8, -8]], [-4, [-2, 0]],
+  ] as const) {
+    for (const activity of ["rest", "walk", "moderate", "intense"] as const) {
+      const result = buildRiskTrend(makeTrendForecast(future.map((temp, i) => ({
+        offsetHours: i + 1, temp, feels_like: temp, windKmh: 0, uvi: 0,
+      }))), { temp: current, heatIndex: current, windKmh: 0, uvi: 0, activity }, trendNow);
+      assert.equal(result?.direction, "stable", `${current} -> ${future}, ${activity}`);
+      assert.deepEqual(result?.factors, []);
+    }
+  }
+});
+
+test("heat guard preserves real cold category transitions including zero", () => {
+  for (const [current, future, direction] of [
+    [-16, [-10, -6], "improving"], [-6, [-16, -20], "worsening"],
+    [-0.5, [0.5, 2], "improving"], [0.5, [-0.5, -2], "worsening"],
+    [-6, [3, 8], "improving"],
+  ] as const) {
+    const result = buildRiskTrend(makeTrendForecast(future.map((temp, i) => ({
+      offsetHours: i + 1, temp, feels_like: temp, windKmh: 0, uvi: 0,
+    }))), { temp: current, heatIndex: current, windKmh: 0, uvi: 0 }, trendNow);
+    assert.equal(result?.direction, direction);
+    assert.deepEqual(result?.factors, ["cold"]);
+  }
+});
+
+test("heat sensitivity retains increases, decreases and the maximum-future comparison", () => {
+  for (const [current, future, direction] of [
+    [35, [38, 40], "worsening"], [45, [40, 35], "improving"],
+    [40, [36, 35], "improving"], [40, [39, 35], "stable"],
+  ] as const) {
+    const result = buildRiskTrend(makeTrendForecast(future.map((temp, i) => ({
+      offsetHours: i + 1, temp, feels_like: temp, windKmh: 0, uvi: 0,
+    }))), { temp: current, heatIndex: current, windKmh: 0, uvi: 0 }, trendNow);
+    assert.equal(result?.direction, direction);
+    assert.deepEqual(result?.factors, direction === "stable" ? [] : ["heat"]);
+  }
+});
+
+test("secondary heat context respects activity between 24 and 27 degrees", () => {
+  // Constant strong wind holds the global category fixed, isolating secondary
+  // sensitivity rather than the primary category-change path.
+  for (const activity of ["rest", "walk", "moderate", "intense"] as const) {
+    for (const [current, future, restDirection, activeDirection] of [
+      [21, 24, "stable", "worsening"], [23, 26, "stable", "worsening"],
+      [24, 27, "worsening", "worsening"],
+      [24, 21, "stable", "improving"], [26, 23, "stable", "improving"],
+      [27, 24, "improving", "improving"],
+    ] as const) {
+      const result = buildRiskTrend(makeTrendForecast([1, 2].map(offsetHours => ({
+        offsetHours, temp: future, feels_like: future, windKmh: 50, uvi: 0,
+      }))), { temp: current, heatIndex: current, windKmh: 50, uvi: 0, activity }, trendNow);
+      const direction = activity === "rest" ? restDirection : activeDirection;
+      assert.equal(result?.direction, direction, `${activity}: ${current} -> ${future}`);
+      assert.deepEqual(result?.factors, direction === "stable" ? [] : ["heat"]);
+    }
+  }
+});
+
+test("secondary heat sensitivity preserves the exact 3 and 6 degree boundaries", () => {
+  for (const [delta, direction] of [
+    [2.99, "stable"], [3, "worsening"], [5.99, "worsening"], [6, "worsening_clearly"],
+  ] as const) {
+    const result = buildRiskTrend(makeTrendForecast([1, 2].map(offsetHours => ({
+      offsetHours, temp: 33 + delta, feels_like: 33 + delta, windKmh: 0, uvi: 0,
+    }))), { temp: 33, heatIndex: 33, windKmh: 0, uvi: 0 }, trendNow);
+    assert.equal(result?.direction, direction);
+    assert.deepEqual(result?.factors, direction === "stable" ? [] : ["heat"]);
+  }
+  for (const [delta, direction] of [[2.99, "stable"], [3, "improving"]] as const) {
+    const result = buildRiskTrend(makeTrendForecast([1, 2].map(offsetHours => ({
+      offsetHours, temp: 40 - delta, feels_like: 40 - delta, windKmh: 0, uvi: 0,
+    }))), { temp: 40, heatIndex: 40, windKmh: 0, uvi: 0 }, trendNow);
+    assert.equal(result?.direction, direction);
+  }
+});
+
+test("excluded cold warming cannot select the peak or make UV and wind changes clear", () => {
+  for (const factor of ["uv", "wind"] as const) {
+    const current = { temp: -12, heatIndex: -12, windKmh: 0, uvi: 0 };
+    const result = buildRiskTrend(makeTrendForecast([
+      { offsetHours: 1, temp: -6, feels_like: -6, windKmh: 0, uvi: 0 },
+      { offsetHours: 2, temp: -8, feels_like: -12,
+        windKmh: factor === "wind" ? 9 : 0, uvi: factor === "uv" ? 1.5 : 0 },
+    ]), current, trendNow);
+    assert.equal(result?.direction, "worsening");
+    assert.deepEqual(result?.factors, [factor]);
+    assert.equal(result?.peakStart?.getTime(), trendNow.getTime() + 2 * 3600000);
+    assert.equal(result?.peakEnd?.getTime(), trendNow.getTime() + 4 * 3600000);
+
+    // At the same timestamp, the excluded +6 degrees must not contribute to clear.
+    const sameHour = buildRiskTrend(makeTrendForecast([1, 2].map(offsetHours => ({
+      offsetHours, temp: -6, feels_like: -6,
+      windKmh: factor === "wind" ? 9 : 0, uvi: factor === "uv" ? 1.5 : 0,
+    }))), current, trendNow);
+    assert.equal(sameHour?.direction, "worsening");
+    assert.deepEqual(sameHour?.factors, [factor]);
+  }
+});
+
+test("cold wind-chill category changes and valid clear UV and wind trends remain intact", () => {
+  const windChill = buildRiskTrend(makeTrendForecast([
+    { offsetHours: 1, temp: -6, feels_like: -6, windKmh: 25, uvi: 0 },
+    { offsetHours: 2, temp: -6, feels_like: -6, windKmh: 45, uvi: 0 },
+  ]), { temp: -6, heatIndex: -6, windKmh: 0, uvi: 0 }, trendNow);
+  assert.equal(windChill?.direction, "worsening");
+  assert.ok(windChill?.factors.includes("cold"));
+  for (const factor of ["uv", "wind"] as const) {
+    const result = buildRiskTrend(makeTrendForecast([1, 2].map(offsetHours => ({
+      offsetHours, temp: 20, feels_like: 20,
+      windKmh: factor === "wind" ? 63 : 50, uvi: factor === "uv" ? 3 : 0,
+    }))), { temp: 20, heatIndex: 20, windKmh: factor === "wind" ? 45 : 50, uvi: 0 }, trendNow);
+    // Both changes use secondary sensitivity while the global category stays fixed.
+    assert.equal(result?.direction, "worsening_clearly");
+    assert.deepEqual(result?.factors, [factor]);
+  }
+});
+
+test("heat sensitivity excludes non-finite comparisons and preserves finite temperature fallback", () => {
+  for (const invalid of [NaN, Infinity, -Infinity]) {
+    for (const missingCurrent of [true, false]) {
+      const result = buildRiskTrend(makeTrendForecast([1, 2].map(offsetHours => ({
+        offsetHours, temp: missingCurrent ? 35 : invalid,
+        feels_like: missingCurrent ? 35 : invalid, windKmh: 50, uvi: 0,
+      }))), { temp: missingCurrent ? invalid : 35, heatIndex: missingCurrent ? invalid : 35,
+        windKmh: 50, uvi: 0 }, trendNow);
+      assert.equal(result?.direction, "stable");
+      assert.deepEqual(result?.factors, []);
+    }
+  }
+  const fallback = buildRiskTrend(makeTrendForecast([1, 2].map(offsetHours => ({
+    offsetHours, temp: 38, windKmh: 0, uvi: 0,
+  }))), { temp: 35, heatIndex: null, windKmh: 0, uvi: 0 }, trendNow);
+  assert.equal(fallback?.direction, "worsening");
+  assert.deepEqual(fallback?.factors, ["heat"]);
+});
