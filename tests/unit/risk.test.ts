@@ -79,7 +79,7 @@ import {
 } from "../../src/utils/dataRefresh";
 import { pickPrimaryRisk } from "../../src/utils/PickPrimaryRisk";
 import { getWorkWindow, getWorkWindowText } from "../../src/utils/workWindow";
-import { buildRiskTrend } from "../../src/utils/riskTrend";
+import { buildRiskTrend, isRiskTrendForecastFresh } from "../../src/utils/riskTrend";
 import { getWeatherByCity } from "../../src/services/weatherService";
 import {
   buildRainShortTermSummary,
@@ -6879,6 +6879,7 @@ function makeTrendForecast(
 ) {
   const nowSeconds = Math.floor(trendNow.getTime() / 1000);
   return {
+    fetchedAt: trendNow.getTime(),
     hourly: hours.map(({ offsetHours, windKmh, ...rest }) => ({
       dt: nowSeconds + offsetHours * 60 * 60,
       wind_speed: typeof windKmh === "number" ? windKmh / 3.6 : undefined,
@@ -8052,6 +8053,7 @@ test("city fixture matrix keeps primary risk, activity and recommendation signal
 test("Tokyo fixture marks future trend times as local time when timezone differs", () => {
   const now = new Date("2026-07-09T00:00:00.000Z");
   const forecast = {
+    fetchedAt: now.getTime(),
     hourly: [
       { dt: Math.floor(now.getTime() / 1000) + 60 * 60, temp: 29, feels_like: 30, wind_speed: 3, uvi: 4 },
       { dt: Math.floor(now.getTime() / 1000) + 2 * 60 * 60, temp: 30, feels_like: 31, wind_speed: 3, uvi: 6.5 },
@@ -8543,6 +8545,45 @@ const combinedEscalationTitles = {
   gl: ["Aumenta o risco UV – ThermoSafe", "Aumenta o risco por calor – ThermoSafe"],
   en: ["UV risk has increased – ThermoSafe", "Heat risk has increased – ThermoSafe"],
 };
+
+test("risk trend forecast freshness accepts only verified data up to one hour old", () => {
+  const nowMs = trendNow.getTime();
+  const forecast = { hourly: [], fetchedAt: nowMs };
+  const ages = [
+    [10 * 60 * 1000, true],
+    [59 * 60 * 1000 + 59_000, true],
+    [60 * 60 * 1000, true],
+    [60 * 60 * 1000 + 1, false],
+    [2 * 60 * 60 * 1000, false],
+    [6 * 60 * 60 * 1000, false],
+  ] as const;
+
+  for (const [ageMs, expected] of ages) {
+    assert.equal(isRiskTrendForecastFresh({ ...forecast, fetchedAt: nowMs - ageMs }, nowMs), expected, `age ${ageMs}ms`);
+  }
+  assert.equal(isRiskTrendForecastFresh({ ...forecast, stale: true }, nowMs), false);
+  assert.equal(isRiskTrendForecastFresh({ ...forecast, fetchedAt: undefined }, nowMs), false);
+  assert.equal(isRiskTrendForecastFresh({ ...forecast, fetchedAt: Number.NaN }, nowMs), false);
+  assert.equal(isRiskTrendForecastFresh({ ...forecast, fetchedAt: Number.POSITIVE_INFINITY }, nowMs), false);
+  assert.equal(isRiskTrendForecastFresh({ ...forecast, fetchedAt: nowMs + 1 }, nowMs), false);
+});
+
+test("buildRiskTrend rejects forecasts without a fresh acquisition timestamp", () => {
+  const fresh = makeTrendForecast([
+    { offsetHours: 1, temp: 22, feels_like: 22, windKmh: 5, uvi: 2 },
+    { offsetHours: 2, temp: 23, feels_like: 23, windKmh: 5, uvi: 2 },
+  ]);
+  const cases = [
+    { ...fresh, stale: true },
+    { ...fresh, fetchedAt: undefined },
+    { ...fresh, fetchedAt: trendNow.getTime() - 3_600_001 },
+    { ...fresh, fetchedAt: trendNow.getTime() + 1 },
+  ];
+
+  for (const forecast of cases) {
+    assert.equal(buildRiskTrend(forecast, { temp: 22, heatIndex: 22, windKmh: 5, uvi: 2 }, trendNow), null);
+  }
+});
 
 // JSON normalizes objects from separate VM contexts before comparing payloads/state.
 const plainNotificationValue = (value: any) => JSON.parse(JSON.stringify(value));

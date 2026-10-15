@@ -53,7 +53,7 @@ import { getUVDetailFromOpenUV, getUVFromOpenUV } from "./services/openUV";
 	   import { normalizeLang } from "./utils/normalizeLang";
    import { getUvLevelIndex, getUvText, normalizeUviForDisplay } from "./utils/uv";
      import { getTimeAwareUvAdvice, usesContextualUvAdvice } from "./utils/uvAdviceMessage";
-	   import { buildRiskTrend, type RiskTrendResult } from "./utils/riskTrend";
+	   import { buildRiskTrend, isRiskTrendForecastFresh, type RiskTrendResult } from "./utils/riskTrend";
 	   import { getCoords, type Coords } from "./utils/geolocation";
 	   import { safeUVFetch } from "./utils/safeUVFetch";
    import { evaluateRiskScore } from "./utils/riskScoreEngine";
@@ -637,6 +637,7 @@ useEffect(() => {
 
   const onVisibilityChange = () => {
     if (document.visibilityState === "visible") {
+      setNightForecastTick(tick => tick + 1);
       checkForAppUpdate();
       if (
         shouldRefreshOnVisible(
@@ -2072,8 +2073,8 @@ useEffect(() => {
   const boundaries = [
     nightForecast.sunsetUtcSec === null ? NaN : nightForecast.sunsetUtcSec * 1000,
     nightForecast.sunriseUtcSec === null ? NaN : nightForecast.sunriseUtcSec * 1000,
-    hourlyForecast?.fetchedAt === undefined ? NaN : hourlyForecast.fetchedAt + 3600001,
-  ].filter(time => Number.isFinite(time) && time > now);
+    hourlyForecast?.fetchedAt === undefined ? NaN : hourlyForecast.fetchedAt + 3600000,
+  ].filter(time => Number.isFinite(time) && time >= now);
   if (!boundaries.length) return;
   const timer = window.setTimeout(() => setNightForecastTick(tick => tick + 1), Math.min(...boundaries) - now + 1);
   return () => window.clearTimeout(timer);
@@ -2577,6 +2578,7 @@ const trendUsesDifferentTimezone =
   locationTimezoneOffsetSec !== null &&
   Math.abs(locationTimezoneOffsetSec - browserTimezoneOffsetSec) >= 30 * 60;
 const riskTrendDisplay = useMemo(() => {
+  const visibleRiskTrend = isRiskTrendForecastFresh(hourlyForecast) ? riskTrend : null;
   const formatTrendTime = (date: Date | null) => {
     if (!date) return "";
 
@@ -2601,53 +2603,62 @@ const riskTrendDisplay = useMemo(() => {
       .join("_");
   };
 
-  const trendStartTime = formatTrendTime(riskTrend?.peakStart ?? null);
-  const trendEndTime = formatTrendTime(riskTrend?.peakEnd ?? null);
-  const trendFactorKey = formatTrendFactorKey(riskTrend?.factors);
+  const trendStartTime = formatTrendTime(visibleRiskTrend?.peakStart ?? null);
+  const trendEndTime = formatTrendTime(visibleRiskTrend?.peakEnd ?? null);
+  const trendFactorKey = formatTrendFactorKey(visibleRiskTrend?.factors);
   const baseRiskTrendText = riskTrendLoading
     ? t("riskTrend.loading")
-    : !riskTrend
+    : !visibleRiskTrend
     ? t("riskTrend.unavailable")
-    : riskTrend.direction === "stable"
-    ? t(`riskTrend.${riskTrend.direction}`)
-    : riskTrend.direction === "improving"
+    : visibleRiskTrend.direction === "stable"
+    ? t(`riskTrend.${visibleRiskTrend.direction}`)
+    : visibleRiskTrend.direction === "improving"
     ? t(`riskTrend.improving_${trendFactorKey}`, {
         defaultValue: t("riskTrend.improving"),
       })
-    : t(`riskTrend.${riskTrend.direction}At_${trendFactorKey}`, {
+    : t(`riskTrend.${visibleRiskTrend.direction}At_${trendFactorKey}`, {
         start: trendStartTime,
         end: trendEndTime,
-        defaultValue: t(`riskTrend.${riskTrend.direction}At`, {
+        defaultValue: t(`riskTrend.${visibleRiskTrend.direction}At`, {
           start: trendStartTime,
           end: trendEndTime,
         }),
       });
   const shouldShowTrendLocalTime =
-    Boolean(riskTrend) &&
+    Boolean(visibleRiskTrend) &&
     !riskTrendLoading &&
     trendUsesDifferentTimezone &&
     Boolean(trendStartTime && trendEndTime) &&
-    riskTrend?.direction !== "stable" &&
-    riskTrend?.direction !== "improving";
+    visibleRiskTrend?.direction !== "stable" &&
+    visibleRiskTrend?.direction !== "improving";
   const text = [
     baseRiskTrendText,
     shouldShowTrendLocalTime ? t("riskTrend.localTimeSuffix") : "",
-    riskTrend?.partial && !riskTrendLoading ? t("riskTrend.partialSuffix") : "",
+    visibleRiskTrend?.partial && !riskTrendLoading ? t("riskTrend.partialSuffix") : "",
   ]
     .filter(Boolean)
     .join(" ");
   const icon = riskTrendLoading
     ? "…"
-    : !riskTrend
+    : !visibleRiskTrend
     ? "·"
-    : riskTrend.direction === "improving"
+    : visibleRiskTrend.direction === "improving"
     ? "↘"
-    : riskTrend.direction === "stable"
+    : visibleRiskTrend.direction === "stable"
     ? "→"
     : "↗";
 
   return { text, icon };
-}, [riskTrend, riskTrendLoading, trendUsesDifferentTimezone, locationTimezoneOffsetSec, currentLang, t]);
+}, [
+  riskTrend,
+  riskTrendLoading,
+  hourlyForecast,
+  nightForecastTick,
+  trendUsesDifferentTimezone,
+  locationTimezoneOffsetSec,
+  currentLang,
+  t,
+]);
 const riskTrendText = riskTrendDisplay.text;
 const riskTrendIcon = riskTrendDisplay.icon;
 // Translate the neutral weather code at render time, never a stored translated label.

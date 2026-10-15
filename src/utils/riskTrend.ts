@@ -63,11 +63,31 @@ const UV_TREND_DELTA = 1.5;
 const UV_TREND_CLEAR_DELTA = 3;
 const WIND_TREND_DELTA = 9;
 const WIND_TREND_CLEAR_DELTA = 18;
+const RISK_TREND_MAX_FORECAST_AGE_MS = 60 * 60 * 1000;
 
 const factorOrder: RiskTrendFactor[] = ["heat", "cold", "wind", "uv"];
 
 function finiteNumber(value?: number | null) {
   return typeof value === "number" && Number.isFinite(value) ? value : null;
+}
+
+export function isRiskTrendForecastFresh(
+  forecast: HourlyForecastResponse | null,
+  nowMs = Date.now()
+) {
+  const fetchedAt = forecast?.fetchedAt;
+  if (
+    !forecast ||
+    forecast.stale === true ||
+    typeof fetchedAt !== "number" ||
+    !Number.isFinite(fetchedAt) ||
+    !Number.isFinite(nowMs)
+  ) {
+    return false;
+  }
+
+  const ageMs = nowMs - fetchedAt;
+  return ageMs >= 0 && ageMs <= RISK_TREND_MAX_FORECAST_AGE_MS;
 }
 
 function windChill(temp: number, windKmh: number) {
@@ -281,7 +301,12 @@ export function buildRiskTrend(
   current: CurrentRiskInput,
   now = new Date()
 ): RiskTrendResult | null {
-  if (!forecast || !Array.isArray(forecast.hourly) || forecast.hourly.length === 0) {
+  if (
+    !forecast ||
+    !Array.isArray(forecast.hourly) ||
+    forecast.hourly.length === 0 ||
+    !isRiskTrendForecastFresh(forecast, now.getTime())
+  ) {
     return null;
   }
 

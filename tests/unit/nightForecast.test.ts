@@ -4,6 +4,7 @@ import vm from "node:vm";
 import { readFileSync } from "node:fs";
 import SunCalc from "suncalc";
 import { buildNightForecast, type NightForecast } from "../../src/utils/nightForecast";
+import { isRiskTrendForecastFresh } from "../../src/utils/riskTrend";
 import { getHourlyForecastByCoords } from "../../src/services/weatherService";
 import Recommendations from "../../src/components/Recommendations";
 import { evaluateRiskScore } from "../../src/utils/riskScoreEngine";
@@ -196,6 +197,16 @@ test("presentation expiry clock schedules boundaries without fetching or synchro
   const end=source.indexOf("const workWindow =",start);
   const effect=source.slice(start,end);
   assert.doesNotMatch(effect,/fetch\(|refreshCurrentData|updateRiskAlert|locate\(/);
+  const displayStart=source.indexOf("const riskTrendDisplay = useMemo(() => {");
+  const displayEnd=source.indexOf("const riskTrendText =",displayStart);
+  const display=source.slice(displayStart,displayEnd);
+  assert.match(display,/isRiskTrendForecastFresh\(hourlyForecast\) \? riskTrend : null/);
+  assert.match(display,/!visibleRiskTrend\s*\? t\("riskTrend\.unavailable"\)/);
+  assert.match(display,/hourlyForecast,[\s\S]*nightForecastTick/);
+  const visibilityStart=source.indexOf("const onVisibilityChange = () => {");
+  const visibilityEnd=source.indexOf("document.addEventListener(\"visibilitychange\"",visibilityStart);
+  const visibility=source.slice(visibilityStart,visibilityEnd);
+  assert.match(visibility,/setNightForecastTick\(tick => tick \+ 1\)/);
   let now=100000, scheduled:(()=>void)|undefined,delay=0,ticks=0;
   let cleanup:(()=>void)|undefined;
   const context={
@@ -210,7 +221,49 @@ test("presentation expiry clock schedules boundaries without fetching or synchro
   assert.equal(delay,1001);scheduled!();assert.equal(ticks,1);cleanup!();
   now+=1001;context.nightForecastTick=ticks;
   vm.runInNewContext(effect,context);
-  assert.equal(delay,9001); // Next wake-up is forecast expiry, not another weather refresh.
+  assert.equal(delay,9000); // Next wake-up is the first millisecond beyond one hour, not another weather refresh.
+  now+=delay;scheduled!();assert.equal(ticks,2);
+});
+
+test("risk trend expiry schedules one millisecond past the exact freshness limit", () => {
+  const source=readFileSync("src/App.tsx","utf8");
+  const start=source.indexOf("// Presentation clock only:");
+  const end=source.indexOf("const workWindow =",start);
+  const effect=source.slice(start,end);
+  assert.doesNotMatch(effect,/fetch\(|getHourlyForecastByCoords|refreshCurrentData/);
+
+  const now=200000;
+  const forecast={fetchedAt:now-3600000,hourly:[]};
+  assert.equal(isRiskTrendForecastFresh(forecast,now),true);
+  assert.equal(isRiskTrendForecastFresh(forecast,now+1),false);
+
+  let scheduled:(()=>void)|undefined,delay:number|undefined,ticks=0,apiCalls=0;
+  const context={
+    Date:{now:()=>now},Number,Math,
+    nightForecast:{sunsetUtcSec:null,sunriseUtcSec:null},
+    hourlyForecast:forecast,nightForecastTick:0,
+    setNightForecastTick:(fn:(n:number)=>number)=>{ticks=fn(ticks);},
+    getHourlyForecastByCoords:()=>{apiCalls++;},
+    window:{setTimeout:(fn:()=>void,ms:number)=>{scheduled=fn;delay=ms;return 1;},clearTimeout:()=>{}},
+    useEffect:(fn:()=>unknown)=>{fn();},
+  };
+
+  vm.runInNewContext(effect,context);
+  assert.equal(delay,1);
+  scheduled!();
+  assert.equal(ticks,1);
+  assert.equal(apiCalls,0);
+
+  const checkDelay=(fetchedAt:number,at:number,expected:number|undefined) => {
+    let actual:number|undefined;
+    const checkContext={...context,Date:{now:()=>at},hourlyForecast:{...forecast,fetchedAt},
+      window:{setTimeout:(_fn:()=>void,ms:number)=>{actual=ms;return 1;},clearTimeout:()=>{}},
+      useEffect:(fn:()=>unknown)=>{fn();}};
+    vm.runInNewContext(effect,checkContext);
+    assert.equal(actual,expected);
+  };
+  checkDelay(now-3599999,now,2); // The validity boundary is still one millisecond ahead.
+  checkDelay(now-3600001,now,undefined); // Already expired: do not schedule an unnecessary timer.
 });
 
 
