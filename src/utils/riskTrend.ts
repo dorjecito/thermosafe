@@ -89,30 +89,37 @@ function uvSeverity(uvi?: number | null) {
 function scoreConditions(input: CurrentRiskInput) {
   const temp = finiteNumber(input.temp);
   const heatIndex = finiteNumber(input.heatIndex) ?? temp;
-  const windKmh = finiteNumber(input.windKmh) ?? 0;
+  const windKmh = finiteNumber(input.windKmh);
 
   const heatScore =
     heatIndex !== null
       ? heatSeverity[getHeatRisk(heatIndex, input.activity || "rest").class] ?? 0
-      : 0;
+      : null;
 
-  const coldBase = temp !== null ? windChill(temp, windKmh) : null;
+  // Below the wind-chill threshold, wind is needed to determine cold severity.
+  // Above it, windChill returns temperature unchanged, so temperature alone is enough.
+  const coldComparable = temp !== null &&
+    (temp > WINDCHILL_TEMP_MAX || windKmh !== null);
+  const coldBase = coldComparable && temp !== null
+    ? windChill(temp, windKmh ?? 0)
+    : null;
   const coldScore =
-    coldBase !== null ? coldSeverity[getColdRisk(coldBase, windKmh)] ?? 0 : 0;
+    coldBase !== null ? coldSeverity[getColdRisk(coldBase, windKmh)] ?? 0 : null;
 
-  const windScore = windSeverity[getWindRisk(windKmh)] ?? 0;
+  const windScore = windKmh !== null ? windSeverity[getWindRisk(windKmh)] ?? 0 : null;
   const uvScore = uvSeverity(input.uvi);
-  const scores: Record<RiskTrendFactor, number> = {
+  const scores: Record<RiskTrendFactor, number | null> = {
     heat: heatScore,
     cold: coldScore,
     wind: windScore,
-    uv: uvScore ?? 0,
+    uv: uvScore,
   };
+  const knownScores = Object.values(scores).filter((score): score is number => score !== null);
 
   return {
-    score: Math.max(...Object.values(scores)),
+    score: knownScores.length > 0 ? Math.max(...knownScores) : null,
     scores,
-    hasUv: uvScore !== null,
+    complete: knownScores.length === factorOrder.length,
   };
 }
 
@@ -143,15 +150,17 @@ function forecastUvi(item: HourlyForecastItem) {
 }
 
 function topFactors(
-  scores: Record<RiskTrendFactor, number>,
+  scores: Record<RiskTrendFactor, number | null>,
   score: number,
-  previousScores?: Record<RiskTrendFactor, number>
+  previousScores?: Record<RiskTrendFactor, number | null>
 ) {
   if (score <= 0) return [];
 
   const matchingFactors = factorOrder.filter((factor) => scores[factor] === score);
   const increasedFactors = previousScores
-    ? matchingFactors.filter((factor) => scores[factor] > previousScores[factor])
+    ? matchingFactors.filter((factor) =>
+        previousScores[factor] !== null && scores[factor] !== null && scores[factor]! > previousScores[factor]!
+      )
     : [];
 
   return (increasedFactors.length > 0 ? increasedFactors : matchingFactors).slice(0, 2);
@@ -239,22 +248,18 @@ function buildSensitivityTrend(current: CurrentRiskInput, nextHours: HourlyForec
   }
 
   const currentHeatIndex = finiteNumber(current.heatIndex) ?? finiteNumber(current.temp);
-  const futureHeatValues = nextHours
-    .map(forecastHeatIndex)
-    .filter((value): value is number => value !== null);
+  const futureHeatValues = nextHours.map(forecastHeatIndex);
   const heatImproves =
     currentHeatIndex !== null &&
     getHeatRisk(currentHeatIndex, current.activity || "rest").class !== "safe" &&
-    futureHeatValues.length > 0 &&
+    futureHeatValues.every((value): value is number => value !== null) &&
     Math.max(...futureHeatValues) <= currentHeatIndex - HEAT_TREND_DELTA;
 
   const currentWind = finiteNumber(current.windKmh);
-  const futureWindValues = nextHours
-    .map(forecastWindKmh)
-    .filter((value): value is number => value !== null);
+  const futureWindValues = nextHours.map(forecastWindKmh);
   const windImproves =
     currentWind !== null &&
-    futureWindValues.length > 0 &&
+    futureWindValues.every((value): value is number => value !== null) &&
     Math.max(...futureWindValues) <= currentWind - WIND_TREND_DELTA;
 
   if (heatImproves || windImproves) {
@@ -301,11 +306,81 @@ export function buildRiskTrend(
       item,
       score: risk.score,
       scores: risk.scores,
-      hasUv: risk.hasUv,
+      complete: risk.complete,
     };
   });
 
+  const partial = !currentRisk.complete || scored.some((entry) => !entry.complete);
+
+  // On incomplete forecasts compare each factor only where current and future
+  // observations exist. This retains supported worsening while preventing an
+  // unknown factor from acting as a zero and creating an apparent improvement.
+  if (partial) {
+    if (currentScore === null) return null;
+
+    // Keep the original dominant-risk policy: compare the highest known future
+    // severity with the highest known current severity, then retain only
+    // comparable factors tied at that future maximum. A larger per-factor
+    // delta must not displace a more severe future risk.
+    const candidates = scored.flatMap((entry) => {
+      if (entry.score === null || entry.score <= currentScore) return [];
+      const factors = factorOrder.filter((factor) => {
+        const futureScore = entry.scores[factor];
+        const previousScore = currentRisk.scores[factor];
+        return futureScore === entry.score && previousScore !== null && futureScore > previousScore;
+      }).slice(0, 2);
+      return factors.length > 0 ? [{ ...entry, factors }] : [];
+    });
+
+    const sensitivityHours = scored
+      .filter((entry) => {
+        const currentDominants = factorOrder.filter((factor) => currentRisk.scores[factor] === currentScore);
+        const observedDominants = currentDominants
+          .map((factor) => entry.scores[factor])
+          .filter((score): score is number => score !== null);
+        const allDominantsObserved = observedDominants.length === currentDominants.length;
+        const allDominantsDeclined = allDominantsObserved &&
+          observedDominants.every((score) => score < currentScore);
+        return !allDominantsDeclined;
+      })
+      .map((entry) => entry.item);
+    const sensitivityTrend = sensitivityHours.length > 0
+      ? buildSensitivityTrend(current, sensitivityHours)
+      : null;
+    const sensitivityWorsens = sensitivityTrend &&
+      (sensitivityTrend.direction === "worsening" || sensitivityTrend.direction === "worsening_clearly");
+    if (candidates.length === 0) {
+      if (!sensitivityWorsens || !sensitivityTrend?.item) return null;
+      return {
+        direction: sensitivityTrend.direction,
+        factors: sensitivityTrend.factors,
+        peakStart: new Date(sensitivityTrend.item.dt * 1000),
+        peakEnd: new Date((sensitivityTrend.item.dt + 2 * 60 * 60) * 1000),
+        partial: true,
+        stale: Boolean(forecast.stale),
+      };
+    }
+    // Strictly greater preserves the original earliest-sample tie break.
+    const peak = candidates.reduce((best, next) => next.score! > best.score! ? next : best);
+    const delta = peak.score! - currentScore;
+    const direction = delta >= 2
+      ? "worsening_clearly"
+      : "worsening";
+    return {
+      direction,
+      factors: peak.factors,
+      peakStart: new Date(peak.item.dt * 1000),
+      peakEnd: new Date((peak.item.dt + 2 * 60 * 60) * 1000),
+      partial: true,
+      stale: Boolean(forecast.stale),
+    };
+  }
+
+  // Complete data follows the existing global severity comparison unchanged.
+  if (currentScore === null) return null;
+
   const peak = scored.reduce((best, next) => (next.score > best.score ? next : best), scored[0]);
+  if (peak.score === null) return null;
   const maxScore = peak.score;
   const delta = maxScore - currentScore;
 
@@ -340,7 +415,7 @@ export function buildRiskTrend(
     factors,
     peakStart,
     peakEnd,
-    partial: scored.some((entry) => !entry.hasUv),
+    partial: false,
     stale: Boolean(forecast.stale),
   };
 }

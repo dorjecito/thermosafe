@@ -6871,7 +6871,7 @@ const trendNow = new Date("2026-06-29T10:00:00Z");
 function makeTrendForecast(
   hours: Array<{
     offsetHours: number;
-    temp: number;
+    temp?: number;
     feels_like?: number;
     windKmh?: number;
     uvi?: number;
@@ -9275,8 +9275,7 @@ test("heat sensitivity excludes non-finite comparisons and preserves finite temp
         feels_like: missingCurrent ? 35 : invalid, windKmh: 50, uvi: 0,
       }))), { temp: missingCurrent ? invalid : 35, heatIndex: missingCurrent ? invalid : 35,
         windKmh: 50, uvi: 0 }, trendNow);
-      assert.equal(result?.direction, "stable");
-      assert.deepEqual(result?.factors, []);
+      assert.equal(result, null);
     }
   }
   const fallback = buildRiskTrend(makeTrendForecast([1, 2].map(offsetHours => ({
@@ -9284,4 +9283,217 @@ test("heat sensitivity excludes non-finite comparisons and preserves finite temp
   }))), { temp: 35, heatIndex: null, windKmh: 0, uvi: 0 }, trendNow);
   assert.equal(fallback?.direction, "worsening");
   assert.deepEqual(fallback?.factors, ["heat"]);
+});
+
+test("missing current or future factors cannot manufacture improving or stable trends", () => {
+  const forecast = (hours: Array<Record<string, number | undefined>>) =>
+    makeTrendForecast(hours.map((hour, index) => ({ offsetHours: index + 1, ...hour })));
+
+  const cases = [
+    {
+      name: "high heat without future temperature or feels-like",
+      current: { temp: 42, heatIndex: 42, windKmh: 0, uvi: 0 },
+      hours: [{ temp: undefined, feels_like: undefined, windKmh: 0, uvi: 0 }, { temp: undefined, feels_like: undefined, windKmh: 0, uvi: 0 }],
+    },
+    {
+      name: "high cold without future temperature",
+      current: { temp: -20, heatIndex: -20, windKmh: 20, uvi: 0 },
+      hours: [{ temp: undefined, feels_like: undefined, windKmh: 20, uvi: 0 }, { temp: undefined, feels_like: undefined, windKmh: 20, uvi: 0 }],
+    },
+    {
+      name: "strong wind without future wind",
+      current: { temp: 20, heatIndex: 20, windKmh: 55, uvi: 0 },
+      hours: [{ temp: 20, feels_like: 20, windKmh: undefined, uvi: 0 }, { temp: 20, feels_like: 20, windKmh: undefined, uvi: 0 }],
+    },
+    {
+      name: "high UV without future UV",
+      current: { temp: 20, heatIndex: 20, windKmh: 0, uvi: 10 },
+      hours: [{ temp: 20, feels_like: 20, windKmh: 0, uvi: undefined }, { temp: 20, feels_like: 20, windKmh: 0, uvi: undefined }],
+    },
+    {
+      name: "several future factors missing",
+      current: { temp: 42, heatIndex: 42, windKmh: 55, uvi: 10 },
+      hours: [{ temp: undefined, feels_like: undefined, windKmh: undefined, uvi: undefined }, { temp: undefined, feels_like: undefined, windKmh: undefined, uvi: undefined }],
+    },
+  ];
+
+  for (const scenario of cases) {
+    const result = buildRiskTrend(forecast(scenario.hours), scenario.current, trendNow);
+    assert.equal(result, null, scenario.name);
+  }
+});
+
+test("partial forecasts retain supported UV, wind and heat worsening", () => {
+  const uv = buildRiskTrend(makeTrendForecast([1, 2].map((offsetHours) => ({
+    offsetHours, temp: undefined, feels_like: undefined, windKmh: 0, uvi: 10.5,
+  }))), { temp: 22, heatIndex: 22, windKmh: 0, uvi: 9 }, trendNow);
+  assert.equal(uv?.direction, "worsening");
+  assert.deepEqual(uv?.factors, ["uv"]);
+  assert.equal(uv?.partial, true);
+
+  const wind = buildRiskTrend(makeTrendForecast([1, 2].map((offsetHours) => ({
+    offsetHours, temp: 22, feels_like: 22, windKmh: 50, uvi: undefined,
+  }))), { temp: 22, heatIndex: 22, windKmh: 30, uvi: 0 }, trendNow);
+  assert.equal(wind?.direction, "worsening");
+  assert.deepEqual(wind?.factors, ["wind"]);
+  assert.equal(wind?.partial, true);
+
+  const heat = buildRiskTrend(makeTrendForecast([1, 2].map((offsetHours) => ({
+    offsetHours, temp: 45, feels_like: 45, windKmh: 0, uvi: undefined,
+  }))), { temp: 42, heatIndex: 42, windKmh: 0, uvi: 0 }, trendNow);
+  assert.equal(heat?.direction, "worsening");
+  assert.deepEqual(heat?.factors, ["heat"]);
+  assert.equal(heat?.partial, true);
+});
+
+test("heat uses finite temperature when feels-like is absent and cold requires wind below 10 C", () => {
+  const heat = buildRiskTrend(makeTrendForecast([1, 2].map((offsetHours) => ({
+    offsetHours, temp: 42, feels_like: undefined, windKmh: 0, uvi: 0,
+  }))), { temp: 39, heatIndex: null, windKmh: 0, uvi: 0 }, trendNow);
+  assert.equal(heat?.direction, "worsening");
+  assert.deepEqual(heat?.factors, ["heat"]);
+
+  const coldUnknownWind = buildRiskTrend(makeTrendForecast([1, 2].map((offsetHours) => ({
+    offsetHours, temp: -8, feels_like: -8, windKmh: undefined, uvi: 0,
+  }))), { temp: -6, heatIndex: -6, windKmh: undefined, uvi: 0 }, trendNow);
+  assert.equal(coldUnknownWind, null);
+});
+
+test("missing current weather is partial and cannot be mistaken for zero risk", () => {
+  const future = makeTrendForecast([1, 2].map((offsetHours) => ({
+    offsetHours, temp: 20, feels_like: 20, windKmh: 0, uvi: 0,
+  })));
+  const unknown = buildRiskTrend(future, {}, trendNow);
+  assert.equal(unknown, null);
+
+  const realZero = buildRiskTrend(future, { temp: 0, heatIndex: 0, windKmh: 0, uvi: 0 }, trendNow);
+  assert.equal(realZero?.direction, "improving");
+  assert.deepEqual(realZero?.factors, ["cold"]);
+  assert.equal(realZero?.partial, false);
+});
+
+test("a partial secondary improvement needs every forecast sample", () => {
+  for (const factor of ["heat", "wind"] as const) {
+    const current = { temp: factor === "heat" ? 45 : 20, heatIndex: factor === "heat" ? 45 : 20,
+      windKmh: factor === "wind" ? 55 : 0, uvi: 0 };
+    const result = buildRiskTrend(makeTrendForecast([
+      { offsetHours: 1, temp: factor === "heat" ? 40 : 20, feels_like: factor === "heat" ? 40 : 20,
+        windKmh: factor === "wind" ? 40 : 0, uvi: 0 },
+      { offsetHours: 2, temp: factor === "heat" ? undefined : 20,
+        feels_like: factor === "heat" ? undefined : 20,
+        windKmh: factor === "wind" ? undefined : 0, uvi: 0 },
+    ]), current, trendNow);
+    assert.equal(result, null, `${factor} must not improve from only one usable sample`);
+  }
+});
+
+test("insufficiently comparable data returns unavailable, while complete real improvements remain", () => {
+  const incomplete = buildRiskTrend(makeTrendForecast([1, 2].map((offsetHours) => ({
+    offsetHours, temp: 20, feels_like: 20, windKmh: 0, uvi: undefined,
+  }))), { temp: 20, heatIndex: 20, windKmh: 0, uvi: 8 }, trendNow);
+  assert.equal(incomplete, null);
+
+  const complete = buildRiskTrend(makeTrendForecast([40, 35].map((temp, index) => ({
+    offsetHours: index + 1, temp, feels_like: temp, windKmh: 0, uvi: 0,
+  }))), { temp: 45, heatIndex: 45, windKmh: 0, uvi: 0 }, trendNow);
+  assert.equal(complete?.direction, "improving");
+  assert.deepEqual(complete?.factors, ["heat"]);
+  assert.equal(complete?.partial, false);
+});
+
+test("valid categorical worsening survives incomplete unrelated factors and keeps factor selection clean", () => {
+  const result = buildRiskTrend(makeTrendForecast([1, 2].map((offsetHours) => ({
+    offsetHours, temp: 20, feels_like: 20, windKmh: 50, uvi: 10,
+  }))), { temp: 20, heatIndex: 20, windKmh: 30, uvi: undefined }, trendNow);
+  assert.equal(result?.direction, "worsening");
+  assert.deepEqual(result?.factors, ["wind"]);
+  assert.equal(result?.partial, true);
+});
+
+test("secondary improvements reject an incomplete thermal sample without contaminating clear", () => {
+  const current = { temp: 45, heatIndex: 45, windKmh: 50, uvi: 0 };
+  const result = buildRiskTrend(makeTrendForecast([
+    { offsetHours: 1, temp: 35, feels_like: 35, windKmh: 50, uvi: 0 },
+    { offsetHours: 2, temp: undefined, feels_like: undefined, windKmh: 50, uvi: 0 },
+  ]), current, trendNow);
+  assert.equal(result, null);
+});
+
+test("current trend input keeps missing wind distinct from a real zero wind reading", () => {
+  const source = readFileSync("src/App.tsx", "utf8");
+  assert.match(source, /windKmh:\s*Number\.isFinite\(data\?\.wind\?\.speed\)\s*\?\s*windKmh\s*:\s*null/);
+  assert.match(source, /heatIndex:\s*\n?\s*Number\.isFinite\(data\?\.main\?\.temp\)\s*\|\|\s*Number\.isFinite\(data\?\.main\?\.feels_like\)/);
+});
+
+test("partial risk selection follows future severity rather than the largest factor delta", () => {
+  const windDominates = buildRiskTrend(makeTrendForecast([
+    { offsetHours: 1, temp: undefined, feels_like: undefined, windKmh: 70, uvi: 8 },
+    { offsetHours: 2, temp: undefined, feels_like: undefined, windKmh: 70, uvi: 8 },
+  ]), { temp: 20, heatIndex: 20, windKmh: 50, uvi: 0 }, trendNow);
+
+  assert.equal(windDominates?.direction, "worsening");
+  assert.deepEqual(windDominates?.factors, ["wind"]);
+  assert.equal(windDominates?.partial, true);
+  assert.equal(windDominates?.peakStart?.getTime(), trendNow.getTime() + 60 * 60 * 1000);
+  assert.equal(windDominates?.peakEnd?.getTime(), trendNow.getTime() + 3 * 60 * 60 * 1000);
+
+  const tied = buildRiskTrend(makeTrendForecast([
+    { offsetHours: 1, temp: undefined, feels_like: undefined, windKmh: 70, uvi: 11 },
+    { offsetHours: 2, temp: undefined, feels_like: undefined, windKmh: 70, uvi: 11 },
+  ]), { temp: 20, heatIndex: 20, windKmh: 30, uvi: 0 }, trendNow);
+  assert.equal(tied?.direction, "worsening_clearly");
+  assert.deepEqual(tied?.factors, ["wind", "uv"]);
+  assert.equal(tied?.partial, true);
+  assert.equal(tied?.peakStart?.getTime(), trendNow.getTime() + 60 * 60 * 1000);
+});
+
+test("partial dominant-risk comparison blocks secondary worsening when the known maximum falls", () => {
+  const fallingDominant = buildRiskTrend(makeTrendForecast([1, 2].map((offsetHours) => ({
+    offsetHours, temp: 42, feels_like: 42, windKmh: undefined, uvi: 10,
+  }))), { temp: 55, heatIndex: 55, windKmh: 0, uvi: 0 }, trendNow);
+  assert.equal(fallingDominant, null);
+
+  const stableDominant = buildRiskTrend(makeTrendForecast([1, 2].map((offsetHours) => ({
+    offsetHours, temp: 55, feels_like: 55, windKmh: 12, uvi: undefined,
+  }))), { temp: 55, heatIndex: 55, windKmh: 0, uvi: 0 }, trendNow);
+  assert.equal(stableDominant?.direction, "worsening");
+  assert.deepEqual(stableDominant?.factors, ["wind"]);
+  assert.equal(stableDominant?.partial, true);
+});
+
+test("partial cold heat wind and UV worsening remain attributable to comparable factors", () => {
+  const cold = buildRiskTrend(makeTrendForecast([1, 2].map((offsetHours) => ({
+    offsetHours, temp: -20, feels_like: -20, windKmh: 30, uvi: undefined,
+  }))), { temp: -6, heatIndex: -6, windKmh: 30, uvi: 0 }, trendNow);
+  assert.equal(cold?.direction, "worsening_clearly");
+  assert.deepEqual(cold?.factors, ["cold"]);
+  assert.equal(cold?.partial, true);
+
+  const heat = buildRiskTrend(makeTrendForecast([1, 2].map((offsetHours) => ({
+    offsetHours, temp: 45, feels_like: 45, windKmh: 0, uvi: undefined,
+  }))), { temp: 42, heatIndex: 42, windKmh: 0, uvi: 0 }, trendNow);
+  assert.equal(heat?.direction, "worsening");
+  assert.deepEqual(heat?.factors, ["heat"]);
+  assert.equal(heat?.partial, true);
+
+  const wind = buildRiskTrend(makeTrendForecast([1, 2].map((offsetHours) => ({
+    offsetHours, temp: undefined, feels_like: undefined, windKmh: 70, uvi: 0,
+  }))), { temp: 20, heatIndex: 20, windKmh: 50, uvi: 0 }, trendNow);
+  assert.equal(wind?.direction, "worsening");
+  assert.deepEqual(wind?.factors, ["wind"]);
+  assert.equal(wind?.partial, true);
+
+  const uv = buildRiskTrend(makeTrendForecast([1, 2].map((offsetHours) => ({
+    offsetHours, temp: undefined, feels_like: undefined, windKmh: 0, uvi: 10.5,
+  }))), { temp: 22, heatIndex: 22, windKmh: 0, uvi: 9 }, trendNow);
+  assert.equal(uv?.direction, "worsening");
+  assert.deepEqual(uv?.factors, ["uv"]);
+  assert.equal(uv?.partial, true);
+});
+
+test("partial trends never claim a global improvement when a known factor disappears", () => {
+  const result = buildRiskTrend(makeTrendForecast([1, 2].map((offsetHours) => ({
+    offsetHours, temp: 20, feels_like: 20, windKmh: undefined, uvi: 0,
+  }))), { temp: 20, heatIndex: 20, windKmh: 55, uvi: 0 }, trendNow);
+  assert.equal(result, null);
 });

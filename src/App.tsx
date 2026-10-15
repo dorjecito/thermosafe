@@ -2146,9 +2146,14 @@ useEffect(() => {
       setHourlyForecastCoords({ lat, lon });
 
       const trend = buildRiskTrend(forecast, {
-        heatIndex: hi,
-        temp,
-        windKmh,
+        // Keep unknown current observations distinct from the display/risk
+        // fallbacks (which can legitimately use zero for missing wind).
+        heatIndex:
+          Number.isFinite(data?.main?.temp) || Number.isFinite(data?.main?.feels_like)
+            ? hi
+            : null,
+        temp: Number.isFinite(data?.main?.temp) ? data.main.temp : null,
+        windKmh: Number.isFinite(data?.wind?.speed) ? windKmh : null,
         uvi,
         activity: preventiveActivity,
       });
