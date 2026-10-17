@@ -796,7 +796,7 @@ color: #111827;
   border-left: 6px solid #ff9800; /* taronja */
 }
 .alert-ext {
-  border-left: 6px solid #f44336; /* vermell */
+  border-left: 6px solid var(--card-text);
 }
 
 /* Descripció */

@@ -19,7 +19,8 @@ export type HazardId =
   | "temp_max"
   | "other";
 
-type LevelId = "extreme" | "high" | "moderate" | "info";
+type TitleLevelId = "extreme" | "severe" | "moderate" | "neutral";
+type TitleLevelResult = TitleLevelId | "provider-event";
 
 export interface AemetAiAlert {
   title: string;
@@ -65,36 +66,57 @@ const HAZARD_LABELS: Record<HazardId, Record<LangKey, string>> = {
   },
 };
 
-const LEVEL_LABELS: Record<LevelId, Record<LangKey, string>> = {
+const TITLE_LEVEL_LABELS: Record<TitleLevelId, Record<LangKey, string>> = {
   extreme: {
-    ca: "Risc extrem per",
-    es: "Riesgo extremo por",
-    eu: "Arrisku oso larria",
-    gl: "Risco extremo por",
-    en: "Extreme risk:",
+    ca: "Avís extrem per",
+    es: "Aviso extremo por",
+    eu: "Muturreko abisua:",
+    gl: "Aviso extremo por",
+    en: "Extreme warning:",
   },
-  high: {
-    ca: "Risc important per",
-    es: "Riesgo importante por",
-    eu: "Arrisku handia",
-    gl: "Risco importante por",
-    en: "High risk:",
+  severe: {
+    ca: "Avís sever per",
+    es: "Aviso severo por",
+    eu: "Abisu larria:",
+    gl: "Aviso severo por",
+    en: "Severe warning:",
   },
   moderate: {
-    ca: "Avís per",
-    es: "Aviso por",
-    eu: "Abisua",
-    gl: "Aviso por",
-    en: "Warning:",
+    ca: "Avís moderat per",
+    es: "Aviso moderado por",
+    eu: "Abisu moderatua:",
+    gl: "Aviso moderado por",
+    en: "Moderate warning:",
   },
-  info: {
-    ca: "Informació sobre",
-    es: "Información sobre",
-    eu: "Informazioa",
-    gl: "Información sobre",
-    en: "Info:",
+  neutral: {
+    ca: "Avís meteorològic per",
+    es: "Aviso meteorológico por",
+    eu: "Eguraldi-abisua:",
+    gl: "Aviso meteorolóxico por",
+    en: "Weather alert for:",
   },
 };
+
+function getTitleLevel(rawEvent: string): TitleLevelResult {
+  const event = normalizeAlertText(rawEvent);
+  const hasWord = (word: string) => new RegExp(`(^|[^a-z0-9])${word}(?=$|[^a-z0-9])`).test(event);
+  const levelWords: Record<Exclude<TitleLevelId, "neutral">, string[]> = {
+    moderate: ["moderate", "moderat", "moderado", "moderada", "moderatua"],
+    severe: ["severe", "sever", "severo", "severa", "larria"],
+    extreme: ["extreme", "extrem", "extremo", "extrema", "muturreko"],
+  };
+  const explicitLevels = (Object.keys(levelWords) as Array<keyof typeof levelWords>)
+    .filter((level) => levelWords[level].some(hasWord));
+  const providerTerms = [
+    "important", "importante", "high", "alto", "alta", "orange", "naranja",
+    "taronja", "laranja", "laranxa", "red", "rojo", "vermell", "gorria",
+    "yellow", "amarillo", "groc", "horia", "amarelo", "very",
+  ];
+
+  if (explicitLevels.length > 1 || providerTerms.some(hasWord)) return "provider-event";
+  if (explicitLevels.length === 0) return "neutral";
+  return explicitLevels[0];
+}
 
 const GENERIC_BODY: Record<LangKey, string> = {
   ca: "Avís meteorològic oficial d'AEMET.",
@@ -475,22 +497,20 @@ export function buildAemetAiAlert(
   const desc = cleanAemetDescription(rawDescription || "");
 
   // ---- Fenomen ----
-  const ev = normalizeAlertText(rawEvent || "");
   const hazard = detectAemetHazard(rawEvent, desc);
 
-  // ---- Nivell ----
-  let level: LevelId = "info";
-  if (ev.includes("extreme") || ev.includes("red")) level = "extreme";
-  else if (ev.includes("severe") || ev.includes("high") || ev.includes("important") || ev.includes("orange")) level = "high";
-  else if (ev.includes("moderate") || ev.includes("yellow")) level = "moderate";
-
-  const levelText =
-    LEVEL_LABELS[level]?.[lang] || LEVEL_LABELS[level]?.es || (lang === "en" ? "Warning:" : "Avís");
+  // Title wording uses only an unambiguous English qualifier from the event.
+  const level = getTitleLevel(rawEvent || "");
+  const levelText = level === "provider-event"
+    ? ""
+    : TITLE_LEVEL_LABELS[level]?.[lang] || TITLE_LEVEL_LABELS[level]?.es || TITLE_LEVEL_LABELS.neutral[lang];
 
   const hazardText =
     HAZARD_LABELS[hazard]?.[lang] || HAZARD_LABELS[hazard]?.es || rawEvent || (lang === "en" ? "Weather alert" : "Avís meteorològic");
 
-  const title = `${levelText} ${hazardText}`.trim();
+  const title = level === "provider-event"
+    ? `OpenWeather: ${String(rawEvent || "").trim()}`
+    : `${levelText} ${hazardText}`.trim();
 
   const cleanSender = (senderName || "").trim();
 

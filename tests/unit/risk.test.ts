@@ -6044,6 +6044,176 @@ test("official alert hazard detection covers common AEMET phenomena", () => {
   assert.equal(detectAemetHazard("Unknown advisory"), "other");
 });
 
+test("AEMET card titles preserve explicit English severity across all supported languages", () => {
+  const cases: Array<{
+    event: string;
+    expected: Record<LangKey, string>;
+  }> = [
+    {
+      event: "Moderate rain warning",
+      expected: {
+        ca: "Avís moderat per pluja",
+        es: "Aviso moderado por lluvia",
+        eu: "Abisu moderatua: euria",
+        gl: "Aviso moderado por chuva",
+        en: "Moderate warning: rain",
+      },
+    },
+    {
+      event: "Severe rain warning",
+      expected: {
+        ca: "Avís sever per pluja",
+        es: "Aviso severo por lluvia",
+        eu: "Abisu larria: euria",
+        gl: "Aviso severo por chuva",
+        en: "Severe warning: rain",
+      },
+    },
+    {
+      event: "Extreme rain warning",
+      expected: {
+        ca: "Avís extrem per pluja",
+        es: "Aviso extremo por lluvia",
+        eu: "Muturreko abisua: euria",
+        gl: "Aviso extremo por chuva",
+        en: "Extreme warning: rain",
+      },
+    },
+    {
+      event: "Moderate thunderstorm warning",
+      expected: {
+        ca: "Avís moderat per tempestes",
+        es: "Aviso moderado por tormentas",
+        eu: "Abisu moderatua: ekaitzak",
+        gl: "Aviso moderado por treboadas",
+        en: "Moderate warning: storms",
+      },
+    },
+    {
+      event: "Severe thunderstorm warning",
+      expected: {
+        ca: "Avís sever per tempestes",
+        es: "Aviso severo por tormentas",
+        eu: "Abisu larria: ekaitzak",
+        gl: "Aviso severo por treboadas",
+        en: "Severe warning: storms",
+      },
+    },
+  ];
+
+  for (const { event, expected } of cases) {
+    for (const lang of Object.keys(expected) as LangKey[]) {
+      assert.equal(buildAemetAiAlert(event, "", lang).title, expected[lang], `${lang}: ${event}`);
+    }
+  }
+});
+
+test("AEMET titles use neutral wording for missing, unknown, localized or ambiguous severity", () => {
+  const cases: Array<{
+    event: string;
+    description?: string;
+    expected: Record<LangKey, string>;
+  }> = [
+    {
+      event: "Rain warning",
+      expected: {
+        ca: "Avís meteorològic per pluja",
+        es: "Aviso meteorológico por lluvia",
+        eu: "Eguraldi-abisua: euria",
+        gl: "Aviso meteorolóxico por chuva",
+        en: "Weather alert for: rain",
+      },
+    },
+    {
+      event: "Unknown advisory",
+      expected: {
+        ca: "Avís meteorològic per fenòmens adversos",
+        es: "Aviso meteorológico por fenómenos adversos",
+        eu: "Eguraldi-abisua: fenomeno kaltegarriak",
+        gl: "Aviso meteorolóxico por fenómenos adversos",
+        en: "Weather alert for: adverse phenomena",
+      },
+    },
+  ];
+
+  for (const { event, description = "", expected } of cases) {
+    for (const lang of Object.keys(expected) as LangKey[]) {
+      assert.equal(
+        buildAemetAiAlert(event, description, lang).title,
+        expected[lang],
+        `${lang}: ${event}`
+      );
+    }
+  }
+});
+
+test("AEMET titles retain ambiguous provider qualifiers literally instead of suppressing them", () => {
+  const events = [
+    "Important rain warning",
+    "High rain warning",
+    "Orange rain warning",
+    "Red rain warning",
+    "Aviso importante por lluvias",
+    "Aviso naranja por lluvias",
+    "Aviso rojo por lluvias",
+  ];
+
+  for (const event of events) {
+    for (const lang of ["ca", "es", "eu", "gl", "en"] as LangKey[]) {
+      assert.equal(
+        buildAemetAiAlert(event, "", lang).title,
+        `OpenWeather: ${event}`,
+        `${lang}: ${event}`
+      );
+    }
+  }
+});
+
+test("AEMET localized explicit severity is translated while description-only or conflicting severity is not inferred", () => {
+  const localizedModerate = {
+    ca: "Avís moderat per pluja",
+    es: "Aviso moderado por lluvia",
+    eu: "Abisu moderatua: euria",
+    gl: "Aviso moderado por chuva",
+    en: "Moderate warning: rain",
+  };
+  for (const lang of Object.keys(localizedModerate) as LangKey[]) {
+    assert.equal(
+      buildAemetAiAlert("Aviso moderado por lluvias", "", lang).title,
+      localizedModerate[lang],
+      lang
+    );
+    assert.equal(
+      buildAemetAiAlert("Rain warning", "Extreme precipitation details", lang).title,
+      ({
+        ca: "Avís meteorològic per pluja",
+        es: "Aviso meteorológico por lluvia",
+        eu: "Eguraldi-abisua: euria",
+        gl: "Aviso meteorolóxico por chuva",
+        en: "Weather alert for: rain",
+      } as Record<LangKey, string>)[lang],
+      `${lang}: description must not set title severity`
+    );
+  }
+
+  assert.equal(
+    buildAemetAiAlert("Moderate severe rain warning", "", "ca").title,
+    "OpenWeather: Moderate severe rain warning"
+  );
+});
+
+test("AEMET title wording does not change internal severity classification or combined-hazard priority", () => {
+  assert.equal(getAemetAlertSeverity({ event: "Moderate rain warning" }), 2);
+  assert.equal(getAemetAlertSeverity({ event: "Severe rain warning" }), 3);
+  assert.equal(getAemetAlertSeverity({ event: "Extreme rain warning" }), 4);
+  assert.equal(getAemetAlertSeverity({ event: "Orange rain warning" }), 3);
+  assert.equal(getAemetAlertSeverity({ event: "Red rain warning" }), 4);
+
+  const combined = buildAemetAiAlert("Severe thunderstorm rain warning", "", "ca");
+  assert.equal(combined.title, "Avís sever per pluja");
+  assert.equal(detectAemetHazard("Severe thunderstorm rain warning"), "rain");
+});
+
 test("AEMET/OpenWeather descriptions are localized from complete known templates", () => {
   const cases: Array<{
     description: string;
