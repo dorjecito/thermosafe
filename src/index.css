@@ -2384,17 +2384,17 @@ body,
 }
 
 .alert-banner-aemet-active {
-  background: #b91c1c;
-  border-color: #7f1d1d;
+  background: #0056b3;
+  border-color: #003f83;
   color: #ffffff;
-  box-shadow: 0 4px 12px rgba(185, 28, 28, 0.32);
+  box-shadow: 0 4px 12px rgba(0, 86, 179, 0.32);
 }
 
 .alert-banner-aemet-soon {
-  background: #d97706;
-  border-color: #92400e;
+  background: #0056b3;
+  border-color: #003f83;
   color: #ffffff;
-  box-shadow: 0 4px 12px rgba(217, 119, 6, 0.28);
+  box-shadow: 0 4px 12px rgba(0, 86, 179, 0.32);
   animation: none;
 }
 
