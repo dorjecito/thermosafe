@@ -13,7 +13,6 @@ import type { NightForecast } from "../utils/nightForecast";
 import { getHeatRisk } from "../utils/heatRisk";
 import { getColdRisk, type ColdRisk } from "../utils/getColdRisk";
 import { getUvLevelIndex } from "../utils/uv";
-import { getTimeAwareUvAdvice, usesContextualUvAdvice } from "../utils/uvAdviceMessage";
 import type { HeatDayPhase } from "../utils/isDayAtLocation";
 import type { FactorRisk } from "../utils/riskScoreEngine";
 import type { WeatherContext } from "../utils/weatherContext";
@@ -31,6 +30,10 @@ type TextKeys =
   | "factorHeat"
   | "factorCold"
   | "factorUv"
+  | "uvModerateLabel"
+  | "uvHighLabel"
+  | "uvVeryHighLabel"
+  | "uvExtremeLabel"
   | "factorWind"
   | "factorHumidity"
   | "factorRain"
@@ -204,6 +207,10 @@ const TXT: TxtDict = {
     factorHeat: "Calor",
     factorCold: "Fred",
     factorUv: "Radiació UV",
+    uvModerateLabel: "Radiació UV moderada",
+    uvHighLabel: "Radiació UV alta",
+    uvVeryHighLabel: "Radiació UV molt alta",
+    uvExtremeLabel: "Radiació UV extrema",
     factorWind: "Vent",
     factorHumidity: "Humitat",
     factorRain: "Pluja",
@@ -280,7 +287,7 @@ const TXT: TxtDict = {
     windStrong:
       "Revalora tasques exposades i assegura eines o materials lleugers.",
     safeUvCloudy:
-      "Pot existir radiació UV significativa encara que hi hagi núvols o pluja. Si passes temps a l’exterior, utilitza protecció solar bàsica i adapta l’activitat segons l’evolució del temps.",
+      "Els núvols no eliminen el risc de radiació UV.",
     tropicalNight:
       "Mantén una bona ventilació i hidrata’t amb normalitat. Si notes calor durant el descans, procura refrescar l’habitació.",
     torridNight:
@@ -308,6 +315,10 @@ const TXT: TxtDict = {
     factorHeat: "Calor",
     factorCold: "Frío",
     factorUv: "Radiación UV",
+    uvModerateLabel: "Radiación UV moderada",
+    uvHighLabel: "Radiación UV alta",
+    uvVeryHighLabel: "Radiación UV muy alta",
+    uvExtremeLabel: "Radiación UV extrema",
     factorWind: "Viento",
     factorHumidity: "Humedad",
     factorRain: "Lluvia",
@@ -384,7 +395,7 @@ const TXT: TxtDict = {
     windStrong:
       "Revisa las tareas en zonas expuestas y asegura herramientas o materiales ligeros.",
     safeUvCloudy:
-      "Puede existir radiación UV significativa aunque haya nubes o lluvia. Si pasas tiempo al aire libre, utiliza protección solar básica y adapta la actividad según la evolución del tiempo.",
+      "Las nubes no eliminan el riesgo de radiación UV.",
     tropicalNight:
       "Mantén una buena ventilación e hidrátate con normalidad. Si notas calor mientras descansas, procura refrescar la habitación.",
     torridNight:
@@ -412,6 +423,10 @@ const TXT: TxtDict = {
     factorHeat: "Beroa",
     factorCold: "Hotza",
     factorUv: "UV erradiazioa",
+    uvModerateLabel: "UV erradiazio moderatua",
+    uvHighLabel: "UV erradiazio handia",
+    uvVeryHighLabel: "UV erradiazio oso handia",
+    uvExtremeLabel: "Muturreko UV erradiazioa",
     factorWind: "Haizea",
     factorHumidity: "Hezetasuna",
     factorRain: "Euria",
@@ -488,7 +503,7 @@ const TXT: TxtDict = {
     windStrong:
       "Berrikusi kanpoan egiteko lanak eta ziurtatu tresna edo material arinak.",
     safeUvCloudy:
-      "Hodeiak edo euria egon arren, UV erradiazio esanguratsua egon daiteke. Kanpoan denbora ematen baduzu, erabili oinarrizko eguzki-babesa eta egokitu jarduera eguraldiaren bilakaeraren arabera.",
+      "Hodeiek ez dute UV erradiazioaren arriskua ezabatzen.",
     tropicalNight:
       "Mantendu aireztapen ona eta hidratatu ohi bezala. Atseden hartzean beroa nabaritzen baduzu, saiatu gela freskatzen.",
     torridNight:
@@ -516,6 +531,10 @@ const TXT: TxtDict = {
     factorHeat: "Calor",
     factorCold: "Frío",
     factorUv: "Radiación UV",
+    uvModerateLabel: "Radiación UV moderada",
+    uvHighLabel: "Radiación UV alta",
+    uvVeryHighLabel: "Radiación UV moi alta",
+    uvExtremeLabel: "Radiación UV extrema",
     factorWind: "Vento",
     factorHumidity: "Humidade",
     factorRain: "Chuvia",
@@ -592,7 +611,7 @@ const TXT: TxtDict = {
     windStrong:
       "Revisa as tarefas en zonas expostas e asegura ferramentas ou materiais lixeiros.",
     safeUvCloudy:
-      "Pode existir radiación UV significativa aínda que haxa nubes ou choiva. Se permaneces ao aire libre, usa protección solar básica e adapta a actividade segundo a evolución do tempo.",
+      "As nubes non eliminan o risco da radiación UV.",
     tropicalNight:
       "Mantén unha boa ventilación e hidrátate con normalidade. Se notas calor mentres descansas, procura refrescar o cuarto.",
     torridNight:
@@ -620,6 +639,10 @@ const TXT: TxtDict = {
     factorHeat: "Heat",
     factorCold: "Cold",
     factorUv: "UV radiation",
+    uvModerateLabel: "Moderate UV radiation",
+    uvHighLabel: "High UV radiation",
+    uvVeryHighLabel: "Very high UV radiation",
+    uvExtremeLabel: "Extreme UV radiation",
     factorWind: "Wind",
     factorHumidity: "Humidity",
     factorRain: "Rain",
@@ -696,7 +719,7 @@ const TXT: TxtDict = {
     windStrong:
       "Reassess exposed tasks and secure light tools or materials.",
     safeUvCloudy:
-      "Significant UV radiation may still be present even with clouds or rain. If you stay outdoors, use basic sun protection and adapt activity as the weather evolves.",
+      "Clouds do not eliminate UV radiation risk.",
     tropicalNight:
       "Keep the room well ventilated and stay hydrated as usual. If you feel warm while resting, try to cool the room.",
     torridNight:
@@ -835,6 +858,10 @@ const getUvRecommendationKey = (
   uvKey: UvKey,
   heatDayPhase?: HeatDayPhase
 ): UvKey | "uvLateDay" | "uvEvening" => {
+  // Do not let the time-of-day copy hide the active UV severity.
+  if (uvKey === "uvHigh" || uvKey === "uvVeryHigh" || uvKey === "uvExtreme") {
+    return uvKey;
+  }
   if (heatDayPhase === "evening") return "uvEvening";
   if (heatDayPhase === "late_day") return "uvLateDay";
   return uvKey;
@@ -964,6 +991,21 @@ export const factorItems = (
   }));
 };
 
+const factorItemsWithPrimary = (
+  riskFactors: FactorRisk[] | undefined,
+  primaryFactor: RecommendationItem["factor"] | undefined,
+  ...items: Array<RecommendationItem | undefined | null | false>
+): RecommendationItem[] => {
+  const ordered = factorItems(riskFactors, ...items);
+  const uvItems = ordered.filter((item) => item.factor === "uv");
+  const otherItems = ordered.filter((item) => item.factor !== "uv");
+  if (primaryFactor) {
+    const primaryIndex = otherItems.findIndex((item) => item.factor === primaryFactor);
+    if (primaryIndex > 0) otherItems.unshift(otherItems.splice(primaryIndex, 1)[0]);
+  }
+  return [...otherItems, ...uvItems];
+};
+
 const thermalComfortItem = (
   t: TextPack,
   text = t.safe
@@ -1080,14 +1122,15 @@ function CurrentRecommendations({
   const uvRecommendationKey = uvKey
     ? getUvRecommendationKey(uvKey, heatDayPhase)
     : null;
-  const uvAdviceWeather = { weatherMain, weatherCode, rainMmH };
-  const contextualUvAdvice = usesContextualUvAdvice(uvAdviceWeather);
-  const uvTextOptions = contextualUvAdvice ? { preserveText: true } : {};
-  const uvRecommendationText = uvRecommendationKey
-    ? contextualUvAdvice
-      ? getTimeAwareUvAdvice(uvi ?? null, lng, currentHour, uvAdviceWeather)
-      : t[uvRecommendationKey]
-    : null;
+  // Keep this factor actionable and distinct from the contextual paragraph
+  // shown by the primary status and the solar summary.
+  const uvRecommendationText = uvRecommendationKey ? t[uvRecommendationKey] : null;
+  const uvFactorLabel =
+    uvKey === "uvModerate" ? t.uvModerateLabel
+      : uvKey === "uvHigh" ? t.uvHighLabel
+      : uvKey === "uvVeryHigh" ? t.uvVeryHighLabel
+      : uvKey === "uvExtreme" ? t.uvExtremeLabel
+      : t.factorUv;
   const contextualColdTemp =
     typeof coldEffectiveTemp === "number" && Number.isFinite(coldEffectiveTemp)
       ? coldEffectiveTemp
@@ -1173,11 +1216,25 @@ function CurrentRecommendations({
   const contextualText = contextualItems.map((item) => item.text).join("\n\n");
   const contextualWeatherPrimary =
     slipperySurface || rainy || stormy || contextualItems.length > 0;
-  const uvSuppressedByWeather =
-  isDay &&
-  uvActive &&
-  !!uvKey &&
-  suppressUv;
+  // Clouds add context to UV advice; rain and storms retain their own
+  // recommendation as the primary message while UV can appear secondarily.
+  const uvSuppressedByWeather = isDay && uvActive && !!uvKey && (rainy || stormy);
+  const uvCloudNote =
+    isDay && uvActive && !!uvKey && veryCloudy && !rainy && !stormy
+      ? t.safeUvCloudy
+      : null;
+  const uvTextWithCloudContext = joinLines(uvRecommendationText, uvCloudNote);
+  const importantUvSupplement =
+    isDay &&
+    uvActive &&
+    (uvKey === "uvHigh" || uvKey === "uvVeryHigh" || uvKey === "uvExtreme") &&
+    !!uvRecommendationText
+      ? { factor: "uv" as const, icon: "☀️", label: uvFactorLabel, text: uvTextWithCloudContext }
+      : null;
+  const weatherUvSupplement =
+    isDay && uvActive && !!uvKey && !!uvRecommendationText
+      ? { factor: "uv" as const, icon: "☀️", label: uvFactorLabel, text: uvRecommendationText }
+      : null;
 
   if (
     import.meta.env?.DEV &&
@@ -1226,9 +1283,11 @@ function CurrentRecommendations({
         className={`recommendation-box ${coldKey}`}
         title={`${getIcon(coldKey)} ${t.title}`}
         body={t[coldKey]}
-        items={factorItems(
+        items={factorItemsWithPrimary(
           riskFactors,
+          undefined,
           { factor: "cold", icon: "🥶", label: t.factorCold, text: t[coldKey] },
+          importantUvSupplement,
           showWindModerate && { factor: "wind", icon: "🌬️", label: t.factorWind, text: t.windModerate },
           showWindStrong && { factor: "wind", icon: "🌬️", label: t.factorWind, text: t.windStrong },
           stormy && { factor: "storm", icon: "⛈️", label: t.factorStorm, text: t.storm },
@@ -1253,25 +1312,28 @@ function CurrentRecommendations({
     const riskObj = getHeatRisk(effectiveTemp, activity || "rest");
     const heatKey = mapHeatLevelToKey(riskObj.level);
     const heatRecommendationKey = getHeatRecommendationKey(heatKey, heatDayPhase, currentHour);
-    const showUvRecommendation = uvActive && !!uvRecommendationText && !suppressUv;
+    const showUvRecommendation =
+      uvActive &&
+      !!uvRecommendationText &&
+      (!suppressUv || uvKey === "uvHigh" || uvKey === "uvVeryHigh" || uvKey === "uvExtreme");
 
     return (
       <RecommendationBox
         className={`recommendation-box ${heatKey}`}
         title={`${getIcon(heatKey)} ${t.title}`}
         body={t[heatRecommendationKey]}
-	        items={factorItems(
-	          riskFactors,
+        items={factorItemsWithPrimary(
+		          riskFactors,
+		          undefined,
 	          { factor: "heat", icon: "🌡️", label: t.factorHeat, text: t[heatRecommendationKey] },
 	          humid && { factor: "humidity", icon: "💧", label: t.factorHumidity, text: humidityText },
-	          showUvRecommendation && uvKey && { ...uvTextOptions, factor: "uv", icon: "☀️", label: t.factorUv, text: uvRecommendationText },
+        showUvRecommendation && uvKey && { factor: "uv", icon: "☀️", label: uvFactorLabel, text: uvTextWithCloudContext },
 	          showWindModerate && { factor: "wind", icon: "🌬️", label: t.factorWind, text: t.windModerate },
 	          showWindStrong && { factor: "wind", icon: "🌬️", label: t.factorWind, text: t.windStrong },
 	          ...contextualItems
 	        )}
 	        extra={joinExtras(
 	          humid && humidityText,
-	          showUvRecommendation && uvRecommendationText,
 	          showWindModerate && t.windModerate,
 	          showWindStrong && t.windStrong,
 	          contextualText
@@ -1289,22 +1351,18 @@ function CurrentRecommendations({
         className="recommendation-box windStrong"
         title={`${getIcon("windStrong")} ${t.title}`}
         body={t.windStrong}
-        items={factorItems(
+        items={factorItemsWithPrimary(
           riskFactors,
+          undefined,
           { factor: "wind", icon: "🌬️", label: t.factorWind, text: t.windStrong },
           humid && { factor: "humidity", icon: "💧", label: t.factorHumidity, text: humidityText },
-          uvActive && uvKey === "uvHigh" && uvRecommendationText && { ...uvTextOptions, factor: "uv", icon: "☀️", label: t.factorUv, text: uvRecommendationText },
-          uvActive && uvKey === "uvVeryHigh" && uvRecommendationText && { ...uvTextOptions, factor: "uv", icon: "☀️", label: t.factorUv, text: uvRecommendationText },
-          uvActive && uvKey === "uvExtreme" && uvRecommendationText && { ...uvTextOptions, factor: "uv", icon: "☀️", label: t.factorUv, text: uvRecommendationText },
+          importantUvSupplement,
           rainy && !stormy && { factor: "rain", icon: "🌧️", label: t.factorRain, text: t.rain },
           stormy && { factor: "storm", icon: "⛈️", label: t.factorStorm, text: t.storm },
           ...contextualItems
         )}
         extra={joinExtras(
           humid && humidityText,
-          uvActive && uvKey === "uvHigh" && uvRecommendationText,
-          uvActive && uvKey === "uvVeryHigh" && uvRecommendationText,
-          uvActive && uvKey === "uvExtreme" && uvRecommendationText,
           rainy && !stormy && t.rain,
           stormy && t.storm,
           contextualText
@@ -1322,22 +1380,22 @@ function CurrentRecommendations({
       className="recommendation-box safe"
       title={`${getIcon("safe")} ${t.title}`}
       body={joinLines(
-      stormy ? t.storm : rainy ? t.rain : t.safeUvCloudy,
+      stormy ? t.storm : t.rain,
       humid && humidityText,
 	      showWindModerate && t.windModerate,
         contextualText
     )}
-      items={factorItems(
-        riskFactors,
+        items={factorItemsWithPrimary(
+          riskFactors,
+          stormy ? "storm" : "rain",
         stormy
           ? { factor: "storm", icon: "⛈️", label: t.factorStorm, text: t.storm }
-          : rainy
-            ? { factor: "rain", icon: "🌧️", label: t.factorRain, text: t.rain }
-            : { factor: "uv", icon: "☀️", label: t.factorUv, text: t.safeUvCloudy },
+          : { factor: "rain", icon: "🌧️", label: t.factorRain, text: t.rain },
+          weatherUvSupplement,
         humid && { factor: "humidity", icon: "💧", label: t.factorHumidity, text: humidityText },
         showWindModerate && { factor: "wind", icon: "🌬️", label: t.factorWind, text: t.windModerate },
         ...contextualItems
-      )}
+        )}
     />
   );
 } 
@@ -1350,7 +1408,12 @@ function CurrentRecommendations({
         body={uvRecommendationText ?? t[uvKey]}
         items={factorItems(
           riskFactors,
-	          { ...uvTextOptions, factor: "uv", icon: "☀️", label: t.factorUv, text: uvRecommendationText ?? t[uvKey] },
+          {
+            factor: "uv",
+            icon: "☀️",
+            label: uvFactorLabel,
+            text: joinLines(uvRecommendationText ?? t[uvKey], uvCloudNote),
+          },
           humid && { factor: "humidity", icon: "💧", label: t.factorHumidity, text: humidityText },
           showWindModerate && { factor: "wind", icon: "🌬️", label: t.factorWind, text: t.windModerate },
           showWindStrong && { factor: "wind", icon: "🌬️", label: t.factorWind, text: t.windStrong },
@@ -1443,9 +1506,11 @@ function CurrentRecommendations({
         className={`recommendation-box ${heatKey}`}
         title={`${getIcon(heatKey)} ${t.title}`}
         body={t[heatRecommendationKey]}
-        items={factorItems(
+        items={factorItemsWithPrimary(
           riskFactors,
+          undefined,
           { factor: "heat", icon: "🌡️", label: t.factorHeat, text: t[heatRecommendationKey] },
+          importantUvSupplement,
           humid && { factor: "humidity", icon: "💧", label: t.factorHumidity, text: humidityText },
           showWindModerate && { factor: "wind", icon: "🌬️", label: t.factorWind, text: t.windModerate },
           showWindStrong && { factor: "wind", icon: "🌬️", label: t.factorWind, text: t.windStrong },

@@ -5014,7 +5014,8 @@ function renderRecommendationLabelsForObservedUvScenario(
 
 function renderRecommendationForRainScenario(
   weatherMain: "Rain" | "Drizzle" | "Thunderstorm",
-  uvi: number | null = null
+  uvi: number | null = null,
+  lang = "ca"
 ) {
   const weatherContext = getWeatherContext({
     weatherMain,
@@ -5031,7 +5032,7 @@ function renderRecommendationForRainScenario(
 
   return Recommendations({
     temp: 10.9,
-    lang: "ca",
+    lang,
     isDay: true,
     activity: "rest",
     humidity: 73,
@@ -5209,12 +5210,127 @@ test("dry safe recommendations keep generic thermal comfort text", () => {
   assert.equal(element.props.body, "El confort tèrmic és favorable.");
 });
 
-test("rain suppresses active UV advice before the rain branch", () => {
+test("rain and storms keep their primary advice and add one secondary UV factor", () => {
   const element = renderRecommendationForRainScenario("Rain", 8);
-  const labels = (element.props.items as RecommendationItem[]).map((item) => item.label);
+  const items = element.props.items as RecommendationItem[];
 
-  assert.doesNotMatch(labels.join(" "), /Radiació UV/i);
-  assert.doesNotMatch(element.props.body, /protecció solar|gorra|ulleres/i);
+  assert.equal(items[0]?.factor, "rain");
+  assert.equal(items.filter((item) => item.factor === "uv").length, 1);
+  const uvItem = items.find((item) => item.factor === "uv");
+  assert.match(`${uvItem?.label} ${uvItem?.text}`, /molt alta|very high|oso handia|moi alta/i);
+  assert.match(uvItem?.text ?? "", /SPF 50|gorra|gafas|txapela|hat/i);
+  for (const weatherMain of ["Rain", "Thunderstorm"] as const) {
+    const result = renderRecommendationForRainScenario(weatherMain, 8);
+    const factors = (result.props.items as RecommendationItem[]).map((item) => item.factor);
+    assert.equal(factors[0], weatherMain === "Rain" ? "rain" : "storm");
+    assert.equal(factors.filter((factor) => factor === "uv").length, 1);
+  }
+});
+
+test("UV cloud note complements the category advice in all five languages", () => {
+  const cases = [
+    ["ca", /SPF 50/i, /núvols no eliminen/i],
+    ["es", /SPF 50/i, /nubes no eliminan/i],
+    ["eu", /SPF 50/i, /hodeiek ez dute/i],
+    ["gl", /SPF 50/i, /nubes non eliminan/i],
+    ["en", /SPF 50/i, /clouds do not eliminate/i],
+  ] as const;
+  for (const [lang, severity, cloudNote] of cases) for (const uvi of [3, 6, 9.8, 12]) {
+    const cloudyContext = getWeatherContext({ weatherMain: "Clouds", effectiveTemp: 20, cloudiness: 98 });
+    const cloudy = Recommendations({
+      temp: 20, lang, isDay: true, humidity: 50, uvi,
+      weatherMain: "Clouds", weatherCode: 803, cloudiness: 98, windKmh: 5,
+      currentHour: 13, heatDayPhase: "day", coldRisk: "cap", coldEffectiveTemp: 20,
+      weatherContext: cloudyContext,
+    }) as any;
+    const cloudyUv = (cloudy.props.items as RecommendationItem[]).filter((item) => item.factor === "uv");
+    assert.equal(cloudyUv.length, 1, `${lang}, UV ${uvi}`);
+    assert.match(cloudyUv[0].text, cloudNote);
+    assert.doesNotMatch(cloudyUv[0].text, /basic sun protection|protección solar básica|oinarrizko eguzki-babesa/i);
+    if (uvi === 9.8) assert.match(`${cloudyUv[0].label} ${cloudyUv[0].text}`, severity);
+    const clear = Recommendations({
+      temp: 20, lang, isDay: true, humidity: 50, uvi,
+      weatherMain: "Clear", cloudiness: 0, windKmh: 5,
+      currentHour: 13, heatDayPhase: "day", coldRisk: "cap", coldEffectiveTemp: 20,
+    }) as any;
+    const clearUv = (clear.props.items as RecommendationItem[]).filter((item) => item.factor === "uv");
+    assert.equal(clearUv.length, 1, `${lang}, clear UV ${uvi}`);
+    if (uvi >= 6) {
+      const late = Recommendations({
+        temp: 20, lang, isDay: true, humidity: 50, uvi,
+        weatherMain: "Clear", cloudiness: 0, windKmh: 5,
+        currentHour: 19, heatDayPhase: "evening", coldRisk: "cap", coldEffectiveTemp: 20,
+      }) as any;
+      assert.equal(
+        (late.props.items as RecommendationItem[]).find((item) => item.factor === "uv")?.text,
+        clearUv[0].text,
+        `${lang}, late-day UV ${uvi} keeps category advice`,
+      );
+    }
+  }
+});
+
+test("rain and thunderstorm UV supplements preserve every valid category across languages", () => {
+  const langs = ["ca", "es", "eu", "gl", "en"];
+  for (const lang of langs) for (const uvi of [3, 6, 9.8, 12]) {
+    for (const weatherMain of ["Rain", "Thunderstorm"] as const) {
+      const result = renderRecommendationForRainScenario(weatherMain, uvi, lang) as any;
+      const items = result.props.items as RecommendationItem[];
+      assert.equal(items[0]?.factor, weatherMain === "Rain" ? "rain" : "storm");
+      assert.equal(items.filter((item) => item.factor === "uv").length, 1, `${lang} UV ${uvi} ${weatherMain}`);
+      assert.ok(items.findIndex((item) => item.factor === "uv") > 0, `${lang} UV ${uvi} secondary order`);
+      const uvItem = items.find((item) => item.factor === "uv");
+      assert.match(`${uvItem?.label} ${uvItem?.text}`, /UV|radiació|erradiazioa|radiación/i);
+    }
+  }
+});
+
+test("cold, heat and strong wind remain primary while high-or-higher UV is secondary", () => {
+  const cases = [
+    { name: "cold", props: { temp: -5, coldRisk: "alt", coldEffectiveTemp: -8 } },
+    { name: "heat", props: { temp: 36, coldRisk: "cap", coldEffectiveTemp: 36 } },
+    { name: "wind", props: { temp: 20, coldRisk: "cap", coldEffectiveTemp: 20, windKmh: 55 } },
+  ] as const;
+  for (const uvi of [6, 9.8, 12]) for (const scenario of cases) {
+    const result = Recommendations({
+      temp: 20, lang: "ca", isDay: true, humidity: 50, uvi,
+      weatherMain: "Clear", cloudiness: 0, windKmh: 5,
+      currentHour: 13, heatDayPhase: "day",
+      riskFactors: [
+        { factor: "uv", severity: 3, active: true },
+        { factor: scenario.name, severity: 2, active: true },
+      ] as any,
+      ...scenario.props,
+    }) as any;
+    const items = result.props.items as RecommendationItem[];
+    const primary = scenario.name === "cold" ? "cold" : scenario.name === "heat" ? "heat" : "wind";
+    assert.equal(items[0]?.factor, primary, `${scenario.name} remains primary at UV ${uvi}`);
+    assert.equal(items.filter((item) => item.factor === "uv").length, 1);
+  }
+});
+
+test("cold and strong-wind priorities do not gain a new moderate-UV supplement", () => {
+  for (const scenario of [
+    { temp: -5, coldRisk: "alt", coldEffectiveTemp: -8, windKmh: 5 },
+    { temp: 20, coldRisk: "cap", coldEffectiveTemp: 20, windKmh: 50 },
+  ]) {
+    const result = Recommendations({
+      ...scenario, lang: "ca", isDay: true, humidity: 50, uvi: 3,
+      weatherMain: "Clear", cloudiness: 0, currentHour: 13, heatDayPhase: "day",
+    }) as any;
+    assert.equal((result.props.items as RecommendationItem[]).some((item) => item.factor === "uv"), false);
+  }
+});
+
+test("night and missing or invalid UV do not add daytime UV advice", () => {
+  for (const [isDay, uvi] of [[false, 12], [true, null], [true, NaN], [true, Infinity]] as const) {
+    const result = Recommendations({
+      temp: 20, lang: "ca", isDay, humidity: 50, uvi,
+      weatherMain: "Clouds", cloudiness: 98, windKmh: 5,
+      currentHour: 22, heatDayPhase: isDay ? "evening" : "night",
+    }) as any;
+    assert.equal((result.props.items as RecommendationItem[]).some((item) => item.factor === "uv"), false);
+  }
 });
 
 function renderCoolRecommendationScenario({
@@ -5385,7 +5501,7 @@ test("high UV and suppressed UV keep their existing priority over positive cool 
 
   assert.deepEqual(
     (uvElement.props.items as RecommendationItem[]).map((item) => item.label),
-    ["Radiació UV"]
+    ["Radiació UV alta"]
   );
   assert.match(uvElement.props.body, /protecció solar|gorra|ulleres/i);
 
@@ -5404,7 +5520,9 @@ test("high UV and suppressed UV keep their existing priority over positive cool 
     }),
   });
 
-  assert.doesNotMatch(suppressedElement.props.body, /gorra|ulleres|crema|SPF/i);
+  const suppressedUv = (suppressedElement.props.items as RecommendationItem[]).find((item) => item.factor === "uv");
+  assert.match(suppressedUv?.text ?? "", /gorra|ulleres|SPF/i);
+  assert.match(suppressedUv?.text ?? "", /núvols no eliminen/i);
   assert.doesNotMatch(
     (suppressedElement.props.items as RecommendationItem[]).map((item) => item.label).join(" "),
     /Ambient fresc|Fred/
@@ -5495,7 +5613,7 @@ test("positive cool recommendation has complete strings in all supported languag
 test("recommendations keep moderate UV visible with heat and moderate wind", () => {
   assert.deepEqual(
     renderRecommendationLabelsForObservedUvScenario(5.8),
-    ["Vent", "Calor", "Radiació UV"]
+    ["Vent", "Calor", "Radiació UV moderada"]
   );
 });
 

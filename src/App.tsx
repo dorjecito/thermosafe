@@ -2541,11 +2541,23 @@ const uvSummaryAdvice = useMemo(
   }),
   [uvSummaryValue, currentLang, locationCurrentHour, data?.weather?.[0]?.main, data?.weather?.[0]?.id, data?.rain?.["1h"]]
 );
-const compactUvAdvice =
-  uvSummaryValue !== null && getUvLevelIndex(uvSummaryValue) === 0
+const isRiskRenderReady = Boolean(data && isInitialRiskReady && !loading);
+const primaryUvAdviceMatchesSummary = Boolean(
+  isRiskRenderReady &&
+  !aemetActive &&
+  day &&
+  primary.kind === "uv" &&
+  uvSummaryAdvice &&
+  primaryStatus?.text?.trim() === uvSummaryAdvice.trim()
+);
+const compactUvAdvice = primaryUvAdviceMatchesSummary
+  ? null
+  : uvSummaryValue !== null && getUvLevelIndex(uvSummaryValue) === 0
     ? localUi.compactLowUvAdvice
     : uvSummaryAdvice;
-const isRiskRenderReady = Boolean(data && isInitialRiskReady && !loading);
+const visibleUvSummaryAdvice = primaryUvAdviceMatchesSummary
+  ? primaryStatus.text
+  : compactUvAdvice;
 const locationTimezoneOffsetSec =
   typeof data?.timezone === "number" ? data.timezone : null;
 const uvSolarArcData = useMemo(() => {
@@ -3404,7 +3416,7 @@ return (
                     currentHour={locationCurrentHour}
                     weatherCode={data?.weather?.[0]?.id}
                     rainMmH={data?.rain?.["1h"]}
-                    summaryAdvice={uvSummaryAdvice}
+                    summaryAdvice={visibleUvSummaryAdvice}
 	                />
 
 	                {/* ⏱ Temps segur d’exposició */}

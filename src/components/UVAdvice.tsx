@@ -181,10 +181,14 @@ const UVAdvice: React.FC<UVAdviceProps> = ({
   // Retain the distinct cloud-cover note, without duplicating contextual advice.
   const extraNote = !contextual && isVeryCloudy(cloudiness) && u >= 3 ? L.cloudyNote : null;
   const mainMsg = getTimeAwareUvAdvice(u, lng, currentHour, weather);
+  const mainAdviceAlreadyVisible = Boolean(
+    summaryAdvice && mainMsg.trim() === summaryAdvice.trim()
+  );
 
-  if (!extraNote && summaryAdvice && mainMsg.trim() === summaryAdvice.trim()) {
+  if (!extraNote && mainAdviceAlreadyVisible) {
     return null;
   }
+  if (!mainMsg && !extraNote) return null;
 
   return (
     <div
@@ -198,12 +202,14 @@ const UVAdvice: React.FC<UVAdviceProps> = ({
     >
       <strong>🔆 {L.adviceTitle}</strong>
 
-      <p style={{ marginTop: ".5rem", marginBottom: extraNote ? ".4rem" : 0 }}>
-        {mainMsg}
-      </p>
+      {!mainAdviceAlreadyVisible && mainMsg && (
+        <p style={{ marginTop: ".5rem", marginBottom: extraNote ? ".4rem" : 0 }}>
+          {mainMsg}
+        </p>
+      )}
 
       {extraNote && (
-        <p style={{ marginTop: 0, fontSize: "0.95rem", opacity: 0.9 }}>
+        <p style={{ marginTop: mainAdviceAlreadyVisible ? ".5rem" : 0, fontSize: "0.95rem", opacity: 0.9 }}>
           {extraNote}
         </p>
       )}

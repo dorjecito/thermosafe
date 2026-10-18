@@ -63,8 +63,57 @@ test("UV usual mode and low/no-data behavior survive context disappearance",()=>
   assert.equal(getTimeAwareUvAdvice(null,"ca",12,{weatherMain:"Rain"}),"");
   const usual=getTimeAwareUvAdvice(3.8,"ca",12);
   const detail=UVAdvice({uvi:3.8,lang:"ca",cloudiness:89,weatherMain:"Clouds",weatherCode:803,summaryAdvice:usual});
-  assert.ok(textOf(detail).includes(usual));
+  assert.ok(!textOf(detail).includes(usual));
   assert.ok(textOf(detail).includes("La nuvolositat pot reduir parcialment"));
+  const noVisibleSummary=UVAdvice({uvi:3.8,lang:"ca",cloudiness:89,weatherMain:"Clouds",weatherCode:803});
+  assert.ok(textOf(noVisibleSummary).includes(usual));
+  assert.ok(textOf(noVisibleSummary).includes("La nuvolositat pot reduir parcialment"));
+});
+
+test("UV detail keeps only the localized cloud note when its advice is already visible",()=>{
+  const cloudNotes={
+    ca:"La nuvolositat pot reduir parcialment l’exposició",
+    es:"La nubosidad puede reducir parcialmente la exposición",
+    eu:"Hodeitasunak esposizioa neurri batean murriztu dezake",
+    gl:"A nubosidade pode reducir parcialmente a exposición",
+    en:"Cloud cover may partly reduce exposure",
+  };
+  for(const [lang,note] of Object.entries(cloudNotes)) for(const uvi of [3.8,6,8,11]){
+    const advice=getTimeAwareUvAdvice(uvi,lang,12);
+    const detail=UVAdvice({uvi,lang,currentHour:12,cloudiness:98,weatherMain:"Clouds",weatherCode:803,summaryAdvice:advice});
+    const visible=textOf(detail);
+    assert.ok(visible.includes(note),`${lang}, UV ${uvi}: cloud note remains`);
+    assert.ok(!visible.includes(advice),`${lang}, UV ${uvi}: repeated advice is omitted`);
+  }
+});
+
+test("UV detail retains the preventive advice when no matching summary is visible",()=>{
+  for(const lang of ["ca","es","eu","gl","en"]){
+    const advice=getTimeAwareUvAdvice(9.8,lang,12,{weatherMain:"Rain"});
+    const detail=UVAdvice({uvi:9.8,lang,currentHour:12,weatherMain:"Rain"});
+    assert.ok(textOf(detail).includes(advice),`${lang}: advice remains without a summary`);
+  }
+  for(const uvi of [null,NaN,Infinity,-Infinity]){
+    assert.doesNotMatch(textOf(UVAdvice({uvi,lang:"ca",currentHour:12})),/Radiació UV|Radiación UV|UV erradiazio|UV radiation|SPF 50/i);
+  }
+  const lowAdvice=getTimeAwareUvAdvice(2,"ca",12);
+  const lowDetail=UVAdvice({uvi:2,lang:"ca",currentHour:12,summaryAdvice:"Protecció UV baixa compacta"});
+  assert.ok(textOf(lowDetail).includes(lowAdvice),"A different low-UV compact note must not suppress the detail advice");
+});
+
+test("late-day high, very-high and extreme advice keeps severity without claiming UV is decreasing",()=>{
+  const markers={
+    ca:["alta","molt alta","extrem"],
+    es:["alta","muy alta","extremo"],
+    eu:["handia","oso handia","muturreko"],
+    gl:["alta","moi alta","extremo"],
+    en:["high","very high","extreme"],
+  } as const;
+  for(const [lang,expected] of Object.entries(markers))for(const [index,uvi] of [6,9.8,12].entries())for(const hour of [16,19]){
+    const advice=getTimeAwareUvAdvice(uvi,lang,hour);
+    assert.match(advice,new RegExp(expected[index],"i"),`${lang}, UV ${uvi}, ${hour}:00`);
+    assert.doesNotMatch(advice,/decreas|disminu|jaisten|jaisten|diminui/i);
+  }
 });
 
 test("App forwards current weather inputs to both summary and detail with reactive dependencies",()=>{
@@ -224,7 +273,14 @@ test("contextual primary UV body cannot override official alerts or other primar
     getPrimaryStatusBlock({...input,contextualPrimaryUvAdvice:"must not appear"}), getPrimaryStatusBlock(input));
 });
 
-test("Recommendations preserve usual copy and contextualize visible UV including strong wind in five languages", () => {
+test("Recommendations give localized category labels and distinct practical UV advice in five languages", () => {
+  const labels={
+    ca:["Radiació UV moderada","Radiació UV alta","Radiació UV molt alta","Radiació UV extrema"],
+    es:["Radiación UV moderada","Radiación UV alta","Radiación UV muy alta","Radiación UV extrema"],
+    eu:["UV erradiazio moderatua","UV erradiazio handia","UV erradiazio oso handia","Muturreko UV erradiazioa"],
+    gl:["Radiación UV moderada","Radiación UV alta","Radiación UV moi alta","Radiación UV extrema"],
+    en:["Moderate UV radiation","High UV radiation","Very high UV radiation","Extreme UV radiation"],
+  } as const;
   for (const lang of langs) for (const [i,uvi] of [3.8,7.6,8.5,11].entries()) {
     for(const windKmh of [0,60]) {
       const base={temp:22,lang,isDay:true,uvi,windKmh,currentHour:12,heatDayPhase:"day" as const};
@@ -240,8 +296,9 @@ test("Recommendations preserve usual copy and contextualize visible UV including
           if(windKmh===0) assert.equal(items.length,1);
         }
         for(const item of items){
-          assert.equal(item.text,getTimeAwareUvAdvice(uvi,lang,12,weather));
-          assert.doesNotMatch(item.text,/ombra|sombra|shade|itzala/);
+          assert.equal(item.label,labels[lang as keyof typeof labels][i]);
+          assert.equal(item.text,originalRecommendationUv[lang as keyof typeof originalRecommendationUv][i]);
+          assert.notEqual(item.text,getTimeAwareUvAdvice(uvi,lang,12,weather));
         }
         if(windKmh===60) {
           assert.equal(result.props.className,usual.props.className);
@@ -261,4 +318,23 @@ test("App wires current weather into primary status and Recommendations without 
   const block=app.slice(app.indexOf("const primaryStatusInput"),app.indexOf("const primaryStatus ="));
   assert.equal((block.match(/contextualPrimaryUvAdvice/g)||[]).length,2,"input and memo dependencies");
   assert.match(app,/<Recommendations[^]*?weatherCode=\{data\?\.weather\?\.\[0\]\?\.id\}[^]*?rainMmH=\{data\?\.rain\?\.\["1h"\]\}/);
+  assert.match(app,/const primaryUvAdviceMatchesSummary = Boolean\([\s\S]*?isRiskRenderReady[\s\S]*?!aemetActive[\s\S]*?day[\s\S]*?primary\.kind === "uv"[\s\S]*?primaryStatus\?\.text\?\.trim\(\) === uvSummaryAdvice\.trim\(\)/);
+  assert.match(app,/const compactUvAdvice = primaryUvAdviceMatchesSummary\s*\? null/);
+  assert.match(app,/const visibleUvSummaryAdvice = primaryUvAdviceMatchesSummary\s*\?\s*primaryStatus\.text\s*:\s*compactUvAdvice/);
+  assert.match(app,/<UVAdvice[^]*?summaryAdvice=\{visibleUvSummaryAdvice\}/);
+  assert.match(app,/<div className=\{`uv-block \$\{day \? "" : "uv-night"\}`\}>[\s\S]*?uvSummaryValue[\s\S]*?uvMaxSummaryValue[\s\S]*?uvSolarArcData/);
+  assert.match(app,/\{!aemetActive && \(\s*<div className=\{primaryStatus\.className\}/);
+  const guard=app.match(/const primaryUvAdviceMatchesSummary = Boolean\(([\s\S]*?)\n\);/);
+  assert.ok(guard,"Panel suppression must use the exact rendered primary text");
+  const shouldSuppress = new Function("isRiskRenderReady","aemetActive","day","primary","uvSummaryAdvice","primaryStatus",`return Boolean(${guard[1]});`);
+  const visibleUv={kind:"uv"};
+  const common={isRiskRenderReady:true,aemetActive:false,day:true,primary:visibleUv,uvSummaryAdvice:"same advice",primaryStatus:{text:"same advice"}};
+  assert.equal(shouldSuppress(common.isRiskRenderReady,common.aemetActive,common.day,common.primary,common.uvSummaryAdvice,common.primaryStatus),true);
+  for(const variant of [
+    {...common,primary:{kind:"heat"}},
+    {...common,aemetActive:true},
+    {...common,isRiskRenderReady:false},
+    {...common,day:false},
+    {...common,primaryStatus:{text:"different advice"}},
+  ]) assert.equal(shouldSuppress(variant.isRiskRenderReady,variant.aemetActive,variant.day,variant.primary,variant.uvSummaryAdvice,variant.primaryStatus),false);
 });

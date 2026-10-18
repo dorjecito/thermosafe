@@ -26,11 +26,11 @@ const messages: Record<
       "Evita totalment l’exposició solar. Risc molt elevat.",
     ],
     lateHigh:
-      "Encara hi ha radiació UV significativa. Si continues a l’exterior, utilitza protecció solar.",
+      "La radiació UV continua sent alta. Utilitza protecció solar i redueix l’exposició directa.",
     lateVeryHigh:
-      "La radiació UV disminueix, però encara convé protegir la pell si l’exposició és prolongada.",
+      "La radiació UV continua sent molt alta. Mantén una protecció solar reforçada mentre continuïs a l’exterior.",
     lateExtreme:
-      "La radiació UV continua sent molt intensa. Mantén la màxima protecció si continues a l’exterior.",
+      "L’índex UV continua en nivell extrem. Mantén la màxima protecció si continues a l’exterior.",
   },
   es: {
     base: [
@@ -41,11 +41,11 @@ const messages: Record<
       "Evita totalmente la exposición solar. Riesgo muy elevado.",
     ],
     lateHigh:
-      "Todavía hay radiación UV significativa. Si continúas al aire libre, utiliza protección solar.",
+      "La radiación UV sigue siendo alta. Usa protección solar y reduce la exposición directa.",
     lateVeryHigh:
-      "La radiación UV disminuye, pero aún conviene proteger la piel si la exposición es prolongada.",
+      "La radiación UV sigue siendo muy alta. Mantén una protección solar reforzada mientras continúes al aire libre.",
     lateExtreme:
-      "La radiación UV sigue siendo muy intensa. Mantén la máxima protección si continúas al aire libre.",
+      "El índice UV continúa en nivel extremo. Mantén la máxima protección si continúas al aire libre.",
   },
   eu: {
     base: [
@@ -56,11 +56,11 @@ const messages: Record<
       "Saihestu guztiz eguzki-esposizioa. Arrisku oso handia.",
     ],
     lateHigh:
-      "UV erradiazio esanguratsua dago oraindik. Kanpoan jarraitzen baduzu, erabili eguzki-babesa.",
+      "UV erradiazioa handia da oraindik. Erabili eguzki-babesa eta murriztu zuzeneko esposizioa.",
     lateVeryHigh:
-      "UV erradiazioa jaisten ari da, baina esposizioa luzea bada azala babestea komeni da.",
+      "UV erradiazioa oso handia da oraindik. Mantendu eguzki-babes indartua kanpoan jarraitzen duzun bitartean.",
     lateExtreme:
-      "UV erradiazioa oso bizia da oraindik. Kanpoan jarraitzen baduzu, mantendu babes handiena.",
+      "UV indizeak muturreko mailan jarraitzen du. Mantendu babes handiena kanpoan jarraitzen baduzu.",
   },
   gl: {
     base: [
@@ -71,11 +71,11 @@ const messages: Record<
       "Evita totalmente a exposición solar. Risco moi elevado.",
     ],
     lateHigh:
-      "Aínda hai radiación UV significativa. Se continúas no exterior, usa protección solar.",
+      "A radiación UV segue sendo alta. Usa protección solar e reduce a exposición directa.",
     lateVeryHigh:
-      "A radiación UV diminúe, pero aínda convén protexer a pel se a exposición é prolongada.",
+      "A radiación UV segue sendo moi alta. Mantén unha protección solar reforzada mentres continúes no exterior.",
     lateExtreme:
-      "A radiación UV segue sendo moi intensa. Mantén a máxima protección se continúas no exterior.",
+      "O índice UV continúa en nivel extremo. Mantén a protección máxima se continúas no exterior.",
   },
   en: {
     base: [
@@ -86,11 +86,11 @@ const messages: Record<
       "Avoid sun exposure completely. Very high risk.",
     ],
     lateHigh:
-      "Significant UV radiation is still present. If you remain outdoors, use sun protection.",
+      "UV radiation remains high. Use sun protection and reduce direct exposure.",
     lateVeryHigh:
-      "UV radiation is decreasing, but skin protection is still advisable for prolonged exposure.",
+      "UV radiation remains very high. Maintain reinforced sun protection while you remain outdoors.",
     lateExtreme:
-      "UV radiation remains very intense. Use maximum protection if you remain outdoors.",
+      "The UV index remains at an extreme level. Maintain maximum protection if you remain outdoors.",
   },
 };
 
@@ -155,10 +155,6 @@ export const getTimeAwareUvAdvice = (
 
   if (level > 0 && usesContextualUvAdvice(weather)) {
     return contextualMessages[normalizeLang(lang)][level - 1];
-  }
-
-  if (typeof currentHour === "number" && currentHour >= 18 && level >= 2) {
-    return t.lateVeryHigh;
   }
 
   if (typeof currentHour === "number" && currentHour >= 16) {
