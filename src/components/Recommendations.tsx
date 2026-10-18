@@ -250,7 +250,7 @@ const TXT: TxtDict = {
     nightCool:
       "Ambient nocturn fresc. Es recomana roba còmoda i una capa lleugera si passes temps a l’exterior.",
     nightSafe:
-      "Condicions nocturnes agradables i estables. No calen mesures especials.",
+      "La temperatura actual no presenta un risc tèrmic destacable.",
     nightHeat:
       "Temperatura nocturna elevada. Afavoreix la ventilació creuada, hidrata’t i utilitza roba lleugera i transpirable.",
     coolPositiveLabel: "Ambient fresc",
@@ -354,7 +354,7 @@ const TXT: TxtDict = {
     nightCool:
       "Ambiente nocturno fresco. Se recomienda ropa cómoda y una capa ligera si pasas tiempo al aire libre.",
     nightSafe:
-      "Condiciones nocturnas agradables y estables. No se requieren medidas especiales.",
+      "La temperatura actual no presenta un riesgo térmico significativo.",
     nightHeat:
       "Temperatura nocturna elevada. Favorece la ventilación cruzada, hidrátate y utiliza ropa ligera y transpirable.",
     coolPositiveLabel: "Ambiente fresco",
@@ -458,7 +458,7 @@ const TXT: TxtDict = {
     nightCool:
       "Gaueko giro freskoa. Erabili arropa erosoa eta geruza arin bat kanpoan denbora pasatuko baduzu.",
     nightSafe:
-      "Gaueko baldintzak atseginak eta egonkorrak dira. Ez da neurri berezirik behar.",
+      "Uneko tenperaturak ez du arrisku termiko nabarmenik eragiten.",
     nightHeat:
       "Gaueko tenperatura altua. Bultzatu aireztapen gurutzatua, hidratatu eta erabili arropa arina eta transpiragarria.",
     coolPositiveLabel: "Giro freskoa",
@@ -562,7 +562,7 @@ const TXT: TxtDict = {
     nightCool:
       "Ambiente nocturno fresco. Recoméndase roupa cómoda e unha capa lixeira se pasas tempo ao aire libre.",
     nightSafe:
-      "Condicións nocturnas agradables e estables. Non se requiren medidas especiais.",
+      "A temperatura actual non presenta un risco térmico significativo.",
     nightHeat:
       "Temperatura nocturna elevada. Favorece a ventilación cruzada, hidrátate e emprega roupa lixeira e transpirable.",
     coolPositiveLabel: "Ambiente fresco",
@@ -666,7 +666,7 @@ const TXT: TxtDict = {
     nightCool:
       "Cool nighttime conditions. Comfortable clothing and a light extra layer are recommended if you stay outdoors for a while.",
     nightSafe:
-      "Night conditions are pleasant and stable. No special measures are needed.",
+      "The current temperature does not pose a significant thermal risk.",
     nightHeat:
       "Elevated nighttime temperatures. Ensure cross-ventilation, stay hydrated and wear light, breathable clothing.",
     coolPositiveLabel: "Cool conditions",

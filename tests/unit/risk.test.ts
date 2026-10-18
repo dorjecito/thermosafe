@@ -9197,6 +9197,39 @@ test("safe cloudy thermal comfort stays thermal-only in all five languages", () 
   }
 });
 
+test("night-safe copy is explicitly thermal in all five languages", () => {
+  const expected = {
+    ca: "La temperatura actual no presenta un risc tèrmic destacable.",
+    es: "La temperatura actual no presenta un riesgo térmico significativo.",
+    eu: "Uneko tenperaturak ez du arrisku termiko nabarmenik eragiten.",
+    gl: "A temperatura actual non presenta un risco térmico significativo.",
+    en: "The current temperature does not pose a significant thermal risk.",
+  } as const;
+
+  for (const lang of Object.keys(expected) as Array<keyof typeof expected>) {
+    const element = renderCoolRecommendationScenario({
+      temp: 16.6, isDay: false, humidity: 50, windKmh: 5, lang,
+    });
+    const comfort = (element.props.items as RecommendationItem[])
+      .find((item) => item.factor === "thermalComfort");
+
+    assert.equal(comfort?.text, expected[lang]);
+    assert.doesNotMatch(comfort?.text ?? "", /stable|estables|agradables|pleasant|egonkorrak|atseginak|no special measures|no calen mesures|no se requieren medidas|ez da neurri berezirik/i);
+  }
+});
+
+test("night-safe thermal copy preserves concurrent rain and wind recommendations", () => {
+  const element = renderCoolRecommendationScenario({
+    temp: 16.6, isDay: false, humidity: 91, windKmh: 25.9, weatherMain: "Rain",
+  });
+  const items = element.props.items as RecommendationItem[];
+
+  assert.equal(items.find((item) => item.factor === "thermalComfort")?.text,
+    "La temperatura actual no presenta un risc tèrmic destacable.");
+  assert.ok(items.some((item) => item.factor === "rain"));
+  assert.ok(items.some((item) => item.factor === "wind"));
+});
+
 test("cloudy conditions retain heat and independent risk recommendations", () => {
   for (const scenario of [
     { temp: 35, factor: "heat" }, { temp: 45, factor: "heat" },
