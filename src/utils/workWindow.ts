@@ -201,6 +201,12 @@ export function getWorkWindow({
   return "optimal";
 }
 
+export function isAemetOnlyCaution(params: Params, level: WorkWindow): boolean {
+  return params.aemetActive === true &&
+    level === "caution" &&
+    getWorkWindow({ ...params, aemetActive: false }) === "optimal";
+}
+
 export function getWorkWindowTitle(lang: WorkWindowLang): string {
   const txt = {
     ca: "Activitat exterior",
@@ -217,7 +223,8 @@ export function getWorkWindowText(
   level: WorkWindow,
   lang: WorkWindowLang,
   aemetActive = false,
-  nightHeatLevel: NightHeatLevel | boolean = "none"
+  nightHeatLevel: NightHeatLevel | boolean = "none",
+  aemetOnlyCaution = false
 ): string {
   void nightHeatLevel;
 
@@ -226,6 +233,7 @@ export function getWorkWindowText(
       optimal: "Les condicions són adequades per a activitats a l’aire lliure.",
       optimalAlert: "Condicions actuals adequades, però hi ha avisos oficials actius. Mantén la precaució.",
       caution: "Es poden realitzar activitats a l’aire lliure amb precaucions bàsiques.",
+      cautionAlert: "Les condicions actuals permeten fer activitats a l’aire lliure, però hi ha un avís meteorològic oficial actiu. Consulta'n el detall i adapta l’activitat si les condicions empitjoren.",
       limited: "Convé limitar les activitats exigents o adaptar-les a les condicions actuals.",
       avoid: "No es recomana fer activitats exigents a l’aire lliure en aquests moments.",
     },
@@ -233,6 +241,7 @@ export function getWorkWindowText(
       optimal: "Las condiciones son adecuadas para actividades al aire libre.",
       optimalAlert: "Condiciones actuales adecuadas, pero hay avisos oficiales activos. Mantén la precaución.",
       caution: "Puedes hacer actividades al aire libre con precauciones básicas.",
+      cautionAlert: "Las condiciones actuales permiten realizar actividades al aire libre, pero hay un aviso meteorológico oficial activo. Consulta sus detalles y adapta la actividad si las condiciones empeoran.",
       limited: "Conviene limitar las actividades exigentes o adaptarlas a las condiciones actuales.",
       avoid: "No se recomienda hacer actividades exigentes al aire libre en este momento.",
     },
@@ -240,6 +249,7 @@ export function getWorkWindowText(
       optimal: "Baldintzak egokiak dira kanpoko jardueretarako.",
       optimalAlert: "Uneko baldintzak egokiak dira, baina abisu ofizialak aktibo daude. Mantendu arreta.",
       caution: "Kanpoko jarduerak egin daitezke oinarrizko neurriak hartuta.",
+      cautionAlert: "Egungo baldintzek aire zabaleko jarduerak egiteko aukera ematen dute, baina alerta meteorologiko ofizial bat dago indarrean. Kontsultatu xehetasunak eta egokitu jarduera baldintzek okerrera egiten badute.",
       limited: "Komeni da jarduera zorrotzak mugatzea edo uneko baldintzetara egokitzea.",
       avoid: "Ez da gomendatzen une honetan kanpoko jarduera zorrotzak egitea.",
     },
@@ -247,6 +257,7 @@ export function getWorkWindowText(
       optimal: "As condicións son axeitadas para actividades ao aire libre.",
       optimalAlert: "As condicións actuais son adecuadas, pero hai avisos oficiais activos. Mantén a precaución.",
       caution: "Podes facer actividades ao aire libre con precaucións básicas.",
+      cautionAlert: "As condicións actuais permiten realizar actividades ao aire libre, pero hai un aviso meteorolóxico oficial activo. Consulta os detalles e adapta a actividade se as condicións empeoran.",
       limited: "Convén limitar as actividades esixentes ou adaptalas ás condicións actuais.",
       avoid: "Non se recomenda facer actividades esixentes ao aire libre nestes momentos.",
     },
@@ -254,10 +265,15 @@ export function getWorkWindowText(
       optimal: "Conditions are suitable for outdoor activities.",
       optimalAlert: "Current conditions are suitable, but official alerts are active. Stay cautious.",
       caution: "You can do outdoor activities with basic precautions.",
+      cautionAlert: "Current conditions allow outdoor activities, but an official weather alert is active. Check its details and adapt your activity if conditions worsen.",
       limited: "Limit demanding activities or adapt them to current conditions.",
       avoid: "Demanding outdoor activities are not recommended at this time.",
     },
   };
+
+  if (level === "caution" && aemetActive && aemetOnlyCaution) {
+    return txt[lang]?.cautionAlert || txt.ca.cautionAlert;
+  }
 
   if (level === "optimal" && aemetActive) {
     return txt[lang]?.optimalAlert || txt.ca.optimalAlert;

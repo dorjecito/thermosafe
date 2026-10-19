@@ -78,7 +78,7 @@ import {
   DATA_REFRESH_MIN_INTERVAL_MS,
 } from "../../src/utils/dataRefresh";
 import { pickPrimaryRisk } from "../../src/utils/PickPrimaryRisk";
-import { getWorkWindow, getWorkWindowText } from "../../src/utils/workWindow";
+import { getWorkWindow, getWorkWindowText, isAemetOnlyCaution } from "../../src/utils/workWindow";
 import { buildRiskTrend, isRiskTrendForecastFresh } from "../../src/utils/riskTrend";
 import { getWeatherByCity } from "../../src/services/weatherService";
 import {
@@ -2913,6 +2913,106 @@ test("workWindow preserves active AEMET preventive behavior", () => {
 
   assert.equal(getWorkWindow(input), "caution");
   assert.equal(getWorkWindow({ ...input, weatherMain: "Rain" }), "limited");
+});
+
+test("active AEMET context text is used only when the alert alone changes optimal to caution", () => {
+  const favorable = {
+    heatRisk: getHeatRisk(16.9, "rest"),
+    heatIndex: 16.9,
+    coldRisk: "cap" as const,
+    windRisk: "none" as const,
+    uvi: 0,
+    weatherMain: "Clouds",
+    activity: "rest" as const,
+    aemetActive: true,
+  };
+  const activeLevel = getWorkWindow(favorable);
+
+  assert.equal(activeLevel, "caution");
+  assert.equal(isAemetOnlyCaution(favorable, activeLevel), true);
+  assert.equal(getWorkWindow({ ...favorable, aemetActive: false }), "optimal");
+  assert.equal(
+    getWorkWindowText(activeLevel, "ca", true, undefined, true),
+    "Les condicions actuals permeten fer activitats a l’aire lliure, però hi ha un avís meteorològic oficial actiu. Consulta'n el detall i adapta l’activitat si les condicions empitjoren."
+  );
+  assert.equal(
+    getWorkWindowText("optimal", "ca", false),
+    "Les condicions són adequades per a activitats a l’aire lliure."
+  );
+  assert.equal(
+    getWorkWindowText("caution", "ca", true),
+    "Es poden realitzar activitats a l’aire lliure amb precaucions bàsiques."
+  );
+});
+
+test("active AEMET does not replace caution, limited or avoid text when local factors justify the level", () => {
+  const base = {
+    heatRisk: getHeatRisk(24, "rest"),
+    coldRisk: "cap" as const,
+    windRisk: "none" as const,
+    uvi: 0,
+    aemetActive: true,
+  };
+
+  const locallyCautious = { ...base, heatRisk: getHeatRisk(27, "rest"), heatIndex: 27 };
+  const cautionLevel = getWorkWindow(locallyCautious);
+  assert.equal(cautionLevel, "caution");
+  assert.equal(isAemetOnlyCaution(locallyCautious, cautionLevel), false);
+  assert.equal(
+    getWorkWindowText(cautionLevel, "ca", true, undefined, isAemetOnlyCaution(locallyCautious, cautionLevel)),
+    "Es poden realitzar activitats a l’aire lliure amb precaucions bàsiques."
+  );
+
+  const limited = { ...base, windRisk: "moderate" as const };
+  const limitedLevel = getWorkWindow(limited);
+  assert.equal(limitedLevel, "limited");
+  assert.equal(isAemetOnlyCaution(limited, limitedLevel), false);
+  assert.equal(
+    getWorkWindowText(limitedLevel, "ca", true, undefined, true),
+    "Convé limitar les activitats exigents o adaptar-les a les condicions actuals."
+  );
+
+  const avoid = { ...base, uvi: 11 };
+  const avoidLevel = getWorkWindow(avoid);
+  assert.equal(avoidLevel, "avoid");
+  assert.equal(isAemetOnlyCaution(avoid, avoidLevel), false);
+  assert.equal(
+    getWorkWindowText(avoidLevel, "ca", true, undefined, true),
+    "No es recomana fer activitats exigents a l’aire lliure en aquests moments."
+  );
+});
+
+test("AEMET-only caution message is localized in all supported languages", () => {
+  const expected = {
+    ca: "Les condicions actuals permeten fer activitats a l’aire lliure, però hi ha un avís meteorològic oficial actiu. Consulta'n el detall i adapta l’activitat si les condicions empitjoren.",
+    es: "Las condiciones actuales permiten realizar actividades al aire libre, pero hay un aviso meteorológico oficial activo. Consulta sus detalles y adapta la actividad si las condiciones empeoran.",
+    eu: "Egungo baldintzek aire zabaleko jarduerak egiteko aukera ematen dute, baina alerta meteorologiko ofizial bat dago indarrean. Kontsultatu xehetasunak eta egokitu jarduera baldintzek okerrera egiten badute.",
+    gl: "As condicións actuais permiten realizar actividades ao aire libre, pero hai un aviso meteorolóxico oficial activo. Consulta os detalles e adapta a actividade se as condicións empeoran.",
+    en: "Current conditions allow outdoor activities, but an official weather alert is active. Check its details and adapt your activity if conditions worsen.",
+  } as const;
+
+  for (const [lang, text] of Object.entries(expected)) {
+    assert.equal(getWorkWindowText("caution", lang as keyof typeof expected, true, undefined, true), text);
+  }
+});
+
+test("future AEMET alerts do not activate the active-alert caution wording", () => {
+  const futureOnly = {
+    heatRisk: getHeatRisk(16.9, "rest"),
+    heatIndex: 16.9,
+    coldRisk: "cap" as const,
+    windRisk: "none" as const,
+    uvi: 0,
+    aemetActive: false,
+  };
+
+  const level = getWorkWindow(futureOnly);
+  assert.equal(level, "optimal");
+  assert.equal(isAemetOnlyCaution(futureOnly, level), false);
+  assert.equal(
+    getWorkWindowText(level, "ca", false, undefined, true),
+    "Les condicions són adequades per a activitats a l’aire lliure."
+  );
 });
 
 test("workWindow uses the active AEMET state once when active and future alerts coexist", () => {

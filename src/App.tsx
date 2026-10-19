@@ -39,7 +39,12 @@ import { getUVDetailFromOpenUV, getUVFromOpenUV } from "./services/openUV";
      translateAemetDescriptionForUi,
    } from "./services/aemetDescriptionTranslation";
    import { getContextualUVMessage } from "./utils/getContextualUVMessage";
-   import { getWorkWindow, getWorkWindowText, getWorkWindowTitle } from "./utils/workWindow";
+   import {
+     getWorkWindow,
+     getWorkWindowText,
+     getWorkWindowTitle,
+     isAemetOnlyCaution,
+   } from "./utils/workWindow";
    import { getRiskIcons } from "./utils/getRiskIcons";
    import { getColdRisk, type ColdRisk } from "./utils/getColdRisk";
    import { getAlertIcon } from "./utils/getAlertIcon";
@@ -2067,34 +2072,19 @@ const nightForecast = buildNightForecast({
   forecastCoords: hourlyForecastCoords,
   forecast: hourlyForecast,
 });
-// Presentation clock only: no weather fetch, location update or risk synchronization.
-useEffect(() => {
-  const now = Date.now();
-  const boundaries = [
-    nightForecast.sunsetUtcSec === null ? NaN : nightForecast.sunsetUtcSec * 1000,
-    nightForecast.sunriseUtcSec === null ? NaN : nightForecast.sunriseUtcSec * 1000,
-    hourlyForecast?.fetchedAt === undefined ? NaN : hourlyForecast.fetchedAt + 3600000,
-  ].filter(time => Number.isFinite(time) && time >= now);
-  if (!boundaries.length) return;
-  const timer = window.setTimeout(() => setNightForecastTick(tick => tick + 1), Math.min(...boundaries) - now + 1);
-  return () => window.clearTimeout(timer);
-}, [nightForecast.sunsetUtcSec, nightForecast.sunriseUtcSec, hourlyForecast?.fetchedAt, nightForecastTick]);
-
-
-const workWindow = useMemo(
-  () =>
-    getWorkWindow({
-      heatRisk,
-      heatIndex: hi,
-      coldRisk,
-      windRisk,
-      uvi,
-      aemetActive,
-      weatherMain,
-      activity: preventiveActivity,
-      engineRisk,
-      weatherContext,
-    }),
+const workWindowInput = useMemo(
+  () => ({
+    heatRisk,
+    heatIndex: hi,
+    coldRisk,
+    windRisk,
+    uvi,
+    aemetActive,
+    weatherMain,
+    activity: preventiveActivity,
+    engineRisk,
+    weatherContext,
+  }),
   [
     heatRisk,
     hi,
@@ -2110,11 +2100,31 @@ const workWindow = useMemo(
   ]
 );
 
+// Presentation clock only: no weather fetch, location update or risk synchronization.
+useEffect(() => {
+  const now = Date.now();
+  const boundaries = [
+    nightForecast.sunsetUtcSec === null ? NaN : nightForecast.sunsetUtcSec * 1000,
+    nightForecast.sunriseUtcSec === null ? NaN : nightForecast.sunriseUtcSec * 1000,
+    hourlyForecast?.fetchedAt === undefined ? NaN : hourlyForecast.fetchedAt + 3600000,
+  ].filter(time => Number.isFinite(time) && time >= now);
+  if (!boundaries.length) return;
+  const timer = window.setTimeout(() => setNightForecastTick(tick => tick + 1), Math.min(...boundaries) - now + 1);
+  return () => window.clearTimeout(timer);
+}, [nightForecast.sunsetUtcSec, nightForecast.sunriseUtcSec, hourlyForecast?.fetchedAt, nightForecastTick]);
+
+
+const workWindow = useMemo(() => getWorkWindow(workWindowInput), [workWindowInput]);
+const aemetOnlyCaution = useMemo(
+  () => isAemetOnlyCaution(workWindowInput, workWindow),
+  [workWindowInput, workWindow]
+);
+
 const workWindowLang = currentLang;
 const workWindowTitle = useMemo(() => getWorkWindowTitle(workWindowLang), [workWindowLang]);
 const workWindowText = useMemo(
-  () => getWorkWindowText(workWindow, workWindowLang, aemetActive),
-  [workWindow, workWindowLang, aemetActive]
+  () => getWorkWindowText(workWindow, workWindowLang, aemetActive, undefined, aemetOnlyCaution),
+  [workWindow, workWindowLang, aemetActive, aemetOnlyCaution]
 );
 
 useEffect(() => {
