@@ -2,7 +2,30 @@ import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
 import { VitePWA } from "vite-plugin-pwa";
 import { readFileSync } from "node:fs";
+import { fileURLToPath } from "node:url";
 import type { Plugin } from "vite";
+
+const sharedHeatIndexPath = fileURLToPath(
+  new URL("./functions/shared/heat-index.cjs", import.meta.url)
+);
+
+function sharedHeatIndexDevInterop(): Plugin {
+  return {
+    name: "thermosafe-shared-heat-index-dev-interop",
+    apply: "serve",
+    enforce: "pre",
+    transform(code, id) {
+      if (id.split("?")[0] !== sharedHeatIndexPath) return null;
+
+      // Keep the CommonJS source canonical for Firebase/Node, while exposing
+      // its named function to Vite's browser module graph during dev only.
+      return code.replace(
+        "module.exports = { calcHeatIndexCelsius };",
+        "export { calcHeatIndexCelsius };"
+      );
+    },
+  };
+}
 
 const packageJson = JSON.parse(
   readFileSync(new URL("./package.json", import.meta.url), "utf8")
@@ -57,6 +80,7 @@ export default defineConfig({
 
   plugins: [
     thermosafeVersionPlugin(),
+    sharedHeatIndexDevInterop(),
     react(),
 
     VitePWA({

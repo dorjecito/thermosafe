@@ -164,7 +164,7 @@ export function getRecommendationSlipperySurface(
 }
 
 interface Props {
-  temp: number;
+	temp: number | null;
   lang: Lang | string;
   isDay: boolean;
   activity?: ActivityLevel;
@@ -1026,6 +1026,7 @@ export const getRecommendationFactorState = (
           (riskFactor) =>
             riskFactor.factor === factor &&
             riskFactor.active !== false &&
+            typeof riskFactor.severity === "number" &&
             riskFactor.severity > 0
         )
       : null;
@@ -1117,7 +1118,8 @@ function CurrentRecommendations({
 
   const t = (TXT as Record<string, (typeof TXT)["ca"]>)[lng] ?? TXT.ca;
 
-  const effectiveTemp = Number(temp);
+  const effectiveTemp =
+    typeof temp === "number" && Number.isFinite(temp) ? temp : Number.NaN;
   const uvKey = getUvKey(uvi);
   const uvRecommendationKey = uvKey
     ? getUvRecommendationKey(uvKey, heatDayPhase)
@@ -1149,7 +1151,10 @@ function CurrentRecommendations({
   const windyModerate = typeof windKmh === "number" && windKmh >= 25 && windKmh < 45;
   const windyStrong = typeof windKmh === "number" && windKmh >= 45;
   const factorState = getRecommendationFactorState(riskFactors);
-  const heatActive = factorState.heat ?? (getHeatRisk(effectiveTemp, activity || "rest").class !== "safe");
+  const heatActive = factorState.heat ?? (
+    Number.isFinite(effectiveTemp) &&
+    getHeatRisk(effectiveTemp, activity || "rest").class !== "safe"
+  );
   // Humid weather alone is not a preventive thermal warning.
   // Reuse the engine's heat factor (or its existing classifier without engine data).
   const hasThermalPrecaution = heatActive;

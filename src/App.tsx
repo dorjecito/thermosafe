@@ -49,7 +49,7 @@ import { getUVDetailFromOpenUV, getUVFromOpenUV } from "./services/openUV";
    import { getColdRisk, type ColdRisk } from "./utils/getColdRisk";
    import { getAlertIcon } from "./utils/getAlertIcon";
    import { pickPrimaryRisk } from "./utils/PickPrimaryRisk";
-   import { calcHI } from "./utils/calcHI";
+import { calcHIOrNull } from "./utils/calcHI";
    import { getHeatDayPhase, isDayAtLocation, isLateDayAtLocation } from "./utils/isDayAtLocation";
    import { getPrimaryStatusBlock } from "./utils/getPrimaryStatusBlock";
    import { getPrimaryAdviceText } from "./utils/getPrimaryAdviceText";
@@ -1223,11 +1223,10 @@ const fetchWeather = async (
 
     // 🌡 Temperatures bàsiques
     const tempReal = data.main?.temp ?? null;
-    const feelsLike = data.main?.feels_like ?? null;
     const humidity = data.main?.humidity ?? null;
 
     setTemp(tempReal);
-    setHi(feelsLike);
+    setHi(calcHIOrNull(tempReal, humidity));
     setHum(humidity);
     setClouds(data.clouds?.all ?? 0);
     setWeatherMain(data.weather?.[0]?.main ?? null);
@@ -1436,15 +1435,9 @@ setIrr(ir ?? null);
   console.error("[DEBUG] Error obtenint IR/UV a updateAll:", err);
 }
 
-  /* 🌡️ CLAMP HEAT-INDEX */
-  const hiVal =
-    tp < 18
-      ? tp
-      : Math.abs(fl - tp) < 1 && hm > 60
-      ? calcHI(tp, hm)
-      : fl;
-
-  setHi(hiVal);
+  // Use the same NWS heat index as the backend. Missing/invalid humidity
+  // leaves heat risk unknown; provider feels_like is not a substitute.
+  setHi(calcHIOrNull(tp, hm));
   if (!silent) setErr('');
 
   console.log(`${colorCyan}✅ [updateAll] Dades actualitzades correctament per ${nm}${colorReset}`);
@@ -1553,9 +1546,10 @@ const isDayHere = isDayAtLocation(nowUtc, tz, sunrise, sunset);
 setDay(isDayHere);
 
 // Meteo bàsica
+const gpsHeatIndex = calcHIOrNull(d.main?.temp, d.main?.humidity);
 setTemp(d.main?.temp ?? null);
 setHum(d.main?.humidity ?? null);
-setHi(d.main?.feels_like ?? null);
+setHi(gpsHeatIndex);
 setClouds(d.clouds?.all ?? 0);
 setWeatherMain(d.weather?.[0]?.main ?? null);
 
@@ -1576,7 +1570,7 @@ setColdRisk(null as any);
 
 // 🌡️ Temperatura real i sensació tèrmica (GPS)
 setTemp(d.main.temp);
-setHi(d.main.feels_like);
+setHi(gpsHeatIndex);
 setHum(d.main.humidity);
 
 // 💨 Conversió de vent
@@ -1713,7 +1707,7 @@ const notificationsTask = uvTask.then(async (uv) => {
 
   startupStart("risk-notifications");
   try {
-    await maybeNotifyHeat(d.main.feels_like);
+    await maybeNotifyHeat(gpsHeatIndex);
     await maybeNotifyCold(effForCold, wKmH);
     await maybeNotifyWind(wKmH);
     await maybeNotifyUV(uv);
@@ -1817,7 +1811,7 @@ const handleSuggestionSelect = async (s: any) => {
 
 	    const tempReal = data.main.temp;
     setTemp(tempReal);
-    setHi(data.main.feels_like);
+    setHi(calcHIOrNull(data.main.temp, data.main.humidity));
     setHum(data.main.humidity);
     setClouds(data.clouds?.all ?? 0);
     setWeatherMain(data.weather?.[0]?.main ?? null);
@@ -2005,7 +1999,9 @@ const activeAlertEvent = useMemo(() => {
   return `${activeAlert?.event || ""} ${activeAlertDescription || ""}`.trim();
 }, [activeAlert, currentLang]);
 
-const currentFeelTemp = hi ?? temp ?? 99;
+const currentFeelTemp = Number.isFinite(data?.main?.feels_like)
+  ? data.main.feels_like
+  : temp ?? 99;
 
 const currentWeatherMain = data?.weather?.[0]?.main ?? null;
 const currentRainingNow =
@@ -2159,10 +2155,7 @@ useEffect(() => {
       const trend = buildRiskTrend(forecast, {
         // Keep unknown current observations distinct from the display/risk
         // fallbacks (which can legitimately use zero for missing wind).
-        heatIndex:
-          Number.isFinite(data?.main?.temp) || Number.isFinite(data?.main?.feels_like)
-            ? hi
-            : null,
+        heatIndex: Number.isFinite(hi) ? hi : null,
         temp: Number.isFinite(data?.main?.temp) ? data.main.temp : null,
         windKmh: Number.isFinite(data?.wind?.speed) ? windKmh : null,
         uvi,
@@ -3234,7 +3227,7 @@ return (
    Ara les governa directament el component Recommendations
    ============================================================ */}
 <Recommendations
-    temp={hi ?? data?.main?.temp ?? 0}
+    temp={hi}
     lang={i18n.resolvedLanguage || i18n.language || "ca"}
     isDay={day}
     activity={preventiveActivity}
@@ -3265,7 +3258,7 @@ return (
   quickTempToneClass={quickTempToneClass}
   temp={temp}
   feelsLikeLabel={t("feels_like")}
-  hi={hi}
+  hi={Number.isFinite(data?.main?.feels_like) ? data.main.feels_like : null}
   windKmh={windKmh}
   uvi={uvi}
   windLabel={t("current_wind")}

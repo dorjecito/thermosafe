@@ -29,7 +29,7 @@ import {
 
 import { formatLastUpdate } from "../../src/utils/formatLastUpdate";
 import { getBaseHeatRisk, getHeatRisk } from "../../src/utils/heatRisk";
-import { calcHI } from "../../src/utils/calcHI";
+import { calcHI, calcHIOrNull } from "../../src/utils/calcHI";
 import { getColdRisk, type ColdRisk } from "../../src/utils/getColdRisk";
 import { getWindRisk } from "../../src/utils/windRisk";
 import {
@@ -649,6 +649,9 @@ function createFunctionsIndexHarness(options: {
       }
       if (id === "./cleanupSubs") {
         return functionsCleanupSubs;
+      }
+      if (id === "./shared/heat-index.cjs") {
+        return createRequire(new URL("../../functions/index.js", import.meta.url))(id);
       }
       throw new Error(`unexpected require ${id}`);
     },
@@ -3287,8 +3290,178 @@ test("workWindow keeps direct heat-index rules even when engine heat factor is l
   assert.equal(getWorkWindow({ ...input, engineRisk }), "avoid");
 });
 
-test("heat index calculation is stable for representative warm and humid conditions", () => {
-  assert.equal(calcHI(30, 70), 35);
+const nwsHeatIndexReferenceCases: Array<[number, number, number]> = [
+  [25, 50, 24.9],
+  [27, 50, 27.4],
+  [30, 70, 35.0],
+  [32, 70, 40.4],
+  [33, 65, 41.4],
+  [35, 70, 50.3],
+  [38, 20, 36.7],
+  [40, 10, 36.7],
+  [28, 90, 34.0],
+  [26, 70, 26.2],
+];
+
+for (const [temperatureC, humidity, expected] of nwsHeatIndexReferenceCases) {
+  test(`Heat Index matches NWS reference at ${temperatureC}°C / ${humidity}% RH`, () => {
+    assert.equal(calcHI(temperatureC, humidity), expected, `${temperatureC}°C/${humidity}%`);
+  });
+}
+
+test("heat risk category boundaries remain at 27, 32, and 41 Celsius", () => {
+  assert.equal(getHeatRisk(26.9, "rest").class, "safe");
+  assert.equal(getHeatRisk(27, "rest").class, "mild");
+  assert.equal(getHeatRisk(31.9, "rest").class, "mild");
+  assert.equal(getHeatRisk(32, "rest").class, "moderate");
+  assert.equal(getHeatRisk(40.9, "rest").class, "moderate");
+  assert.equal(getHeatRisk(41, "rest").class, "high");
+});
+
+test("NWS heat-index results feed existing risk categories after rounding to tenths", () => {
+  assert.equal(getHeatRisk(calcHI(26, 70), "rest").class, "safe");
+  assert.equal(getHeatRisk(calcHI(27, 50), "rest").class, "mild");
+  assert.equal(getHeatRisk(calcHI(30, 70), "rest").class, "moderate");
+  assert.equal(getHeatRisk(calcHI(33, 65), "rest").class, "high");
+});
+
+test("shared NWS heat index preserves the existing activity adjustments", () => {
+  const hi = calcHI(28, 90);
+  assert.equal(hi, 34);
+  assert.equal(getHeatRisk(hi, "rest").class, "moderate");
+  assert.equal(getHeatRisk(hi, "walk").class, "high");
+  assert.equal(getHeatRisk(hi, "moderate").class, "ext");
+  assert.equal(getHeatRisk(hi, "intense").class, "ext");
+});
+
+test("heat index propagates non-finite inputs instead of returning a finite estimate", () => {
+  assert.ok(Number.isNaN(calcHI(Number.NaN, 50)));
+  assert.ok(Number.isNaN(calcHI(30, Number.NaN)));
+  assert.ok(Number.isNaN(calcHI(Number.POSITIVE_INFINITY, 50)));
+  assert.ok(Number.isNaN(calcHI(30, Number.NEGATIVE_INFINITY)));
+});
+
+test("heat index rejects negative relative humidity", () => {
+  assert.ok(Number.isNaN(calcHI(30, -1)));
+});
+
+test("heat index rejects relative humidity above 100 percent", () => {
+  assert.ok(Number.isNaN(calcHI(30, 101)));
+});
+
+test("heat index accepts the valid humidity endpoints zero and 100 percent", () => {
+  assert.ok(Number.isFinite(calcHI(30, 0)));
+  assert.ok(Number.isFinite(calcHI(30, 100)));
+});
+
+test("shared NWS heat index is used for backend push level transitions", async (t) => {
+  const scenarios = [
+    { temp: 26, hum: 70, hi: 26.2, level: 0 },
+    { temp: 28, hum: 90, hi: 34.0, level: 2 },
+    { temp: 32, hum: 70, hi: 40.4, level: 2 },
+    { temp: 33, hum: 65, hi: 41.4, level: 3 },
+  ];
+
+  for (const scenario of scenarios) {
+    await t.test(`${scenario.temp}°C / ${scenario.hum}% RH`, async () => {
+      const calculated = calcHIOrNull(scenario.temp, scenario.hum);
+      assert.equal(calculated, scenario.hi);
+      const harness = createFunctionsIndexHarness({
+        nowMs: Date.UTC(2026, 6, 20, 8, 16),
+        uvi: 0,
+        weather: { temp: scenario.temp, hum: scenario.hum },
+        subs: [{ token: `nws-${scenario.temp}`, lat: 39.49, lon: 2.91,
+          threshold: "moderate", lastHeatLevel: 0, lastDailyResetDay: "2026-07-20" }],
+      });
+
+      await harness.runWeatherV2();
+
+      assert.equal(harness.sends.length, scenario.level > 0 ? 1 : 0);
+      const subscription = harness.db.getSub(`nws-${scenario.temp}`);
+      if (scenario.level > 0) {
+        assert.equal(harness.sends[0].data.type, "heat");
+        assert.equal(Number(harness.sends[0].data.level), scenario.level);
+        assert.equal(Number(harness.sends[0].data.hi), Math.round(scenario.hi));
+        assert.equal(subscription.lastHeatLevel, scenario.level);
+      } else {
+        assert.equal(subscription.lastHeatLevel, 0);
+      }
+    });
+  }
+});
+
+test("invalid thermal observations leave heat unknown and preserve notification state", async (t) => {
+  for (const [name, weather] of [
+    ["NaN humidity", { temp: 35, hum: Number.NaN }],
+    ["out-of-range humidity", { temp: 35, hum: 101 }],
+    ["missing humidity", { temp: 35, hum: undefined }],
+    ["non-finite temperature", { temp: Number.POSITIVE_INFINITY, hum: 70 }],
+  ] as const) {
+    await t.test(name, async () => {
+      const harness = createFunctionsIndexHarness({
+        nowMs: Date.UTC(2026, 6, 20, 8, 16),
+        uvi: 0,
+        weather,
+        subs: [{ token: `unknown-heat-${name}`, lat: 39.49, lon: 2.91,
+          threshold: "moderate", lastHeatLevel: 2, lastHeatAt: 123,
+          lastDailyResetDay: "2026-07-20" }],
+      });
+
+      await harness.runWeatherV2();
+
+      assert.equal(harness.sends.length, 0);
+      const subscription = harness.db.getSub(`unknown-heat-${name}`);
+      assert.equal(subscription.lastHeatLevel, 2);
+      assert.equal(subscription.lastHeatAt, 123);
+    });
+  }
+});
+
+test("NWS heat level is preserved in a combined UV/heat push and deduplicated across crons", async () => {
+  const options = {
+    nowMs: Date.UTC(2026, 6, 20, 8, 11),
+    uvi: 7,
+    weather: { temp: 28, hum: 90 },
+    subs: [{ token: "nws-combined", lat: 39.49, lon: 2.91,
+      threshold: "moderate", lastHeatLevel: 0, lastUvLevel: 0,
+      lastUvResetDay: "2026-07-20", lastDailyResetDay: "2026-07-20" }],
+  };
+  const harness = createFunctionsIndexHarness(options);
+
+  await harness.runUvV2();
+
+  assert.equal(harness.sends.length, 1);
+  assert.equal(harness.sends[0].data.type, "combined");
+  assert.equal(harness.sends[0].data.hi, "34");
+  assert.equal(harness.sends[0].data.heatLevel, "2");
+  assert.equal(harness.db.getSub("nws-combined").lastHeatLevel, 2);
+
+  options.nowMs += 5 * 60 * 1000;
+  await harness.runWeatherV2();
+
+  assert.equal(harness.sends.length, 1);
+  assert.equal(harness.db.getSub("nws-combined").lastHeatAt, options.nowMs - 5 * 60 * 1000);
+});
+
+test("UV notification stays UV-only when invalid humidity makes heat unknown", async () => {
+  const harness = createFunctionsIndexHarness({
+    nowMs: Date.UTC(2026, 6, 20, 8, 11),
+    uvi: 7,
+    weather: { temp: 35, hum: undefined },
+    subs: [{ token: "uv-unknown-heat", lat: 39.49, lon: 2.91,
+      threshold: "moderate", lastHeatLevel: 1, lastHeatAt: 123,
+      lastUvLevel: 0, lastUvResetDay: "2026-07-20", lastDailyResetDay: "2026-07-20" }],
+  });
+
+  await harness.runUvV2();
+
+  assert.equal(harness.sends.length, 1);
+  assert.equal(harness.sends[0].data.type, "uv");
+  assert.equal(harness.sends[0].data.heatLevel, undefined);
+  const subscription = harness.db.getSub("uv-unknown-heat");
+  assert.equal(subscription.lastHeatLevel, 1);
+  assert.equal(subscription.lastHeatAt, 123);
+  assert.equal(subscription.lastUvLevel, 2);
 });
 
 test("cold risk follows effective-temperature thresholds", () => {
@@ -4723,6 +4896,22 @@ test("risk score engine mirrors basic heat risk cases", () => {
   assert.equal(high.primary?.factor, "heat");
   assert.equal(high.primary?.severity, 3);
   assert.equal(high.primary?.level, "high");
+});
+
+test("risk score engine keeps unavailable Heat Index distinct from safe heat", () => {
+  const result = evaluateRiskScore({ heatIndex: null });
+  const heat = result.factors.find((factor) => factor.factor === "heat");
+
+  assert.equal(heat?.active, false);
+  assert.equal(heat?.severity, null);
+  assert.equal(heat?.level, "unknown");
+  assert.equal(heat?.value, null);
+  assert.equal(heat?.labelKey, "heat_unknown");
+  assert.equal(result.primary, null);
+
+  const safe = evaluateRiskScore({ heatIndex: 26.9 }).factors.find((factor) => factor.factor === "heat");
+  assert.equal(safe?.severity, 0);
+  assert.equal(safe?.level, "safe");
 });
 
 test("risk score engine mirrors UV bands", () => {
@@ -7256,11 +7445,27 @@ test("official alert primary status keeps a generic title and describes the know
 
 const trendNow = new Date("2026-06-29T10:00:00Z");
 
+function forecastTemperatureForHeatIndex(target: number, humidity = 50) {
+  let closestTemperature = 26.7;
+  let closestDistance = Number.POSITIVE_INFINITY;
+  for (let temperature = 26.7; temperature <= 80; temperature += 0.001) {
+    const heatIndex = calcHIOrNull(temperature, humidity)!;
+    if (heatIndex === target) return temperature;
+    const distance = Math.abs(heatIndex - target);
+    if (distance < closestDistance) {
+      closestDistance = distance;
+      closestTemperature = temperature;
+    }
+  }
+  return closestTemperature;
+}
+
 function makeTrendForecast(
   hours: Array<{
     offsetHours: number;
     temp?: number;
     feels_like?: number;
+    humidity?: number;
     windKmh?: number;
     uvi?: number;
   }>
@@ -7271,6 +7476,7 @@ function makeTrendForecast(
     hourly: hours.map(({ offsetHours, windKmh, ...rest }) => ({
       dt: nowSeconds + offsetHours * 60 * 60,
       wind_speed: typeof windKmh === "number" ? windKmh / 3.6 : undefined,
+      humidity: Object.hasOwn(rest, "humidity") ? rest.humidity : 50,
       ...rest,
     })),
   };
@@ -7282,7 +7488,7 @@ test("risk trend detects heat-index rise inside the same risk category", () => {
       { offsetHours: 1, temp: 29.8, feels_like: 29.8, windKmh: 5, uvi: 2 },
       { offsetHours: 2, temp: 31.2, feels_like: 31.2, windKmh: 5, uvi: 2 },
     ]),
-    { temp: 28, heatIndex: 28, windKmh: 5, uvi: 2 },
+    { temp: 28, heatIndex: calcHIOrNull(28, 50), windKmh: 5, uvi: 2 },
     trendNow
   );
 
@@ -7384,7 +7590,7 @@ test("risk trend detects real improvement when no factor worsens", () => {
       { offsetHours: 1, temp: 28.4, feels_like: 28.4, windKmh: 5, uvi: 1 },
       { offsetHours: 2, temp: 28.2, feels_like: 28.2, windKmh: 5, uvi: 1 },
     ]),
-    { temp: 31.5, heatIndex: 31.5, windKmh: 5, uvi: 1 },
+    { temp: 31.5, heatIndex: calcHIOrNull(31.5, 50), windKmh: 5, uvi: 1 },
     trendNow
   );
 
@@ -7423,10 +7629,10 @@ test("risk trend identifies cold as the dominant worsening factor", () => {
 test("risk trend keeps at most two similarly weighted factors", () => {
   const trend = buildRiskTrend(
     makeTrendForecast([
-      { offsetHours: 1, temp: 31, feels_like: 31, windKmh: 24, uvi: 2 },
-      { offsetHours: 2, temp: 31, feels_like: 31, windKmh: 24, uvi: 2 },
+      { offsetHours: 1, temp: 33, feels_like: 33, windKmh: 26.5, uvi: 2 },
+      { offsetHours: 2, temp: 33, feels_like: 33, windKmh: 26.5, uvi: 2 },
     ]),
-    { temp: 28, heatIndex: 28, windKmh: 15, uvi: 2 },
+    { temp: 31, heatIndex: calcHIOrNull(31, 50), windKmh: 15.5, uvi: 2 },
     trendNow
   );
 
@@ -9642,8 +9848,9 @@ test("heat sensitivity retains increases, decreases and the maximum-future compa
     [35, [38, 40], "worsening"], [45, [40, 35], "improving"],
     [40, [36, 35], "improving"], [40, [39, 35], "stable"],
   ] as const) {
-    const result = buildRiskTrend(makeTrendForecast(future.map((temp, i) => ({
-      offsetHours: i + 1, temp, feels_like: temp, windKmh: 0, uvi: 0,
+    const result = buildRiskTrend(makeTrendForecast(future.map((targetHeatIndex, i) => ({
+      offsetHours: i + 1, temp: forecastTemperatureForHeatIndex(targetHeatIndex),
+      humidity: 50, windKmh: 0, uvi: 0,
     }))), { temp: current, heatIndex: current, windKmh: 0, uvi: 0 }, trendNow);
     assert.equal(result?.direction, direction);
     assert.deepEqual(result?.factors, direction === "stable" ? [] : ["heat"]);
@@ -9661,8 +9868,8 @@ test("secondary heat context respects activity between 24 and 27 degrees", () =>
       [27, 24, "improving", "improving"],
     ] as const) {
       const result = buildRiskTrend(makeTrendForecast([1, 2].map(offsetHours => ({
-        offsetHours, temp: future, feels_like: future, windKmh: 50, uvi: 0,
-      }))), { temp: current, heatIndex: current, windKmh: 50, uvi: 0, activity }, trendNow);
+        offsetHours, temp: future, feels_like: future, humidity: 70, windKmh: 50, uvi: 0,
+      }))), { temp: current, heatIndex: calcHIOrNull(current, 70), windKmh: 50, uvi: 0, activity }, trendNow);
       const direction = activity === "rest" ? restDirection : activeDirection;
       assert.equal(result?.direction, direction, `${activity}: ${current} -> ${future}`);
       assert.deepEqual(result?.factors, direction === "stable" ? [] : ["heat"]);
@@ -9671,18 +9878,21 @@ test("secondary heat context respects activity between 24 and 27 degrees", () =>
 });
 
 test("secondary heat sensitivity preserves the exact 3 and 6 degree boundaries", () => {
+  const currentHeatIndex = 32;
   for (const [delta, direction] of [
-    [2.99, "stable"], [3, "worsening"], [5.99, "worsening"], [6, "worsening_clearly"],
+    [2.9, "stable"], [3, "worsening"], [5.9, "worsening"], [6, "worsening_clearly"],
   ] as const) {
     const result = buildRiskTrend(makeTrendForecast([1, 2].map(offsetHours => ({
-      offsetHours, temp: 33 + delta, feels_like: 33 + delta, windKmh: 0, uvi: 0,
-    }))), { temp: 33, heatIndex: 33, windKmh: 0, uvi: 0 }, trendNow);
+      offsetHours, temp: forecastTemperatureForHeatIndex(currentHeatIndex + delta),
+      humidity: 50, windKmh: 0, uvi: 0,
+    }))), { temp: 33, heatIndex: currentHeatIndex, windKmh: 0, uvi: 0 }, trendNow);
     assert.equal(result?.direction, direction);
     assert.deepEqual(result?.factors, direction === "stable" ? [] : ["heat"]);
   }
-  for (const [delta, direction] of [[2.99, "stable"], [3, "improving"]] as const) {
+  for (const [delta, direction] of [[2.9, "stable"], [3, "improving"]] as const) {
     const result = buildRiskTrend(makeTrendForecast([1, 2].map(offsetHours => ({
-      offsetHours, temp: 40 - delta, feels_like: 40 - delta, windKmh: 0, uvi: 0,
+      offsetHours, temp: forecastTemperatureForHeatIndex(40 - delta),
+      humidity: 50, windKmh: 0, uvi: 0,
     }))), { temp: 40, heatIndex: 40, windKmh: 0, uvi: 0 }, trendNow);
     assert.equal(result?.direction, direction);
   }
@@ -9729,7 +9939,7 @@ test("cold wind-chill category changes and valid clear UV and wind trends remain
   }
 });
 
-test("heat sensitivity excludes non-finite comparisons and preserves finite temperature fallback", () => {
+test("heat sensitivity excludes non-finite comparisons and unknown heat indices", () => {
   for (const invalid of [NaN, Infinity, -Infinity]) {
     for (const missingCurrent of [true, false]) {
       const result = buildRiskTrend(makeTrendForecast([1, 2].map(offsetHours => ({
@@ -9740,11 +9950,11 @@ test("heat sensitivity excludes non-finite comparisons and preserves finite temp
       assert.equal(result, null);
     }
   }
-  const fallback = buildRiskTrend(makeTrendForecast([1, 2].map(offsetHours => ({
+  const unknownHeat = buildRiskTrend(makeTrendForecast([1, 2].map(offsetHours => ({
     offsetHours, temp: 38, windKmh: 0, uvi: 0,
   }))), { temp: 35, heatIndex: null, windKmh: 0, uvi: 0 }, trendNow);
-  assert.equal(fallback?.direction, "worsening");
-  assert.deepEqual(fallback?.factors, ["heat"]);
+  assert.notEqual(unknownHeat?.direction, "worsening");
+  assert.ok(!unknownHeat?.factors.includes("heat"));
 });
 
 test("missing current or future factors cannot manufacture improving or stable trends", () => {
@@ -9808,12 +10018,17 @@ test("partial forecasts retain supported UV, wind and heat worsening", () => {
   assert.equal(heat?.partial, true);
 });
 
-test("heat uses finite temperature when feels-like is absent and cold requires wind below 10 C", () => {
+test("heat uses the NWS index when temperature and humidity are valid; cold requires wind below 10 C", () => {
   const heat = buildRiskTrend(makeTrendForecast([1, 2].map((offsetHours) => ({
-    offsetHours, temp: 42, feels_like: undefined, windKmh: 0, uvi: 0,
-  }))), { temp: 39, heatIndex: null, windKmh: 0, uvi: 0 }, trendNow);
+    offsetHours, temp: 42, feels_like: undefined, humidity: 50, windKmh: 0, uvi: 0,
+  }))), { temp: 39, heatIndex: calcHIOrNull(39, 50), windKmh: 0, uvi: 0 }, trendNow);
   assert.equal(heat?.direction, "worsening");
   assert.deepEqual(heat?.factors, ["heat"]);
+
+  const unknownHeat = buildRiskTrend(makeTrendForecast([1, 2].map((offsetHours) => ({
+    offsetHours, temp: 42, feels_like: 42, humidity: undefined, windKmh: 0, uvi: 0,
+  }))), { temp: 39, heatIndex: null, windKmh: 0, uvi: 0 }, trendNow);
+  assert.equal(unknownHeat, null);
 
   const coldUnknownWind = buildRiskTrend(makeTrendForecast([1, 2].map((offsetHours) => ({
     offsetHours, temp: -8, feels_like: -8, windKmh: undefined, uvi: 0,
@@ -9839,10 +10054,12 @@ test("a partial secondary improvement needs every forecast sample", () => {
     const current = { temp: factor === "heat" ? 45 : 20, heatIndex: factor === "heat" ? 45 : 20,
       windKmh: factor === "wind" ? 55 : 0, uvi: 0 };
     const result = buildRiskTrend(makeTrendForecast([
-      { offsetHours: 1, temp: factor === "heat" ? 40 : 20, feels_like: factor === "heat" ? 40 : 20,
+      { offsetHours: 1, temp: factor === "heat" ? forecastTemperatureForHeatIndex(42) : 20,
+        humidity: factor === "heat" ? 50 : undefined,
         windKmh: factor === "wind" ? 40 : 0, uvi: 0 },
       { offsetHours: 2, temp: factor === "heat" ? undefined : 20,
         feels_like: factor === "heat" ? undefined : 20,
+        humidity: undefined,
         windKmh: factor === "wind" ? undefined : 0, uvi: 0 },
     ]), current, trendNow);
     assert.equal(result, null, `${factor} must not improve from only one usable sample`);
@@ -9855,8 +10072,9 @@ test("insufficiently comparable data returns unavailable, while complete real im
   }))), { temp: 20, heatIndex: 20, windKmh: 0, uvi: 8 }, trendNow);
   assert.equal(incomplete, null);
 
-  const complete = buildRiskTrend(makeTrendForecast([40, 35].map((temp, index) => ({
-    offsetHours: index + 1, temp, feels_like: temp, windKmh: 0, uvi: 0,
+  const complete = buildRiskTrend(makeTrendForecast([42, 40].map((targetHeatIndex, index) => ({
+    offsetHours: index + 1, temp: forecastTemperatureForHeatIndex(targetHeatIndex),
+    humidity: 50, windKmh: 0, uvi: 0,
   }))), { temp: 45, heatIndex: 45, windKmh: 0, uvi: 0 }, trendNow);
   assert.equal(complete?.direction, "improving");
   assert.deepEqual(complete?.factors, ["heat"]);
@@ -9884,7 +10102,15 @@ test("secondary improvements reject an incomplete thermal sample without contami
 test("current trend input keeps missing wind distinct from a real zero wind reading", () => {
   const source = readFileSync("src/App.tsx", "utf8");
   assert.match(source, /windKmh:\s*Number\.isFinite\(data\?\.wind\?\.speed\)\s*\?\s*windKmh\s*:\s*null/);
-  assert.match(source, /heatIndex:\s*\n?\s*Number\.isFinite\(data\?\.main\?\.temp\)\s*\|\|\s*Number\.isFinite\(data\?\.main\?\.feels_like\)/);
+  assert.match(source, /heatIndex:\s*Number\.isFinite\(hi\)\s*\?\s*hi\s*:\s*null/);
+});
+
+test("NWS risk index remains separate from provider feels-like presentation and context", () => {
+  const source = readFileSync("src/App.tsx", "utf8");
+  assert.match(source, /setHi\(calcHIOrNull\(data\.main\.temp, data\.main\.humidity\)\)/);
+  assert.match(source, /const currentFeelTemp = Number\.isFinite\(data\?\.main\?\.feels_like\)/);
+  assert.match(source, /hi=\{Number\.isFinite\(data\?\.main\?\.feels_like\)\s*\?\s*data\.main\.feels_like\s*:\s*null\}/);
+  assert.match(source, /heatIndex:\s*hi/);
 });
 
 test("partial risk selection follows future severity rather than the largest factor delta", () => {
@@ -9911,12 +10137,14 @@ test("partial risk selection follows future severity rather than the largest fac
 
 test("partial dominant-risk comparison blocks secondary worsening when the known maximum falls", () => {
   const fallingDominant = buildRiskTrend(makeTrendForecast([1, 2].map((offsetHours) => ({
-    offsetHours, temp: 42, feels_like: 42, windKmh: undefined, uvi: 10,
+    offsetHours, temp: forecastTemperatureForHeatIndex(50), humidity: 50,
+    windKmh: undefined, uvi: 10,
   }))), { temp: 55, heatIndex: 55, windKmh: 0, uvi: 0 }, trendNow);
   assert.equal(fallingDominant, null);
 
   const stableDominant = buildRiskTrend(makeTrendForecast([1, 2].map((offsetHours) => ({
-    offsetHours, temp: 55, feels_like: 55, windKmh: 12, uvi: undefined,
+    offsetHours, temp: forecastTemperatureForHeatIndex(56), humidity: 50,
+    windKmh: 12, uvi: undefined,
   }))), { temp: 55, heatIndex: 55, windKmh: 0, uvi: 0 }, trendNow);
   assert.equal(stableDominant?.direction, "worsening");
   assert.deepEqual(stableDominant?.factors, ["wind"]);

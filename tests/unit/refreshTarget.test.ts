@@ -4,6 +4,7 @@ import { createRequire } from "node:module";
 import test from "node:test";
 import vm from "node:vm";
 import { createRefreshGate, getRefreshCoords, getRefreshTarget } from "../../src/utils/dataRefresh";
+import { calcHIOrNull } from "../../src/utils/calcHI";
 
 // Execute the actual App handlers with service spies, including responses whose
 // coordinates differ from the selected point and reverse-geocoded display names.
@@ -16,7 +17,7 @@ export function harness(options: { pushEnabled?: boolean } = {}) {
   const calls: unknown[][] = [];
   const response = {
     name: "Ibiza", coord: { lat: 38.9088, lon: 1.433 },
-    main: { temp: 24, feels_like: 24, humidity: 60 },
+    main: { temp: 30, feels_like: 25, humidity: 70 },
     wind: { speed: 2 }, weather: [{ main: "Clouds" }],
   };
   const context: Record<string, any> = {
@@ -26,6 +27,7 @@ export function harness(options: { pushEnabled?: boolean } = {}) {
     lastSuccessfulDataRefreshRef: { current: null },
     startRequest: () => 1, isStaleRequest: () => false,
     getRefreshTarget, getRefreshCoords,
+    calcHIOrNull,
     getWeatherByCoords: async (...args: unknown[]) => { calls.push(["coords", ...args]); return response; },
     getWeatherByCity: async (...args: unknown[]) => { calls.push(["city", ...args]); return response; },
     getLocationNameFromCoords: async () => "Ibiza, Balearic Islands, ES",
@@ -38,6 +40,7 @@ export function harness(options: { pushEnabled?: boolean } = {}) {
     collapseSearchPanel() {}, locate: async () => { throw new Error("Unexpected GPS lookup"); },
   };
   for (const name of handlers.match(/\bset[A-Z]\w*/g) ?? []) context[name] = () => {};
+  context.setHi = (value: unknown) => { context.hi = value; };
   for (const key of ["city", "realCity", "lat", "lon", "dataSource"]) {
     context[`set${key[0].toUpperCase()}${key.slice(1)}`] = (value: unknown) => { context[key] = value; };
   }
@@ -52,6 +55,13 @@ export function harness(options: { pushEnabled?: boolean } = {}) {
 }
 
 const eivissa = { name: "Eivissa", state: "Balearic Islands", country: "ES", lat: 38.9743901, lon: 1.4197463 };
+
+test("App weather handler derives risk Heat Index from temperature and humidity, not feels-like", async () => {
+  const h = harness();
+  await h.fetchWeather("Llucmajor");
+  assert.equal(h.context.hi, calcHIOrNull(30, 70));
+  assert.notEqual(h.context.hi, 25);
+});
 
 test("suggestion and manual refresh use exactly the selected coordinates, never city", async () => {
   const h = harness();

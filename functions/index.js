@@ -19,6 +19,7 @@ const {
   isAemetHeatRelatedAlert,
 } = require("./aemetAlerts");
 const { handleAemetTranslationRequest } = require("./aemetTranslations");
+const { calcHeatIndexCelsius } = require("./shared/heat-index.cjs");
 const {
   getCleanupDocLabel,
   getCleanupValidationErrorCategory,
@@ -248,21 +249,6 @@ function levelFromINSST(hi) {
     gl: "Nivel 1 INSST – Sen risco apreciable",
     en: "INSST Level 1 – No appreciable risk",
   };
-}
-
-function calcHI(t, h) {
-  const hi =
-    -8.784695 +
-    1.61139411 * t +
-    2.338549 * h -
-    0.14611605 * t * h -
-    0.012308094 * t * t -
-    0.016424828 * h * h +
-    0.002211732 * t * t * h +
-    0.00072546 * t * h * h -
-    0.000003582 * t * t * h * h;
-
-  return Math.round(hi * 10) / 10;
 }
 
 function isQuietHours(nowUtcMs, tzOffsetSec) {
@@ -1497,6 +1483,7 @@ exports.cronCheckWeatherRiskV2 = onSchedule(
             skipped: 0,
             combinedSent: 0,
             reasons: {
+              invalidInput: 0,
               noLevelIncrease: 0,
               belowThreshold: 0,
               blockedByAemet: 0,
@@ -1632,8 +1619,8 @@ exports.cronCheckWeatherRiskV2 = onSchedule(
               const updates = {};
 
             // ───────── CALOR ─────────
-            const hi = w.temp < 18 ? w.temp : calcHI(w.temp, w.hum);
-            const heatInfo = levelFromINSST(hi);
+            const hi = calcHeatIndexCelsius(w.temp, w.hum);
+            const heatInfo = hi === null ? null : levelFromINSST(hi);
             const prevHeatLevel = currentLastHeatLevel;
 
             let aemetLevel = 0;
@@ -1670,22 +1657,25 @@ exports.cronCheckWeatherRiskV2 = onSchedule(
               aemetDescription
             );
 
-            stats.heat.lastValue = hi;
+            stats.heat.lastValue = hi;
 
-            const heatLevelIncreases = shouldNotifyLevelIncrease(
-              prevHeatLevel,
-              heatInfo.level
-            );
+            const heatLevelIncreases = heatInfo !== null && shouldNotifyLevelIncrease(
+              prevHeatLevel,
+              heatInfo.level
+            );
 
-            const heatThresholdOk = meetsUserThreshold(
-              heatInfo.level,
-              sub.threshold
-            );
+            const heatThresholdOk = heatInfo !== null && meetsUserThreshold(
+              heatInfo.level,
+              sub.threshold
+            );
 
             let heatSent = false;
             let heatCombinedSent = false;
 
-            if (!heatLevelIncreases) {
+            if (!heatInfo) {
+              stats.heat.skipped++;
+              stats.heat.reasons.invalidInput++;
+            } else if (!heatLevelIncreases) {
               stats.heat.skipped++;
               stats.heat.reasons.noLevelIncrease++;
             } else if (!heatThresholdOk) {
@@ -1827,7 +1817,7 @@ exports.cronCheckWeatherRiskV2 = onSchedule(
               hum: w.hum,
               hi,
               prevLevel: prevHeatLevel,
-              nextLevel: heatInfo.level,
+              nextLevel: heatInfo?.level ?? null,
               threshold: sub.threshold,
               aemetLevel,
               aemetEvent,
@@ -2869,8 +2859,8 @@ exports.cronCheckUvRiskV2 = onSchedule(
               uvLevelsByZone[zoneKey] ?? sub.lastUvLevel ?? 0
             );
 
-            const hi = w.temp < 18 ? w.temp : calcHI(w.temp, w.hum);
-            const heatInfo = levelFromINSST(hi);
+            const hi = calcHeatIndexCelsius(w.temp, w.hum);
+            const heatInfo = hi === null ? null : levelFromINSST(hi);
 
             let aemetLevel = 0;
             let aemetEvent = "";
@@ -2921,7 +2911,7 @@ exports.cronCheckUvRiskV2 = onSchedule(
               hi,
               prevLevel,
               nextLevel: currentUvLevel,
-              heatLevel: heatInfo.level,
+              heatLevel: heatInfo?.level ?? null,
               threshold: sub.threshold,
               aemetLevel,
               aemetEvent,
@@ -2981,7 +2971,7 @@ exports.cronCheckUvRiskV2 = onSchedule(
                   combined.hasHeat &&
                   combined.hasUv &&
                   currentUvLevel > 0 &&
-                  heatInfo.level > 0;
+                  heatInfo?.level > 0;
 
                 if (isCombined) {
                   console.log("[UV V2][COMBINED][SEND]", {
@@ -2991,7 +2981,7 @@ exports.cronCheckUvRiskV2 = onSchedule(
                     uvi,
                     hi,
                    uvLevel: currentUvLevel,
-                   heatLevel: heatInfo.level,
+                   heatLevel: heatInfo?.level ?? null,
                     aemetContext: hasAemetContextForUv,
                     reason: hasAemetContextForUv ? "uvWithAemet" : "heat_uv",
                   });

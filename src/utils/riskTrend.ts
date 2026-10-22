@@ -2,6 +2,7 @@ import type { HourlyForecastItem, HourlyForecastResponse } from "../services/wea
 import { WINDCHILL_TEMP_MAX, WINDCHILL_WIND_MIN } from "../constants/riskThresholds";
 import { getColdRisk } from "./getColdRisk";
 import { getHeatRisk } from "./heatRisk";
+import { calcHIOrNull } from "./calcHI";
 import { getUvLevelIndex } from "./uv";
 import { getWindRisk } from "./windRisk";
 
@@ -108,7 +109,7 @@ function uvSeverity(uvi?: number | null) {
 
 function scoreConditions(input: CurrentRiskInput) {
   const temp = finiteNumber(input.temp);
-  const heatIndex = finiteNumber(input.heatIndex) ?? temp;
+  const heatIndex = finiteNumber(input.heatIndex);
   const windKmh = finiteNumber(input.windKmh);
 
   const heatScore =
@@ -146,7 +147,7 @@ function scoreConditions(input: CurrentRiskInput) {
 function forecastItemToCurrentInput(item: HourlyForecastItem, activity: ActivityLevel): CurrentRiskInput {
   return {
     temp: item.temp,
-    heatIndex: item.feels_like ?? item.temp,
+    heatIndex: forecastHeatIndex(item),
     windKmh:
       typeof item.wind_speed === "number" && Number.isFinite(item.wind_speed)
         ? item.wind_speed * 3.6
@@ -157,7 +158,7 @@ function forecastItemToCurrentInput(item: HourlyForecastItem, activity: Activity
 }
 
 function forecastHeatIndex(item: HourlyForecastItem) {
-  return finiteNumber(item.feels_like) ?? finiteNumber(item.temp);
+  return calcHIOrNull(item.temp, item.humidity);
 }
 
 function forecastWindKmh(item: HourlyForecastItem) {
@@ -190,7 +191,7 @@ function strongestIncrease(
   item: HourlyForecastItem,
   current: CurrentRiskInput
 ): { value: number; clear: boolean; factors: RiskTrendFactor[] } {
-  const currentHeatIndex = finiteNumber(current.heatIndex) ?? finiteNumber(current.temp);
+  const currentHeatIndex = finiteNumber(current.heatIndex);
   const futureHeatIndex = forecastHeatIndex(item);
   const heatDelta =
     currentHeatIndex !== null && futureHeatIndex !== null &&
@@ -267,7 +268,7 @@ function buildSensitivityTrend(current: CurrentRiskInput, nextHours: HourlyForec
     } as const;
   }
 
-  const currentHeatIndex = finiteNumber(current.heatIndex) ?? finiteNumber(current.temp);
+  const currentHeatIndex = finiteNumber(current.heatIndex);
   const futureHeatValues = nextHours.map(forecastHeatIndex);
   const heatImproves =
     currentHeatIndex !== null &&
@@ -352,7 +353,10 @@ export function buildRiskTrend(
       const factors = factorOrder.filter((factor) => {
         const futureScore = entry.scores[factor];
         const previousScore = currentRisk.scores[factor];
-        return futureScore === entry.score && previousScore !== null && futureScore > previousScore;
+        return futureScore !== null &&
+          previousScore !== null &&
+          futureScore === entry.score &&
+          futureScore > previousScore;
       }).slice(0, 2);
       return factors.length > 0 ? [{ ...entry, factors }] : [];
     });
@@ -404,7 +408,13 @@ export function buildRiskTrend(
   // Complete data follows the existing global severity comparison unchanged.
   if (currentScore === null) return null;
 
-  const peak = scored.reduce((best, next) => (next.score > best.score ? next : best), scored[0]);
+  const peak = scored.reduce(
+    (best, next) =>
+      next.score !== null && (best.score === null || next.score > best.score)
+        ? next
+        : best,
+    scored[0]
+  );
   if (peak.score === null) return null;
   const maxScore = peak.score;
   const delta = maxScore - currentScore;

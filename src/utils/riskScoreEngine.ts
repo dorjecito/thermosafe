@@ -12,7 +12,7 @@ export type FactorRisk = {
   factor: RiskFactor;
   active: boolean;
   level: string;
-  severity: RiskSeverity;
+  severity: RiskSeverity | null;
   value: number | null;
   labelKey: string;
   reasonKey?: string;
@@ -73,7 +73,7 @@ const factorTieOrder: Record<RiskFactor, number> = {
 
 function getFactorTieOrder(factor: FactorRisk): number {
   if (factor.factor === "wind") {
-    return factor.severity >= 3 ? 3 : factorTieOrder.wind;
+    return factor.severity !== null && factor.severity >= 3 ? 3 : factorTieOrder.wind;
   }
 
   return factorTieOrder[factor.factor];
@@ -99,7 +99,7 @@ const uvLabelBySeverity: Record<UvLevelIndex, string> = {
 function sortFactorsByPriority(factors: FactorRisk[]): FactorRisk[] {
   return [...factors].sort(
     (a, b) =>
-      b.severity - a.severity || getFactorTieOrder(b) - getFactorTieOrder(a)
+      (b.severity ?? -1) - (a.severity ?? -1) || getFactorTieOrder(b) - getFactorTieOrder(a)
   );
 }
 
@@ -107,16 +107,16 @@ function createHeatFactor(input: RiskEngineInput): FactorRisk {
   const heatIndex = finiteNumber(input.heatIndex);
   const heatRisk =
     heatIndex !== null ? getHeatRisk(heatIndex, input.activity || "rest") : null;
-  const severity = heatRisk ? heatSeverityByClass[heatRisk.class] : 0;
+  const severity = heatRisk ? heatSeverityByClass[heatRisk.class] : null;
 
   return {
     factor: "heat",
-    active: severity > 0,
+    active: severity !== null && severity > 0,
     severity,
-    level: heatRisk?.class || "safe",
+    level: heatRisk?.class || "unknown",
     value: heatIndex,
-    labelKey: `heat_${heatRisk?.class || "safe"}`,
-    reasonKey: `riskScore.heat.${heatRisk?.class || "safe"}`,
+    labelKey: heatRisk ? `heat_${heatRisk.class}` : "heat_unknown",
+    reasonKey: `riskScore.heat.${heatRisk?.class || "unknown"}`,
   };
 }
 
@@ -173,7 +173,7 @@ function createWindFactor(input: RiskEngineInput): FactorRisk {
 function pickPrimaryFactor(factors: FactorRisk[]): FactorRisk | null {
   const sorted = sortFactorsByPriority(factors);
   const primary = sorted[0];
-  return primary && primary.severity > 0 ? primary : null;
+  return primary && primary.severity !== null && primary.severity > 0 ? primary : null;
 }
 
 export function evaluateRiskScore(input: RiskEngineInput): RiskScoreResult {
