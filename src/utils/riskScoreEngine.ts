@@ -139,7 +139,19 @@ function createColdFactor(input: RiskEngineInput): FactorRisk {
 
 function createUvFactor(input: RiskEngineInput): FactorRisk {
   const uvi = finiteNumber(input.uvi);
-  const uvLevel: UvLevelIndex = getUvLevelIndex(uvi);
+  const uvLevel: UvLevelIndex | null = getUvLevelIndex(uvi);
+  if (uvLevel === null) {
+    return {
+      factor: "uv",
+      active: false,
+      severity: null,
+      level: "unknown",
+      value: null,
+      labelKey: "uv_unknown",
+      reasonKey: "riskScore.uv.unknown",
+    };
+  }
+
   const severity = uvLevel as RiskSeverity;
   const level = uvLabelBySeverity[uvLevel];
 

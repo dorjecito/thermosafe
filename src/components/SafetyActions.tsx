@@ -108,7 +108,7 @@ export default function SafetyActions({
     }
 
     // ☀️ UV
-    if (typeof uvi === "number" && getUvLevelIndex(uvi) >= 1) {
+    if (typeof uvi === "number" && Number.isFinite(uvi) && uvi >= 0 && (getUvLevelIndex(uvi) ?? 0) >= 1) {
       riskLines.push(`• ${t("uvi")}: ${uvi.toFixed(1)}`);
     }
 

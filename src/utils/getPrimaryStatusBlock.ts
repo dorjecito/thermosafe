@@ -24,7 +24,7 @@ type PrimaryStatusBlockArgs = {
   heatRisk: HeatRiskLike;
   coldRisk: string | null;
   windRisk: string | null;
-  uvi: number | null;
+  uvi: number | null | undefined;
   day: boolean;
   isLateDay?: boolean;
   heatDayPhase?: HeatDayPhase;
@@ -376,6 +376,14 @@ export function getPrimaryStatusBlock({
   // ☀️ UV
   if (primary.kind === "uv" && day) {
     const uvLevel = getUvLevelIndex(uvi);
+    if (uvLevel === null) {
+      return {
+        icon: "ℹ️",
+        title: tr("uv_data_unavailable_title", "Avaluació incompleta"),
+        text: tr("uv_data_unavailable_text", "L’índex UV actual no està disponible i aquest risc no es pot valorar."),
+        className: "status-card status-warning",
+      };
+    }
     let uvTitle = tr("primaryStatus.uv.high", "Radiació UV alta");
 
     if (uvLevel === 4) uvTitle = tr("primaryStatus.uv.extreme", "Radiació UV extrema");
@@ -393,6 +401,16 @@ export function getPrimaryStatusBlock({
         t("highUVIWarning") ||
         "Utilitza protecció solar i redueix l’exposició directa.",
       className: "status-card status-uv",
+    };
+  }
+
+  // 🟢 SITUACIÓ SENSE RISCOS CONEGUTS; UV desconegut no confirma seguretat.
+  if (day && getUvLevelIndex(uvi) === null) {
+    return {
+      icon: "ℹ️",
+      title: tr("uv_data_unavailable_title", "Avaluació incompleta"),
+      text: tr("uv_data_unavailable_text", "L’índex UV actual no està disponible i aquest risc no es pot valorar."),
+      className: "status-card status-warning",
     };
   }
 

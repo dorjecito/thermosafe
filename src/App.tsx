@@ -2119,8 +2119,15 @@ const aemetOnlyCaution = useMemo(
 const workWindowLang = currentLang;
 const workWindowTitle = useMemo(() => getWorkWindowTitle(workWindowLang), [workWindowLang]);
 const workWindowText = useMemo(
-  () => getWorkWindowText(workWindow, workWindowLang, aemetActive, undefined, aemetOnlyCaution),
-  [workWindow, workWindowLang, aemetActive, aemetOnlyCaution]
+  () => getWorkWindowText(
+    workWindow,
+    workWindowLang,
+    aemetActive,
+    undefined,
+    aemetOnlyCaution,
+    day && !(typeof uvi === "number" && Number.isFinite(uvi) && uvi >= 0)
+  ),
+  [workWindow, workWindowLang, aemetActive, aemetOnlyCaution, day, uvi]
 );
 
 useEffect(() => {
@@ -3460,7 +3467,7 @@ return (
 	    <div className="uv-integrated-controls">
 	      <UVScale
 	        lang={currentLang as any}
-	        uvi={uvi ?? 0}
+	        uvi={uvi}
 	      />
 
 	      <div className="uv-skin-toggle-wrap">

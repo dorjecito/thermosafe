@@ -171,7 +171,7 @@ export default function UVSafeTime({
 }: Props) {
   const t = TXT[lang] ?? TXT.ca;
 
-  const hasValidUvi = typeof uvi === "number" && Number.isFinite(uvi);
+  const hasValidUvi = typeof uvi === "number" && Number.isFinite(uvi) && uvi >= 0;
   const isNight = hasValidUvi && (uvi as number) <= 0;
   const isVeryLowUv = hasValidUvi && (uvi as number) > 0 && (uvi as number) <= 0.5;
   const shouldShowTime = hasValidUvi && (uvi as number) >= MIN_UV_TO_SHOW_EXPOSURE_TIME;

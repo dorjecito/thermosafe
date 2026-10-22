@@ -8,7 +8,8 @@ export function getRiskIcons(
 ): string {
   const icons = new Set<string>();
 
-  const hasUvRisk = getUvLevelIndex(uvi) >= 1;
+  const uvLevel = getUvLevelIndex(uvi);
+  const hasUvRisk = uvLevel !== null && uvLevel >= 1;
 
   const hasHeatRisk =
     Boolean(heatRisk?.isModerate || heatRisk?.isHigh || heatRisk?.isExtreme);

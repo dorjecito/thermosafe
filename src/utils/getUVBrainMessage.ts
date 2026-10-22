@@ -1,13 +1,13 @@
 import { getUvLevelIndex } from "./uv";
 
 export function getUVBrainMessage(
-  uvi: number | null,
+  uvi: number | null | undefined,
   lang: string = "ca"
 ): string {
-  if (uvi === null || Number.isNaN(uvi)) return "";
+  const level = getUvLevelIndex(uvi);
+  if (level === null) return "";
 
   const l = (lang || "ca").slice(0, 2).toLowerCase();
-  const level = getUvLevelIndex(uvi);
 
   if (l === "es") {
     if (level === 0) return "Riesgo muy bajo. Protección mínima.";

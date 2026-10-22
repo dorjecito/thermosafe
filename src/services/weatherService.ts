@@ -461,7 +461,11 @@ export async function getUVFromOW(
 ): Promise<number | null> {
   const cacheKey = getCacheKey("uv", lat.toFixed(2), lon.toFixed(2));
   const cached = getFromCache<number | null>(cacheKey);
-  if (cached !== null) return cached;
+  if (cached !== null) {
+    return typeof cached === "number" && Number.isFinite(cached) && cached >= 0
+      ? cached
+      : null;
+  }
 
   try {
     // Deixam només current
@@ -491,7 +495,7 @@ export async function getUVFromOW(
       null;
 
     const validUvi =
-      typeof uvi === "number" && Number.isFinite(uvi) ? uvi : null;
+      typeof uvi === "number" && Number.isFinite(uvi) && uvi >= 0 ? uvi : null;
 
     saveToCache(cacheKey, validUvi);
     return validUvi;

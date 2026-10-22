@@ -163,7 +163,9 @@ export async function getUVFromOpenUV(
     if (import.meta.env.DEV) {
       console.log("[OpenUV] UV des de caché:", key, cached);
     }
-    return cached;
+	  return typeof cached === "number" && Number.isFinite(cached) && cached >= 0
+      ? cached
+      : null;
   }
 
   const pending = uvNowPending.get(key);
@@ -192,7 +194,7 @@ export async function getUVFromOpenUV(
       }
 
       const uvi = data.result?.uv ?? null;
-      const safeUvi = typeof uvi === "number" && Number.isFinite(uvi) ? uvi : null;
+      const safeUvi = typeof uvi === "number" && Number.isFinite(uvi) && uvi >= 0 ? uvi : null;
 
       setCached(uvNowCache, key, safeUvi);
       startupEnd("openuv-current", { status: "ok", hasValue: safeUvi !== null });

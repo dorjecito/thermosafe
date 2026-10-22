@@ -13,7 +13,7 @@ export async function safeUVFetch(
   try {
     console.log("[UV] És de dia a la ubicació → consultant OpenUV…");
     const uv = await getUVFromOpenUV(lat, lon);
-    return typeof uv === "number" ? uv : null;
+    return typeof uv === "number" && Number.isFinite(uv) && uv >= 0 ? uv : null;
   } catch (err) {
     console.error("[UV] Error consultant OpenUV:", err);
     return null;

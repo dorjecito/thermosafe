@@ -1,7 +1,11 @@
 import { getUvLevelIndex } from "./uv";
 
-export function getContextualUVMessage(uv: number, lang: string = "ca"): string {
+export function getContextualUVMessage(
+  uv: number | null | undefined,
+  lang: string = "ca"
+): string {
   const level = getUvLevelIndex(uv);
+  if (level === null) return "";
   const l = String(lang || "ca").slice(0, 2).toLowerCase();
 
   if (l === "en") {

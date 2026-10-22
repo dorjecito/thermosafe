@@ -5,20 +5,24 @@
 
 export type UvLevelIndex = 0 | 1 | 2 | 3 | 4;
 
-export function getRoundedUvi(uvi: number | null | undefined): number {
-  if (typeof uvi !== "number" || !Number.isFinite(uvi)) return 0;
-  return Math.max(0, Math.round(uvi));
+export function getRoundedUvi(uvi: number | null | undefined): number | null {
+  if (typeof uvi !== "number" || !Number.isFinite(uvi) || uvi < 0) return null;
+  return Math.round(uvi);
 }
 
 export function normalizeUviForDisplay(
   uvi: number | null | undefined
 ): number | null {
-  if (typeof uvi !== "number" || !Number.isFinite(uvi)) return null;
-  return Number(Math.max(0, uvi).toFixed(1));
+  if (typeof uvi !== "number" || !Number.isFinite(uvi) || uvi < 0) return null;
+  return Number(uvi.toFixed(1));
 }
 
-export function getUvLevelIndex(uvi: number | null | undefined): UvLevelIndex {
-  const u = normalizeUviForDisplay(uvi) ?? 0;
+export function getUvLevelIndex(
+  uvi: number | null | undefined
+): UvLevelIndex | null {
+  const normalized = normalizeUviForDisplay(uvi);
+  if (normalized === null) return null;
+  const u = normalized;
   if (u < 3) return 0;
   if (u < 6) return 1;
   if (u < 8) return 2;
@@ -26,14 +30,15 @@ export function getUvLevelIndex(uvi: number | null | undefined): UvLevelIndex {
   return 4;
 }
 
-export function getUvLevel(uvi: number | null): string {
-  return ["low", "moderate", "high", "very-high", "extreme"][
-    getUvLevelIndex(uvi)
-  ];
+export function getUvLevel(uvi: number | null | undefined): string {
+  const level = getUvLevelIndex(uvi);
+  return level === null
+    ? "unknown"
+    : ["low", "moderate", "high", "very-high", "extreme"][level];
 }
 
-export function getUvText(uvi: number | null, lang: string): string {
-  const level = uvi === null ? -1 : getUvLevelIndex(uvi);
+export function getUvText(uvi: number | null | undefined, lang: string): string {
+  const level = getUvLevelIndex(uvi);
 
   const text: Record<string, string[]> = {
     ca: ["Baix (0–2.9)", "Moderat (3–5.9)", "Alt (6–7.9)", "Molt alt (8–10.9)", "Extrem (11+)"],
@@ -43,13 +48,12 @@ export function getUvText(uvi: number | null, lang: string): string {
     en: ["Low (0–2.9)", "Moderate (3–5.9)", "High (6–7.9)", "Very high (8–10.9)", "Extreme (11+)"],
   };
 
-  return level === -1 ? "—" : (text[lang] || text["ca"])[level];
+  return level === null ? "—" : (text[lang] || text["ca"])[level];
 }
 
-export function getUvAdvice(uvi: number | null, lang: string): string {
-  if (uvi === null) return "";
-
+export function getUvAdvice(uvi: number | null | undefined, lang: string): string {
   const level = getUvLevelIndex(uvi);
+  if (level === null) return "";
 
   const advice: Record<string, string[]> = {
     ca: [

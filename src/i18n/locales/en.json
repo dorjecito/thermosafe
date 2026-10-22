@@ -48,6 +48,8 @@
   
   "safe_conditions": "Safe conditions",
   "safe_conditions_text_day": "No significant risks are currently observed.",
+  "uv_data_unavailable_title": "Assessment incomplete",
+  "uv_data_unavailable_text": "The current UV index is unavailable, so this risk cannot be assessed.",
   "safe_conditions_text_night": "Night-time conditions within normal parameters.",
   "top_alert_weather_active": "Active weather alert",
   "official_alert": "Official weather alert active",

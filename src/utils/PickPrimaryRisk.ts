@@ -100,7 +100,7 @@ export function pickPrimaryRisk({
 
   // --- 4) UV ---
   let uvSev: Severity = 0;
-  let uvKey = "uv_low";
+  let uvKey = "uv_unknown";
 
   if (typeof uvi === "number" && Number.isFinite(uvi)) {
     const uvLevel = getUvLevelIndex(uvi);
@@ -117,7 +117,7 @@ export function pickPrimaryRisk({
     } else if (uvLevel === 1) {
       uvSev = 1;
       uvKey = "uv_moderate";
-    } else {
+    } else if (uvLevel === 0) {
       uvSev = 0;
       uvKey = "uv_low";
     }

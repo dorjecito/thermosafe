@@ -103,6 +103,8 @@
 
   "safe_conditions": "Condicións seguras",
   "safe_conditions_text_day": "Non se observan riscos destacables neste momento.",
+  "uv_data_unavailable_title": "Avaliación incompleta",
+  "uv_data_unavailable_text": "O índice UV actual non está dispoñible e este risco non se pode avaliar.",
   "safe_conditions_text_night": "Condicións nocturnas dentro de parámetros normais.",
   "top_alert_weather_active": "Alerta meteorolóxica activa",
   "official_alert": "Aviso meteorolóxico oficial activo",

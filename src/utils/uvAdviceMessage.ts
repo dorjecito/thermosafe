@@ -143,14 +143,13 @@ const contextualMessages: Record<Lang, readonly string[]> = {
 };
 
 export const getTimeAwareUvAdvice = (
-  uvi: number | null,
+  uvi: number | null | undefined,
   lang: string,
   currentHour?: number | null,
   weather?: UvAdviceWeather
 ): string => {
-  if (uvi === null) return "";
-
   const level = getUvLevelIndex(uvi);
+  if (level === null) return "";
   const t = messages[normalizeLang(lang)];
 
   if (level > 0 && usesContextualUvAdvice(weather)) {

@@ -329,7 +329,7 @@ async function getUV(lat, lon) {
     if (!r.ok) throw new Error(`OpenUV ${r.status}`);
 
     const j = await r.json();
-    return typeof j?.result?.uv === "number" ? j.result.uv : null;
+    return isValidUvi(j?.result?.uv) ? j.result.uv : null;
   } catch (e) {
     console.warn("[uv] error", e?.message || e);
     return null;
@@ -352,7 +352,7 @@ async function getUVfromOpenWeather(lat, lon) {
     if (!r.ok) throw new Error(`OpenWeather UV ${r.status}`);
 
     const j = await r.json();
-    return typeof j?.current?.uvi === "number" ? j.current.uvi : null;
+    return isValidUvi(j?.current?.uvi) ? j.current.uvi : null;
   } catch (e) {
     console.warn("[uv][fallback-openweather] error", e?.message || e);
     return null;
@@ -987,7 +987,12 @@ async function sendWindPush(token, lang, info, windKmh, place) {
 // ─────────────────────────────────────────────
 // Textos i notificacions · UV
 // ─────────────────────────────────────────────
+function isValidUvi(uvi) {
+  return typeof uvi === "number" && Number.isFinite(uvi) && uvi >= 0;
+}
+
 function getUvLevel(uvi) {
+  if (!isValidUvi(uvi)) return null;
   const u = Math.max(0, Number(uvi) || 0);
   if (u < 3) return 0;
   if (u < 6) return 1;
@@ -997,8 +1002,8 @@ function getUvLevel(uvi) {
 }
 
 function getUvInfo(uvi, weather = {}) {
-  if (uvi == null || Number.isNaN(uvi)) {
-    return { level: 0, risk: null, title: null, body: null };
+  if (!isValidUvi(uvi)) {
+    return { level: null, risk: null, title: null, body: null };
   }
 
   const level = getUvLevel(uvi);
@@ -1129,7 +1134,7 @@ function getUvInfo(uvi, weather = {}) {
 }
 
 async function sendUvPush(token, lang, info, uvi, place) {
-  if (!info || info.level === 0) return;
+	if (!info || info.level == null || info.level <= 0 || !isValidUvi(uvi)) return;
 
   const title = info.title?.[lang] ?? info.title?.ca ?? "☀️ ThermoSafe";
   const body =
@@ -1389,7 +1394,7 @@ async function getCachedUV(lat, lon) {
         if (
           cached?.updatedAt &&
           now - Number(cached.updatedAt) < maxAge &&
-          cached?.uvi !== undefined
+          isValidUvi(cached?.uvi)
         ) {
           console.log("[UV CACHE] HIT", {
             key,
@@ -1687,7 +1692,7 @@ exports.cronCheckWeatherRiskV2 = onSchedule(
             } else {
               try {
                 let currentUvi = await getUVfromOpenWeather(sub.lat, sub.lon);
-                if (currentUvi == null) currentUvi = 0;
+                if (!isValidUvi(currentUvi)) currentUvi = null;
 
                 const currentUvInfo = getUvInfo(currentUvi, {
                   cloudiness: w.clouds,
@@ -2802,7 +2807,7 @@ exports.cronCheckUvRiskV2 = onSchedule(
               sampleLon: sub.lon,
             });
 
-            if (uvi == null) {
+            if (!isValidUvi(uvi)) {
               console.log("[UV V2 FALLBACK] trying OpenWeather", {
                 zoneKey,
                 sampleLat: sub.lat,
@@ -2811,7 +2816,7 @@ exports.cronCheckUvRiskV2 = onSchedule(
 
               const fallbackUvi = await getUVfromOpenWeather(sub.lat, sub.lon);
 
-              if (fallbackUvi != null) {
+              if (isValidUvi(fallbackUvi)) {
                 uvi = fallbackUvi;
 
                 const key = locationKey(sub.lat, sub.lon);
@@ -2836,7 +2841,7 @@ exports.cronCheckUvRiskV2 = onSchedule(
               }
             }
 
-            if (uvi == null) {
+            if (!isValidUvi(uvi)) {
               console.warn("[UV V2 NO DATA AFTER FALLBACK]", {
                 zoneKey,
                 sampleLat: sub.lat,
@@ -2844,7 +2849,7 @@ exports.cronCheckUvRiskV2 = onSchedule(
               });
 
               stats.reasons.noData++;
-              uvi = 0;
+              return;
             }
 
             stats.lastUvi = uvi;

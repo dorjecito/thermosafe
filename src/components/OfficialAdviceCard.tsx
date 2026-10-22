@@ -77,7 +77,7 @@ export default function OfficialAdviceCard({
 
   const uvLevel = getUvLevelIndex(uvi);
 
-  if (uvLevel >= 1) {
+  if (uvLevel !== null && uvLevel >= 1) {
     const lvl =
       uvLevel === 1 ? "moderate" : uvLevel === 2 ? "high" : uvLevel === 3 ? "very_high" : "extreme";
     const key = `officialAdviceDynamic.uv.${lvl}`;

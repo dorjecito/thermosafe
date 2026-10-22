@@ -7,8 +7,8 @@ export function getCombinedRiskLevel(
   uvi: number | null
 ): "none" | "high" | "extreme" {
   const uvLevel = getUvLevelIndex(uvi);
-  const hasUvHigh = uvLevel >= 2;
-  const hasUvVeryHigh = uvLevel >= 3;
+  const hasUvHigh = uvLevel !== null && uvLevel >= 2;
+  const hasUvVeryHigh = uvLevel !== null && uvLevel >= 3;
 
   const hasHeatModerate = Boolean(
     heatRisk?.isModerate || heatRisk?.isHigh || heatRisk?.isExtreme

@@ -14,6 +14,7 @@ export function primaryRiskFromEngine(
 
   if (
     !primary ||
+    primary.severity === null ||
     primary.severity === 0 ||
     !["heat", "cold", "wind", "uv"].includes(primary.factor)
   ) {

@@ -22,7 +22,8 @@ export async function getUVI(lat: number, lon: number): Promise<number | null> {
     const data = await response.json();
     console.log("🌞 Dades UVI rebudes:", data);
 
-    return data.current?.uvi ?? null;
+    const uvi = data.current?.uvi;
+    return typeof uvi === "number" && Number.isFinite(uvi) && uvi >= 0 ? uvi : null;
 
   } catch (err) {
     console.error("❌ Error obtenint UVI:", err);

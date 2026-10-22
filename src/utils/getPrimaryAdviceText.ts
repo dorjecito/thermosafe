@@ -88,8 +88,9 @@ export function getPrimaryAdviceText({
   }
 
   // ☀️ UV
-  if (primary.kind === "uv" && typeof uvi === "number") {
+  if (primary.kind === "uv" && typeof uvi === "number" && Number.isFinite(uvi) && uvi >= 0) {
     const currentUvLevel = getUvLevelIndex(uvi);
+    if (currentUvLevel === null) return null;
     let uvLevel: "moderate" | "high" | "very_high" | "extreme" = "moderate";
 
     if (currentUvLevel === 4) uvLevel = "extreme";

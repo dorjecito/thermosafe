@@ -33,7 +33,7 @@ export default function Alerts({ hi, irr, uvi, heatRisk, loading }: Props) {
       )}
 
       {/* 🔆 ALERTA PER UVI */}
-      {uvi !== null && getUvLevelIndex(uvi) >= 3 && (
+      {typeof uvi === "number" && Number.isFinite(uvi) && uvi >= 0 && (getUvLevelIndex(uvi) ?? 0) >= 3 && (
         <div className="alert-banner">
           <p>{t("highUVIWarning")}</p>
         </div>

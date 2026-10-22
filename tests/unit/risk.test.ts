@@ -32,6 +32,8 @@ import { getBaseHeatRisk, getHeatRisk } from "../../src/utils/heatRisk";
 import { calcHI, calcHIOrNull } from "../../src/utils/calcHI";
 import { getColdRisk, type ColdRisk } from "../../src/utils/getColdRisk";
 import { getWindRisk } from "../../src/utils/windRisk";
+import { getCombinedRiskLevel } from "../../src/utils/combinedRisk";
+import { getRiskIcons } from "../../src/utils/getRiskIcons";
 import {
   getUvAdvice,
   getUvLevel,
@@ -505,7 +507,7 @@ function createFunctionsIndexHarness(options: {
     weatherMain: string;
     clouds: number;
   }>;
-  uvi?: number;
+  uvi?: number | null;
   sendError?: Error;
   failTokens?: string[];
   alerts?: any[];
@@ -603,7 +605,7 @@ function createFunctionsIndexHarness(options: {
           return {
             ok: true,
             status: 200,
-            json: async () => ({ current: { uvi: options.uvi ?? 7 }, alerts: options.alerts ?? [] }),
+            json: async () => ({ current: { uvi: options.uvi === undefined ? 7 : options.uvi }, alerts: options.alerts ?? [] }),
           };
         }
 
@@ -611,7 +613,7 @@ function createFunctionsIndexHarness(options: {
           return {
             ok: true,
             status: 200,
-            json: async () => ({ result: { uv: options.uvi ?? 7 } }),
+            json: async () => ({ result: { uv: options.uvi === undefined ? 7 : options.uvi } }),
           };
         }
 
@@ -2985,6 +2987,48 @@ test("active AEMET does not replace caution, limited or avoid text when local fa
   );
 });
 
+test("unknown UV does not change known-factor work limits but prevents an unqualified optimal message", () => {
+  const input = {
+    heatRisk: getHeatRisk(20, "rest"),
+    heatIndex: 20,
+    coldRisk: "cap" as const,
+    windRisk: "none" as const,
+    uvi: null,
+    weatherMain: "Clear",
+  };
+  assert.equal(getWorkWindow(input), "optimal");
+  assert.match(getWorkWindowText("optimal", "ca", false, undefined, false, true), /no es pot valorar el risc UV/i);
+  assert.equal(
+    getWorkWindowText("optimal", "ca", false, undefined, false, false),
+    "Les condicions són adequades per a activitats a l’aire lliure."
+  );
+  assert.equal(
+    getWorkWindowText("optimal", "ca", false, undefined, false, true).includes("UV"),
+    true
+  );
+});
+
+test("unknown UV assessment copy is localized in all supported languages", () => {
+  const expected = {
+    ca: /avaluació incompleta|dada actual no està disponible/i,
+    es: /evaluación incompleta|dato actual no está disponible/i,
+    eu: /ebaluazioa osatu gabe|ez dagoelako eskuragarri/i,
+    gl: /avaliación incompleta|dato actual non está dispoñible/i,
+    en: /assessment incomplete|current data is unavailable/i,
+  } as const;
+  for (const [lang, pattern] of Object.entries(expected)) {
+    const resource = JSON.parse(readFileSync(new URL(`../../src/i18n/locales/${lang}.json`, import.meta.url), "utf8"));
+    const t = (key: string) => resource[key] ?? key;
+    const result = getPrimaryStatusBlock({
+      alerts: [], primary: { kind: "none", severity: 0, labelKey: "none" },
+      heatRisk: null, coldRisk: "cap", windRisk: "none", uvi: null, day: true,
+      primaryAdvice: null, contextualUVMessage: "", t,
+    });
+    assert.match(`${result.title} ${result.text}`, pattern, lang);
+    assert.equal(result.className, "status-card status-warning", lang);
+  }
+});
+
 test("AEMET-only caution message is localized in all supported languages", () => {
   const expected = {
     ca: "Les condicions actuals permeten fer activitats a l’aire lliure, però hi ha un avís meteorològic oficial actiu. Consulta'n el detall i adapta l’activitat si les condicions empitjoren.",
@@ -3528,7 +3572,7 @@ test("wind risk follows km/h threshold boundaries", () => {
 });
 
 test("UV level, text and advice are classified consistently", () => {
-  assert.equal(getUvLevel(null), "low");
+  assert.equal(getUvLevel(null), "unknown");
   assert.equal(getUvLevel(2.4), "low");
   assert.equal(getUvLevel(2.5), "low");
   assert.equal(getUvLevel(2.9), "low");
@@ -3548,6 +3592,42 @@ test("UV level, text and advice are classified consistently", () => {
   assert.equal(getUvText(8, "ca"), "Molt alt (8–10.9)");
   assert.equal(getUvText(11, "es"), "Extremo (11+)");
   assert.match(getUvAdvice(6, "ca"), /Protecció extra/);
+});
+
+test("unknown UV observations stay distinct from valid zero across consumers", () => {
+  const levels = new Map<unknown, unknown>([
+    [0, 0], [1, 0], [2, 0], [3, 1], [5, 1], [6, 2], [8, 3], [11, 4], [100, 4],
+    [null, null], [undefined, null], [Number.NaN, null],
+    [Number.POSITIVE_INFINITY, null], [-1, null],
+  ]);
+
+  for (const [uvi, expected] of levels) {
+    assert.equal(getUvLevelIndex(uvi as number | null | undefined), expected, `UV ${String(uvi)}`);
+    if (expected === null) {
+      assert.equal(getUvLevel(uvi as number | null | undefined), "unknown");
+      assert.equal(getUvText(uvi as number | null | undefined, "ca"), "—");
+      assert.equal(getUvAdvice(uvi as number | null | undefined, "ca"), "");
+      const factor = evaluateRiskScore({ uvi: uvi as number | null }).factors.find((item) => item.factor === "uv");
+      assert.equal(factor?.severity, null);
+      assert.equal(factor?.level, "unknown");
+      assert.equal(factor?.active, false);
+      assert.equal(evaluateRiskScore({ uvi: uvi as number | null }).primary, null);
+      assert.equal(getCombinedRiskLevel(null, null, null, uvi as number | null), "none");
+      assert.equal(getRiskIcons(null, null, null, uvi as number | null), "🌤️");
+    }
+  }
+
+  assert.equal(getUvLevelIndex(0), 0);
+  const zeroFactor = evaluateRiskScore({ uvi: 0 }).factors.find((item) => item.factor === "uv");
+  assert.equal(zeroFactor?.severity, 0);
+  assert.equal(zeroFactor?.level, "low");
+});
+
+test("an unknown UV factor does not take priority over known risks", () => {
+  const result = evaluateRiskScore({ heatIndex: 35, uvi: null });
+  assert.equal(result.primary?.factor, "heat");
+  assert.equal(result.factors.find((item) => item.factor === "uv")?.severity, null);
+  assert.equal(result.activeFactors.some((item) => item.factor === "uv"), false);
 });
 
 test("UV classification follows the visible one-decimal value", () => {
@@ -8731,6 +8811,75 @@ test("failed UV FCM preserves notification state and Weather sends five minutes 
   assert.equal(harness.sends.length, 1);
   assert.equal(harness.db.getSub(initial.token).lastHeatLevel, 2);
   assert.equal(harness.db.getSub(initial.token).lastHeatAt, options.nowMs);
+});
+
+test("missing UV from both providers preserves the previous UV notification state", async () => {
+  const initial = {
+    token: "uv-no-provider-data", lat: 39.49, lon: 2.91,
+    lastHeatLevel: 1, lastHeatAt: 123, lastUvLevel: 2, lastUvAt: 456,
+    lastUvResetDay: "2026-08-20", lastDailyResetDay: "2026-08-20",
+    uvLevelsByZone: { "39.5,2.9": 2 },
+  };
+  const harness = createFunctionsIndexHarness({
+    nowMs: Date.UTC(2026, 7, 20, 7, 11),
+    uvi: null,
+    subs: [initial],
+  });
+
+  await harness.runUvV2();
+
+  const after = harness.db.getSub(initial.token);
+  assert.equal(harness.sends.length, 0);
+  assert.equal(after.lastUvLevel, initial.lastUvLevel);
+  assert.equal(after.lastUvAt, initial.lastUvAt);
+  assert.equal(after.lastUvResetDay, initial.lastUvResetDay);
+  assert.deepEqual(after.uvLevelsByZone, initial.uvLevelsByZone);
+});
+
+test("non-finite and negative UV provider values cannot notify or overwrite deduplication state", async () => {
+  for (const uvi of [Number.POSITIVE_INFINITY, Number.NaN, -1]) {
+    const initial = {
+      token: `uv-invalid-${String(uvi)}`, lat: 39.49, lon: 2.91,
+      lastUvLevel: 1, lastUvAt: 456, lastUvResetDay: "2026-08-20",
+      lastDailyResetDay: "2026-08-20", uvLevelsByZone: { "39.5,2.9": 1 },
+    };
+    const harness = createFunctionsIndexHarness({
+      nowMs: Date.UTC(2026, 7, 20, 7, 11),
+      uvi,
+      subs: [initial],
+    });
+    await harness.runUvV2();
+    const after = harness.db.getSub(initial.token);
+    assert.equal(harness.sends.length, 0, `invalid UVI ${String(uvi)} must not notify`);
+    assert.equal(after.lastUvLevel, initial.lastUvLevel);
+    assert.equal(after.lastUvAt, initial.lastUvAt);
+    assert.deepEqual(after.uvLevelsByZone, initial.uvLevelsByZone);
+  }
+});
+
+test("Weather sends an independent heat notification when UV is unavailable", async () => {
+  const initial = {
+    token: "heat-only-unknown-uv", lat: 39.49, lon: 2.91,
+    lastHeatLevel: 0, lastHeatAt: 123, lastUvLevel: 2, lastUvAt: 456,
+    lastUvResetDay: "2026-08-20", lastDailyResetDay: "2026-08-20",
+    uvLevelsByZone: { "39.5,2.9": 2 },
+  };
+  const harness = createFunctionsIndexHarness({
+    nowMs: Date.UTC(2026, 7, 20, 7, 16),
+    uvi: null,
+    subs: [initial],
+  });
+
+  await harness.runWeatherV2();
+
+  const after = harness.db.getSub(initial.token);
+  assert.equal(harness.sends.length, 1);
+  assert.equal(harness.sends[0].data.type, "heat");
+  assert.equal(harness.sends[0].data.uvi, undefined);
+  assert.equal(after.lastHeatLevel, Number(harness.sends[0].data.level));
+  assert.equal(after.lastUvLevel, initial.lastUvLevel);
+  assert.equal(after.lastUvAt, initial.lastUvAt);
+  assert.deepEqual(after.uvLevelsByZone, initial.uvLevelsByZone);
 });
 
 test("UV without an increase leaves heat available for Weather five minutes later", async () => {
