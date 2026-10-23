@@ -162,9 +162,9 @@
       "torridNight": "Noite tórrida",
       "moderate": "Risco moderado por calor",
       "moderateLateDay": "Calor aínda elevada",
-      "mildText": "A sensación térmica é moderadamente elevada. Hidrátate e adapta a actividade se mantés esforzo físico.",
+      "mildText": "Se fas actividade física, hidrátate e adapta o ritmo e as pausas: o esforzo pode aumentar a carga térmica.",
       "mildLateDayText": "Aínda que o sol xa baixa, a sensación térmica aínda pode provocar cansazo. Hidrátate e evita esforzos innecesarios.",
-      "mildEveningText": "A temperatura aínda se mantén elevada despois da posta do sol. Aínda que o risco diminúe respecto ao día, a calor acumulada pode facer menos confortable a actividade ao aire libre.",
+      "mildEveningText": "Despois da posta do sol, a calor acumulada aínda pode facer menos cómoda a actividade ao aire libre. Hidrátate e adapta o esforzo.",
       "hotNightText": "A calor acumulada durante a noite pode dificultar o descanso e a recuperación térmica. Hidrátate e evita esforzos físicos intensos ata que refresque.",
       "tropicalNightText": "A temperatura nocturna mantense por riba dos 20 °C.",
       "torridNightText": "A temperatura mantense moi elevada durante a noite e pode dificultar notablemente o descanso e a recuperación térmica.",
@@ -476,7 +476,7 @@
 "officialAdviceDynamic": {
   "heat": {
     "mild": "Hidrátate a miúdo e descansa en zonas frescas.",
-    "moderate": "Evita esforzos intensos e procura sombra con regularidade.",
+    "moderate": "Reduce o esforzo intenso, hidrátate e fai pausas nun lugar fresco.",
     "moderate_night": "A temperatura mantense elevada durante a noite. Hidrátate, ventila os espazos e evita esforzos innecesarios.",
     "high": "Risco importante: limita a actividade exterior e hidrátate continuamente.",
     "high_night": "A calor continúa elevada durante a noite. Reduce esforzos, hidrátate e favorece a ventilación.",

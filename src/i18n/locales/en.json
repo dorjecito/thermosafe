@@ -107,9 +107,9 @@
       "torridNight": "Torrid night",
       "moderate": "Moderate heat risk",
       "moderateLateDay": "Heat still elevated",
-      "mildText": "The apparent temperature is moderately elevated. Stay hydrated and adapt your activity if physical effort continues.",
+      "mildText": "If you do physical activity, stay hydrated and adjust your pace and breaks: exertion can increase heat strain.",
       "mildLateDayText": "Even though the sun is lower, the apparent temperature may still cause fatigue. Stay hydrated and avoid unnecessary effort.",
-      "mildEveningText": "The temperature remains elevated after sunset. Although the risk is lower than during the day, accumulated heat can make outdoor activity less comfortable.",
+      "mildEveningText": "After sunset, accumulated heat can still make outdoor activity less comfortable. Stay hydrated and adapt your effort.",
       "hotNightText": "Accumulated overnight heat may make rest and thermal recovery more difficult. Stay hydrated and avoid intense physical effort until it cools down.",
       "tropicalNightText": "The nighttime temperature remains above 20 °C.",
       "torridNightText": "Temperatures remain very high overnight and may significantly hinder rest and thermal recovery.",
@@ -471,7 +471,7 @@
   "officialAdviceDynamic": {
     "heat": {
       "mild": "Hydrate often and rest in cool areas.",
-      "moderate": "Avoid intense effort and seek shade regularly.",
+      "moderate": "Reduce intense effort, stay hydrated and take breaks in a cool place.",
       "moderate_night": "Temperatures remain elevated overnight. Stay hydrated, ventilate indoor spaces and avoid unnecessary effort.",
       "high": "High risk: limit outdoor activity and hydrate continuously.",
       "high_night": "Heat remains high overnight. Reduce effort, stay hydrated and improve ventilation.",

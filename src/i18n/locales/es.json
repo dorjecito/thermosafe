@@ -161,9 +161,9 @@
       "torridNight": "Noche tórrida",
       "moderate": "Riesgo moderado por calor",
       "moderateLateDay": "Calor todavía elevado",
-      "mildText": "La sensación térmica es moderadamente elevada. Hidrátate y adapta la actividad si mantienes esfuerzo físico.",
+      "mildText": "Si haces actividad física, hidrátate y adapta el ritmo y las pausas: el esfuerzo puede aumentar la carga térmica.",
       "mildLateDayText": "Aunque el sol ya baja, la sensación térmica todavía puede provocar cansancio. Hidrátate y evita esfuerzos innecesarios.",
-      "mildEveningText": "La temperatura aún se mantiene elevada después de la puesta de sol. Aunque el riesgo disminuye respecto al día, el calor acumulado puede hacer menos confortable la actividad al aire libre.",
+      "mildEveningText": "Después de la puesta de sol, el calor acumulado aún puede hacer menos cómoda la actividad al aire libre. Hidrátate y adapta el esfuerzo.",
       "hotNightText": "El calor acumulado durante la noche puede dificultar el descanso y la recuperación térmica. Hidrátate y evita esfuerzos físicos intensos hasta que refresque.",
       "tropicalNightText": "La temperatura nocturna se mantiene por encima de los 20 °C.",
       "torridNightText": "La temperatura se mantiene muy elevada durante la noche y puede dificultar notablemente el descanso y la recuperación térmica.",
@@ -463,7 +463,7 @@
   "officialAdviceDynamic": {
     "heat": {
       "mild": "Hidrátate a menudo y descansa en zonas frescas.",
-      "moderate": "Evita esfuerzos intensos, bebe agua con frecuencia y adapta la actividad a las condiciones.",
+      "moderate": "Reduce el esfuerzo intenso, hidrátate y haz pausas en un lugar fresco.",
       "moderate_night": "La temperatura se mantiene elevada durante la noche. Hidrátate, ventila los espacios y evita esfuerzos innecesarios.",
       "high": "Riesgo importante: limita la actividad exterior e hidrátate de forma continua.",
       "high_night": "El calor continúa elevado durante la noche. Reduce esfuerzos, hidrátate y favorece la ventilación.",

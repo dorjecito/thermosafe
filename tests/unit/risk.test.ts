@@ -2668,6 +2668,103 @@ test("activity can raise heat risk but cannot turn safe weather into high heat r
   assert.equal(getHeatRisk(45, "rest").class, "high");
 });
 
+test("mild heat wording and activity bands remain accurate around 24-28 C", () => {
+  assert.equal(getHeatRisk(25.8, "rest").class, "safe");
+  for (const activity of ["walk", "moderate", "intense"] as const) {
+    assert.equal(getHeatRisk(25.8, activity).class, "mild", activity);
+  }
+
+  assert.equal(getHeatRisk(28.1, "rest").class, "mild");
+  for (const activity of ["walk", "moderate", "intense"] as const) {
+    assert.equal(getHeatRisk(28.1, activity).class, "moderate", activity);
+  }
+
+  const expectedByLanguage = {
+    ca: "Si fas activitat física, hidrata’t i adapta el ritme i les pauses: l’esforç pot augmentar la càrrega tèrmica.",
+    es: "Si haces actividad física, hidrátate y adapta el ritmo y las pausas: el esfuerzo puede aumentar la carga térmica.",
+    eu: "Jarduera fisikoa egiten baduzu, hidratatu eta egokitu erritmoa eta atsedenaldiak: ahaleginak gorputzeko bero-karga handitu dezake.",
+    gl: "Se fas actividade física, hidrátate e adapta o ritmo e as pausas: o esforzo pode aumentar a carga térmica.",
+    en: "If you do physical activity, stay hydrated and adjust your pace and breaks: exertion can increase heat strain.",
+  } as const;
+
+  for (const [lang, expected] of Object.entries(expectedByLanguage)) {
+    const locale = JSON.parse(readFileSync(new URL(`../../src/i18n/locales/${lang}.json`, import.meta.url), "utf8"));
+    assert.equal(locale.primaryStatus.heat.mildText, expected, lang);
+    assert.doesNotMatch(locale.primaryStatus.heat.mildEveningText, /risk (?:is )?lower|risk decreases|disminuye|txikiagoa|diminúe/i, lang);
+    assert.doesNotMatch(locale.officialAdviceDynamic.heat.moderate, /ombra|sombra|shade|itzala/i, lang);
+
+    const translate = (key: string) => key.split(".").reduce((value: any, part) => value?.[part], locale) ?? key;
+    for (const [heatValue, activity, expectedClass] of [
+      [25.8, "walk", "mild"],
+      [28.1, "rest", "mild"],
+    ] as const) {
+      const heat = getHeatRisk(heatValue, activity);
+      const status = getPrimaryStatusBlock({
+        alerts: [], primary: { kind: "heat", severity: 1, labelKey: "heat_mild" },
+        heatRisk: heat, coldRisk: "cap", windRisk: "none", uvi: 0, day: true,
+        primaryAdvice: null, contextualUVMessage: "", t: translate,
+      });
+      assert.equal(heat.class, expectedClass, `${lang} ${heatValue}/${activity}`);
+      assert.equal(status.text, locale.primaryStatus.heat.mildText, `${lang} ${heatValue}/${activity}`);
+    }
+
+    const moderateHeat = getHeatRisk(28.1, "intense");
+    const moderateStatus = getPrimaryStatusBlock({
+      alerts: [], primary: { kind: "heat", severity: 2, labelKey: "heat_moderate" },
+      heatRisk: moderateHeat, coldRisk: "cap", windRisk: "none", uvi: 0, day: true,
+      primaryAdvice: null, contextualUVMessage: "", t: translate,
+    });
+    assert.equal(moderateHeat.class, "moderate", `${lang} active 28.1 C`);
+    assert.equal(moderateStatus.text, locale.officialAdviceDynamic.heat.moderate, `${lang} moderate advice`);
+  }
+});
+
+test("moderate heat outdoor caution is contextual only when heat is the primary factor", () => {
+  const hi = 28.1;
+  const activity = "intense" as const;
+  const heatRisk = getHeatRisk(hi, activity);
+  const engineRisk = evaluateRiskScore({ heatIndex: hi, activity, coldEffectiveTemp: hi, windKmh: 0, uvi: 0 });
+  const level = getWorkWindow({ heatRisk, heatIndex: hi, activity, engineRisk });
+  assert.equal(heatRisk.class, "moderate");
+  assert.equal(level, "caution");
+  assert.equal(
+    getWorkWindowText(level, "ca", false, undefined, false, false, heatRisk.class, engineRisk.primary?.factor),
+    "Es poden realitzar activitats a l’aire lliure, però el risc tèrmic requereix adaptar l’esforç i fer pauses regulars."
+  );
+
+  assert.equal(
+    getWorkWindowText("caution", "ca", true, undefined, true, false, "moderate", "heat"),
+    "Les condicions actuals permeten fer activitats a l’aire lliure, però hi ha un avís meteorològic oficial actiu. Consulta'n el detall i adapta l’activitat si les condicions empitjoren."
+  );
+  assert.equal(
+    getWorkWindowText("caution", "ca", false, undefined, false, false, "moderate", "wind"),
+    "Es poden realitzar activitats a l’aire lliure amb precaucions bàsiques."
+  );
+  assert.equal(
+    getWorkWindowText("limited", "ca", false, undefined, false, false, "moderate", "heat"),
+    "Convé limitar les activitats exigents o adaptar-les a les condicions actuals."
+  );
+  assert.equal(
+    getWorkWindowText("avoid", "ca", false, undefined, false, false, "moderate", "heat"),
+    "No es recomana fer activitats exigents a l’aire lliure en aquests moments."
+  );
+
+  const localized = {
+    ca: "Es poden realitzar activitats a l’aire lliure, però el risc tèrmic requereix adaptar l’esforç i fer pauses regulars.",
+    es: "Puedes realizar actividades al aire libre, pero el riesgo térmico requiere adaptar el esfuerzo y hacer pausas regulares.",
+    eu: "Kanpoko jarduerak egin daitezke, baina bero-arriskuak ahalegina egokitzea eta atsedenaldi erregularrak egitea eskatzen du.",
+    gl: "Podes realizar actividades ao aire libre, pero o risco térmico require adaptar o esforzo e facer pausas regulares.",
+    en: "Outdoor activities are possible, but the heat risk calls for adapting effort and taking regular breaks.",
+  } as const;
+  for (const [lang, expected] of Object.entries(localized)) {
+    assert.equal(
+      getWorkWindowText("caution", lang as keyof typeof localized, false, undefined, false, false, "moderate", "heat"),
+      expected,
+      lang
+    );
+  }
+});
+
 test("intense activity below the official heat threshold raises preventive UI risk", () => {
   const heatRisk = getHeatRisk(26.4, "intense");
   const primary = pickPrimaryRisk({
@@ -7874,7 +7971,7 @@ test("heat after sunset uses accumulated-heat evening wording", () => {
   const translations: Record<string, string> = {
     "primaryStatus.heat.mildLateDay": "Temperatura encara elevada",
     "primaryStatus.heat.mildEveningText":
-      "La temperatura encara es manté elevada després de la posta de sol. Tot i que el risc disminueix respecte al dia, la calor acumulada pot fer menys confortable l'activitat a l'exterior.",
+      "Després de la posta de sol, la calor acumulada encara pot fer menys confortable l'activitat a l'exterior. Hidrata’t i adapta l’esforç.",
   };
 
   const result = getPrimaryStatusBlock({
@@ -7893,12 +7990,13 @@ test("heat after sunset uses accumulated-heat evening wording", () => {
 
   assert.equal(result.title, "Temperatura encara elevada");
   assert.match(result.text, /temperatura encara es manté elevada|calor acumulada/i);
+  assert.doesNotMatch(result.text, /risc disminueix/i);
   assert.doesNotMatch(result.text, /sol ja baixa/i);
 });
 
 test("night heat status avoids daytime shade advice", () => {
   const translations: Record<string, string> = {
-    "officialAdviceDynamic.heat.moderate": "Evita esforços intensos i busca ombra regularment.",
+    "officialAdviceDynamic.heat.moderate": "Redueix l’esforç intens, hidrata’t i fes pauses en un lloc fresc.",
     "primaryStatus.heat.tropicalNight": "Nit tropical",
     "primaryStatus.heat.tropicalNightText":
       "La temperatura nocturna es manté per damunt dels 20 °C.",
@@ -8266,11 +8364,11 @@ const seasonalTranslations: Record<string, string> = {
   "primaryStatus.heat.high": "Risc alt per calor",
   "primaryStatus.heat.extreme": "Risc extrem per calor",
   "primaryStatus.heat.mildText":
-    "La sensació tèrmica és moderadament elevada. Hidrata't i adapta l'activitat si mantens esforç físic.",
+    "Si fas activitat física, hidrata’t i adapta el ritme i les pauses: l’esforç pot augmentar la càrrega tèrmica.",
   "primaryStatus.heat.mildLateDayText":
     "Tot i que el sol ja baixa, la sensació tèrmica encara pot provocar cansament. Hidrata't i evita esforços innecessaris.",
   "primaryStatus.heat.mildEveningText":
-    "La temperatura encara es manté elevada després de la posta de sol. Tot i que el risc disminueix respecte al dia, la calor acumulada pot fer menys confortable l'activitat a l'exterior.",
+    "Després de la posta de sol, la calor acumulada encara pot fer menys confortable l’activitat a l’exterior. Hidrata’t i adapta l’esforç.",
   "primaryStatus.heat.hotNightText":
     "La calor acumulada durant la nit pot dificultar el descans i la recuperació tèrmica. Hidrata't i evita esforços físics intensos fins que refresqui.",
   "primaryStatus.heat.tropicalNightText":
@@ -8280,7 +8378,7 @@ const seasonalTranslations: Record<string, string> = {
   "primaryStatus.heat.moderateLateDayText":
     "Tot i ser capvespre, la sensació tèrmica continua elevada. Redueix esforços intensos, hidrata't i fes pauses en llocs frescos.",
   "officialAdviceDynamic.heat.moderate":
-    "Evita esforços intensos i fes pauses en llocs frescos.",
+    "Redueix l’esforç intens, hidrata’t i fes pauses en un lloc fresc.",
   "officialAdviceDynamic.heat.high":
     "Limita l'activitat exterior, hidrata't sovint i cerca ombra.",
   "officialAdviceDynamic.heat.extreme":

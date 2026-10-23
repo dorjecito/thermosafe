@@ -2125,9 +2125,11 @@ const workWindowText = useMemo(
     aemetActive,
     undefined,
     aemetOnlyCaution,
-    day && !(typeof uvi === "number" && Number.isFinite(uvi) && uvi >= 0)
+    day && !(typeof uvi === "number" && Number.isFinite(uvi) && uvi >= 0),
+    heatRisk?.class,
+    engineRisk?.primary?.factor
   ),
-  [workWindow, workWindowLang, aemetActive, aemetOnlyCaution, day, uvi]
+  [workWindow, workWindowLang, aemetActive, aemetOnlyCaution, day, uvi, heatRisk?.class, engineRisk?.primary?.factor]
 );
 
 useEffect(() => {

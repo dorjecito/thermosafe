@@ -162,9 +162,9 @@
       "torridNight": "Gau sargoria",
       "moderate": "Bero-arrisku ertaina",
       "moderateLateDay": "Beroa oraindik altua",
-      "mildText": "Sentsazio termikoa nahiko altua da. Hidratatu eta egokitu jarduera ahalegin fisikoa mantentzen baduzu.",
+      "mildText": "Jarduera fisikoa egiten baduzu, hidratatu eta egokitu erritmoa eta atsedenaldiak: ahaleginak gorputzeko bero-karga handitu dezake.",
       "mildLateDayText": "Eguzkia jaisten ari bada ere, sentsazio termikoak oraindik nekea eragin dezake. Hidratatu eta saihestu beharrezkoak ez diren ahaleginak.",
-      "mildEveningText": "Tenperaturak altu jarraitzen du eguzkia sartu ondoren. Egunean baino arriskua txikiagoa bada ere, pilatutako beroak kanpoko jarduera ez hain erosoa bihur dezake.",
+      "mildEveningText": "Eguzkia sartu ondoren ere, pilatutako beroak kanpoko jarduera deserosoagoa egin dezake. Hidratatu eta egokitu ahalegina.",
       "hotNightText": "Gauean pilatutako beroak atsedena eta berreskuratze termikoa zaildu ditzake. Hidratatu eta saihestu ahalegin fisiko biziak freskatu arte.",
       "tropicalNightText": "Gaueko tenperatura 20 °C-tik gora mantentzen da.",
       "torridNightText": "Tenperatura oso altu mantentzen da gauez, eta horrek nabarmen zaildu ditzake atsedena eta berreskuratze termikoa.",
@@ -444,7 +444,7 @@
 "officialAdviceDynamic": {
   "heat": {
     "mild": "Maiz hidratatu eta atseden hartu gune freskoetan.",
-    "moderate": "Saihestu ahalegin handiak eta bilatu itzala maiz.",
+    "moderate": "Murriztu ahalegin bizia, hidratatu eta egin atsedenaldiak leku fresko batean.",
     "moderate_night": "Tenperaturak altu jarraitzen du gauean. Hidratatu, aireztatu espazioak eta saihestu beharrezkoak ez diren ahaleginak.",
     "high": "Arrisku handia: mugatu aire libreko jarduerak eta hidratatu etengabe.",
     "high_night": "Beroak altu jarraitzen du gauean. Murriztu ahalegina, hidratatu eta aireztapena hobetu.",

@@ -225,7 +225,9 @@ export function getWorkWindowText(
   aemetActive = false,
   nightHeatLevel: NightHeatLevel | boolean = "none",
   aemetOnlyCaution = false,
-  uvUnavailable = false
+  uvUnavailable = false,
+  heatRiskClass?: string | null,
+  primaryRiskKind?: string | null
 ): string {
   void nightHeatLevel;
 
@@ -235,6 +237,7 @@ export function getWorkWindowText(
 	      optimalUvUnavailable: "Les condicions conegudes són adequades per a activitats a l’aire lliure, però no es pot valorar el risc UV perquè la dada actual no està disponible.",
       optimalAlert: "Condicions actuals adequades, però hi ha avisos oficials actius. Mantén la precaució.",
       caution: "Es poden realitzar activitats a l’aire lliure amb precaucions bàsiques.",
+      cautionHeatModerate: "Es poden realitzar activitats a l’aire lliure, però el risc tèrmic requereix adaptar l’esforç i fer pauses regulars.",
       cautionAlert: "Les condicions actuals permeten fer activitats a l’aire lliure, però hi ha un avís meteorològic oficial actiu. Consulta'n el detall i adapta l’activitat si les condicions empitjoren.",
       limited: "Convé limitar les activitats exigents o adaptar-les a les condicions actuals.",
       avoid: "No es recomana fer activitats exigents a l’aire lliure en aquests moments.",
@@ -244,6 +247,7 @@ export function getWorkWindowText(
 	      optimalUvUnavailable: "Las condiciones conocidas son adecuadas para actividades al aire libre, pero no se puede valorar el riesgo UV porque el dato actual no está disponible.",
       optimalAlert: "Condiciones actuales adecuadas, pero hay avisos oficiales activos. Mantén la precaución.",
       caution: "Puedes hacer actividades al aire libre con precauciones básicas.",
+      cautionHeatModerate: "Puedes realizar actividades al aire libre, pero el riesgo térmico requiere adaptar el esfuerzo y hacer pausas regulares.",
       cautionAlert: "Las condiciones actuales permiten realizar actividades al aire libre, pero hay un aviso meteorológico oficial activo. Consulta sus detalles y adapta la actividad si las condiciones empeoran.",
       limited: "Conviene limitar las actividades exigentes o adaptarlas a las condiciones actuales.",
       avoid: "No se recomienda hacer actividades exigentes al aire libre en este momento.",
@@ -253,6 +257,7 @@ export function getWorkWindowText(
 	      optimalUvUnavailable: "Ezagutzen diren baldintzak egokiak dira kanpoko jardueretarako, baina ezin da UV arriskua baloratu uneko datua ez dagoelako eskuragarri.",
       optimalAlert: "Uneko baldintzak egokiak dira, baina abisu ofizialak aktibo daude. Mantendu arreta.",
       caution: "Kanpoko jarduerak egin daitezke oinarrizko neurriak hartuta.",
+      cautionHeatModerate: "Kanpoko jarduerak egin daitezke, baina bero-arriskuak ahalegina egokitzea eta atsedenaldi erregularrak egitea eskatzen du.",
       cautionAlert: "Egungo baldintzek aire zabaleko jarduerak egiteko aukera ematen dute, baina alerta meteorologiko ofizial bat dago indarrean. Kontsultatu xehetasunak eta egokitu jarduera baldintzek okerrera egiten badute.",
       limited: "Komeni da jarduera zorrotzak mugatzea edo uneko baldintzetara egokitzea.",
       avoid: "Ez da gomendatzen une honetan kanpoko jarduera zorrotzak egitea.",
@@ -262,6 +267,7 @@ export function getWorkWindowText(
 	      optimalUvUnavailable: "As condicións coñecidas son axeitadas para actividades ao aire libre, pero non se pode valorar o risco UV porque o dato actual non está dispoñible.",
       optimalAlert: "As condicións actuais son adecuadas, pero hai avisos oficiais activos. Mantén a precaución.",
       caution: "Podes facer actividades ao aire libre con precaucións básicas.",
+      cautionHeatModerate: "Podes realizar actividades ao aire libre, pero o risco térmico require adaptar o esforzo e facer pausas regulares.",
       cautionAlert: "As condicións actuais permiten realizar actividades ao aire libre, pero hai un aviso meteorolóxico oficial activo. Consulta os detalles e adapta a actividade se as condicións empeoran.",
       limited: "Convén limitar as actividades esixentes ou adaptalas ás condicións actuais.",
       avoid: "Non se recomenda facer actividades esixentes ao aire libre nestes momentos.",
@@ -271,6 +277,7 @@ export function getWorkWindowText(
 	      optimalUvUnavailable: "Known conditions are suitable for outdoor activities, but UV risk cannot be assessed because current data is unavailable.",
       optimalAlert: "Current conditions are suitable, but official alerts are active. Stay cautious.",
       caution: "You can do outdoor activities with basic precautions.",
+      cautionHeatModerate: "Outdoor activities are possible, but the heat risk calls for adapting effort and taking regular breaks.",
       cautionAlert: "Current conditions allow outdoor activities, but an official weather alert is active. Check its details and adapt your activity if conditions worsen.",
       limited: "Limit demanding activities or adapt them to current conditions.",
       avoid: "Demanding outdoor activities are not recommended at this time.",
@@ -279,6 +286,10 @@ export function getWorkWindowText(
 
   if (level === "caution" && aemetActive && aemetOnlyCaution) {
     return txt[lang]?.cautionAlert || txt.ca.cautionAlert;
+  }
+
+  if (level === "caution" && heatRiskClass === "moderate" && primaryRiskKind === "heat") {
+    return txt[lang]?.cautionHeatModerate || txt.ca.cautionHeatModerate;
   }
 
   if (level === "optimal" && aemetActive) {
