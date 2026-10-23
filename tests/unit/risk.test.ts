@@ -817,6 +817,48 @@ test("share translations exist and the visible share flow uses cold_risk_title",
   }
 });
 
+test("activity translations are unique and retain the active keys in all five locales", () => {
+  const locales = ["ca", "es", "eu", "gl", "en"];
+  const requiredActivityKeys = [
+    "inactive",
+    "requesting",
+    "active_label",
+    "rest",
+    "walk",
+    "moderate",
+    "intense",
+    "extra",
+    "adjusts_risk",
+    "no_impact",
+    "motion_permission_denied",
+    "motion_activation_error",
+    "info_label",
+    "info_title",
+    "info_body",
+    "info_privacy",
+    "info_close",
+  ];
+
+  for (const locale of locales) {
+    const source = readFileSync(
+      new URL(`../../src/i18n/locales/${locale}.json`, import.meta.url),
+      "utf8"
+    );
+    assert.equal((source.match(/^\s*"activity"\s*:/gm) ?? []).length, 1, `${locale} activity key must be unique`);
+
+    const data = JSON.parse(source);
+    for (const key of requiredActivityKeys) {
+      assert.equal(typeof data.activity?.[key], "string", `${locale} activity.${key} must be translated`);
+      assert.notEqual(data.activity[key].trim(), "", `${locale} activity.${key} must not be empty`);
+    }
+  }
+
+  const galician = JSON.parse(readFileSync(new URL("../../src/i18n/locales/gl.json", import.meta.url), "utf8"));
+  assert.equal(galician.activity.rest, "Repouso");
+  assert.equal(galician.activity.extra, "extra");
+  assert.equal(galician.activity.label, galician.activity.active_label);
+});
+
 test("data refreshes on visibility only after ten minutes with loaded data", () => {
   const now = 1_000_000;
   assert.equal(

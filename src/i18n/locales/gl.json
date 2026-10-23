@@ -385,20 +385,6 @@
     "skin_summary_type": "Pel tipo"
   },
 
-  "activity": {
-    "label": "Actividade",
-    "rest": "Descanso",
-    "walk": "Camiñando",
-    "moderate": "Esforzo moderado",
-    "intense": "Esforzo intenso",
-    "extra": "{{x}} °C extra",
-    "info_label": "Información sobre a detección de movemento",
-    "info_title": "Detección de movemento",
-    "info_body": "ThermoSafe utiliza os sensores de movemento do dispositivo para detectar o nivel de actividade e adaptar as recomendacións preventivas.",
-    "info_privacy": "Os datos procésanse localmente no dispositivo e non se envían a ningún servidor.",
-    "info_close": "Entendido"
-  },
-
   "activity_button": {
   "activate": "🧠 Activar detección de movemento",
   "deactivate": "🧠 Desactivar detección de movemento",
@@ -439,6 +425,7 @@
   },
 
   "activity": {
+  "label": "Actividade",
   "inactive": "Activar detección de movemento",
   "requesting": "Activando detección…",
   "active_label": "Actividade",
