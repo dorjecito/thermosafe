@@ -3657,13 +3657,13 @@ test("cold risk follows effective-temperature thresholds", () => {
   assert.equal(getColdRisk(-40, 20), "extrem");
 });
 
-test("recommendation cold key maps current cold risk labels without changing visible buckets", () => {
+test("recommendation cold key preserves each cold severity band", () => {
   const cases: Array<[ColdRisk, string | null]> = [
     ["cap", null],
     ["lleu", "cold_low"],
     ["moderat", "cold_mod"],
     ["alt", "cold_high"],
-    ["molt alt", "cold_high"],
+    ["molt alt", "cold_very_high"],
     ["extrem", "cold_ext"],
   ];
 
@@ -3681,7 +3681,7 @@ test("recommendation cold key uses coldRisk when available and falls back to eff
   assert.equal(getRecommendationColdKey(null, -15), "cold_high");
   assert.equal(getRecommendationColdKey("moderat", 8), "cold_mod");
   assert.equal(getRecommendationColdKey("cap", -5), null);
-  assert.equal(getRecommendationColdKey("molt alt", -40), "cold_high");
+  assert.equal(getRecommendationColdKey("molt alt", -40), "cold_very_high");
   assert.equal(getRecommendationColdKey("extrem", 10), "cold_ext");
 });
 
@@ -3700,6 +3700,31 @@ test("mild cold status is not presented as moderate", () => {
   });
 
   assert.equal(result.title, "Precaució lleu per fred");
+});
+
+test("cold recommendation transitions are inclusive at the documented thresholds", () => {
+  const cases: Array<[number, ColdRisk, string | null]> = [
+    [-14.9, "moderat", "cold_mod"],
+    [-15.0, "alt", "cold_high"],
+    [-24.9, "alt", "cold_high"],
+    [-25.0, "molt alt", "cold_very_high"],
+    [-39.9, "molt alt", "cold_very_high"],
+    [-40.0, "extrem", "cold_ext"],
+  ];
+
+  for (const [temperature, risk, recommendationKey] of cases) {
+    assert.equal(getColdRisk(temperature, 0), risk, `${temperature}°C risk`);
+    assert.equal(
+      getRecommendationColdKey(risk, temperature),
+      recommendationKey,
+      `${temperature}°C recommendation`
+    );
+    assert.equal(
+      getWorkWindow({ coldRisk: risk, windRisk: "none" }),
+      risk === "extrem" ? "avoid" : "limited",
+      `${temperature}°C outdoor category`
+    );
+  }
 });
 
 test("wind risk follows km/h threshold boundaries", () => {
@@ -5902,6 +5927,142 @@ function renderCoolRecommendationScenario({
       }),
   }) as any;
 }
+
+test("high and very high cold advice is distinct and localized in all five languages", () => {
+  const expected: Record<string, {
+    highTitle: string;
+    veryHighTitle: string;
+    highPrimary: string;
+    veryHighPrimary: string;
+    highRecommendation: string;
+    veryHighRecommendation: string;
+    extremeRecommendation: string;
+  }> = {
+    ca: {
+      highTitle: "Risc alt per fred",
+      veryHighTitle: "Risc molt alt per fred",
+      highPrimary: "El fred intens pot refredar el cos amb rapidesa.",
+      veryHighPrimary: "El fred molt intens pot afectar ràpidament la pell exposada.",
+      highRecommendation: "Limita el temps d'exposició al fred i protegeix especialment les mans, els peus, la cara i les orelles.",
+      veryHighRecommendation: "Evita les exposicions prolongades. Redueix al mínim l'activitat a l'exterior i protegeix tota la pell exposada, especialment la cara, les orelles i les extremitats.",
+      extremeRecommendation: "Roman en un espai interior, protegeix extremitats i conserva la calor corporal.",
+    },
+    es: {
+      highTitle: "Riesgo alto por frío",
+      veryHighTitle: "Riesgo muy alto por frío",
+      highPrimary: "El frío intenso puede enfriar el cuerpo rápidamente.",
+      veryHighPrimary: "El frío muy intenso puede afectar rápidamente a la piel expuesta.",
+      highRecommendation: "Limita el tiempo de exposición al frío y protege especialmente las manos, los pies, la cara y las orejas.",
+      veryHighRecommendation: "Evita las exposiciones prolongadas. Reduce al mínimo la actividad al aire libre y protege toda la piel expuesta, especialmente la cara, las orejas y las extremidades.",
+      extremeRecommendation: "Permanece en interiores, protege las extremidades y conserva el calor corporal.",
+    },
+    eu: {
+      highTitle: "Hotz-arrisku handia",
+      veryHighTitle: "Hotz-arrisku oso handia",
+      highPrimary: "Hotz biziak gorputza azkar hoztu dezake.",
+      veryHighPrimary: "Hotz oso biziak azala azkar kaltetu dezake.",
+      highRecommendation: "Mugatu hotzarekiko esposizio-denbora, eta babestu bereziki eskuak, oinak, aurpegia eta belarriak.",
+      veryHighRecommendation: "Saihestu esposizio luzeak. Murriztu gutxienera kanpoko jarduera, eta babestu azal agerian dagoen guztia, bereziki aurpegia, belarriak eta gorputz-adarrak.",
+      extremeRecommendation: "Egon barruan, babestu gorputz-adarrak eta mantendu gorputz-berotasuna.",
+    },
+    gl: {
+      highTitle: "Risco alto por frío",
+      veryHighTitle: "Risco moi alto por frío",
+      highPrimary: "O frío intenso pode arrefriar o corpo rapidamente.",
+      veryHighPrimary: "O frío moi intenso pode afectar rapidamente a pel exposta.",
+      highRecommendation: "Limita o tempo de exposición ao frío e protexe especialmente as mans, os pés, a cara e as orellas.",
+      veryHighRecommendation: "Evita as exposicións prolongadas. Reduce ao mínimo a actividade no exterior e protexe toda a pel exposta, especialmente a cara, as orellas e as extremidades.",
+      extremeRecommendation: "Permanece en interiores, protexe as extremidades e conserva a calor corporal.",
+    },
+    en: {
+      highTitle: "High cold risk",
+      veryHighTitle: "Very high cold risk",
+      highPrimary: "Intense cold can cool the body quickly.",
+      veryHighPrimary: "Very intense cold can quickly affect exposed skin.",
+      highRecommendation: "Limit time exposed to the cold and protect your hands, feet, face and ears in particular.",
+      veryHighRecommendation: "Avoid prolonged exposure. Minimise outdoor activity and protect all exposed skin, especially your face, ears and extremities.",
+      extremeRecommendation: "Stay indoors, protect extremities and preserve body heat.",
+    },
+  };
+
+  for (const lang of ["ca", "es", "eu", "gl", "en"] as const) {
+    const locale = JSON.parse(
+      readFileSync(new URL(`../../src/i18n/locales/${lang}.json`, import.meta.url), "utf8")
+    );
+    const t = (key: string) => {
+      const value = key.split(".").reduce((current: any, part) => current?.[part], locale);
+      return typeof value === "string" ? value : key;
+    };
+    const languageExpected = expected[lang];
+
+    for (const scenario of [
+      { risk: "alt" as const, temp: -20, title: languageExpected.highTitle, text: languageExpected.highPrimary, recommendation: languageExpected.highRecommendation },
+      { risk: "molt alt" as const, temp: -30, title: languageExpected.veryHighTitle, text: languageExpected.veryHighPrimary, recommendation: languageExpected.veryHighRecommendation },
+    ]) {
+      const status = getPrimaryStatusBlock({
+        alerts: [],
+        primary: { kind: "cold", severity: 3, labelKey: scenario.risk === "alt" ? "cold_high" : "cold_very_high" },
+        heatRisk: null,
+        coldRisk: scenario.risk,
+        windRisk: "none",
+        uvi: 0,
+        day: true,
+        primaryAdvice: null,
+        contextualUVMessage: "",
+        t,
+      });
+      const recommendation = renderCoolRecommendationScenario({
+        temp: scenario.temp,
+        coldEffectiveTemp: scenario.temp,
+        lang,
+      });
+      const coldItem = (recommendation.props.items as RecommendationItem[])
+        .find((item) => item.factor === "cold");
+
+      assert.equal(status.title, scenario.title, `${lang} ${scenario.risk} title`);
+      assert.equal(status.text, scenario.text, `${lang} ${scenario.risk} primary text`);
+      assert.equal(coldItem?.text, scenario.recommendation, `${lang} ${scenario.risk} recommendation`);
+      assert.notEqual(status.text, coldItem?.text, `${lang} ${scenario.risk} duplicate advice`);
+    }
+
+    const activeAlertStatus = getPrimaryStatusBlock({
+      alerts: [{ start: 0, end: Number.MAX_SAFE_INTEGER, event: "Weather warning" }],
+      primary: { kind: "cold", severity: 3, labelKey: "cold_very_high" },
+      heatRisk: null,
+      coldRisk: "molt alt",
+      windRisk: "none",
+      uvi: 0,
+      day: true,
+      primaryAdvice: null,
+      contextualUVMessage: "",
+      t,
+    });
+    assert.equal(activeAlertStatus.className, "status-card status-alert", `${lang} AEMET priority`);
+
+    const extremeStatus = getPrimaryStatusBlock({
+      alerts: [],
+      primary: { kind: "cold", severity: 4, labelKey: "cold_extreme" },
+      heatRisk: null,
+      coldRisk: "extrem",
+      windRisk: "none",
+      uvi: 0,
+      day: true,
+      primaryAdvice: null,
+      contextualUVMessage: "",
+      t,
+    });
+    const extremeRecommendation = renderCoolRecommendationScenario({
+      temp: -40,
+      coldEffectiveTemp: -40,
+      lang,
+    });
+    const extremeColdItem = (extremeRecommendation.props.items as RecommendationItem[])
+      .find((item) => item.factor === "cold");
+    assert.equal(extremeStatus.title, t("primaryStatus.cold.extreme"), `${lang} extreme title`);
+    assert.equal(extremeStatus.text, t("officialAdviceDynamic.cold.extreme"), `${lang} extreme primary advice`);
+    assert.equal(extremeColdItem?.text, languageExpected.extremeRecommendation, `${lang} extreme recommendation`);
+  }
+});
 
 test("recommendations replace safe night text with positive cold advice for Dudinka", () => {
   const element = renderCoolRecommendationScenario({

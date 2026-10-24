@@ -173,6 +173,9 @@
       "mild": "Precaución leve por frío",
       "moderate": "Riesgo moderado por frío",
       "high": "Riesgo alto por frío",
+      "veryHigh": "Riesgo muy alto por frío",
+      "highText": "El frío intenso puede enfriar el cuerpo rápidamente.",
+      "veryHighText": "El frío muy intenso puede afectar rápidamente a la piel expuesta.",
       "extreme": "Riesgo extremo por frío"
     },
     "wind": {

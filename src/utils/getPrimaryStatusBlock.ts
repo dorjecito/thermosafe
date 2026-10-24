@@ -318,13 +318,26 @@ export function getPrimaryStatusBlock({
       };
     }
 
-    if (coldRisk === "alt" || coldRisk === "molt alt") {
+    if (coldRisk === "molt alt") {
+      return {
+        icon: "🔵",
+        title: tr("primaryStatus.cold.veryHigh", "Risc molt alt per fred"),
+        text: tr(
+          "primaryStatus.cold.veryHighText",
+          "El fred molt intens pot afectar ràpidament la pell exposada."
+        ),
+        className: "status-card status-cold",
+      };
+    }
+
+    if (coldRisk === "alt") {
       return {
         icon: "🔵",
         title: tr("primaryStatus.cold.high", "Risc alt per fred"),
-        text:
-          t("officialAdviceDynamic.cold.high") ||
-          "Protegeix extremitats i limita el temps d’exposició exterior.",
+        text: tr(
+          "primaryStatus.cold.highText",
+          "El fred intens pot refredar el cos amb rapidesa."
+        ),
         className: "status-card status-cold",
       };
     }

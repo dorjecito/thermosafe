@@ -72,6 +72,7 @@ type TextKeys =
   | "cold_low"
   | "cold_mod"
   | "cold_high"
+  | "cold_very_high"
   | "cold_ext"
   | "rain"
   | "storm"
@@ -271,7 +272,9 @@ const TXT: TxtDict = {
     cold_mod:
       "Limita l’exposició a l’exterior i protegeix mans, peus i vies respiratòries.",
     cold_high:
-      "Evita exposicions prolongades a l’exterior i reforça la protecció tèrmica.",
+      "Limita el temps d'exposició al fred i protegeix especialment les mans, els peus, la cara i les orelles.",
+    cold_very_high:
+      "Evita les exposicions prolongades. Redueix al mínim l'activitat a l'exterior i protegeix tota la pell exposada, especialment la cara, les orelles i les extremitats.",
     cold_ext:
       "Roman en un espai interior, protegeix extremitats i conserva la calor corporal.",
     rain:
@@ -379,7 +382,9 @@ const TXT: TxtDict = {
     cold_mod:
       "Limita la exposición al exterior y protege manos, pies y vías respiratorias.",
     cold_high:
-      "Evita exposiciones prolongadas al aire libre y refuerza la protección térmica.",
+      "Limita el tiempo de exposición al frío y protege especialmente las manos, los pies, la cara y las orejas.",
+    cold_very_high:
+      "Evita las exposiciones prolongadas. Reduce al mínimo la actividad al aire libre y protege toda la piel expuesta, especialmente la cara, las orejas y las extremidades.",
     cold_ext:
       "Permanece en interiores, protege las extremidades y conserva el calor corporal.",
     rain:
@@ -487,7 +492,9 @@ const TXT: TxtDict = {
     cold_mod:
       "Mugatu kanpoko esposizioa eta babestu eskuak, oinak eta arnasbideak.",
     cold_high:
-      "Saihestu kanpoan denbora luzez egotea eta indartu babes termikoa.",
+      "Mugatu hotzarekiko esposizio-denbora, eta babestu bereziki eskuak, oinak, aurpegia eta belarriak.",
+    cold_very_high:
+      "Saihestu esposizio luzeak. Murriztu gutxienera kanpoko jarduera, eta babestu azal agerian dagoen guztia, bereziki aurpegia, belarriak eta gorputz-adarrak.",
     cold_ext:
       "Egon barruan, babestu gorputz-adarrak eta mantendu gorputz-berotasuna.",
     rain:
@@ -595,7 +602,9 @@ const TXT: TxtDict = {
     cold_mod:
       "Limita a exposición ao exterior e protexe mans, pés e vías respiratorias.",
     cold_high:
-      "Evita exposicións prolongadas ao aire libre e reforza a protección térmica.",
+      "Limita o tempo de exposición ao frío e protexe especialmente as mans, os pés, a cara e as orellas.",
+    cold_very_high:
+      "Evita as exposicións prolongadas. Reduce ao mínimo a actividade no exterior e protexe toda a pel exposta, especialmente a cara, as orellas e as extremidades.",
     cold_ext:
       "Permanece en interiores, protexe as extremidades e conserva a calor corporal.",
     rain:
@@ -703,7 +712,9 @@ const TXT: TxtDict = {
     cold_mod:
       "Limit outdoor exposure and protect hands, feet and airways.",
     cold_high:
-      "Avoid prolonged time outdoors and reinforce thermal protection.",
+      "Limit time exposed to the cold and protect your hands, feet, face and ears in particular.",
+    cold_very_high:
+      "Avoid prolonged exposure. Minimise outdoor activity and protect all exposed skin, especially your face, ears and extremities.",
     cold_ext:
       "Stay indoors, protect extremities and preserve body heat.",
     rain:
@@ -793,7 +804,8 @@ export const mapColdRiskToRecommendationKey = (
   coldRisk: ColdRisk | null | undefined
 ): ColdKey | null => {
   if (coldRisk === "extrem") return "cold_ext";
-  if (coldRisk === "alt" || coldRisk === "molt alt") return "cold_high";
+  if (coldRisk === "molt alt") return "cold_very_high";
+  if (coldRisk === "alt") return "cold_high";
   if (coldRisk === "moderat") return "cold_mod";
   if (coldRisk === "lleu") return "cold_low";
   return null;

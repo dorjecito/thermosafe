@@ -151,6 +151,9 @@
       "mild": "Precaució lleu per fred",
       "moderate": "Risc moderat per fred",
       "high": "Risc alt per fred",
+      "veryHigh": "Risc molt alt per fred",
+      "highText": "El fred intens pot refredar el cos amb rapidesa.",
+      "veryHighText": "El fred molt intens pot afectar ràpidament la pell exposada.",
       "extreme": "Risc extrem per fred"
     },
     "wind": {

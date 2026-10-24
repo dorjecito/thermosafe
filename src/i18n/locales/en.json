@@ -119,6 +119,9 @@
       "mild": "Mild cold caution",
       "moderate": "Moderate cold risk",
       "high": "High cold risk",
+      "veryHigh": "Very high cold risk",
+      "highText": "Intense cold can cool the body quickly.",
+      "veryHighText": "Very intense cold can quickly affect exposed skin.",
       "extreme": "Extreme cold risk"
     },
     "wind": {
