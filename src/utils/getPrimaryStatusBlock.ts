@@ -31,6 +31,7 @@ type PrimaryStatusBlockArgs = {
   primaryAdvice: string | null;
   contextualUVMessage: string;
   contextualPrimaryUvAdvice?: string | null;
+  uvPending?: boolean;
   t: TFunctionLike;
 };
 
@@ -54,6 +55,7 @@ export function getPrimaryStatusBlock({
   primaryAdvice,
   contextualUVMessage,
   contextualPrimaryUvAdvice,
+  uvPending = false,
   t,
 }: PrimaryStatusBlockArgs): PrimaryStatusBlockResult {
   const tr = (key: string, fallback: string) => {
@@ -65,6 +67,20 @@ export function getPrimaryStatusBlock({
     const text = t(key);
     return text && text !== key ? text : null;
   };
+
+  const getUnknownUVStatus = (): PrimaryStatusBlockResult => uvPending
+    ? {
+        icon: "ℹ️",
+        title: tr("uv_assessment_pending_title", "Actualitzant l’avaluació…"),
+        text: tr("uv_assessment_pending_text", "S’està consultant l’índex UV actual."),
+        className: "status-card",
+      }
+    : {
+        icon: "ℹ️",
+        title: tr("uv_data_unavailable_title", "Avaluació incompleta"),
+        text: tr("uv_data_unavailable_text", "L’índex UV actual no està disponible i aquest risc no es pot valorar."),
+        className: "status-card status-warning",
+      };
 
   const getNightHeatStatus = (): Pick<PrimaryStatusBlockResult, "title" | "text"> => ({
     title: tr("primaryStatus.heat.hotNight", "Nit calorosa"),
@@ -390,12 +406,7 @@ export function getPrimaryStatusBlock({
   if (primary.kind === "uv" && day) {
     const uvLevel = getUvLevelIndex(uvi);
     if (uvLevel === null) {
-      return {
-        icon: "ℹ️",
-        title: tr("uv_data_unavailable_title", "Avaluació incompleta"),
-        text: tr("uv_data_unavailable_text", "L’índex UV actual no està disponible i aquest risc no es pot valorar."),
-        className: "status-card status-warning",
-      };
+      return getUnknownUVStatus();
     }
     let uvTitle = tr("primaryStatus.uv.high", "Radiació UV alta");
 
@@ -419,12 +430,7 @@ export function getPrimaryStatusBlock({
 
   // 🟢 SITUACIÓ SENSE RISCOS CONEGUTS; UV desconegut no confirma seguretat.
   if (day && getUvLevelIndex(uvi) === null) {
-    return {
-      icon: "ℹ️",
-      title: tr("uv_data_unavailable_title", "Avaluació incompleta"),
-      text: tr("uv_data_unavailable_text", "L’índex UV actual no està disponible i aquest risc no es pot valorar."),
-      className: "status-card status-warning",
-    };
+    return getUnknownUVStatus();
   }
 
   // 🟢 SITUACIÓ SEGURA

@@ -58,6 +58,13 @@ import {
 } from "../../src/utils/skinTypePreference";
 import { getPrimaryStatusBlock } from "../../src/utils/getPrimaryStatusBlock";
 import {
+  getUVAssessmentForLocation,
+  makeUVLocationKey,
+  settleUVAssessment,
+  startUVAssessment,
+} from "../../src/utils/uvAssessment";
+import { withAbortTimeout } from "../../src/utils/withAbortTimeout";
+import {
   buildAemetAiAlert,
   detectAemetHazard,
   isKnownAemetDescription,
@@ -1106,7 +1113,7 @@ test("manual current-weather refresh bypasses cache while normal loads keep it",
   assert.match(appSource, /const refreshCurrentData = \(manual = false\)/);
   assert.match(appSource, /fetchWeather\(target\.city, true, manual\)/);
   assert.match(appSource, /locate\(true, getRefreshCoords\(lat, lon\), manual\)/);
-  assert.match(appSource, /if \(!data \|\| !data\.coord\) \{[\s\S]*?\}\s*\s*setData\(data\);/);
+  assert.match(appSource, /if \(!data \|\| !data\.coord\) \{[\s\S]*?const newLat = coords\?\.lat \?\? data\.coord\?\.lat \?\? null;[\s\S]*?setData\(data\);/);
 });
 
 test("explicit city searches force current weather while normal loads retain the cache", async () => {
@@ -3145,6 +3152,164 @@ test("unknown UV does not change known-factor work limits but prevents an unqual
     getWorkWindowText("optimal", "ca", false, undefined, false, true).includes("UV"),
     true
   );
+});
+
+test("UV assessment state distinguishes pending, valid zero and settled unavailable by location", () => {
+  const latA = 27.9667;
+  const lonA = -15.6;
+  const latB = 19.4326;
+  const lonB = -99.1332;
+  const keyA = makeUVLocationKey(latA, lonA);
+  const keyB = makeUVLocationKey(latB, lonB);
+
+  let state = startUVAssessment(null, latA, lonA, 1);
+  assert.equal(state.status, "pending");
+  assert.equal(state.value, null);
+  assert.equal(getUVAssessmentForLocation(state, keyA)?.status, "pending");
+
+  state = settleUVAssessment(state, 1, 0)!;
+  assert.equal(state.status, "available");
+  assert.equal(state.value, 0);
+
+  state = startUVAssessment(state, latA, lonA, 2);
+  assert.equal(state.status, "pending");
+  assert.equal(state.value, 0, "a same-location refresh retains the valid prior value");
+  state = settleUVAssessment(state, 2, null)!;
+  assert.equal(state.status, "available");
+  assert.equal(state.value, 0, "a failed refresh does not discard the valid same-location value");
+
+  const nextLocation = startUVAssessment(state, latB, lonB, 3);
+  assert.equal(getUVAssessmentForLocation(nextLocation, keyA), null);
+  assert.equal(getUVAssessmentForLocation(nextLocation, keyB)?.status, "pending");
+  assert.equal(nextLocation.value, null, "UV from the previous city is not reused");
+
+  const staleCompletion = settleUVAssessment(nextLocation, 2, 11);
+  assert.equal(staleCompletion, nextLocation, "an old request cannot complete a newer location request");
+
+  let failed = settleUVAssessment(nextLocation, 3, null)!;
+  assert.equal(failed.status, "unavailable");
+  assert.equal(failed.value, null);
+  for (const invalid of [undefined, NaN, Infinity, -1]) {
+    const pending = startUVAssessment(null, latB, lonB, 4);
+    failed = settleUVAssessment(pending, 4, invalid)!;
+    assert.equal(failed.status, "unavailable", String(invalid));
+    assert.equal(failed.value, null, String(invalid));
+  }
+});
+
+test("UV query timeout aborts the pending request", async () => {
+  let aborted = false;
+  await assert.rejects(
+    withAbortTimeout((signal) => new Promise<never>(() => {
+      signal.addEventListener("abort", () => { aborted = signal.aborted; }, { once: true });
+    }), 5),
+    /Request timed out/
+  );
+  assert.equal(aborted, true);
+});
+
+test("pending UV is localized, does not claim safety, and yields to known risks and official alerts", () => {
+  const expectedPending = {
+    ca: ["Actualitzant l’avaluació…", "S’està consultant l’índex UV actual."],
+    es: ["Actualizando la evaluación…", "Se está consultando el índice UV actual."],
+    eu: ["Ebaluazioa eguneratzen…", "Uneko UV indizea kontsultatzen ari da."],
+    gl: ["Actualizando a avaliación…", "Estase consultando o índice UV actual."],
+    en: ["Updating assessment…", "Checking the current UV index."],
+  } as const;
+  const activeAlert = [{ start: Math.floor(Date.now() / 1000) - 60, end: Math.floor(Date.now() / 1000) + 600, event: "Moderate rain warning" }];
+
+  for (const [lang, expected] of Object.entries(expectedPending)) {
+    const locale = JSON.parse(readFileSync(new URL(`../../src/i18n/locales/${lang}.json`, import.meta.url), "utf8"));
+    assert.equal(locale.uv_assessment_pending_title, expected[0], `${lang} title`);
+    assert.equal(locale.uv_assessment_pending_text, expected[1], `${lang} text`);
+    const translate = (key: string) => key.split(".").reduce((value: any, part) => value?.[part], locale) ?? key;
+
+    const pending = getPrimaryStatusBlock({
+      alerts: [], primary: { kind: "none", severity: 0, labelKey: "none" },
+      heatRisk: null, coldRisk: "cap", windRisk: "none", uvi: null, day: true,
+      uvPending: true, primaryAdvice: null, contextualUVMessage: "", t: translate,
+    });
+    assert.equal(pending.title, expected[0], `${lang} pending title`);
+    assert.equal(pending.text, expected[1], `${lang} pending text`);
+    assert.equal(pending.className, "status-card", `${lang} pending state is neutral`);
+
+    const stillPendingHeat = getPrimaryStatusBlock({
+      alerts: [], primary: { kind: "heat", severity: 2, labelKey: "heat_moderate" },
+      heatRisk: { isModerate: true }, coldRisk: "cap", windRisk: "none", uvi: null, day: true,
+      uvPending: true, primaryAdvice: "Known heat warning", contextualUVMessage: "", t: translate,
+    });
+    assert.ok(stillPendingHeat.text.length > 0, `${lang} known risk remains visible`);
+    assert.doesNotMatch(stillPendingHeat.text, /UV|actualitzant|updating|evaluación|ebaluazioa|avaliación/i, `${lang} pending UV does not replace known risk advice`);
+
+    for (const knownRisk of [
+      { primary: { kind: "cold" as const, severity: 2 as const, labelKey: "cold_moderate" }, coldRisk: "moderat", windRisk: "none", heatRisk: null },
+      { primary: { kind: "wind" as const, severity: 2 as const, labelKey: "wind_moderate" }, coldRisk: "cap", windRisk: "strong", heatRisk: null },
+    ]) {
+      const knownStatus = getPrimaryStatusBlock({
+        alerts: [], ...knownRisk, uvi: null, day: true, uvPending: true,
+        primaryAdvice: null, contextualUVMessage: "", t: translate,
+      });
+      assert.notEqual(knownStatus.title, expected[0], `${lang} other known risk retains priority`);
+      assert.doesNotMatch(knownStatus.text, /uv_data_unavailable|assessment incomplete|avaluació incompleta/i, `${lang} other known risk is not replaced by UV state`);
+    }
+
+    const alertWins = getPrimaryStatusBlock({
+      alerts: activeAlert, primary: { kind: "none", severity: 0, labelKey: "none" },
+      heatRisk: null, coldRisk: "cap", windRisk: "none", uvi: null, day: true,
+      uvPending: true, primaryAdvice: null, contextualUVMessage: "", t: translate,
+    });
+    assert.equal(alertWins.className, "status-card status-alert", `${lang} AEMET stays primary`);
+  }
+
+  const zero = getPrimaryStatusBlock({
+    alerts: [], primary: { kind: "none", severity: 0, labelKey: "none" },
+    heatRisk: null, coldRisk: "cap", windRisk: "none", uvi: 0, day: true,
+    uvPending: false, primaryAdvice: null, contextualUVMessage: "", t: (key) => key,
+  });
+  assert.equal(zero.title, "safe_conditions");
+
+  const unavailable = getPrimaryStatusBlock({
+    alerts: [], primary: { kind: "none", severity: 0, labelKey: "none" },
+    heatRisk: null, coldRisk: "cap", windRisk: "none", uvi: null, day: true,
+    uvPending: false, primaryAdvice: null, contextualUVMessage: "", t: (key) => key,
+  });
+  assert.equal(unavailable.title, "Avaluació incompleta");
+});
+
+test("outdoor activity distinguishes pending UV from unavailable UV without hiding known-risk advice", () => {
+  const expected = {
+    ca: "S’està actualitzant l’avaluació UV; encara no es pot confirmar si les condicions són adequades per a activitats a l’aire lliure.",
+    es: "Se está actualizando la evaluación UV; todavía no se puede confirmar si las condiciones son adecuadas para actividades al aire libre.",
+    eu: "UV ebaluazioa eguneratzen ari da; oraindik ezin da baieztatu baldintzak egokiak direnik kanpoko jardueretarako.",
+    gl: "Estase actualizando a avaliación UV; aínda non se pode confirmar se as condicións son axeitadas para actividades ao aire libre.",
+    en: "The UV assessment is being updated; it is not yet possible to confirm whether conditions are suitable for outdoor activities.",
+  } as const;
+  for (const [lang, text] of Object.entries(expected)) {
+    assert.equal(getWorkWindowText("optimal", lang as keyof typeof expected, false, undefined, false, false, undefined, undefined, true), text);
+  }
+  assert.equal(
+    getWorkWindowText("caution", "ca", false, undefined, false, false, undefined, "wind", true),
+    "Es poden realitzar activitats a l’aire lliure amb precaucions bàsiques."
+  );
+  assert.equal(
+    getWorkWindowText("limited", "ca", false, undefined, false, false, undefined, "heat", true),
+    "Convé limitar les activitats exigents o adaptar-les a les condicions actuals."
+  );
+  assert.equal(
+    getWorkWindowText("optimal", "ca", false, undefined, false, true, undefined, undefined, false),
+    "Les condicions conegudes són adequades per a activitats a l’aire lliure, però no es pot valorar el risc UV perquè la dada actual no està disponible."
+  );
+});
+
+test("GPS startup marks the location UV query pending before releasing primary weather content", () => {
+  const source = readFileSync(new URL("../../src/App.tsx", import.meta.url), "utf8");
+  const start = source.indexOf('const provisionalName = d.name || "Ubicació desconeguda";');
+  const end = source.indexOf('const geocodingTask = (async () => {', start);
+  assert.ok(start >= 0 && end > start);
+  const flow = source.slice(start, end);
+  assert.ok(flow.indexOf("beginUVRequest(lat, lon)") < flow.indexOf("setIsInitialRiskReady(true)"));
+  assert.ok(flow.indexOf("setIsInitialRiskReady(true)") < flow.indexOf("safeUVFetch(lat, lon, isDayHere)"));
+  assert.match(flow, /finishUVRequest\(uvRequestId, uv\)/);
 });
 
 test("unknown UV assessment copy is localized in all supported languages", () => {

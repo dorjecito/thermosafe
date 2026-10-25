@@ -26,6 +26,13 @@ import {
 } from "./constants/riskThresholds";
 
 import { getUVDetailFromOpenUV, getUVFromOpenUV } from "./services/openUV";
+import {
+  getUVAssessmentForLocation,
+  makeUVLocationKey,
+  settleUVAssessment,
+  startUVAssessment,
+  type UVAssessment,
+} from "./utils/uvAssessment";
 
    /* —— utilitats ——————————————————————————— */
    import { getLocationNameFromCoords } from './utils/getLocationNameFromCoords';
@@ -756,7 +763,7 @@ useEffect(() => {
   const [hum, setHum] = useState<number | null>(null);
   const [hi, setHi] = useState<number | null>(null);
   const [irr, setIrr] = useState<number | null>(null);
-  const [uvi, setUvi] = useState<number | null>(null);
+  const [uvAssessment, setUvAssessment] = useState<UVAssessment | null>(null);
   const [uvMaxToday, setUvMaxToday] = useState<number | null>(null);
   const [uvDetailSunTimes, setUvDetailSunTimes] = useState<{
     sunriseIso: string;
@@ -777,6 +784,32 @@ useEffect(() => {
 	  const [windKmh, setWindKmh] = useState<number | null>(null);
 	  const [lat, setLat] = useState<number | null>(null);
 	  const [lon, setLon] = useState<number | null>(null);
+  const uvRequestIdRef = useRef(0);
+  const currentUvLocationKey =
+    typeof lat === "number" && Number.isFinite(lat) &&
+    typeof lon === "number" && Number.isFinite(lon)
+      ? makeUVLocationKey(lat, lon)
+      : null;
+  const currentUvAssessment = getUVAssessmentForLocation(uvAssessment, currentUvLocationKey);
+  const uvi = currentUvAssessment?.value ?? null;
+  const uvPending = day && uvi === null && currentUvAssessment?.status === "pending";
+  const uvUnavailable = day && uvi === null && (
+    currentUvAssessment?.status === "unavailable" || (data !== null && currentUvAssessment === null)
+  );
+
+  const beginUVRequest = (requestLat: number, requestLon: number) => {
+    const requestId = ++uvRequestIdRef.current;
+    setUvAssessment((current) => startUVAssessment(current, requestLat, requestLon, requestId));
+    return requestId;
+  };
+  const finishUVRequest = (requestId: number, value: unknown) => {
+    if (uvRequestIdRef.current !== requestId) return;
+    setUvAssessment((current) => settleUVAssessment(current, requestId, value));
+  };
+  const invalidateUVRequest = () => {
+    uvRequestIdRef.current += 1;
+    setUvAssessment(null);
+  };
   const [riskTrend, setRiskTrend] = useState<RiskTrendResult | null>(null);
   const [riskTrendLoading, setRiskTrendLoading] = useState(false);
   const [nightForecastTick, setNightForecastTick] = useState(0);
@@ -1187,7 +1220,6 @@ const fetchWeather = async (
       return false;
     }
 
-    setData(data);
     refreshTargetRef.current = coords
       ? { source: "coords", city: cityName, lat: coords.lat, lon: coords.lon }
       : { source: "search", city: cityName };
@@ -1218,6 +1250,7 @@ const fetchWeather = async (
 
     if (isStaleRequest("search", requestId)) return false;
 
+    setData(data);
     setCity(resolvedName);
     setRealCity(resolvedName);
 
@@ -1269,23 +1302,34 @@ const fetchWeather = async (
 
     // ✅ Coordenades reals de la ciutat cercada
     if (newLat != null && newLon != null) {
+      const uvRequestId = beginUVRequest(newLat, newLon);
       setLat(newLat);
       setLon(newLon);
 
-      // 🟣 UVI (OpenUV)
-      const uv = await getUVFromOpenUV(newLat, newLon);
-
-      if (isStaleRequest("search", requestId)) return false;
-
-	      console.log("[SEARCH] UV rebut:", uv);
-	      setUvi(uv);
-	      await loadUvMaxToday(newLat, newLon, data.timezone ?? 0);
+	      // UV és complementari: el seu resultat no ha d'endarrerir riscos ni avisos.
+	      void (async () => {
+	        let uv: number | null = null;
+	        try {
+	          uv = await getUVFromOpenUV(newLat, newLon);
+	        } catch (error) {
+	          console.warn("[OpenUV] No s'ha pogut obtenir l'índex UV de la ciutat:", error);
+	        }
+	        finishUVRequest(uvRequestId, uv);
+	        if (uvRequestIdRef.current === uvRequestId) {
+	          await loadUvMaxToday(newLat, newLon, data.timezone ?? 0);
+	        }
+	      })();
 
 		      if (import.meta.env.DEV) {
 		        console.log("[DEBUG] Coordenades ciutat cercada:", newLat, newLon);
 		      }
 
-      // ⚠️ Avisos oficials
+      if (!preserveVisible) {
+        setIsInitialRiskReady(true);
+        setLoading(false);
+      }
+
+      // ⚠️ Avisos oficials, en paral·lel a l'actualització UV.
       await loadAlertsIfNeeded(
         newLat,
         newLon,
@@ -1306,7 +1350,9 @@ const fetchWeather = async (
         });
       }
 		    } else {
-		      setUvi(null);
+		      invalidateUVRequest();
+		      setLat(null);
+		      setLon(null);
 		      setUvMaxToday(null);
 		      setAlerts([]);
       }
@@ -1498,10 +1544,6 @@ const locate = async (
 	const lon = position.lon;
 	const accuracy = position.acc ?? null;
 
-// ✅ PUNT 4: desa coordenades a l’estat global (per components com UVSafeTime)
-setLat(lat);
-setLon(lon);
-
 if (import.meta.env.DEV) {
   console.log("[GPS]", {
     latitude: lat,
@@ -1531,6 +1573,8 @@ if (import.meta.env.DEV) {
     auditStatus = "weather-empty";
 	  return;
 	}
+	setLat(lat);
+	setLon(lon);
 	setData(d);
   refreshTargetRef.current = { source: "gps" };
   startupMark("weather-visible", { source: "gps" });
@@ -1608,6 +1652,7 @@ const provisionalName = d.name || "Ubicació desconeguda";
 setCity(provisionalName);
 setRealCity("");
 setDataSource("gps");
+const uvRequestId = beginUVRequest(lat, lon);
 startupMark("primary-weather-ready", {
   hasWeather: true,
   hasProvisionalLocation: Boolean(provisionalName),
@@ -1623,13 +1668,13 @@ if (!silent) {
 
 const uvTask = (async () => {
   const uv = await safeUVFetch(lat, lon, isDayHere);
+  finishUVRequest(uvRequestId, uv);
 
   if (isStaleRequest("gps", requestId)) {
     auditStatus = "stale-after-uv";
     return null;
   }
 
-  setUvi(uv);
   startupMark("uv-visible", { hasValue: typeof uv === "number" });
   loadUvMaxTodayInBackground(lat, lon, d.timezone ?? 0);
   console.log("[DEBUG] UVI actual (nou):", uv);
@@ -1794,6 +1839,7 @@ const handleSuggestionSelect = async (s: any) => {
 
     setData(data);
     refreshTargetRef.current = { source: "coords", city: label, lat: s.lat, lon: s.lon };
+    const uvRequestId = beginUVRequest(s.lat, s.lon);
     setLat(s.lat);
     setLon(s.lon);
 
@@ -1842,9 +1888,20 @@ const handleSuggestionSelect = async (s: any) => {
     setColdRisk(coldRiskValue as ColdRisk);
 
     setIcon(data.weather?.[0]?.icon || "");
-	    const uv = await getUVFromOpenUV(s.lat, s.lon);
-	    setUvi(uv);
-	    await loadUvMaxToday(s.lat, s.lon, data.timezone ?? 0);
+	    void (async () => {
+	      let uv: number | null = null;
+	      try {
+	        uv = await getUVFromOpenUV(s.lat, s.lon);
+	      } catch (error) {
+	        console.warn("[OpenUV] No s'ha pogut obtenir l'índex UV de la localitat:", error);
+	      }
+	      finishUVRequest(uvRequestId, uv);
+	      if (uvRequestIdRef.current === uvRequestId) {
+	        await loadUvMaxToday(s.lat, s.lon, data.timezone ?? 0);
+	      }
+	    })();
+	    setIsInitialRiskReady(true);
+	    setLoading(false);
 
 	    await loadAlertsIfNeeded(
 	      s.lat,
@@ -2125,11 +2182,12 @@ const workWindowText = useMemo(
     aemetActive,
     undefined,
     aemetOnlyCaution,
-    day && !(typeof uvi === "number" && Number.isFinite(uvi) && uvi >= 0),
+    uvUnavailable,
     heatRisk?.class,
-    engineRisk?.primary?.factor
+    engineRisk?.primary?.factor,
+    uvPending
   ),
-  [workWindow, workWindowLang, aemetActive, aemetOnlyCaution, day, uvi, heatRisk?.class, engineRisk?.primary?.factor]
+  [workWindow, workWindowLang, aemetActive, aemetOnlyCaution, uvUnavailable, heatRisk?.class, engineRisk?.primary?.factor, uvPending]
 );
 
 useEffect(() => {
@@ -2287,6 +2345,7 @@ const primaryStatusInput = useMemo(
     primaryAdvice,
     contextualUVMessage,
     contextualPrimaryUvAdvice,
+    uvPending,
     t,
   }),
   [
@@ -2302,6 +2361,7 @@ const primaryStatusInput = useMemo(
     primaryAdvice,
     contextualUVMessage,
     contextualPrimaryUvAdvice,
+    uvPending,
     t,
   ]
 );

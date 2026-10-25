@@ -1,5 +1,6 @@
 // src/services/openUV.ts
 import { startupEnd, startupStart } from "../utils/startupAudit";
+import { withAbortTimeout } from "../utils/withAbortTimeout";
 
 // ==============================
 // 🔹 Tipus
@@ -51,6 +52,7 @@ export type OpenUVForecastResponse = {
 
 const UV_NOW_TTL = 5 * 60 * 1000; // 5 minuts
 const UV_DETAIL_TTL = 10 * 60 * 1000; // 10 minuts
+const UV_CURRENT_REQUEST_TIMEOUT_MS = 15_000;
 
 type CacheEntry<T> = {
   ts: number;
@@ -125,7 +127,7 @@ function buildOpenUVProxyUrl(
   return `/api/openuv?${params.toString()}`;
 }
 
-async function safeFetch(url: string) {
+async function safeFetch(url: string, timeoutMs = 0) {
   const headers: HeadersInit = {};
 
   if (import.meta.env.DEV) {
@@ -136,14 +138,20 @@ async function safeFetch(url: string) {
     headers["x-access-token"] = key;
   }
 
-  const response = await fetch(url, { headers });
+  const load = async (signal?: AbortSignal) => {
+    const response = await fetch(url, { headers, ...(signal ? { signal } : {}) });
 
-  if (!response.ok) {
-    const txt = await response.text().catch(() => "");
-    throw new Error(`OpenUV error ${response.status}: ${txt}`);
-  }
+    if (!response.ok) {
+      const txt = await response.text().catch(() => "");
+      throw new Error(`OpenUV error ${response.status}: ${txt}`);
+    }
 
-  return response.json();
+    return response.json();
+  };
+
+  return timeoutMs > 0
+    ? withAbortTimeout(load, timeoutMs)
+    : load();
 }
 
 // ==============================
@@ -187,7 +195,7 @@ export async function getUVFromOpenUV(
         console.log("[OpenUV] Fetch UV via proxy");
       }
 
-      const data = (await safeFetch(url)) as OpenUVCurrentResponse;
+      const data = (await safeFetch(url, UV_CURRENT_REQUEST_TIMEOUT_MS)) as OpenUVCurrentResponse;
 
       if (import.meta.env.DEV) {
         console.log("[OpenUV] UV Response keys:", Object.keys(data || {}));

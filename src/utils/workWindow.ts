@@ -227,13 +227,15 @@ export function getWorkWindowText(
   aemetOnlyCaution = false,
   uvUnavailable = false,
   heatRiskClass?: string | null,
-  primaryRiskKind?: string | null
+  primaryRiskKind?: string | null,
+  uvPending = false
 ): string {
   void nightHeatLevel;
 
   const txt = {
     ca: {
       optimal: "Les condicions són adequades per a activitats a l’aire lliure.",
+	      optimalUvPending: "S’està actualitzant l’avaluació UV; encara no es pot confirmar si les condicions són adequades per a activitats a l’aire lliure.",
 	      optimalUvUnavailable: "Les condicions conegudes són adequades per a activitats a l’aire lliure, però no es pot valorar el risc UV perquè la dada actual no està disponible.",
       optimalAlert: "Condicions actuals adequades, però hi ha avisos oficials actius. Mantén la precaució.",
       caution: "Es poden realitzar activitats a l’aire lliure amb precaucions bàsiques.",
@@ -244,6 +246,7 @@ export function getWorkWindowText(
     },
     es: {
       optimal: "Las condiciones son adecuadas para actividades al aire libre.",
+	      optimalUvPending: "Se está actualizando la evaluación UV; todavía no se puede confirmar si las condiciones son adecuadas para actividades al aire libre.",
 	      optimalUvUnavailable: "Las condiciones conocidas son adecuadas para actividades al aire libre, pero no se puede valorar el riesgo UV porque el dato actual no está disponible.",
       optimalAlert: "Condiciones actuales adecuadas, pero hay avisos oficiales activos. Mantén la precaución.",
       caution: "Puedes hacer actividades al aire libre con precauciones básicas.",
@@ -254,6 +257,7 @@ export function getWorkWindowText(
     },
     eu: {
       optimal: "Baldintzak egokiak dira kanpoko jardueretarako.",
+	      optimalUvPending: "UV ebaluazioa eguneratzen ari da; oraindik ezin da baieztatu baldintzak egokiak direnik kanpoko jardueretarako.",
 	      optimalUvUnavailable: "Ezagutzen diren baldintzak egokiak dira kanpoko jardueretarako, baina ezin da UV arriskua baloratu uneko datua ez dagoelako eskuragarri.",
       optimalAlert: "Uneko baldintzak egokiak dira, baina abisu ofizialak aktibo daude. Mantendu arreta.",
       caution: "Kanpoko jarduerak egin daitezke oinarrizko neurriak hartuta.",
@@ -264,6 +268,7 @@ export function getWorkWindowText(
     },
     gl: {
       optimal: "As condicións son axeitadas para actividades ao aire libre.",
+	      optimalUvPending: "Estase actualizando a avaliación UV; aínda non se pode confirmar se as condicións son axeitadas para actividades ao aire libre.",
 	      optimalUvUnavailable: "As condicións coñecidas son axeitadas para actividades ao aire libre, pero non se pode valorar o risco UV porque o dato actual non está dispoñible.",
       optimalAlert: "As condicións actuais son adecuadas, pero hai avisos oficiais activos. Mantén a precaución.",
       caution: "Podes facer actividades ao aire libre con precaucións básicas.",
@@ -274,6 +279,7 @@ export function getWorkWindowText(
     },
     en: {
       optimal: "Conditions are suitable for outdoor activities.",
+	      optimalUvPending: "The UV assessment is being updated; it is not yet possible to confirm whether conditions are suitable for outdoor activities.",
 	      optimalUvUnavailable: "Known conditions are suitable for outdoor activities, but UV risk cannot be assessed because current data is unavailable.",
       optimalAlert: "Current conditions are suitable, but official alerts are active. Stay cautious.",
       caution: "You can do outdoor activities with basic precautions.",
@@ -295,6 +301,10 @@ export function getWorkWindowText(
   if (level === "optimal" && aemetActive) {
     return txt[lang]?.optimalAlert || txt.ca.optimalAlert;
   }
+
+	if (level === "optimal" && uvPending) {
+		return txt[lang]?.optimalUvPending || txt.ca.optimalUvPending;
+	}
 
 	if (level === "optimal" && uvUnavailable) {
 		return txt[lang]?.optimalUvUnavailable || txt.ca.optimalUvUnavailable;

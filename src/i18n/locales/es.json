@@ -104,6 +104,8 @@
   "safe_conditions_text_day": "No se observan riesgos destacables en este momento.",
   "uv_data_unavailable_title": "Evaluación incompleta",
   "uv_data_unavailable_text": "El índice UV actual no está disponible y este riesgo no se puede valorar.",
+  "uv_assessment_pending_title": "Actualizando la evaluación…",
+  "uv_assessment_pending_text": "Se está consultando el índice UV actual.",
   "safe_conditions_text_night": "Condiciones nocturnas dentro de parámetros normales.",
   "top_alert_weather_active": "Alerta meteorológica activa",
   "official_alert": "Aviso meteorológico oficial activo",
