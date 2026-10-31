@@ -366,9 +366,13 @@
   "no_alerts": "No hi ha avisos meteorològics actualment.",
 
  "notifications": {
-  "label": "Avisos",
-  "on": "ACTIVATS",
-  "off": "DESACTIVATS"
+  "label": "Notificacions",
+  "on": "ACTIVES",
+  "off": "DESACTIVADES",
+  "info_label": "Informació sobre les notificacions",
+  "info_title": "Notificacions push",
+  "info_body": "Les notificacions t’avisen de riscos rellevants per calor, fred, vent, UV i avisos meteorològics oficials, segons la teva ubicació i configuració.",
+  "info_close": "Entesos"
 },
 
   "solar_info": "Radiació solar i índex UV",

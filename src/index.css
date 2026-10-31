@@ -2309,6 +2309,20 @@ body,
   cursor: pointer;
 }
 
+.notifications-info-icon {
+  margin-right: 0;
+}
+
+.notifications-info-dialog {
+  border: 0;
+  max-height: calc(100dvh - 2rem);
+  overflow-y: auto;
+}
+
+.notifications-info-dialog::backdrop {
+  background: rgba(15, 23, 42, 0.38);
+}
+
 @media (prefers-color-scheme: dark) {
   .activity-info-icon {
     border-color: rgba(255, 255, 255, 0.18);

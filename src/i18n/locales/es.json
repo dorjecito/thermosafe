@@ -392,9 +392,13 @@
   "no_alerts": "No hay avisos meteorológicos actualmente.",
 
   "notifications": {
-  "label": "Avisos",
-  "on": "ACTIVADOS",
-  "off": "DESACTIVADOS"
+  "label": "Notificaciones",
+  "on": "ACTIVAS",
+  "off": "DESACTIVADAS",
+  "info_label": "Información sobre las notificaciones",
+  "info_title": "Notificaciones push",
+  "info_body": "Las notificaciones te avisan de riesgos relevantes por calor, frío, viento, UV y avisos meteorológicos oficiales, según tu ubicación y configuración.",
+  "info_close": "Entendido"
 }, 
 
   "solar_info": "Radiación solar e índice UV",

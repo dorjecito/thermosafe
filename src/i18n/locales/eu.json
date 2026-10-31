@@ -377,9 +377,13 @@
   "no_alerts": "Ez dago abisurik une honetan.",
 
   "notifications": {
-  "label": "Abisuak",
+  "label": "Jakinarazpenak",
   "on": "AKTIBATUTA",
-  "off": "DESAKTIBATUTA"
+  "off": "DESAKTIBATUTA",
+  "info_label": "Jakinarazpenei buruzko informazioa",
+  "info_title": "Push jakinarazpenak",
+  "info_body": "Jakinarazpenek beroak, hotzak, haizeak eta UV erradiazioak eragindako arrisku garrantzitsuen eta abisu meteorologiko ofizialen berri ematen dizute, zure kokapenaren eta ezarpenen arabera.",
+  "info_close": "Ulertuta"
 },
 
   "solar_info": "Eguzki-erradiazioa eta UV indizea",

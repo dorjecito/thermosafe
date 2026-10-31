@@ -370,9 +370,13 @@
   "no_alerts": "Sen avisos.",
 
   "notifications": {
-  "label": "Avisos",
-  "on": "ACTIVADOS",
-  "off": "DESACTIVADOS"
+  "label": "Notificacións",
+  "on": "ACTIVAS",
+  "off": "DESACTIVADAS",
+  "info_label": "Información sobre as notificacións",
+  "info_title": "Notificacións push",
+  "info_body": "As notificacións avísante de riscos relevantes por calor, frío, vento, UV e avisos meteorolóxicos oficiais, segundo a túa localización e configuración.",
+  "info_close": "Entendido"
 },
 
   "solar_info": "Radiación solar e índice UV",

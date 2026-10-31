@@ -106,6 +106,7 @@ import { calcHIOrNull } from "./utils/calcHI";
    import UVScale             from './components/UVScale';
    import LocationCard from "./components/LocationCard";
    import SafetyActions from "./components/SafetyActions";
+   import NotificationsInfo from "./components/NotificationsInfo";
    import type { SkinType } from "./components/SkinTypeInfo";
    import TopAlertBanner from "./components/TopAlertBanner";
    import CompactHeader from "./components/CompactHeader";
@@ -3056,6 +3057,9 @@ return (
         gap: "8px",
         transition: "all 0.2s ease",
         flex: 1,
+        flexWrap: "wrap",
+        minWidth: 0,
+        minHeight: "44px",
         width: "100%",
         maxWidth: "100%",
         whiteSpace: "normal",
@@ -3068,6 +3072,7 @@ return (
         {pushEnabled ? t("notifications.on") : t("notifications.off")}
       </strong>
     </button>
+    <NotificationsInfo />
   </div>
 
   {/* (opcional) Missatge d’estat/errada del push */}

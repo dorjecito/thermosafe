@@ -7,6 +7,7 @@ import "./refreshTarget.test";
 import "./citySuggestions.test";
 import "./languageInitialization.test";
 import "./subscriptionLifecycle.test";
+import "./notificationsControl.test";
 import assert from "node:assert/strict";
 import { createInstance } from "i18next";
 import { createHash } from "node:crypto";

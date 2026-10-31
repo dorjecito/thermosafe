@@ -358,9 +358,13 @@
   "no_alerts": "No alerts at this time.",
 
   "notifications": {
-    "label": "Alerts",
+    "label": "Notifications",
     "on": "ON",
-    "off": "OFF"
+    "off": "OFF",
+    "info_label": "Information about notifications",
+    "info_title": "Push notifications",
+    "info_body": "Notifications alert you to significant risks from heat, cold, wind and UV, and to official weather warnings, based on your location and settings.",
+    "info_close": "Got it"
   },
 
   "solar_info": "Solar radiation and UV index",
