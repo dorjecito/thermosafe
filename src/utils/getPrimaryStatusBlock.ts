@@ -1,6 +1,7 @@
 import { getUvLevelIndex } from "./uv";
 import type { HeatDayPhase } from "./isDayAtLocation";
 import { detectAemetHazard, type HazardId } from "./aemetAi";
+import { getAemetAlertPhase } from "./aemetAlertTimeline";
 
 type TFunctionLike = (key: string) => string;
 
@@ -20,6 +21,7 @@ type HeatRiskLike = {
 
 type PrimaryStatusBlockArgs = {
   alerts: any[];
+  nowTs?: number;
   primary: Primary;
   heatRisk: HeatRiskLike;
   coldRisk: string | null;
@@ -44,6 +46,7 @@ type PrimaryStatusBlockResult = {
 
 export function getPrimaryStatusBlock({
   alerts,
+  nowTs = Math.floor(Date.now() / 1000),
   primary,
   heatRisk,
   coldRisk,
@@ -132,8 +135,6 @@ export function getPrimaryStatusBlock({
     };
   };
 
-  const nowTs = Math.floor(Date.now() / 1000);
-
   const activeAlert =
     Array.isArray(alerts) &&
     alerts.find(
@@ -141,7 +142,7 @@ export function getPrimaryStatusBlock({
         typeof alert?.start === "number" &&
         typeof alert?.end === "number" &&
         nowTs >= alert.start &&
-        nowTs <= alert.end
+        nowTs < alert.end
     );
 
   const activeAlerts =
@@ -151,7 +152,7 @@ export function getPrimaryStatusBlock({
             typeof alert?.start === "number" &&
             typeof alert?.end === "number" &&
             nowTs >= alert.start &&
-            nowTs <= alert.end
+            nowTs < alert.end
         )
       : [];
 
@@ -160,7 +161,7 @@ export function getPrimaryStatusBlock({
     alerts.find(
       (alert) =>
         typeof alert?.start === "number" &&
-        alert.start > nowTs
+        alert.start > nowTs && getAemetAlertPhase(alert, nowTs) !== "ended"
     );
 
   const soonAlerts =
@@ -168,7 +169,7 @@ export function getPrimaryStatusBlock({
       ? alerts.filter(
           (alert) =>
             typeof alert?.start === "number" &&
-            alert.start > nowTs
+            alert.start > nowTs && getAemetAlertPhase(alert, nowTs) !== "ended"
         )
       : [];
 

@@ -37,7 +37,8 @@ export function getAemetAlertPhase(
     return "unknown";
   }
 
-  if (nowTs >= start && nowTs <= end) return "active";
+  if (nowTs >= end) return "ended";
+  if (nowTs >= start && nowTs < end) return "active";
   if (start > nowTs) return "future";
   return "ended";
 }
@@ -126,7 +127,10 @@ export function getAemetAlertTimelineState<T extends AemetAlertLike>(
     };
   }
 
-  const sortedAlerts = sortAemetAlerts(alerts, nowTs);
+  const sortedAlerts = sortAemetAlerts(
+    alerts.filter(alert => getAemetAlertPhase(alert, nowTs) !== "ended"),
+    nowTs
+  );
   const activeAlerts = sortedAlerts.filter(
     (alert) => getAemetAlertPhase(alert, nowTs) === "active"
   );

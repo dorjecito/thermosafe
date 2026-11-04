@@ -1,4 +1,5 @@
 import { buildNightForecast } from "./utils/nightForecast";
+import { useAlertClock } from "./hooks/useAlertClock";
 /* ───────────────────────────────────────────
    src/App.tsx  —  100 % camins relatius
    ─────────────────────────────────────────── */
@@ -198,9 +199,8 @@ const formatAlertTime = (unixSeconds: number, lang: string) => {
   });
 };
 
-const isAlertActiveNow = (start: number, end: number) => {
-  const now = Date.now() / 1000;
-  return now >= start && now <= end;
+const isAlertActiveNow = (start: number, end: number, now: number) => {
+  return now >= start && now < end;
 };
 
 const getQuickTempToneClass = (value: number | null): string => {
@@ -2005,6 +2005,7 @@ const activityAffectsHeatRisk = useMemo(
 const displayedActivityLevel = activityEnabled ? heldActivityLevel : activityLevelStable;
 
 const nowTs = Math.floor(Date.now() / 1000);
+const alertNowTs = useAlertClock(alerts, data);
 const isLateDay = useMemo(
   () =>
     data
@@ -2039,8 +2040,8 @@ const {
   activeAlert,
   sortedAlerts,
 } = useMemo(() => {
-  return getAemetAlertTimelineState(alerts, nowTs);
-}, [alerts, nowTs]);
+  return getAemetAlertTimelineState(alerts, alertNowTs);
+}, [alerts, alertNowTs]);
 
 const currentLang = normalizeLang(i18n.resolvedLanguage || i18n.language || "ca");
 
@@ -2335,6 +2336,7 @@ const contextualPrimaryUvAdvice = contextualUvAdvice
 const primaryStatusInput = useMemo(
   () => ({
     alerts,
+    nowTs: alertNowTs,
     primary,
     heatRisk,
     coldRisk,
@@ -2351,6 +2353,7 @@ const primaryStatusInput = useMemo(
   }),
   [
     alerts,
+    alertNowTs,
     primary,
     heatRisk,
     coldRisk,
@@ -2571,11 +2574,11 @@ const renderAlertCard = ({ alert, ai, i }: (typeof alertCards)[number]) => (
     {typeof alert?.start === "number" && typeof alert?.end === "number" && (
       <div className="aemet-alert-time">
         🕒 {formatAlertTime(alert.start, lang)} → {formatAlertTime(alert.end, lang)}
-        {isAlertActiveNow(alert.start, alert.end) && (
+        {isAlertActiveNow(alert.start, alert.end, alertNowTs) && (
           <span> · {t("alert_time.active")}</span>
         )}
         <br />
-        ⏳ {getAlertTimeCountdown(alert.start, alert.end, lang, t)}
+        ⏳ {getAlertTimeCountdown(alert.start, alert.end, lang, t, alertNowTs)}
       </div>
     )}
 
@@ -3251,7 +3254,7 @@ return (
 )}
 
 {/* 🔔 AVISOS AEMET (Targetes noves) */}
-{alerts.length > 0 && (
+{alertCards.length > 0 && (
   <div style={{ marginTop: "1.5rem" }}>
     {alertCards.slice(0, 1).map(renderAlertCard)}
 

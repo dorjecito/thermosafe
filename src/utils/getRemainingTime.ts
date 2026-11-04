@@ -3,9 +3,10 @@ type TFunctionLike = (key: string, options?: any) => string;
 export function getRemainingTime(
   endUnix: number,
   lang: string,
-  t: TFunctionLike
+  t: TFunctionLike,
+  nowUnix = Date.now() / 1000
 ): string {
-  const now = Date.now() / 1000;
+  const now = nowUnix;
   const diff = Math.floor(endUnix - now);
 
   if (diff <= 0) return t("alert_time.ended");
@@ -39,6 +40,8 @@ export function getAlertTimeCountdown(
   nowUnix = Date.now() / 1000
 ): string {
   const now = Math.floor(nowUnix);
+
+  if (now >= endUnix) return t("alert_time.ended");
 
   if (now < startUnix) {
     return formatDuration(Math.floor(startUnix - now), t, "starts_in");
