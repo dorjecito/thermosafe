@@ -21,17 +21,17 @@ plugins {
 }
 
 def twaManifest = [
-    applicationId: 'app.thermosafe.twa',
+    applicationId: 'app.vercel.thermosafe.twa',
     hostName: 'thermosafe.app', // The domain being opened in the TWA.
     launchUrl: '/', // The start path for the TWA. Must be relative to the domain.
-    name: 'Thermosafe - Risc climàtic', // The application name.
+    name: 'ThermoSafe', // The application name.
     launcherName: 'ThermoSafe', // The name shown on the Android Launcher.
     themeColor: '#F59E0B', // The color used for the status bar.
-    themeColorDark: '#000000', // The color used for the dark status bar.
-    navigationColor: '#000000', // The color used for the navigation bar.
-    navigationColorDark: '#000000', // The color used for the dark navbar.
-    navigationDividerColor: '#000000', // The navbar divider color.
-    navigationDividerColorDark: '#000000', // The dark navbar divider color.
+    themeColorDark: '#F59E0B', // The color used for the dark status bar.
+    navigationColor: '#F59E0B', // The color used for the navigation bar.
+    navigationColorDark: '#F59E0B', // The color used for the dark navbar.
+    navigationDividerColor: '#F59E0B', // The navbar divider color.
+    navigationDividerColorDark: '#F59E0B', // The dark navbar divider color.
     backgroundColor: '#FFFFFF', // The color used for the splash screen background.
     enableNotifications: true, // Set to true to enable notification delegation.
     // Every shortcut must include the following fields:
@@ -50,15 +50,21 @@ def twaManifest = [
     orientation: 'portrait',
 ]
 
+// Secrets are supplied only through the environment, never stored in this project.
+def releaseStorePassword = providers.environmentVariable('THERMOSAFE_STORE_PASSWORD').orNull
+def releaseKeyPassword = providers.environmentVariable('THERMOSAFE_KEY_PASSWORD').orNull
+def releaseKeystorePath = providers.environmentVariable('THERMOSAFE_KEYSTORE_PATH')
+        .getOrElse('/Users/estevemontalvo/Desktop/ThermoSafe 19.46.22/signing.keystore')
+
 android {
     compileSdkVersion 36
-    namespace "app.thermosafe.twa"
+    namespace "app.vercel.thermosafe.twa"
     defaultConfig {
-        applicationId "app.thermosafe.twa"
-        minSdkVersion 21
+        applicationId "app.vercel.thermosafe.twa"
+        minSdkVersion 24
         targetSdkVersion 36
-        versionCode 1
-        versionName "1"
+        versionCode 28
+        versionName "1.2.3"
 
         // The name for the application
         resValue "string", "appName", twaManifest.name
@@ -76,7 +82,7 @@ android {
             // The URL the Web Manifest for the Progressive Web App that the TWA points to. This
             // is used by Chrome OS and Meta Quest to open the Web version of the PWA instead of
             // the TWA, as it will probably give a better user experience for non-mobile devices.
-            resValue "string", "webManifestUrl", 'https://thermosafe.app/manifest.json'
+            resValue "string", "webManifestUrl", 'https://thermosafe.app/manifest.webmanifest'
         
 
         
@@ -150,9 +156,18 @@ android {
 
         
     }
+    signingConfigs {
+        release {
+            storeFile file(releaseKeystorePath)
+            storePassword releaseStorePassword
+            keyAlias 'my-key-alias'
+            keyPassword releaseKeyPassword
+        }
+    }
     buildTypes {
         release {
             minifyEnabled true
+            signingConfig signingConfigs.release
         }
     }
     compileOptions {
@@ -162,6 +177,20 @@ android {
     lintOptions {
         checkReleaseBuilds false
     }
+}
+
+def validateThermoSafeReleaseSigning = tasks.register('validateThermoSafeReleaseSigning') {
+    doLast {
+        if (!releaseStorePassword || !releaseKeyPassword) {
+            throw new GradleException('Release signing requires THERMOSAFE_STORE_PASSWORD and THERMOSAFE_KEY_PASSWORD environment variables.')
+        }
+        if (!file(releaseKeystorePath).isFile()) {
+            throw new GradleException('Release keystore not found. Set THERMOSAFE_KEYSTORE_PATH to the authorized upload keystore.')
+        }
+    }
+}
+tasks.matching { it.name == 'preReleaseBuild' }.configureEach {
+    dependsOn(validateThermoSafeReleaseSigning)
 }
 
 task generateShorcutsFile {
@@ -208,7 +237,6 @@ repositories {
 dependencies {
     implementation fileTree(include: ['*.jar'], dir: 'libs')
     
-        implementation 'com.google.androidbrowserhelper:locationdelegation:1.1.2'
     
         implementation 'com.google.androidbrowserhelper:androidbrowserhelper:2.6.2'
     

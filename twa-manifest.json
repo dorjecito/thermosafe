@@ -1,15 +1,15 @@
 {
-  "packageId": "app.thermosafe.twa",
+  "packageId": "app.vercel.thermosafe.twa",
   "host": "thermosafe.app",
-  "name": "Thermosafe - Risc climàtic",
+  "name": "ThermoSafe",
   "launcherName": "ThermoSafe",
   "display": "standalone",
   "themeColor": "#F59E0B",
-  "themeColorDark": "#000000",
-  "navigationColor": "#000000",
-  "navigationColorDark": "#000000",
-  "navigationDividerColor": "#000000",
-  "navigationDividerColorDark": "#000000",
+  "themeColorDark": "#F59E0B",
+  "navigationColor": "#F59E0B",
+  "navigationColorDark": "#F59E0B",
+  "navigationDividerColor": "#F59E0B",
+  "navigationDividerColorDark": "#F59E0B",
   "backgroundColor": "#FFFFFF",
   "enableNotifications": true,
   "startUrl": "/",
@@ -18,18 +18,18 @@
   "monochromeIconUrl": "https://thermosafe.app/icons/icon-512.png",
   "splashScreenFadeOutDuration": 300,
   "signingKey": {
-    "path": "/Users/estevemontalvo/Downloads/thermosafe_millores_15.10.2025/android.keystore",
-    "alias": "thermosafe"
+    "path": "/Users/estevemontalvo/Desktop/ThermoSafe 19.46.22/signing.keystore",
+    "alias": "my-key-alias"
   },
-  "appVersionName": "1",
-  "appVersionCode": 1,
+  "appVersionName": "1.2.3",
+  "appVersionCode": 28,
   "shortcuts": [],
   "generatorApp": "bubblewrap-cli",
-  "webManifestUrl": "https://thermosafe.app/manifest.json",
+  "webManifestUrl": "https://thermosafe.app/manifest.webmanifest",
   "fallbackType": "customtabs",
   "features": {
     "locationDelegation": {
-      "enabled": true
+      "enabled": false
     }
   },
   "alphaDependencies": {
@@ -39,7 +39,7 @@
   "isChromeOSOnly": false,
   "isMetaQuest": false,
   "fullScopeUrl": "https://thermosafe.app/",
-  "minSdkVersion": 21,
+  "minSdkVersion": 24,
   "orientation": "portrait",
   "fingerprints": [],
   "additionalTrustedOrigins": [],
@@ -48,5 +48,5 @@
   "fileHandlers": [],
   "launchHandlerClientMode": "",
   "displayOverride": [],
-  "appVersion": "1"
+  "appVersion": "1.2.3"
 }
