@@ -47,7 +47,13 @@ coverage
 # Other
 bower_components
 jspm_packages/
-build/Release
+# Android / Gradle generated outputs
+.gradle/
+app/build/
+build/
+local.properties
+*.apk
+*.aab
 *.tgz
 .yarn-integrity
 .eslintcache
