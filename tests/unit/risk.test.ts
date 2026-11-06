@@ -10014,7 +10014,9 @@ test("cold wind: failed FCM leaves notification state unchanged and retries next
   await h.runWeatherV2();
   assert.equal(attempts, 1); // No unsafe individual fallback after combined failure.
   assert.equal(h.sends.length, 0);
-  assert.equal(JSON.stringify(h.db.getSub("cw")), before);
+  const { lastWindJobType: initializedProfile, ...afterFailure } = h.db.getSub("cw");
+  assert.deepEqual(afterFailure, JSON.parse(before));
+  assert.equal(initializedProfile, "generic");
   const retry = coldWindHarness({ subs: [h.db.getSub("cw")] });
   await retry.runWeatherV2();
   assert.deepEqual(retry.sends.map(p => p.data.type), ["cold_wind"]);
@@ -10030,7 +10032,8 @@ test("cold wind: invalid token uses existing cleanup without fallback or notifie
   assert.equal(attempts, 1);
   assert.equal(h.db.getSub("cw"), undefined);
   assert.deepEqual(h.db.deletes, ["subs/cw"]);
-  assert.equal(h.db.writes.filter(w => w.path === "subs/cw").length, 0);
+  assert.equal(h.db.writes.filter(w => w.path === "subs/cw").length, 1);
+  assert.equal(h.db.writes.find(w => w.path === "subs/cw").data.lastWindJobType, "generic");
 });
 
 test("cold wind: user threshold cannot make the other factor eligible", async (t) => {
@@ -10057,6 +10060,174 @@ test("cold wind: jobType wind boundaries and rounding remain unchanged", async (
       assert.equal(h.sends[0].data.type, expected ? "cold_wind" : "cold");
     }
   });
+});
+
+test("cold wind profile transition: level 0 and 1 rebaseline without a wind push", async (t) => {
+  for (const scenario of [
+    { name: "level 1", windKmh: 27, expectedLevel: 1 },
+    { name: "level 0", windKmh: 15, expectedLevel: 0 },
+  ]) await t.test(scenario.name, async () => {
+    const h = coldWindHarness({ weather: { temp: 15, hum: 50, wind: scenario.windKmh / 3.6 },
+      subs: [{ token: "cw", lat: 39, lon: 2, jobType: "altura", lastWindJobType: "generic",
+        lastWindLevel: 0, lastDailyResetDay: "2026-01-20" }] });
+    await h.runWeatherV2();
+    assert.deepEqual(h.sends, []);
+    assert.equal(h.db.getSub("cw").lastWindJobType, "altura");
+    assert.equal(h.db.getSub("cw").lastWindLevel, scenario.expectedLevel);
+  });
+});
+
+test("cold wind profile transition: more sensitive level 2 remains eligible", async (t) => {
+  for (const previousLevel of [0, 1]) await t.test(`previous level ${previousLevel}`, async () => {
+    const h = coldWindHarness({ weather: { temp: 15, hum: 50, wind: 40 / 3.6 },
+      subs: [{ token: "cw", lat: 39, lon: 2, jobType: "altura", lastWindJobType: "generic",
+        lastWindLevel: previousLevel, lastDailyResetDay: "2026-01-20" }] });
+    await h.runWeatherV2();
+    assert.deepEqual(h.sends.map((p) => p.data.type), ["wind"]);
+    assert.equal(h.db.getSub("cw").lastWindJobType, "altura");
+    assert.equal(h.db.getSub("cw").lastWindLevel, 2);
+  });
+});
+
+test("cold wind profile transition: level 3 remains eligible at very_high threshold", async () => {
+  const h = coldWindHarness({ weather: { temp: 15, hum: 50, wind: 55 / 3.6 },
+    subs: [{ token: "cw", lat: 39, lon: 2, threshold: "very_high", jobType: "altura",
+      lastWindJobType: "generic", lastWindLevel: 0, lastDailyResetDay: "2026-01-20" }] });
+  await h.runWeatherV2();
+  assert.deepEqual(h.sends.map((p) => p.data.type), ["wind"]);
+  assert.equal(h.sends[0].data.level, "3");
+  assert.equal(h.db.getSub("cw").lastWindLevel, 3);
+});
+
+test("cold wind profile transition: level 2 respects each user threshold", async (t) => {
+  for (const [threshold, expectedSends] of [["moderate", 1], ["high", 1], ["very_high", 0]] as const) {
+    await t.test(threshold, async () => {
+      const h = coldWindHarness({ weather: { temp: 15, hum: 50, wind: 40 / 3.6 },
+        subs: [{ token: "cw", lat: 39, lon: 2, threshold, jobType: "altura",
+          lastWindJobType: "generic", lastWindLevel: 0, lastDailyResetDay: "2026-01-20" }] });
+      await h.runWeatherV2();
+      assert.equal(h.sends.length, expectedSends);
+      assert.equal(h.db.getSub("cw").lastWindJobType, "altura");
+      assert.equal(h.db.getSub("cw").lastWindLevel, expectedSends ? 2 : 0);
+    });
+  }
+});
+
+test("cold wind profile transition: less sensitive profile lowers the baseline without push", async () => {
+  const h = coldWindHarness({ weather: { temp: 15, hum: 50, wind: 27 / 3.6 },
+    subs: [{ token: "cw", lat: 39, lon: 2, jobType: "trekking", lastWindJobType: "altura",
+      lastWindLevel: 1, lastDailyResetDay: "2026-01-20" }] });
+  await h.runWeatherV2();
+  assert.deepEqual(h.sends, []);
+  assert.equal(h.db.getSub("cw").lastWindJobType, "trekking");
+  assert.equal(h.db.getSub("cw").lastWindLevel, 0);
+});
+
+test("cold wind profile transition: suppressed wind cannot combine with an independent cold push", async () => {
+  const h = coldWindHarness({ weather: { temp: -6, hum: 60, wind: 27 / 3.6 },
+    subs: [{ token: "cw", lat: 39, lon: 2, jobType: "altura", lastWindJobType: "generic",
+      lastColdLevel: 0, lastWindLevel: 0, lastDailyResetDay: "2026-01-20" }] });
+  await h.runWeatherV2();
+  assert.deepEqual(h.sends.map((p) => p.data.type), ["cold"]);
+  assert.equal(h.db.getSub("cw").lastWindJobType, "altura");
+  assert.equal(h.db.getSub("cw").lastWindLevel, 1);
+});
+
+test("cold wind profile transition: eligible level 2 retains combined cold-wind behavior", async () => {
+  const h = coldWindHarness({ weather: { temp: -6, hum: 60, wind: 40 / 3.6 },
+    subs: [{ token: "cw", lat: 39, lon: 2, jobType: "altura", lastWindJobType: "generic",
+      lastColdLevel: 0, lastWindLevel: 0, lastDailyResetDay: "2026-01-20" }] });
+  await h.runWeatherV2();
+  assert.deepEqual(h.sends.map((p) => p.data.type), ["cold_wind"]);
+  assert.equal(h.db.getSub("cw").lastWindJobType, "altura");
+  assert.equal(h.db.getSub("cw").lastWindLevel, 2);
+});
+
+test("cold wind profile transition: quiet hours defer profile handling until the next active cron", async () => {
+  const quiet = coldWindHarness({ nowMs: Date.UTC(2026, 0, 20, 4, 16),
+    weather: { temp: 15, hum: 50, wind: 40 / 3.6 },
+    subs: [{ token: "cw", lat: 39, lon: 2, jobType: "altura", lastWindJobType: "generic",
+      lastWindLevel: 0, lastDailyResetDay: "2026-01-20" }] });
+  await quiet.runWeatherV2();
+  assert.deepEqual(quiet.sends, []);
+  assert.equal(quiet.db.getSub("cw").lastWindJobType, "generic");
+
+  const active = coldWindHarness({ nowMs: coldWindNow, weather: { temp: 15, hum: 50, wind: 40 / 3.6 },
+    subs: [quiet.db.getSub("cw")] });
+  await active.runWeatherV2();
+  assert.deepEqual(active.sends.map((p) => p.data.type), ["wind"]);
+  assert.equal(active.db.getSub("cw").lastWindJobType, "altura");
+  assert.equal(active.db.getSub("cw").lastWindLevel, 2);
+});
+
+test("cold wind profile transition: daily reset still allows an eligible severe profile change", async () => {
+  const h = coldWindHarness({ weather: { temp: 15, hum: 50, wind: 40 / 3.6 },
+    subs: [{ token: "cw", lat: 39, lon: 2, jobType: "altura", lastWindJobType: "generic",
+      lastWindLevel: 2, lastDailyResetDay: "2026-01-19" }] });
+  await h.runWeatherV2();
+  assert.deepEqual(h.sends.map((p) => p.data.type), ["wind"]);
+  assert.equal(h.db.getSub("cw").lastDailyResetDay, "2026-01-20");
+  assert.equal(h.db.getSub("cw").lastWindJobType, "altura");
+  assert.equal(h.db.getSub("cw").lastWindLevel, 2);
+});
+
+test("cold wind profile transition: legacy marker initialization preserves the notified level", async () => {
+  const h = coldWindHarness({ weather: { temp: 15, hum: 50, wind: 40 / 3.6 },
+    subs: [{ token: "cw", lat: 39, lon: 2, lastWindLevel: 1, lastDailyResetDay: "2026-01-20" }] });
+  await h.runWeatherV2();
+  assert.deepEqual(h.sends, []);
+  assert.equal(h.db.getSub("cw").lastWindJobType, "generic");
+  assert.equal(h.db.getSub("cw").lastWindLevel, 1);
+});
+
+test("cold wind profile transition: absent, empty and invalid jobType normalize to generic", async (t) => {
+  for (const jobType of [undefined, "", "not-a-profile"] as const) await t.test(String(jobType), async () => {
+    const h = coldWindHarness({ weather: { temp: 15, hum: 50, wind: 30 / 3.6 },
+      subs: [{ token: "cw", lat: 39, lon: 2, jobType, lastWindJobType: "generic",
+        lastWindLevel: 0, lastDailyResetDay: "2026-01-20" }] });
+    await h.runWeatherV2();
+    assert.deepEqual(h.sends.map((p) => p.data.type), ["wind"]);
+    assert.equal(h.db.getSub("cw").lastWindJobType, "generic");
+    assert.equal(h.db.getSub("cw").lastWindLevel, 1);
+  });
+});
+
+test("cold wind profile transition: failed FCM persists marker but not the wind level", async () => {
+  const h = coldWindHarness({ weather: { temp: 15, hum: 50, wind: 40 / 3.6 },
+    sendError: new Error("temporary FCM error"),
+    subs: [{ token: "cw", lat: 39, lon: 2, jobType: "altura", lastWindJobType: "generic",
+      lastWindLevel: 0, lastDailyResetDay: "2026-01-20" }] });
+  await h.runWeatherV2();
+  assert.deepEqual(h.sends, []);
+  assert.equal(h.db.getSub("cw").lastWindJobType, "altura");
+  assert.equal(h.db.getSub("cw").lastWindLevel, 0);
+});
+
+test("cold wind profile transition: failed independent cold push preserves wind baseline", async () => {
+  const h = coldWindHarness({ weather: { temp: -6, hum: 60, wind: 27 / 3.6 },
+    sendError: new Error("temporary FCM error"),
+    subs: [{ token: "cw", lat: 39, lon: 2, jobType: "altura", lastWindJobType: "generic",
+      lastColdLevel: 0, lastWindLevel: 0, lastDailyResetDay: "2026-01-20" }] });
+  await h.runWeatherV2();
+  assert.deepEqual(h.sends, []);
+  assert.equal(h.db.getSub("cw").lastWindJobType, "altura");
+  assert.equal(h.db.getSub("cw").lastWindLevel, 1);
+});
+
+test("cold wind profile transition: consecutive profile changes rebaseline each transition", async () => {
+  const first = coldWindHarness({ weather: { temp: 15, hum: 50, wind: 27 / 3.6 },
+    subs: [{ token: "cw", lat: 39, lon: 2, jobType: "altura", lastWindJobType: "generic",
+      lastWindLevel: 0, lastDailyResetDay: "2026-01-20" }] });
+  await first.runWeatherV2();
+  assert.equal(first.db.getSub("cw").lastWindLevel, 1);
+
+  const second = coldWindHarness({ nowMs: coldWindNow + 60 * 60 * 1000,
+    weather: { temp: 15, hum: 50, wind: 27 / 3.6 },
+    subs: [{ ...first.db.getSub("cw"), jobType: "trekking" }] });
+  await second.runWeatherV2();
+  assert.deepEqual(second.sends, []);
+  assert.equal(second.db.getSub("cw").lastWindJobType, "trekking");
+  assert.equal(second.db.getSub("cw").lastWindLevel, 0);
 });
 
 test("cold wind: wind chill formula and cold boundaries are unchanged", async () => {

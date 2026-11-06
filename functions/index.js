@@ -848,6 +848,16 @@ function buildCombinedRiskMessage({
   };
 }
 
+const VALID_WIND_JOB_TYPES = new Set([
+  "generic", "jardineria", "poda", "altura", "obra", "neteja", "trekking", "oci",
+]);
+
+function normalizeWindJobType(jobType) {
+  return typeof jobType === "string" && VALID_WIND_JOB_TYPES.has(jobType)
+    ? jobType
+    : "generic";
+}
+
 function getWindThresholds(jobType = "generic") {
   switch (jobType) {
     case "altura":
@@ -1861,8 +1871,36 @@ exports.cronCheckWeatherRiskV2 = onSchedule(
 
             // ───────── VENT ─────────
             const windKmh = Math.round((w.wind ?? 0) * 3.6);
-            const jobType = sub.jobType || "generic";
+            const jobType = normalizeWindJobType(sub.jobType);
             const windInfo = getWindInfo(windKmh, jobType);
+
+            const storedWindJobType =
+              typeof sub.lastWindJobType === "string" &&
+              VALID_WIND_JOB_TYPES.has(sub.lastWindJobType)
+                ? sub.lastWindJobType
+                : null;
+            const windProfileStateUpdate = {};
+
+            if (storedWindJobType === null) {
+              // Legacy documents keep their existing level; this is initialization, not a transition.
+              windProfileStateUpdate.lastWindJobType = jobType;
+            } else if (storedWindJobType !== jobType) {
+              const previousProfileLevel = getWindInfo(windKmh, storedWindJobType).level;
+              windProfileStateUpdate.lastWindJobType = jobType;
+
+              if (windInfo.level <= 1 || windInfo.level < previousProfileLevel) {
+                currentLastWindLevel = windInfo.level;
+                windProfileStateUpdate.lastWindLevel = windInfo.level;
+              }
+            }
+
+            // Persist profile state before any FCM send, so a cold-push failure cannot
+            // lose the transition baseline. Do not advance levels for eligible 2/3
+            // transitions; only a successful push may record those levels.
+            if (Object.keys(windProfileStateUpdate).length > 0) {
+              await doc.ref.set(windProfileStateUpdate, { merge: true });
+            }
+
             const prevWindLevel = currentLastWindLevel;
 
             stats.wind.lastValue = windKmh;
