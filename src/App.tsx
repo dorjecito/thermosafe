@@ -186,6 +186,11 @@ async function updateRiskAlertLocationLazy(payload: UpdateRiskAlertLocationPaylo
   return updateRiskAlertLocation(payload);
 }
 
+async function updateSubscriptionJobTypeLazy(profile: WindActivityProfile) {
+  const { updateSubscriptionJobType } = await import("./push/subscribe");
+  return updateSubscriptionJobType(profile);
+}
+
 function useStableValue<T>(value: T, delay = 800): T {
   const [stable, setStable] = useState(value);
 
@@ -547,6 +552,13 @@ const handleWindActivityProfileChange = (value: string) => {
   const profile = parseWindActivityProfile(value);
   setWindActivityProfile(profile);
   writeWindActivityProfile(profile);
+  if (pushEnabled && (pushToken || localStorage.getItem("fcmToken"))) {
+    void updateSubscriptionJobTypeLazy(profile).catch((error) => {
+      if (!handleChunkLoadFailure(error)) {
+        console.warn("[PUSH] No s'ha pogut sincronitzar el perfil de vent.", error);
+      }
+    });
+  }
 };
 //const lastWindRiskRef = useRef<WindRisk>('none');
 const [enableWindAlerts, setEnableWindAlerts] = useState<boolean>(() => {
@@ -1981,6 +1993,11 @@ useEffect(() => {
   if (tok) {
     setPushEnabled(true);
     setPushToken(tok);
+    void updateSubscriptionJobTypeLazy(readWindActivityProfile()).catch((error) => {
+      if (!handleChunkLoadFailure(error)) {
+        console.warn("[PUSH] No s'ha pogut sincronitzar el perfil de vent inicial.", error);
+      }
+    });
   }
 }, []);
 

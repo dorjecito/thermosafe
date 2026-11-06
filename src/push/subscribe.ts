@@ -18,6 +18,11 @@ import {
   writeWithOptionalTokenSyncFallback,
 } from "../utils/tokenSyncMetadata";
 import { waitForServiceWorkerRegistrationActive } from "../utils/firebaseMessagingSw";
+import {
+  parseWindActivityProfile,
+  readWindActivityProfile,
+  type WindActivityProfile,
+} from "../utils/windActivityProfile";
 
 type Level = "moderate" | "high" | "very_high";
 type Lang = "ca" | "es" | "eu" | "gl" | "en";
@@ -56,6 +61,7 @@ type SubDoc = {
 
 const RESET_DISTANCE_KM = 15;
 const MIN_UPDATE_DISTANCE_KM = 0.1; // 100 metres
+let jobTypeSyncQueue: Promise<void> = Promise.resolve();
 
 async function askNotifPerm(): Promise<boolean> {
   if (!("Notification" in window)) return false;
@@ -307,6 +313,7 @@ async function recoverRiskAlertToken(
       lon: location.lon,
       ...(place ? { place } : {}),
       lang,
+      jobType: readWindActivityProfile(),
       ...(previous ? {} : { threshold, createdAt: now }),
       updatedAt: now,
       ...tokenLastSyncedPayload(),
@@ -323,6 +330,33 @@ async function recoverRiskAlertToken(
   } finally {
     tokenRecovery = null;
   }
+}
+
+/** Synchronizes only the locally selected wind activity profile for this device token. */
+export async function updateSubscriptionJobType(profile: unknown): Promise<boolean> {
+  const token = localStorage.getItem("fcmToken");
+  if (!token) return false;
+
+  const jobType: WindActivityProfile = parseWindActivityProfile(profile);
+  const sync = async (): Promise<boolean> => {
+    try {
+      const ref = doc(db, "subs", token);
+      const snap = await getDoc(ref);
+      if (!snap.exists()) return false;
+      if (snap.data()?.jobType === jobType) return true;
+
+      await updateDoc(ref, { jobType });
+      return true;
+    } catch (error) {
+      warnNotifications("No s'ha pogut sincronitzar el perfil d'activitat de vent.", error);
+      return false;
+    }
+  };
+
+  // Serialize the complete read/write operation so a later selection always runs last.
+  const result = jobTypeSyncQueue.then(sync, sync);
+  jobTypeSyncQueue = result.then(() => undefined, () => undefined);
+  return result;
 }
 
 export async function updateRiskAlertLocation({
@@ -591,6 +625,7 @@ export async function enableRiskAlerts({
           lon: loc.lon,
           threshold,
           lang: langNorm,
+          jobType: readWindActivityProfile(),
           ...(placeNorm ? { place: placeNorm } : {}),
           createdAt: now,
           updatedAt: now,
@@ -623,6 +658,7 @@ export async function enableRiskAlerts({
           lon: loc.lon,
           threshold,
           lang: langNorm,
+          jobType: readWindActivityProfile(),
           ...(placeNorm ? { place: placeNorm } : {}),
           updatedAt: now,
           ...tokenLastSyncedPayload(),
