@@ -57,12 +57,12 @@ def releaseKeystorePath = providers.environmentVariable('THERMOSAFE_KEYSTORE_PAT
         .getOrElse('/Users/estevemontalvo/Desktop/ThermoSafe 19.46.22/signing.keystore')
 
 android {
-    compileSdkVersion 36
+    compileSdk 36
     namespace "app.vercel.thermosafe.twa"
     defaultConfig {
         applicationId "app.vercel.thermosafe.twa"
-        minSdkVersion 24
-        targetSdkVersion 36
+        minSdk 24
+        targetSdk 36
         versionCode 28
         versionName "1.2.3"
 
@@ -174,8 +174,8 @@ android {
         sourceCompatibility JavaVersion.VERSION_1_8
         targetCompatibility JavaVersion.VERSION_1_8
     }
-    lintOptions {
-        checkReleaseBuilds false
+    lint {
+        checkReleaseBuilds = false
     }
 }
 
