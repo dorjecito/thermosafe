@@ -30,7 +30,7 @@ const adminFields = {
   lastAemetEventKey: "event", lastAemetEvent: { ca: "Calor" },
   lastAemetSender: "AEMET", lastAemetResetDay: "2026-09-20",
   uvLevelsByZone: { "39.5,2.9": 3 }, lastUvResetDay: "2026-09-20",
-  jobType: "construction", futureAdminField: { value: "read-only" },
+  lastWindJobType: "generic", futureAdminField: { value: "read-only" },
 };
 function fresh() {
   const token = `rules-test-${++sequence}-` + "x".repeat(60);
@@ -136,6 +136,75 @@ test("minimal compatible signup without reset metadata remains allowed", async (
   const { ref, token } = fresh();
   await setDoc(ref, { token, lat: 39.5, lon: 2.9 });
 });
+test("legacy create without jobType remains allowed", async () => {
+  const { ref, data } = fresh();
+  await setDoc(ref, data);
+  assert.equal((await getDoc(ref)).exists(), true);
+  assert.equal((await getDoc(ref)).data().jobType, undefined);
+});
+
+for (const jobType of ["generic", "jardineria", "poda", "altura", "obra", "neteja", "trekking", "oci"]) {
+  test(`create accepts valid jobType ${jobType}`, async () => {
+    const { ref, data } = fresh();
+    await setDoc(ref, { ...data, jobType });
+    assert.equal((await getDoc(ref)).data().jobType, jobType);
+  });
+}
+
+for (const jobType of [null, 42, "", "construction"]) {
+  test(`create rejects invalid jobType ${String(jobType)}`, async () => {
+    const { ref, data } = fresh();
+    await denied(setDoc(ref, { ...data, jobType }));
+  });
+}
+
+test("client can update only jobType without changing other subscription fields", async () => {
+  const { ref } = await seeded();
+  const before = (await getDoc(ref)).data();
+  await updateDoc(ref, { jobType: "generic" });
+  const after = (await getDoc(ref)).data();
+  assert.equal(after.jobType, "generic");
+  const { jobType: _jobType, ...beforeOtherFields } = before;
+  const { jobType: _updatedJobType, ...afterOtherFields } = after;
+  assert.deepEqual(afterOtherFields, beforeOtherFields);
+});
+
+test("client can change one valid jobType to another", async () => {
+  const { ref } = await seeded({ jobType: "generic" });
+  await updateDoc(ref, { jobType: "trekking" });
+  assert.equal((await getDoc(ref)).data().jobType, "trekking");
+});
+
+test("update rejects null, non-string, empty and unknown jobType values", async () => {
+  for (const jobType of [null, 42, "", "construction"]) {
+    const { ref } = await seeded({ jobType: "generic" });
+    await denied(updateDoc(ref, { jobType }));
+  }
+});
+
+test("legacy subscription without jobType remains updateable and accepts jobType", async () => {
+  const { ref } = await seeded();
+  const before = (await getDoc(ref)).data();
+  assert.equal(before.jobType, undefined);
+  await updateDoc(ref, { jobType: "poda" });
+  const after = (await getDoc(ref)).data();
+  assert.equal(after.jobType, "poda");
+  assert.equal(after.token, before.token);
+  assert.equal(after.lastWindLevel, before.lastWindLevel);
+  assert.equal(after.lastWindJobType, before.lastWindJobType);
+});
+
+test("client cannot forge lastWindLevel or change lastWindJobType", async () => {
+  const { ref } = await seeded({ jobType: "generic" });
+  await denied(updateDoc(ref, { lastWindLevel: 999 }));
+  await denied(updateDoc(ref, { lastWindJobType: "altura" }));
+});
+
+test("client cannot add an arbitrary field alongside jobType", async () => {
+  const { ref } = await seeded();
+  await denied(updateDoc(ref, { jobType: "poda", injectedField: true }));
+});
+
 for (const key of Object.keys(adminFields)) {
   test(`signup cannot inject ${key}`, async () => {
     const { ref, data } = fresh();

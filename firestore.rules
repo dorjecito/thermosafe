@@ -20,6 +20,11 @@ service cloud.firestore {
       return threshold in ["moderate", "high", "very_high"];
     }
 
+    function validJobType(jobType) {
+      return jobType is string
+        && jobType in ["generic", "jardineria", "poda", "altura", "obra", "neteja", "trekking", "oci"];
+    }
+
     function validOptionalNumber(data, key) {
       return !(key in data) || data[key] == null || data[key] is number;
     }
@@ -34,7 +39,7 @@ service cloud.firestore {
     }
 
     function subClientUpdateKeys() {
-      return ["lat", "lon", "place", "threshold", "lang", "updatedAt", "tokenLastSyncedAt"];
+      return ["lat", "lon", "place", "threshold", "lang", "jobType", "updatedAt", "tokenLastSyncedAt"];
     }
 
     // Exactly resetRiskLevelsPayload() in src/push/subscribe.ts.
@@ -67,6 +72,7 @@ service cloud.firestore {
         && data.lon is number && data.lon >= -180 && data.lon <= 180
         && (!("threshold" in data) || data.threshold == null || validThreshold(data.threshold))
         && (!("lang" in data) || data.lang == null || validLang(data.lang))
+        && (!("jobType" in data) || validJobType(data.jobType))
         && validOptionalString(data, "place", 200)
         && validOptionalNumber(data, "updatedAt")
         && validOptionalTimestamp(data, "tokenLastSyncedAt");
@@ -84,7 +90,7 @@ service cloud.firestore {
       // Admin fields may exist unchanged, including future fields. Clients cannot
       // add, modify or delete them. In particular: lastAemetEpisodeKey,
       // lastAemetNotifiedLevel, lastAemetEventKey/Event/Sender/ResetDay,
-      // uvLevelsByZone and lastUvResetDay. token/createdAt are immutable too.
+      // lastWindJobType, uvLevelsByZone and lastUvResetDay. token/createdAt are immutable too.
       return changed.hasOnly(subClientUpdateKeys().concat(subResetKeys()))
         && validSubClientShape(data, token)
         && (!changed.hasAny(subResetKeys()) || validSubReset(data));
