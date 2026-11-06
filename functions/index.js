@@ -904,11 +904,11 @@ function getWindInfo(windKmh, jobType = "generic") {
         en: "🌪️ ThermoSafe – Very strong wind",
       },
       body: {
-        ca: `🌪️ Vent molt fort (${windKmh} km/h). Evita treballar a l’exterior si no és imprescindible.`,
-        es: `🌪️ Viento muy fuerte (${windKmh} km/h). Evita trabajar en el exterior si no es imprescindible.`,
-        eu: `🌪️ Haize oso indartsua (${windKmh} km/h). Saihestu kanpoan lan egitea ezinbestekoa ez bada.`,
-        gl: `🌪️ Vento moi forte (${windKmh} km/h). Evita traballar no exterior se non é imprescindible.`,
-        en: `🌪️ Very strong wind (${windKmh} km/h). Avoid working outdoors unless strictly necessary.`,
+        ca: `🌪️ Vent molt fort (${windKmh} km/h). Evita l’exposició a l’aire lliure i cerca un lloc arrecerat.`,
+        es: `🌪️ Viento muy fuerte (${windKmh} km/h). Evita exponerte al aire libre y busca un lugar resguardado.`,
+        eu: `🌪️ Haize oso indartsua (${windKmh} km/h). Saihestu aire zabalean egotea eta bilatu babesleku bat.`,
+        gl: `🌪️ Vento moi forte (${windKmh} km/h). Evita a exposición ao aire libre e busca un lugar abeirado.`,
+        en: `🌪️ Very strong wind (${windKmh} km/h). Avoid being outdoors and seek shelter.`,
       },
     };
   }
@@ -945,11 +945,11 @@ function getWindInfo(windKmh, jobType = "generic") {
         en: "🌬️ ThermoSafe – Moderate wind",
       },
       body: {
-        ca: `🌬️ Vent moderat (${windKmh} km/h). Precaució en treballs a l’exterior.`,
-        es: `🌬️ Viento moderado (${windKmh} km/h). Precaución en trabajos al aire libre.`,
-        eu: `🌬️ Haize moderatua (${windKmh} km/h). Kontuz kanpoko lanetan.`,
-        gl: `🌬️ Vento moderado (${windKmh} km/h). Precaución nos traballos ao aire libre.`,
-        en: `🌬️ Moderate wind (${windKmh} km/h). Take care when working outdoors.`,
+        ca: `🌬️ Vent moderat (${windKmh} km/h). Tingues precaució en zones exposades.`,
+        es: `🌬️ Viento moderado (${windKmh} km/h). Ten precaución en zonas expuestas.`,
+        eu: `🌬️ Haize moderatua (${windKmh} km/h). Kontuz ibili agerian dauden eremuetan.`,
+        gl: `🌬️ Vento moderado (${windKmh} km/h). Ten precaución nas zonas expostas.`,
+        en: `🌬️ Moderate wind (${windKmh} km/h). Take care in exposed areas.`,
       },
     };
   }

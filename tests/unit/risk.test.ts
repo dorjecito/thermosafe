@@ -10062,6 +10062,49 @@ test("cold wind: jobType wind boundaries and rounding remain unchanged", async (
   });
 });
 
+test("cold wind push copy: level 1 and 3 are universal in all five languages; level 2 is unchanged", async (t) => {
+  const copy = {
+    ca: {
+      1: "🌬️ Vent moderat (30 km/h). Tingues precaució en zones exposades.",
+      2: "💨 Vent fort (45 km/h). Assegura objectes solts i extrema la precaució.",
+      3: "🌪️ Vent molt fort (65 km/h). Evita l’exposició a l’aire lliure i cerca un lloc arrecerat.",
+    },
+    es: {
+      1: "🌬️ Viento moderado (30 km/h). Ten precaución en zonas expuestas.",
+      2: "💨 Viento fuerte (45 km/h). Asegura objetos sueltos y extrema la precaución.",
+      3: "🌪️ Viento muy fuerte (65 km/h). Evita exponerte al aire libre y busca un lugar resguardado.",
+    },
+    eu: {
+      1: "🌬️ Haize moderatua (30 km/h). Kontuz ibili agerian dauden eremuetan.",
+      2: "💨 Haize handia (45 km/h). Lotu objektu solteak eta areagotu arreta.",
+      3: "🌪️ Haize oso indartsua (65 km/h). Saihestu aire zabalean egotea eta bilatu babesleku bat.",
+    },
+    gl: {
+      1: "🌬️ Vento moderado (30 km/h). Ten precaución nas zonas expostas.",
+      2: "💨 Vento forte (45 km/h). Asegura obxectos soltos e extrema a precaución.",
+      3: "🌪️ Vento moi forte (65 km/h). Evita a exposición ao aire libre e busca un lugar abeirado.",
+    },
+    en: {
+      1: "🌬️ Moderate wind (30 km/h). Take care in exposed areas.",
+      2: "💨 Strong wind (45 km/h). Secure loose objects and take extra care.",
+      3: "🌪️ Very strong wind (65 km/h). Avoid being outdoors and seek shelter.",
+    },
+  };
+  const windByLevel = { 1: 30, 2: 45, 3: 65 } as const;
+
+  for (const [lang, expected] of Object.entries(copy)) await t.test(lang, async () => {
+    for (const level of [1, 2, 3] as const) {
+      const h = coldWindHarness({ weather: { temp: 15, hum: 50, wind: windByLevel[level] / 3.6 },
+        subs: [{ token: "wind-copy", lat: 39, lon: 2, lang, lastWindLevel: 0,
+          lastDailyResetDay: "2026-01-20" }] });
+      await h.runWeatherV2();
+      assert.equal(h.sends.length, 1);
+      assert.equal(h.sends[0].data.level, String(level));
+      assert.equal(h.sends[0].data.body, expected[level]);
+    }
+  });
+});
+
 test("cold wind profile transition: level 0 and 1 rebaseline without a wind push", async (t) => {
   for (const scenario of [
     { name: "level 1", windKmh: 27, expectedLevel: 1 },
