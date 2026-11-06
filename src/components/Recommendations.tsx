@@ -286,7 +286,7 @@ const TXT: TxtDict = {
     humidNight:
       "La humitat elevada pot dificultar el confort durant la nit. Mantén una bona ventilació i refresca l’espai si és necessari.",
     windModerate:
-      "Vigila eines, materials lleugers i maniobres en zones exposades.",
+      "Extrema la precaució en zones exposades i vigila elements que el vent pugui desplaçar.",
     windStrong:
       "Revalora tasques exposades i assegura eines o materials lleugers.",
     safeUvCloudy:
@@ -396,7 +396,7 @@ const TXT: TxtDict = {
     humidNight:
       "La humedad elevada puede dificultar el confort durante la noche. Mantén una buena ventilación y refresca el espacio si es necesario.",
     windModerate:
-      "Vigila herramientas, materiales ligeros y maniobras en zonas expuestas.",
+      "Extrema la precaución en zonas expuestas y vigila los elementos que el viento pueda desplazar.",
     windStrong:
       "Revisa las tareas en zonas expuestas y asegura herramientas o materiales ligeros.",
     safeUvCloudy:
@@ -506,7 +506,7 @@ const TXT: TxtDict = {
     humidNight:
       "Gauean, hezetasun handiak erosotasuna zaildu dezake. Mantendu aireztapen ona eta freskatu espazioa beharrezkoa bada.",
     windModerate:
-      "Zaindu tresnak, material arinak eta eremu irekietan egindako maniobrak.",
+      "Kontu handiz ibili haizearen eraginpean dauden eremuetan, eta zaindu haizeak mugi ditzakeen elementuak.",
     windStrong:
       "Berrikusi kanpoan egiteko lanak eta ziurtatu tresna edo material arinak.",
     safeUvCloudy:
@@ -616,7 +616,7 @@ const TXT: TxtDict = {
     humidNight:
       "A humidade elevada pode dificultar o confort durante a noite. Mantén unha boa ventilación e refresca o espazo se é necesario.",
     windModerate:
-      "Vixía ferramentas, materiais lixeiros e manobras en zonas expostas.",
+      "Extrema a precaución nas zonas expostas e vixía os elementos que o vento poida desprazar.",
     windStrong:
       "Revisa as tarefas en zonas expostas e asegura ferramentas ou materiais lixeiros.",
     safeUvCloudy:
@@ -726,7 +726,7 @@ const TXT: TxtDict = {
     humidNight:
       "At night, high humidity can make it harder to stay comfortable. Keep the space well ventilated and cool it if necessary.",
     windModerate:
-      "Watch tools, light materials and manoeuvres in exposed areas.",
+      "Take extra care in exposed areas and watch for items the wind could move.",
     windStrong:
       "Reassess exposed tasks and secure light tools or materials.",
     safeUvCloudy:

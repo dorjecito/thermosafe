@@ -469,6 +469,35 @@
     "info_close": "Entendido"
   },
 
+  "windActivity": {
+    "label": "Tipo de actividad",
+    "profile": {
+      "generic": "General",
+      "jardineria": "Jardinería",
+      "poda": "Poda",
+      "altura": "Trabajo en altura",
+      "obra": "Obra",
+      "neteja": "Limpieza exterior",
+      "trekking": "Trekking",
+      "oci": "Actividad recreativa"
+    },
+    "level": {
+      "caution": "Precaución por viento",
+      "elevated": "Precaución elevada",
+      "avoid": "Detén o aplaza la actividad expuesta"
+    },
+    "advice": {
+      "generic": "El viento puede dificultar algunas actividades, especialmente en zonas expuestas.",
+      "jardineria": "Precaución con ramas, herramientas y elementos que puedan desplazarse.",
+      "poda": "El viento puede dificultar el control de ramas y herramientas.",
+      "altura": "El viento puede afectar al equilibrio y al control de materiales.",
+      "obra": "Asegura materiales y elementos sueltos antes de continuar.",
+      "neteja": "Vigila herramientas y elementos ligeros en zonas expuestas.",
+      "trekking": "El viento puede dificultar el equilibrio en tramos expuestos.",
+      "oci": "Elige una zona resguardada y asegura los elementos ligeros."
+    }
+  },
+
   "officialAdviceDynamic": {
     "heat": {
       "mild": "Hidrátate a menudo y descansa en zonas frescas.",

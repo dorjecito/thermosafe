@@ -421,6 +421,35 @@
   "info_close": "Ulertuta"
 },
 
+"windActivity": {
+  "label": "Jarduera mota",
+  "profile": {
+    "generic": "Orokorra",
+    "jardineria": "Lorezaintza",
+    "poda": "Inausketa",
+    "altura": "Altuera-lana",
+    "obra": "Obra",
+    "neteja": "Kanpoko garbiketa",
+    "trekking": "Trekkinga",
+    "oci": "Aisialdiko jarduera"
+  },
+  "level": {
+    "caution": "Kontuz haizearekin",
+    "elevated": "Kontu handiz ibili",
+    "avoid": "Gelditu edo atzeratu haizepeko jarduera"
+  },
+  "advice": {
+    "generic": "Haizeak zenbait jarduera zaildu ditzake, batez ere eremu agerietan.",
+    "jardineria": "Kontuz adarrekin, tresnekin eta mugi daitezkeen objektuekin.",
+    "poda": "Haizeak adarrak eta tresnak kontrolatzea zaildu dezake.",
+    "altura": "Haizeak orekan eta materialen kontrolean eragin dezake.",
+    "obra": "Finkatu materialak eta elementu solteak lanean jarraitu aurretik.",
+    "neteja": "Zaindu tresnak eta objektu arinak eremu agerietan.",
+    "trekking": "Haizeak oreka zaildu dezake agerian dauden tarteetan.",
+    "oci": "Aukeratu haizetik babestutako tokia eta finkatu objektu arinak."
+  }
+},
+
 "insst_heat": "INSST: estres termikoa eta beroa",
 "aemet_health": "AEMET: osasuna eta meteorologia",
 

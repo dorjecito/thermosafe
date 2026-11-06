@@ -41,6 +41,14 @@ import {
    import {windDegToCardinal16 as windDegreesToCardinal16,
    } from "./utils/windDirections";
    import { getWindRisk, type WindRisk } from "./utils/windRisk";
+import {
+  getWindActivityRisk,
+  parseWindActivityProfile,
+  readWindActivityProfile,
+  writeWindActivityProfile,
+  WIND_ACTIVITY_PROFILES,
+  type WindActivityProfile,
+} from "./utils/windActivityProfile";
    import { buildAemetAiAlert, isKnownAemetDescription, type LangKey } from "./utils/aemetAi";
    import {
      isAemetAutoTranslationEnabled,
@@ -532,6 +540,14 @@ useEffect(() => {
 
 // 🌀 Estat i refs per a risc de vent
 const [windRisk, setWindRisk] = useState<WindRisk>('none');
+const [windActivityProfile, setWindActivityProfile] = useState<WindActivityProfile>(
+  () => readWindActivityProfile()
+);
+const handleWindActivityProfileChange = (value: string) => {
+  const profile = parseWindActivityProfile(value);
+  setWindActivityProfile(profile);
+  writeWindActivityProfile(profile);
+};
 //const lastWindRiskRef = useRef<WindRisk>('none');
 const [enableWindAlerts, setEnableWindAlerts] = useState<boolean>(() => {
   try {
@@ -2170,6 +2186,10 @@ useEffect(() => {
 
 
 const workWindow = useMemo(() => getWorkWindow(workWindowInput), [workWindowInput]);
+const windActivityRisk = useMemo(
+  () => getWindActivityRisk(windKmh, windActivityProfile),
+  [windKmh, windActivityProfile]
+);
 const aemetOnlyCaution = useMemo(
   () => isAemetOnlyCaution(workWindowInput, workWindow),
   [workWindowInput, workWindow]
@@ -3288,6 +3308,30 @@ return (
   </div>
 
   <p className="work-window-text">{workWindowText}</p>
+
+  <div className="wind-activity-profile-control">
+    <label htmlFor="wind-activity-profile">{t("windActivity.label")}</label>
+    <select
+      id="wind-activity-profile"
+      value={windActivityProfile}
+      onChange={(event) => handleWindActivityProfileChange(event.currentTarget.value)}
+    >
+      {WIND_ACTIVITY_PROFILES.map((profile) => (
+        <option key={profile} value={profile}>
+          {t(`windActivity.profile.${profile}`)}
+        </option>
+      ))}
+    </select>
+  </div>
+
+  {windActivityRisk && (
+    <div className={`wind-activity-risk wind-activity-risk-${windActivityRisk}`} role="status" aria-live="polite">
+      <strong>
+        {t(`windActivity.profile.${windActivityProfile}`)} · {t(`windActivity.level.${windActivityRisk}`)}
+      </strong>
+      <span>{t(`windActivity.advice.${windActivityProfile}`)}</span>
+    </div>
+  )}
 
   <div
     className={`risk-trend-card risk-trend-${riskTrend?.direction || "unavailable"}`}

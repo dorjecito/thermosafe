@@ -445,6 +445,35 @@
     "info_close": "Entesos"
   },
 
+  "windActivity": {
+    "label": "Tipus d’activitat",
+    "profile": {
+      "generic": "General",
+      "jardineria": "Jardineria",
+      "poda": "Poda",
+      "altura": "Treball en altura",
+      "obra": "Obra",
+      "neteja": "Neteja exterior",
+      "trekking": "Trekking",
+      "oci": "Activitat recreativa"
+    },
+    "level": {
+      "caution": "Precaució pel vent",
+      "elevated": "Precaució elevada",
+      "avoid": "Atura o ajorna l’activitat exposada"
+    },
+    "advice": {
+      "generic": "El vent pot dificultar algunes activitats, especialment en zones exposades.",
+      "jardineria": "Precaució amb branques, eines i elements que es puguin desplaçar.",
+      "poda": "El vent pot dificultar el control de branques i eines.",
+      "altura": "El vent pot afectar l’equilibri i el control de materials.",
+      "obra": "Assegura materials i elements solts abans de continuar.",
+      "neteja": "Vigila eines i elements lleugers en zones exposades.",
+      "trekking": "El vent pot dificultar l’equilibri en trams exposats.",
+      "oci": "Tria una zona arrecerada i assegura els elements lleugers."
+    }
+  },
+
   "official_links": "Enllaços oficials",
   "insst_heat": "INSST: estrès tèrmic i calor",
   "aemet_health": "AEMET: salut i meteorologia",

@@ -2062,6 +2062,66 @@ body,
   opacity: 0.95;
 }
 
+.wind-activity-profile-control {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.65rem;
+  margin-top: 0.75rem;
+  font-size: 0.9rem;
+}
+
+.wind-activity-profile-control label {
+  font-weight: 650;
+}
+
+.wind-activity-profile-control select {
+  min-width: 0;
+  max-width: 68%;
+  padding: 0.45rem 0.6rem;
+  border: 1px solid var(--card-border, rgba(128, 128, 128, 0.45));
+  border-radius: 8px;
+  background: var(--card-bg, rgba(255, 255, 255, 0.08));
+  color: inherit;
+  font: inherit;
+}
+
+.wind-activity-profile-control select:focus-visible {
+  outline: 2px solid var(--accent, #4dabf7);
+  outline-offset: 2px;
+}
+
+.wind-activity-risk {
+  display: grid;
+  gap: 0.15rem;
+  margin-top: 0.55rem;
+  padding: 0.55rem 0.65rem;
+  border-radius: 8px;
+  font-size: 0.86rem;
+  line-height: 1.35;
+  background: rgba(255, 193, 7, 0.12);
+}
+
+.wind-activity-risk-elevated {
+  background: rgba(255, 152, 0, 0.14);
+}
+
+.wind-activity-risk-avoid {
+  background: rgba(211, 47, 47, 0.14);
+}
+
+@media (max-width: 420px) {
+  .wind-activity-profile-control {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .wind-activity-profile-control select {
+    max-width: 100%;
+    width: 100%;
+  }
+}
+
 .risk-trend-card {
   display: flex;
   align-items: center;

@@ -447,6 +447,35 @@
     "info_close": "Got it"
   },
 
+  "windActivity": {
+    "label": "Activity type",
+    "profile": {
+      "generic": "General",
+      "jardineria": "Gardening",
+      "poda": "Pruning",
+      "altura": "Working at height",
+      "obra": "Construction",
+      "neteja": "Outdoor cleaning",
+      "trekking": "Trekking",
+      "oci": "Recreational activity"
+    },
+    "level": {
+      "caution": "Wind caution",
+      "elevated": "Increased caution",
+      "avoid": "Stop or postpone exposed activity"
+    },
+    "advice": {
+      "generic": "Wind can make some activities more difficult, especially in exposed areas.",
+      "jardineria": "Take care around branches, tools and items that could move.",
+      "poda": "Wind can make branches and tools harder to control.",
+      "altura": "Wind can affect balance and control of materials.",
+      "obra": "Secure materials and loose items before continuing.",
+      "neteja": "Watch tools and lightweight items in exposed areas.",
+      "trekking": "Wind can make balance harder on exposed sections.",
+      "oci": "Choose a sheltered area and secure lightweight items."
+    }
+  },
+
   "official_links": "Official links",
   "insst_heat": "INSST: Heat stress and thermal risk",
   "aemet_health": "AEMET: Health and meteorology",

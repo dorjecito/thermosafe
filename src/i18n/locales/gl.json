@@ -454,6 +454,35 @@
   "info_close": "Entendido"
 },
 
+"windActivity": {
+  "label": "Tipo de actividade",
+  "profile": {
+    "generic": "Xeral",
+    "jardineria": "Xardinaría",
+    "poda": "Poda",
+    "altura": "Traballo en altura",
+    "obra": "Obra",
+    "neteja": "Limpeza exterior",
+    "trekking": "Trekking",
+    "oci": "Actividade recreativa"
+  },
+  "level": {
+    "caution": "Precaución polo vento",
+    "elevated": "Precaución elevada",
+    "avoid": "Detén ou adía a actividade exposta"
+  },
+  "advice": {
+    "generic": "O vento pode dificultar algunhas actividades, especialmente nas zonas expostas.",
+    "jardineria": "Precaución con pólas, ferramentas e elementos que se poidan desprazar.",
+    "poda": "O vento pode dificultar o control das pólas e das ferramentas.",
+    "altura": "O vento pode afectar ao equilibrio e ao control dos materiais.",
+    "obra": "Asegura os materiais e os elementos soltos antes de continuar.",
+    "neteja": "Vixía ferramentas e elementos lixeiros en zonas expostas.",
+    "trekking": "O vento pode dificultar o equilibrio en tramos expostos.",
+    "oci": "Escolle unha zona abeirada e asegura os elementos lixeiros."
+  }
+},
+
 "insst_heat": "INSST: estrés térmico e calor",
 "aemet_health": "AEMET: saúde e meteoroloxía",
 

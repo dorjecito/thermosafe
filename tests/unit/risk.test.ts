@@ -1,6 +1,7 @@
 import "./precipitationPresentation.test";
 import "./uvAdviceContext.test";
 import "./currentWindGust.test";
+import "./windActivityProfile.test";
 import "./nightForecast.test";
 import "./skyLanguage.test";
 import "./refreshTarget.test";
