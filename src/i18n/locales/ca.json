@@ -371,7 +371,7 @@
   "off": "DESACTIVADES",
   "info_label": "Informació sobre les notificacions",
   "info_title": "Notificacions push",
-  "info_body": "Les notificacions t’avisen de riscos rellevants per calor, fred, vent, UV i avisos meteorològics oficials, segons la teva ubicació i configuració.",
+  "info_body": "Les notificacions t’avisen de riscos rellevants per calor, fred, vent, UV i avisos meteorològics oficials, segons la teva ubicació i configuració. En alguns casos, com el vent, el tipus d’activitat seleccionat també pot ajustar quan es genera un avís.",
   "info_close": "Entesos"
 },
 
@@ -440,13 +440,21 @@
     "motion_activation_error": "No s'ha pogut activar la detecció de moviment",
     "info_label": "Informació sobre la detecció de moviment",
     "info_title": "Detecció de moviment",
-    "info_body": "ThermoSafe utilitza els sensors de moviment del dispositiu per detectar el nivell d’activitat i adaptar les recomanacions preventives.",
+    "info_body": "ThermoSafe utilitza els sensors de moviment del dispositiu per estimar la intensitat de l’activitat física —repòs, caminar, esforç moderat o intens— i ajustar el risc tèrmic i les recomanacions relacionades amb la calor.",
+    "info_context": "Aquesta funció és independent del Tipus d’activitat, que s’utilitza per contextualitzar riscos com el vent.",
     "info_privacy": "Les dades es processen localment al dispositiu i no s’envien a cap servidor.",
     "info_close": "Entesos"
   },
 
   "windActivity": {
     "label": "Tipus d’activitat",
+    "info_label": "Informació sobre el tipus d’activitat",
+    "info_title": "Tipus d’activitat",
+    "info_body": "Selecciona l’activitat que estàs fent perquè ThermoSafe adapti la valoració i les notificacions de vent a l’activitat seleccionada.",
+    "info_example": "Per exemple, el vent pot representar més risc en treballs en altura o poda que en una activitat recreativa.",
+    "info_context": "Aquesta selecció és independent de la detecció de moviment.",
+    "info_default": "Pots deixar seleccionat General si no vols especificar cap activitat.",
+    "info_close": "Entesos",
     "profile": {
       "generic": "General",
       "jardineria": "Jardineria",

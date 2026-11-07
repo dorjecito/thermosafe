@@ -382,7 +382,7 @@
   "off": "DESAKTIBATUTA",
   "info_label": "Jakinarazpenei buruzko informazioa",
   "info_title": "Push jakinarazpenak",
-  "info_body": "Jakinarazpenek beroak, hotzak, haizeak eta UV erradiazioak eragindako arrisku garrantzitsuen eta abisu meteorologiko ofizialen berri ematen dizute, zure kokapenaren eta ezarpenen arabera.",
+  "info_body": "Jakinarazpenek beroak, hotzak, haizeak eta UV erradiazioak eragindako arrisku garrantzitsuen eta abisu meteorologiko ofizialen berri ematen dizute, zure kokapenaren eta ezarpenen arabera. Zenbait kasutan, haizearekin adibidez, hautatutako jarduera motak abisua noiz bidaltzen den ere baldintza dezake.",
   "info_close": "Ulertuta"
 },
 
@@ -416,13 +416,21 @@
   "motion_activation_error": "Ezin izan da mugimendu-detekzioa aktibatu",
   "info_label": "Mugimendu-detekzioari buruzko informazioa",
   "info_title": "Mugimendu-detekzioa",
-  "info_body": "ThermoSafek gailuaren mugimendu-sentsoreak erabiltzen ditu jarduera-maila hautemateko eta prebentzio-gomendioak egokitzeko.",
+  "info_body": "ThermoSafek gailuaren mugimendu-sentsoreak erabiltzen ditu jarduera fisikoaren intentsitatea —atsedena, oinez ibiltzea, esfortzu ertaina edo bizia— kalkulatzeko, eta bero-arriskua eta beroarekin lotutako gomendioak egokitzeko.",
+  "info_context": "Funtzio hau Jarduera motatik independentea da; jarduera mota eskuz hautatzen da, haizea bezalako arriskuak testuinguruan jartzeko.",
   "info_privacy": "Datuak gailuan bertan prozesatzen dira eta ez dira zerbitzarietara bidaltzen.",
   "info_close": "Ulertuta"
 },
 
 "windActivity": {
   "label": "Jarduera mota",
+  "info_label": "Jarduera motari buruzko informazioa",
+  "info_title": "Jarduera mota",
+  "info_body": "Hautatu egiten ari zaren jarduera, ThermoSafe-k haize-arriskuaren balorazioa eta jakinarazpenak hautatutako jarduerara egokitzeko.",
+  "info_example": "Adibidez, haizeak arrisku handiagoa ekar dezake altueran lan egitean edo inausketan, aisialdiko jarduera batean baino.",
+  "info_context": "Hautaketa hau mugimendu-detekziotik independentea da.",
+  "info_default": "Ez baduzu jarduerarik zehaztu nahi, Orokorra hautatuta utz dezakezu.",
+  "info_close": "Ulertuta",
   "profile": {
     "generic": "Orokorra",
     "jardineria": "Lorezaintza",

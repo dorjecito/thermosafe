@@ -397,7 +397,7 @@
   "off": "DESACTIVADAS",
   "info_label": "Información sobre las notificaciones",
   "info_title": "Notificaciones push",
-  "info_body": "Las notificaciones te avisan de riesgos relevantes por calor, frío, viento, UV y avisos meteorológicos oficiales, según tu ubicación y configuración.",
+  "info_body": "Las notificaciones te avisan de riesgos relevantes por calor, frío, viento, UV y avisos meteorológicos oficiales, según tu ubicación y configuración. En algunos casos, como el viento, el tipo de actividad seleccionado también puede ajustar cuándo se genera un aviso.",
   "info_close": "Entendido"
 }, 
 
@@ -464,13 +464,21 @@
     "motion_activation_error": "No se ha podido activar la detección de movimiento",
     "info_label": "Información sobre la detección de movimiento",
     "info_title": "Detección de movimiento",
-    "info_body": "ThermoSafe utiliza los sensores de movimiento del dispositivo para detectar el nivel de actividad y adaptar las recomendaciones preventivas.",
+    "info_body": "ThermoSafe utiliza los sensores de movimiento del dispositivo para estimar la intensidad de la actividad física —reposo, caminar, esfuerzo moderado o intenso— y ajustar el riesgo térmico y las recomendaciones relacionadas con el calor.",
+    "info_context": "Esta función es independiente del Tipo de actividad, que se utiliza para contextualizar riesgos como el viento.",
     "info_privacy": "Los datos se procesan localmente en el dispositivo y no se envían a ningún servidor.",
     "info_close": "Entendido"
   },
 
   "windActivity": {
     "label": "Tipo de actividad",
+    "info_label": "Información sobre el tipo de actividad",
+    "info_title": "Tipo de actividad",
+    "info_body": "Selecciona la actividad que estás haciendo para que ThermoSafe adapte la valoración y las notificaciones de viento a la actividad seleccionada.",
+    "info_example": "Por ejemplo, el viento puede representar más riesgo al trabajar en altura o podar que durante una actividad recreativa.",
+    "info_context": "Esta selección es independiente de la detección de movimiento.",
+    "info_default": "Puedes dejar General seleccionado si no quieres especificar ninguna actividad.",
+    "info_close": "Entendido",
     "profile": {
       "generic": "General",
       "jardineria": "Jardinería",

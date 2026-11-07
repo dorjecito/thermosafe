@@ -375,7 +375,7 @@
   "off": "DESACTIVADAS",
   "info_label": "Información sobre as notificacións",
   "info_title": "Notificacións push",
-  "info_body": "As notificacións avísante de riscos relevantes por calor, frío, vento, UV e avisos meteorolóxicos oficiais, segundo a túa localización e configuración.",
+  "info_body": "As notificacións avísante de riscos relevantes por calor, frío, vento, UV e avisos meteorolóxicos oficiais, segundo a túa localización e configuración. Nalgúns casos, como o vento, o tipo de actividade seleccionado tamén pode axustar cando se xera un aviso.",
   "info_close": "Entendido"
 },
 
@@ -449,13 +449,21 @@
   "motion_activation_error": "Non se puido activar a detección de movemento",
   "info_label": "Información sobre a detección de movemento",
   "info_title": "Detección de movemento",
-  "info_body": "ThermoSafe utiliza os sensores de movemento do dispositivo para detectar o nivel de actividade e adaptar as recomendacións preventivas.",
+  "info_body": "ThermoSafe utiliza os sensores de movemento do dispositivo para estimar a intensidade da actividade física —repouso, camiñar, esforzo moderado ou intenso— e axustar o risco térmico e as recomendacións relacionadas coa calor.",
+  "info_context": "Esta función é independente do Tipo de actividade, que se utiliza para contextualizar riscos como o vento.",
   "info_privacy": "Os datos procésanse localmente no dispositivo e non se envían a ningún servidor.",
   "info_close": "Entendido"
 },
 
 "windActivity": {
   "label": "Tipo de actividade",
+  "info_label": "Información sobre o tipo de actividade",
+  "info_title": "Tipo de actividade",
+  "info_body": "Selecciona a actividade que estás a realizar para que ThermoSafe adapte a valoración e as notificacións de vento á actividade seleccionada.",
+  "info_example": "Por exemplo, o vento pode supoñer máis risco ao traballar en altura ou podar que nunha actividade recreativa.",
+  "info_context": "Esta selección é independente da detección de movemento.",
+  "info_default": "Podes deixar Xeral seleccionado se non queres especificar ningunha actividade.",
+  "info_close": "Entendido",
   "profile": {
     "generic": "Xeral",
     "jardineria": "Xardinaría",

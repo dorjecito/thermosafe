@@ -363,7 +363,7 @@
     "off": "OFF",
     "info_label": "Information about notifications",
     "info_title": "Push notifications",
-    "info_body": "Notifications alert you to significant risks from heat, cold, wind and UV, and to official weather warnings, based on your location and settings.",
+    "info_body": "Notifications alert you to significant risks from heat, cold, wind and UV, and to official weather warnings, based on your location and settings. In some cases, such as wind, your selected activity type may also affect when an alert is sent.",
     "info_close": "Got it"
   },
 
@@ -442,13 +442,21 @@
     "motion_activation_error": "Motion detection could not be enabled",
     "info_label": "Information about motion detection",
     "info_title": "Motion detection",
-    "info_body": "ThermoSafe uses the device’s motion sensors to detect activity level and adapt preventive recommendations.",
+    "info_body": "ThermoSafe uses the device’s motion sensors to estimate the intensity of physical activity—resting, walking, moderate effort or intense effort—and adjust thermal risk and heat-related recommendations.",
+    "info_context": "This feature is independent of Activity type, which is selected manually to put risks such as wind into context.",
     "info_privacy": "Data is processed locally on the device and is not sent to any server.",
     "info_close": "Got it"
   },
 
   "windActivity": {
     "label": "Activity type",
+    "info_label": "Information about activity type",
+    "info_title": "Activity type",
+    "info_body": "Select the activity you’re doing so ThermoSafe can tailor its wind risk assessment and alerts to your selected activity.",
+    "info_example": "For example, wind may pose more risk when working at height or pruning than during a recreational activity.",
+    "info_context": "This selection is independent of motion detection.",
+    "info_default": "You can leave General selected if you don’t want to specify an activity.",
+    "info_close": "Got it",
     "profile": {
       "generic": "General",
       "jardineria": "Gardening",

@@ -116,6 +116,7 @@ import { calcHIOrNull } from "./utils/calcHI";
    import LocationCard from "./components/LocationCard";
    import SafetyActions from "./components/SafetyActions";
    import NotificationsInfo from "./components/NotificationsInfo";
+   import ActivityTypeInfo from "./components/ActivityTypeInfo";
    import type { SkinType } from "./components/SkinTypeInfo";
    import TopAlertBanner from "./components/TopAlertBanner";
    import CompactHeader from "./components/CompactHeader";
@@ -3224,6 +3225,7 @@ return (
       >
         <h3 id="activity-info-title">{t("activity.info_title")}</h3>
         <p>{t("activity.info_body")}</p>
+        <p>{t("activity.info_context")}</p>
         <p>{t("activity.info_privacy")}</p>
         <button
           type="button"
@@ -3327,7 +3329,10 @@ return (
   <p className="work-window-text">{workWindowText}</p>
 
   <div className="wind-activity-profile-control">
-    <label htmlFor="wind-activity-profile">{t("windActivity.label")}</label>
+    <div className="wind-activity-label-group">
+      <label htmlFor="wind-activity-profile">{t("windActivity.label")}</label>
+      <ActivityTypeInfo />
+    </div>
     <select
       id="wind-activity-profile"
       value={windActivityProfile}

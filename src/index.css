@@ -2075,6 +2075,13 @@ body,
   font-weight: 650;
 }
 
+.wind-activity-label-group {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  min-width: 0;
+}
+
 .wind-activity-profile-control select {
   min-width: 0;
   max-width: 68%;
