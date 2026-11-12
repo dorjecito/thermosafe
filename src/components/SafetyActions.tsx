@@ -149,6 +149,9 @@ export default function SafetyActions({
       <button type="button" className="safety-share-btn" onClick={share}>
         📤 {t("share")}
       </button>
+      <a className="safety-info-link" href="/guia">
+        <span aria-hidden="true">ⓘ</span> {t("guide.link")}
+      </a>
       {shareStatus ? (
         <div aria-live="polite" role="status" style={{ fontSize: "0.82rem" }}>
           {shareStatus}

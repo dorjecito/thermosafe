@@ -19,14 +19,12 @@
   "wind_direction": "Direcció del vent",
   "wind_risk": "Risc per vent",
   "cloudiness": "Nuvolositat",
-  
   "combinedRisk": {
-  "highTitle": "Combinació de riscos rellevant",
-  "highText": "Hi ha diversos factors de risc simultanis. Redueix l’exposició i extrema la precaució.",
-  "extremeTitle": "Combinació de risc molt elevada",
-  "extremeText": "La combinació actual de condicions meteorològiques exigeix màxima precaució i limitació de l’exposició exterior."
-},
-
+    "highTitle": "Combinació de riscos rellevant",
+    "highText": "Hi ha diversos factors de risc simultanis. Redueix l’exposició i extrema la precaució.",
+    "extremeTitle": "Combinació de risc molt elevada",
+    "extremeText": "La combinació actual de condicions meteorològiques exigeix màxima precaució i limitació de l’exposició exterior."
+  },
   "riskTrend": {
     "loading": "S’està calculant la previsió de les pròximes hores…",
     "unavailable": "La previsió per a les pròximes hores no està disponible.",
@@ -67,17 +65,14 @@
     "partialSuffix": "Aquesta previsió es basa en les dades disponibles.",
     "localTimeSuffix": "(hora local)"
   },
-
   "loading": "Carregant dades meteorològiques...",
   "errorGPS": "No s'ha pogut obtenir la ubicació per GPS.",
   "errorCity": "No s'han trobat dades per a aquesta ubicació. Es mostren les darreres dades disponibles.",
   "errorNoLocation": "No s'ha pogut obtenir la ubicació.",
-
   "recommendations_title": "Recomanacions segons condicions actuals:",
   "solarProtection": "🔆 Protecció solar",
   "irradianceLegend": "☀️ Nivells d'irradiància: <8 moderat · ≥8 alt",
   "toggleLegend": "ℹ️ Mostra/Amaga escala UV",
-  
   "safe_conditions": "Condicions segures",
   "safe_conditions_text_day": "No s'observen riscos destacables en aquest moment.",
   "uv_data_unavailable_title": "Avaluació incompleta",
@@ -171,29 +166,22 @@
       "extreme": "Radiació UV extrema"
     }
   },
-
-
   "highIrradianceWarning": "⚠️ Irradiància solar molt alta. Evita l'exposició directa al sol.",
   "highUVIWarning": "⚠️ Índex UV molt alt. Protecció solar imprescindible!",
   "extremeUVIWarning": "🚨 UV EXTREM (11+) — Evita l’exposició directa",
   "irradianceTips": "👒 Fes servir barret, ulleres de sol i crema solar. Evita fer activitat física sota el sol.",
-
   "risk_level": "Risc per calor:",
   "alert_extreme": "🚨 RISC EXTREM DE CALOR! Atura l'activitat i hidrata't immediatament.",
   "alertRisk": "⚠️ Risc alt o extrem per calor.",
-
   "link_insst": "INSST: estrès tèrmic i calor",
   "link_aemet": "AEMET: salut i meteorologia",
-
   "cold_alert_label": "Rebre avisos per fred extrem",
   "wind_alert_label": "Rebre avisos per vent fort",
-
   "heat_risk": "Risc per calor",
   "current_risk": "Risc actual",
   "no_risk": "Cap risc",
   "no_risk_overall": "Sense risc detectat",
   "no_specific_risk": "Sense risc específic",
-
   "risk_levels": {
     "safe": "Condicions segures",
     "mild": "Risc lleu",
@@ -205,40 +193,31 @@
     "extreme": "Risc extrem"
   },
   "risk": {
-  "current": "Risc actual"
-},
-
+    "current": "Risc actual"
+  },
   "skin": {
-  "toggle": "Mostra/Oculta informació del fototip"
-},
-
+    "toggle": "Mostra/Oculta informació del fototip"
+  },
   "high": "Alt",
   "moderate": "Moderat",
   "extreme": "Extrem",
-
   "notify": {
-  "coldTitle": "Avís ThermoSafe",
-  "coldBody": "Risc per fred {{risk}}. Temperatura: {{temp}}°C",
-
-  "heatTitle": "Avís ThermoSafe",
-  "heatBody": "Risc per calor {{risk}}. Sensació tèrmica: {{hi}}°C",
-
-  "windTitle": "Avís ThermoSafe",
-  "windBody": "Risc per vent {{risk}}. Velocitat del vent: {{speed}} km/h",
-
-  "uvTitle": "Avís ThermoSafe",
-  "uvModerate": "Índex UV moderat. Protegeix-te si estàs exposat al sol.",
-  "uvHigh": "Índex UV alt. Usa crema solar i evita exposició prolongada.",
-  "uvVeryHigh": "Índex UV molt alt. Protecció solar imprescindible.",
-  "uvExtreme": "Índex UV extrem. Evita l’exposició directa al sol."
-},
-
-"search_help_title": "Ajuda de cerca",
-"search_help": "Escriu almenys 4 lletres. Els suggeriments poden requerir gairebé el nom complet de la ciutat.",
-
+    "coldTitle": "Avís ThermoSafe",
+    "coldBody": "Risc per fred {{risk}}. Temperatura: {{temp}}°C",
+    "heatTitle": "Avís ThermoSafe",
+    "heatBody": "Risc per calor {{risk}}. Sensació tèrmica: {{hi}}°C",
+    "windTitle": "Avís ThermoSafe",
+    "windBody": "Risc per vent {{risk}}. Velocitat del vent: {{speed}} km/h",
+    "uvTitle": "Avís ThermoSafe",
+    "uvModerate": "Índex UV moderat. Protegeix-te si estàs exposat al sol.",
+    "uvHigh": "Índex UV alt. Usa crema solar i evita exposició prolongada.",
+    "uvVeryHigh": "Índex UV molt alt. Protecció solar imprescindible.",
+    "uvExtreme": "Índex UV extrem. Evita l’exposició directa al sol."
+  },
+  "search_help_title": "Ajuda de cerca",
+  "search_help": "Escriu almenys 4 lletres. Els suggeriments poden requerir gairebé el nom complet de la ciutat.",
   "heatRiskLabel": "Risc per calor",
   "effectiveTemp": "Temperatura efectiva",
-
   "heatRisk": {
     "cap": "cap risc",
     "baix": "baix",
@@ -250,7 +229,6 @@
     "extrem": "extrem",
     "extreme": "extrem"
   },
-
   "coldRisk": {
     "cap": "cap risc",
     "lleu": "lleu",
@@ -259,23 +237,19 @@
     "molt_alt": "molt alt",
     "extrem": "extrem"
   },
-
   "cold_risk_title": "Risc per fred",
   "wind_chill": "Temperatura efectiva",
-
   "windRisk": {
-  "none": "cap risc",
-  "breezy": "baix",
-  "moderate": "moderat",
-  "strong": "alt",
-  "very_strong": "molt alt",
-
-  "low": "baix",
-  "high": "alt",
-  "very_high": "molt alt",
-  "extreme": "extrem"
-},
-
+    "none": "cap risc",
+    "breezy": "baix",
+    "moderate": "moderat",
+    "strong": "alt",
+    "very_strong": "molt alt",
+    "low": "baix",
+    "high": "alt",
+    "very_high": "molt alt",
+    "extreme": "extrem"
+  },
   "sky_state": "Estat del cel",
   "weather_desc": {
     "clear_sky": "Cel clar",
@@ -301,7 +275,6 @@
     "ash": "Cendra volcànica",
     "squall": "Ràfegues de vent",
     "tornado": "Tornado",
-
     "ennuvolat": "Ennuvolat",
     "lleugerament_ennuvolat": "Lleugerament ennuvolat",
     "molt_ennuvolat": "Molt ennuvolat",
@@ -309,7 +282,6 @@
     "poc_ennuvolat": "Poc ennuvolat",
     "nuvolositat_variable": "Nuvolositat variable"
   },
-
   "weather_alerts": {
     "storm": "Avís per tempesta",
     "rain": "Avís per pluja",
@@ -317,30 +289,24 @@
     "wind": "Avís per vent",
     "heat": "Avís per calor",
     "cold": "Avís per fred",
-
     "coastalevent": "Avís per risc costaner",
     "coastal_event": "Avís per risc costaner",
     "coastal_event_warning": "Avís per risc costaner",
     "coastalevent_warning": "Avís per risc costaner",
-
     "moderate_coastalevent_warning": "Avís costaner moderat",
     "moderate_coastal_event_warning": "Avís costaner moderat",
     "moderate coastal event warning": "Avís costaner moderat",
     "moderate_coastalevent": "Avís costaner moderat",
-
     "low_temperature_warning": "Avís per temperatures baixes",
     "low temperature warning": "Avís per temperatures baixes",
     "moderate_low_temperature_warning": "Avís moderat per temperatures baixes",
     "moderate low temperature warning": "Avís moderat per temperatures baixes",
-
     "snow_warning": "Avís per neu",
     "wind_warning": "Avís per vent",
     "rain_warning": "Avís per pluja",
-
     "minimum_temperature": "Temperatura mínima",
     "minimum temperature": "Temperatura mínima"
   },
-
   "last_update": "Actualitzat fa",
   "refresh_data": "Actualitza",
   "refreshing_data": "Actualitzant…",
@@ -364,17 +330,15 @@
   "alerts_title": "Avisos meteorològics oficials",
   "alerts_none": "No hi ha avisos meteorològics actius actualment.",
   "no_alerts": "No hi ha avisos meteorològics actualment.",
-
- "notifications": {
-  "label": "Notificacions",
-  "on": "ACTIVES",
-  "off": "DESACTIVADES",
-  "info_label": "Informació sobre les notificacions",
-  "info_title": "Notificacions push",
-  "info_body": "Les notificacions t’avisen de riscos rellevants per calor, fred, vent, UV i avisos meteorològics oficials, segons la teva ubicació i configuració. En alguns casos, com el vent, el tipus d’activitat seleccionat també pot ajustar quan es genera un avís.",
-  "info_close": "Entesos"
-},
-
+  "notifications": {
+    "label": "Notificacions",
+    "on": "ACTIVES",
+    "off": "DESACTIVADES",
+    "info_label": "Informació sobre les notificacions",
+    "info_title": "Notificacions push",
+    "info_body": "Les notificacions t’avisen de riscos rellevants per calor, fred, vent, UV i avisos meteorològics oficials, segons la teva ubicació i configuració. En alguns casos, com el vent, el tipus d’activitat seleccionat també pot ajustar quan es genera un avís.",
+    "info_close": "Entesos"
+  },
   "solar_info": "Radiació solar i índex UV",
   "uv_index_current": "Índex UV actual",
   "uv_level": "Nivell",
@@ -390,7 +354,6 @@
     "exposure_summary": "Exposició orientativa",
     "skin_summary_type": "Pell tipus"
   },
-
   "recommendations_full": {
     "heat": {
       "low": "Mantén una bona hidratació i evita el sol directe en hores punta.",
@@ -423,8 +386,6 @@
       "extreme": "Onatge molt fort: risc extrem. Evita completament passejar prop del mar."
     }
   },
-  
-
   "activity": {
     "inactive": "Activar detecció de moviment",
     "requesting": "Activant detecció…",
@@ -445,7 +406,6 @@
     "info_privacy": "Les dades es processen localment al dispositiu i no s’envien a cap servidor.",
     "info_close": "Entesos"
   },
-
   "windActivity": {
     "label": "Tipus d’activitat",
     "info_label": "Informació sobre el tipus d’activitat",
@@ -481,18 +441,15 @@
       "oci": "Tria una zona arrecerada i assegura els elements lleugers."
     }
   },
-
   "official_links": "Enllaços oficials",
   "insst_heat": "INSST: estrès tèrmic i calor",
   "aemet_health": "AEMET: salut i meteorologia",
   "show_details": "Veure detall",
   "hide_details": "Amagar detall",
-
   "share": "Compartir",
   "show_advice": "Mostrar recomanacions",
   "hide_advice": "Amagar recomanacions",
   "official_advice_share": "Segueix les recomanacions de seguretat segons el teu risc actual.",
-
   "officialAdviceDynamic": {
     "heat": {
       "mild": "Hidrata’t sovint i descansa en zones fresques.",
@@ -522,7 +479,6 @@
       "extreme": "Evita exposar-te al sol. Risc extrem de dany ocular i cutani."
     }
   },
-
   "official_advice": {
     "hydration": "Hidrata’t amb regularitat, encara que no tinguis set.",
     "rest": "Descansa en zones d’ombra durant activitats prolongades.",
@@ -540,19 +496,16 @@
     "symptoms": "Si tens marejos, nàusees o confusió, atura l’activitat.",
     "symptomsCold": "Si tens calfreds, tremolors o confusió, busca refugi i escalfor."
   },
-
   "official_advice_title": "Recomanacions oficials de seguretat",
   "share_title": "Resum de risc – ThermoSafe",
   "share_copied": "Text copiat al porta-retalls",
   "share_failed": "No s’ha pogut compartir ni copiar el text",
   "official_advice_footer": "Basat en guies de l’INSST i AEMET.",
   "data_sources_footer": "Fonts de dades: OpenWeather · OpenUV · NASA POWER · AEMET (avisos oficials) · OpenStreetMap/Nominatim",
-
   "rec": {
     "safe": "Condicions segures. Mantén la hidratació habitual.",
     "safeWithHighUV": "Condicions tèrmiques segures. Precaució per radiació solar."
   },
-
   "push": {
     "label": "Rebre avisos quan el risc per calor ≥ moderat",
     "errors": {
@@ -563,19 +516,19 @@
     }
   },
   "alert_time": {
-  "active": "Vigent",
-  "ended": "Finalitzat",
-  "remaining_hours": "Queden {{hours}}h {{minutes}}min",
-  "remaining_minutes": "Queden {{minutes}} min",
-  "starts_in_hours": "Comença en {{hours}}h {{minutes}}min",
-  "starts_in_minutes": "Comença en {{minutes}} min"
-},
-"uvTitle": "Avís ThermoSafe",
-"uvLow": "Índex UV baix.",
-"uvModerate": "Índex UV moderat. Protecció recomanada.",
-"uvHigh": "Índex UV alt. Protecció elevada.",
-"uvVeryHigh": "Índex UV molt alt. Protecció solar imprescindible!",
-"uvExtreme": "🚨 UV EXTREM (11+) — Evita l’exposició directa",
+    "active": "Vigent",
+    "ended": "Finalitzat",
+    "remaining_hours": "Queden {{hours}}h {{minutes}}min",
+    "remaining_minutes": "Queden {{minutes}} min",
+    "starts_in_hours": "Comença en {{hours}}h {{minutes}}min",
+    "starts_in_minutes": "Comença en {{minutes}} min"
+  },
+  "uvTitle": "Avís ThermoSafe",
+  "uvLow": "Índex UV baix.",
+  "uvModerate": "Índex UV moderat. Protecció recomanada.",
+  "uvHigh": "Índex UV alt. Protecció elevada.",
+  "uvVeryHigh": "Índex UV molt alt. Protecció solar imprescindible!",
+  "uvExtreme": "🚨 UV EXTREM (11+) — Evita l’exposició directa",
   "chunkRecovery": {
     "title": "ThermoSafe s’ha actualitzat.",
     "reloading": "S’està carregant la nova versió…",
@@ -712,6 +665,252 @@
       "focus": "Focus",
       "scheduledSummary": "Resum programat",
       "pwaInstalled": "PWA instal·lada"
+    }
+  },
+  "guide": {
+    "link": "Informació",
+    "title": "Guia d’usuari",
+    "metaTitle": "Guia d’usuari · ThermoSafe",
+    "description": "Aprèn a consultar el temps, interpretar els riscos i configurar ThermoSafe per a les teves activitats a l’exterior.",
+    "eyebrow": "INFORMACIÓ I AJUDA",
+    "back": "Torna a ThermoSafe",
+    "top": "Torna a dalt",
+    "index": "En aquesta guia",
+    "skip": "Ves al contingut",
+    "language": "Idioma",
+    "safetyTitle": "Prevenció amb criteri",
+    "safety": "ThermoSafe és una eina auxiliar de prevenció. No substitueix les avaluacions de riscos laborals, les instruccions dels serveis de prevenció ni els avisos oficials. Les dades i estimacions poden ser incompletes o arribar amb retard. L'absència d'un avís no garanteix que una situació sigui segura.",
+    "sections": {
+      "about": {
+        "title": "Què és ThermoSafe?",
+        "paragraphs": [
+          "ThermoSafe ajuda a entendre les condicions meteorològiques i a planificar activitats a l’exterior amb més informació. Pot ser útil en feines a l’aire lliure, excursions i activitats recreatives.",
+          "Avalua calor, fred, vent i radiació ultraviolada. Les recomanacions són orientatives: no descriuen totes les condicions d’un lloc de treball ni totes les circumstàncies personals.",
+          "Les dades dels proveïdors poden diferir de les condicions exactes del punt on et trobes. Consulta també les indicacions oficials i del teu servei de prevenció."
+        ],
+        "blocks": []
+      },
+      "start": {
+        "title": "Com començar",
+        "paragraphs": [],
+        "blocks": [
+          {
+            "title": "1. Tria l’idioma",
+            "text": "Selecciona català, castellà, basc, gallec o anglès. La preferència es desa al navegador quan l’emmagatzematge està disponible."
+          },
+          {
+            "title": "2. Tria la ubicació",
+            "text": "Permet la geolocalització per consultar on ets o cerca una localitat i selecciona el resultat correcte. Comprova sempre el nom de la ubicació mostrada."
+          },
+          {
+            "title": "3. Llegeix les condicions",
+            "text": "Revisa temperatura, sensació tèrmica, vent i UV, juntament amb el risc principal i les recomanacions. La previsió explica què podria passar després; no és una observació actual."
+          },
+          {
+            "title": "4. Comprova l’actualització",
+            "text": "L’hora o el temps transcorregut que es mostra ajuda a valorar l’antiguitat de la informació. No implica una mesura instantània al teu costat. Utilitza el control d’actualització i comprova que la consulta acaba correctament."
+          }
+        ]
+      },
+      "personalization": {
+        "title": "Tipus d’activitat i personalització",
+        "paragraphs": [
+          "Són tres ajustos independents. Tria el perfil que millor descriu la tasca real; cap ajust substitueix les mesures de prevenció necessàries."
+        ],
+        "blocks": [
+          {
+            "title": "A. Perfil d’activitat exterior",
+            "text": "Pots triar General, Jardineria, Poda, Treball en altura, Obra, Neteja exterior, Trekking o Activitat recreativa. General és l’opció si no vols concretar. El perfil adapta l’avís contextual de vent i el perfil de les notificacions de vent, però no canvia la classificació meteorològica general del vent."
+          },
+          {
+            "title": "B. Detecció de moviment",
+            "text": "És opcional. Els sensors del dispositiu estimen repòs, caminar, esforç moderat o intens i poden elevar la valoració preventiva de calor. No és un selector manual d’intensitat ni una mesura de l’esforç real. El moviment es processa localment i no es continua processant amb la pàgina oculta."
+          },
+          {
+            "title": "C. Fototip de pell",
+            "text": "Els fototips I–VI ajusten l’estimació orientativa del temps d’exposició UV. No modifiquen l’índex UV ni el seu nivell. El temps estimat no és una garantia d’exposició segura."
+          }
+        ],
+        "details": {
+          "title": "Llindars contextuals de vent",
+          "text": "Valors en km/h: precaució / precaució elevada / atura o ajorna l’activitat exposada. S’apliquen a partir del valor indicat.\nGeneral i Jardineria: 30 / 45 / 65.\nPoda: 25 / 40 / 60.\nTreball en altura: 20 / 35 / 55.\nObra: 28 / 45 / 65.\nNeteja exterior: 30 / 50 / 70.\nTrekking i Activitat recreativa: 35 / 50 / 70."
+        }
+      },
+      "risks": {
+        "title": "Com interpretar els riscos",
+        "paragraphs": [
+          "El valor meteorològic és una dada, com la temperatura o la velocitat del vent. El nivell de risc és la valoració que en fa l’aplicació. El risc principal destaca un dels factors més rellevants, però no elimina els altres riscos.",
+          "Les recomanacions orienten la prevenció. L’indicador contextual d’activitat afegeix informació sobre la tasca. Separa sempre les condicions actuals de la previsió i de la tendència."
+        ],
+        "blocks": [
+          {
+            "title": "Calor",
+            "text": "Es basa en un índex de calor que combina temperatura i humitat; no és simplement la temperatura de l’aire. La detecció de moviment, si està activada, pot elevar-ne la valoració dins els límits preventius implementats."
+          },
+          {
+            "title": "Fred",
+            "text": "Es valora la temperatura efectiva, amb l’efecte del vent quan es compleixen les condicions del càlcul. Una temperatura fresca i un nivell de risc per fred no són necessàriament el mateix."
+          },
+          {
+            "title": "Vent",
+            "text": "La classificació general utilitza la velocitat sostinguda del vent. El perfil d’activitat aporta un indicador separat: la mateixa velocitat pot requerir més precaució en altura que en una activitat recreativa."
+          },
+          {
+            "title": "Radiació UV",
+            "text": "L’índex UV descriu la radiació ultraviolada, no la temperatura. Núvols o sensació de frescor no garanteixen absència de risc. Un UV no disponible no significa UV zero."
+          }
+        ],
+        "details": {
+          "title": "Escales de referència de la pantalla",
+          "text": "Calor, abans de l’ajust per moviment, en °C d’índex de calor: menys de 27, sense risc; de 27 a menys de 32, baix; de 32 a menys de 41, moderat; de 41 a menys de 54, alt; 54 o més, extrem.\nFred, en °C efectius: més de 0, cap; més de −5 fins a 0, lleu; més de −15 fins a −5, moderat; més de −25 fins a −15, alt; més de −40 fins a −25, molt alt; −40 o menys, extrem.\nVent, en km/h: menys de 15, sense risc; de 15 a menys de 25, brisa; de 25 a menys de 45, moderat; de 45 a menys de 65, fort; 65 o més, molt fort.\nUV, normalitzat a un decimal: menys de 3, baix; de 3 a menys de 6, moderat; de 6 a menys de 8, alt; de 8 a menys d’11, molt alt; 11 o més, extrem."
+        }
+      },
+      "notifications": {
+        "title": "Notificacions",
+        "paragraphs": [
+          "Activa o desactiva els avisos amb el control Notificacions de la pantalla principal. Per activar-los cal permís de notificacions, compatibilitat del navegador i obtenció de la ubicació GPS. Desactivar-los sol·licita la baixa de la subscripció; comprova que l’operació no mostra errors.",
+          "Les alertes es calculen per a les coordenades desades a la subscripció. Una cerca manual posterior pot actualitzar-les: no pressuposis que sempre corresponen a la teva posició física actual."
+        ],
+        "blocks": [
+          {
+            "title": "Quan s’envia un avís?",
+            "text": "Els controls automàtics són aproximadament horaris. Un nou avís depèn del risc, del llindar i de si supera el nivell ja notificat. Actualitzar la pantalla no força un enviament. La pantalla i els avisos poden utilitzar escales diferents; el moviment detectat no s’aplica de la mateixa manera a les notificacions."
+          },
+          {
+            "title": "Per què no es repeteix?",
+            "text": "L’aplicació conserva el nivell notificat per evitar repeticions. Si el risc baixa i torna al mateix nivell, pot no avisar de nou. Hi ha reinicis diaris per als riscos meteorològics i UV; els avisos oficials es dedupliquen per episodi i poden tornar a avisar si s’agreugen."
+          },
+          {
+            "title": "Horaris i agrupacions",
+            "text": "El procés de calor, fred i vent evita enviaments de les 22 a les 7 h locals. El procés específic d’UV envia entre les 7 i abans de les 20 h. Aquestes franges no s’han de donar per aplicables als avisos oficials. Es poden agrupar calor i UV, o fred i vent, en un missatge."
+          },
+          {
+            "title": "El lliurament no està garantit",
+            "text": "La connexió, els permisos, el navegador, el sistema operatiu i els proveïdors poden afectar els avisos. No esperis una notificació per prendre mesures davant una situació de risc."
+          }
+        ],
+        "details": {
+          "title": "Més sobre els criteris d’enviament",
+          "text": "Les notificacions de calor fan servir els llindars d’índex de calor de 27, 32 i 41 °C; són diferents de les cinc categories visuals de la pantalla. L’avís només s’envia si el nivell puja i arriba al llindar configurat. Si les dades AEMET actualitzades fa 90 minuts o menys identifiquen un avís relacionat amb calor o temperatura, es bloqueja l’avís ordinari de calor. Una notificació combinada UV pot cobrir un episodi AEMET concret: el cron d’avisos oficials pot suprimir-ne la notificació durant menys de 120 minuts si és la mateixa subscripció, l’episodi coincideix i el nivell ja cobert és igual o superior. Aquesta supressió no s’aplica si l’avís s’agreuja. Per tant, 120 minuts no és un temps d’espera general per a totes les notificacions."
+        }
+      },
+      "location": {
+        "title": "Ubicació i actualització",
+        "paragraphs": [
+          "GPS consulta la posició del dispositiu; la cerca manual consulta el lloc triat encara que estiguis en un altre indret. Comprova la localitat abans d’interpretar el risc.",
+          "Amb la pàgina en funcionament, les dades es refresquen cada 30 minuts. En tornar a primer pla es pot actualitzar si han passat almenys 10 minuts des de l’última actualització correcta. El navegador pot suspendre les tasques en segon pla.",
+          "No hi ha seguiment GPS continu amb l’aplicació tancada. Els avisos poden continuar referits a la darrera ubicació desada. Per obtenir dades noves cal connexió i disponibilitat dels proveïdors."
+        ],
+        "blocks": []
+      },
+      "official": {
+        "title": "Avisos meteorològics oficials",
+        "paragraphs": [
+          "ThermoSafe mostra avisos oficials rebuts a través del proveïdor meteorològic i identifica l’emissor quan està disponible. A Espanya poden incloure avisos d’AEMET; no tots arriben directament de l’API d’AEMET ni tots els emissors són AEMET.",
+          "Comprova l’inici i el final: un avís actiu afecta el període actual; un avís futur anuncia un període posterior; un de caducat ja ha superat la seva vigència. La presentació pot incloure traduccions.",
+          "L’absència d’un avís a ThermoSafe no garanteix que no existeixi un avís oficial. Consulta els canals oficials i segueix-ne les instruccions."
+        ],
+        "blocks": []
+      },
+      "installation": {
+        "title": "Instal·lació i actualització",
+        "paragraphs": [],
+        "blocks": [
+          {
+            "title": "Navegador",
+            "text": "Pots utilitzar ThermoSafe directament a thermosafe.app, sense instal·lar-la."
+          },
+          {
+            "title": "Instal·lació PWA",
+            "text": "Si el navegador ho permet, utilitza l’opció d’instal·lar o afegir a la pantalla d’inici. El nom i la disponibilitat de l’opció depenen del navegador i del dispositiu."
+          },
+          {
+            "title": "Android",
+            "text": "L’aplicació Android obre l’experiència web de ThermoSafe. Els permisos del sistema i del navegador poden afectar les funcions disponibles."
+          },
+          {
+            "title": "Noves versions i connexió",
+            "text": "Quan la pantalla principal detecta una versió nova, mostra un banner per recarregar-la. Utilitza’l amb connexió. La guia pot ser consultable sense connexió si els recursos ja són a la memòria cau, però no es garanteix en tots els dispositius. Les dades i els avisos nous necessiten connexió."
+          }
+        ]
+      },
+      "faq": {
+        "title": "Preguntes freqüents",
+        "paragraphs": [
+          "Si alguna funció falla, no interpretis l’absència de dades o d’avisos com una situació segura."
+        ],
+        "blocks": [
+          {
+            "title": "La ubicació és incorrecta",
+            "text": "Comprova si tens seleccionada una cerca manual. Torna a demanar la ubicació actual o cerca la localitat correcta. El GPS i els noms de lloc poden tenir errors de precisió."
+          },
+          {
+            "title": "He denegat el GPS",
+            "text": "Pots consultar el temps amb la cerca manual. Per tornar a utilitzar GPS, revisa el permís de localització del lloc al navegador i al dispositiu. L’activació de notificacions requereix obtenir GPS."
+          },
+          {
+            "title": "No arriben notificacions",
+            "text": "Comprova el control Notificacions, els permisos del lloc i del sistema, la connexió i les restriccions de bateria. Revisa també la ubicació associada i els horaris. Un risc que no augmenta pot no generar un altre avís."
+          },
+          {
+            "title": "La pantalla i la notificació són diferents",
+            "text": "Poden correspondre a hores o ubicacions diferents. A més, els criteris d’enviament no reprodueixen tots els ajustos de pantalla, com la detecció de moviment."
+          },
+          {
+            "title": "No hi ha informació UV",
+            "text": "El proveïdor pot no haver retornat un valor vàlid. Torna a consultar amb connexió. No interpretis un valor absent com a zero."
+          },
+          {
+            "title": "Les dades no s’actualitzen",
+            "text": "Comprova la connexió, la ubicació seleccionada i l’hora mostrada. Utilitza l’actualització; si falla el proveïdor, cal tornar-ho a provar més tard. Les dades poden reutilitzar memòria cau."
+          },
+          {
+            "title": "No trobo com instal·lar-la",
+            "text": "L’opció depèn del navegador i del dispositiu. Revisa el menú del navegador; si no està disponible, pots continuar utilitzant la web."
+          },
+          {
+            "title": "No tinc connexió",
+            "text": "No es poden obtenir dades meteorològiques noves. Alguns recursos ja desats poden continuar accessibles, però no es garanteix funcionament complet sense connexió."
+          }
+        ]
+      },
+      "sources": {
+        "title": "Fonts, limitacions i seguretat",
+        "paragraphs": [
+          "La informació és una estimació del context meteorològic, no una avaluació completa de la teva exposició personal o laboral."
+        ],
+        "blocks": [
+          {
+            "title": "OpenWeather",
+            "text": "Condicions actuals, previsió horària, geocodificació i distribució d’avisos oficials. També pot aportar UV de suport al sistema de notificacions."
+          },
+          {
+            "title": "OpenUV",
+            "text": "Índex UV actual, màxim i informació detallada relacionada amb l’exposició solar."
+          },
+          {
+            "title": "NASA POWER",
+            "text": "Dades de radiació solar diària. No són una mesura instantània al lloc on et trobes."
+          },
+          {
+            "title": "OpenStreetMap / Nominatim",
+            "text": "Identificació de localitats a partir de coordenades, amb suport alternatiu d’OpenWeather."
+          },
+          {
+            "title": "Avisos i recomanacions",
+            "text": "Els avisos oficials són distribuïts pel proveïdor meteorològic. Les referències preventives no impliquen certificació ni aval de ThermoSafe per part dels organismes citats."
+          }
+        ]
+      },
+      "contact": {
+        "title": "Contacte",
+        "paragraphs": [
+          "Tens algun dubte, has detectat un error o vols proposar una millora de ThermoSafe? Pots escriure a:"
+        ],
+        "email": "info@thermosafe.app",
+        "blocks": [],
+        "emergencyNote": "Aquest canal no és per comunicar emergències."
+      }
     }
   }
 }

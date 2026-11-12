@@ -3050,3 +3050,41 @@ body,
     padding-top: 0.5rem;
   }
 }
+
+/* Public guide entry: scoped additions after the existing action-bar cascade. */
+.safety-actions .safety-info-link {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.35rem;
+  padding: 0.55rem 0.9rem;
+  min-height: 44px;
+  border: 1px solid #64748b;
+  border-radius: 10px;
+  background: #f1f5f9;
+  color: #334155;
+  font-size: 0.92rem;
+  font-weight: 600;
+  line-height: 1.2;
+  text-decoration: none;
+}
+.safety-actions .safety-112-btn {
+  flex-shrink: 0;
+  min-height: 44px;
+  min-width: 64px;
+}
+.safety-actions :is(button, a):focus-visible,
+.guide-unavailable-link a:focus-visible {
+  outline: 3px solid #d97706;
+  outline-offset: 3px;
+}
+.guide-unavailable-link a {
+  display: inline-block;
+  padding: 10px;
+  color: #125a93;
+  text-decoration: underline;
+}
+@media (prefers-color-scheme: dark) {
+  .safety-actions .safety-info-link { background: #283341; color: #e2e8f0; border-color: #94a3b8; }
+  .guide-unavailable-link a { color: #9bd4ff; }
+}

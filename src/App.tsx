@@ -3664,6 +3664,7 @@ return (
   )
 )}
 {err && <p style={{ color: 'red' }}>{err}</p>}
+{(!isRiskRenderReady || err) && <p className="guide-unavailable-link"><a href="/guia">ⓘ {t("guide.link")}</a></p>}
 {diagnosticsOpen && (
   <React.Suspense fallback={null}>
     <NotificationDiagnosticsModal

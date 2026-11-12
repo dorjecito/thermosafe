@@ -2,16 +2,13 @@
   "current_wind": "Haizea",
   "current_wind_gusts": "Haize-boladak",
   "t": "ThermoSafe – Uneko arriskua ☀️❄️💨",
-
   "ph": "Sartu herri edo hiri bat",
   "btn": "🔍 Kontsultatu",
   "gps": "📍 Erabili uneko kokapena",
-
   "title": "ThermoSafe – Uneko arriskua ☀️❄️💨",
   "search_placeholder": "Bilatu hiria",
   "search_button": "🔍 Kontsultatu",
   "gps_button": "📍 Erabili uneko kokapena",
-
   "location": "📍 Kokapena",
   "current_conditions": "Uneko baldintzak",
   "humidity": "Hezetasuna",
@@ -28,14 +25,12 @@
   "moderate_wind": "Moderatua",
   "strong_wind": "Indartsua",
   "very_strong_wind": "Oso indartsua",
-
   "combinedRisk": {
-  "highTitle": "Arrisku-konbinazio nabarmena",
-  "highText": "Arrisku-faktore batzuk aldi berean daude. Murriztu esposizioa eta hartu neurri handiagoak.",
-  "extremeTitle": "Arrisku-konbinazio oso handia",
-  "extremeText": "Egungo baldintza meteorologikoen konbinazioak arreta handiena eta kanpoko esposizioa mugatzea eskatzen du."
-}, 
-
+    "highTitle": "Arrisku-konbinazio nabarmena",
+    "highText": "Arrisku-faktore batzuk aldi berean daude. Murriztu esposizioa eta hartu neurri handiagoak.",
+    "extremeTitle": "Arrisku-konbinazio oso handia",
+    "extremeText": "Egungo baldintza meteorologikoen konbinazioak arreta handiena eta kanpoko esposizioa mugatzea eskatzen du."
+  },
   "riskTrend": {
     "loading": "Datozen orduetarako iragarpena kalkulatzen ari da…",
     "unavailable": "Datozen orduetarako iragarpena ez dago erabilgarri.",
@@ -76,31 +71,24 @@
     "partialSuffix": "Iragarpen hau eskuragarri dauden datuetan oinarrituta dago.",
     "localTimeSuffix": "(tokiko ordua)"
   },
-
   "caution_outdoors": "Kontuz kanpoan",
   "take_extreme_caution": "Saihestu aire libreko jarduerak",
   "wind_alert_label": "Haize bortitzaren abisuak jaso",
-
   "highIrradianceWarning": "⚠️ Eguzki-erradiazio oso altua. Saihestu eguzkipeko esposizio zuzena.",
   "highUVIWarning": "⚠️ UV indize oso altua. Babes egokia ezinbestekoa!",
   "extremeUVIWarning": "🚨 UV MUTURREKOA (11+) — Saihestu esposizio zuzena",
-
   "irradianceTips": "👒 Erabili txanoa, betaurrekoak eta eguzki-krema. Ez egin jarduera fisikorik eguzkitan.",
-
   "risk_level": "Bero arriskua:",
   "alert_extreme": "🚨 BERO ARRISKU LARRIA! Gelditu jarduera eta hidratatu berehala.",
   "alertRisk": "⚠️ Bero arrisku handia edo larria.",
-
   "loading": "Datu meteorologikoak kargatzen...",
   "errorGPS": "Ezin izan da GPS bidez tenperatura eskuratu.",
   "errorCity": "Ez da daturik aurkitu kokapen honetarako. Azken datu erabilgarriak erakusten dira.",
   "errorNoLocation": "Ezin izan da kokapena eskuratu.",
-
   "recommendations_title": "Uneko baldintzen araberako gomendioak:",
   "solarProtection": "🔆 Eguzki-babesa",
   "irradianceLegend": "☀️ Erradiazio mailak: <8 moderatua · ≥8 altua",
   "toggleLegend": "ℹ️ Erakutsi/Ezkutatu UV eskala",
-
   "safe_conditions": "Baldintza seguruak",
   "safe_conditions_text_day": "Une honetan ez da arrisku nabarmenik ikusten.",
   "uv_data_unavailable_title": "Ebaluazioa osatu gabe",
@@ -194,7 +182,6 @@
       "extreme": "Muturreko UV erradiazioa"
     }
   },
-
   "push": {
     "label": "Jaso abisuak bero arriskua ≥ moderatua denean",
     "enabled": "Abisuak aktibatuta. Jakinarazpenak jasoko dituzu arriskua moderatua edo handiagoa denean.",
@@ -206,29 +193,22 @@
       "noToken": "Ezin izan da jakinarazpenen tokena eskuratu."
     }
   },
-
-  
   "sky_state": "Zeruaren egoera",
-
   "weather_desc": {
     "clear_sky": "Zeru garbia",
     "few_clouds": "Hodei gutxi",
     "scattered_clouds": "Hodei sakabanatuak",
     "broken_clouds": "Zati batean hodeituta",
     "overcast_clouds": "Zeru estalia",
-
     "light_rain": "Euri arina",
     "moderate_rain": "Euri ertaina",
     "heavy_intensity_rain": "Euri bizia",
     "drizzle": "Zirimiria",
     "shower_rain": "Zaparrada",
-
     "thunderstorm": "Ekaitza",
     "thunderstorm_with_rain": "Ekaitza euriarekin",
-
     "snow": "Elurra",
     "light_snow": "Elur arina",
-
     "mist": "Lanbroa",
     "fog": "Lainoa",
     "smoke": "Kea",
@@ -236,10 +216,8 @@
     "dust": "Hautsa",
     "sand": "Harea",
     "ash": "Errauts bolkanikoak",
-
     "squall": "Haize-boladak",
     "tornado": "Tornadoa",
-
     "ennuvolat": "Hodeituta",
     "lleugerament_ennuvolat": "Arinki hodeituta",
     "molt_ennuvolat": "Oso hodeituta",
@@ -247,11 +225,9 @@
     "poc_ennuvolat": "Pixka bat hodeituta",
     "nuvolositat_variable": "Hodeitasun aldakorra"
   },
-
   "official_links": "Esteka ofizialak",
   "link_insst": "INSST: estres termikoa eta beroa",
   "link_aemet": "AEMET: osasuna eta meteorologia",
-
   "cold_alert_label": "Jaso abisuak hotz larria dagoenean",
   "heat_risk": "Bero arriskua",
   "current_risk": "Uneko arriskua",
@@ -261,29 +237,23 @@
   "high": "Handia",
   "extreme": "Larria",
   "moderate": "Moderatua",
-
   "notify": {
-  "coldTitle": "ThermoSafe Abisua",
-  "coldBody": "Hotzagatik arriskua {{risk}}. Tenperatura: {{temp}}°C",
-
-  "heatTitle": "ThermoSafe Abisua",
-  "heatBody": "Beroagatik arriskua {{risk}}. Sentsazio termikoa: {{hi}}°C",
-
-  "windTitle": "ThermoSafe Abisua",
-  "windBody": "Haizeagatik arriskua {{risk}}. Haizearen abiadura: {{speed}} km/h",
-
-  "uvTitle": "ThermoSafe Abisua",
-  "uvModerate": "UV indize moderatua. Eguzki-babesa gomendatzen da esposizioan.",
-  "uvHigh": "UV indize altua. Erabili eguzki-babesa eta murriztu esposizio luzea.",
-  "uvVeryHigh": "UV indize oso altua. Eguzki-babesa ezinbestekoa da.",
-  "uvExtreme": "UV indize muturrekoa. Saihestu eguzki-esposizio zuzena."
-},
-"search_help_title": "Bilaketa laguntza",
-"search_help": "Idatzi gutxienez 4 letra. Iradokizunek ia hiriaren izen osoa behar dezakete.",
-
+    "coldTitle": "ThermoSafe Abisua",
+    "coldBody": "Hotzagatik arriskua {{risk}}. Tenperatura: {{temp}}°C",
+    "heatTitle": "ThermoSafe Abisua",
+    "heatBody": "Beroagatik arriskua {{risk}}. Sentsazio termikoa: {{hi}}°C",
+    "windTitle": "ThermoSafe Abisua",
+    "windBody": "Haizeagatik arriskua {{risk}}. Haizearen abiadura: {{speed}} km/h",
+    "uvTitle": "ThermoSafe Abisua",
+    "uvModerate": "UV indize moderatua. Eguzki-babesa gomendatzen da esposizioan.",
+    "uvHigh": "UV indize altua. Erabili eguzki-babesa eta murriztu esposizio luzea.",
+    "uvVeryHigh": "UV indize oso altua. Eguzki-babesa ezinbestekoa da.",
+    "uvExtreme": "UV indize muturrekoa. Saihestu eguzki-esposizio zuzena."
+  },
+  "search_help_title": "Bilaketa laguntza",
+  "search_help": "Idatzi gutxienez 4 letra. Iradokizunek ia hiriaren izen osoa behar dezakete.",
   "heatRiskLabel": "Bero arriskua",
   "effectiveTemp": "Benetako tenperatura",
-
   "heatRisk": {
     "Cap risc": "Arriskurik ez",
     "Baix": "Baxua",
@@ -295,32 +265,27 @@
     "Extrem": "Larria",
     "extreme": "muturrekoa"
   },
-
   "coldRisk": {
-  "cap": "Arriskurik ez",
-  "lleu": "Arina",
-  "moderat": "Moderatua",
-  "alt": "Handia",
-  "molt alt": "Oso handia",
-  "extrem": "Larria"
-},
-
-"cold_risk_title": "Hotz-arriskua",
-"wind_chill": "Benetako tenperatura",
-
-"windRisk": {
-  "none": "arriskurik ez",
-  "breezy": "ahula",
-  "moderate": "ertaina",
-  "strong": "altua",
-  "very_strong": "oso altua",
-
-  "low": "baxua",
-  "high": "altua",
-  "very_high": "oso altua",
-  "extreme": "muturrekoa"
-},
-
+    "cap": "Arriskurik ez",
+    "lleu": "Arina",
+    "moderat": "Moderatua",
+    "alt": "Handia",
+    "molt alt": "Oso handia",
+    "extrem": "Larria"
+  },
+  "cold_risk_title": "Hotz-arriskua",
+  "wind_chill": "Benetako tenperatura",
+  "windRisk": {
+    "none": "arriskurik ez",
+    "breezy": "ahula",
+    "moderate": "ertaina",
+    "strong": "altua",
+    "very_strong": "oso altua",
+    "low": "baxua",
+    "high": "altua",
+    "very_high": "oso altua",
+    "extreme": "muturrekoa"
+  },
   "weather_alerts": {
     "storm": "Ekaitz abisua",
     "rain": "Euri abisua",
@@ -328,30 +293,24 @@
     "wind": "Haize abisua",
     "heat": "Bero abisua",
     "cold": "Hotz abisua",
-
     "coastalevent": "Kostaldeko arrisku abisua",
     "coastal_event": "Kostaldeko arrisku abisua",
     "coastal_event_warning": "Kostaldeko arrisku abisua",
     "coastalevent_warning": "Kostaldeko arrisku abisua",
-
     "moderate_coastalevent_warning": "Kostaldeko abisu moderatua",
     "moderate_coastal_event_warning": "Kostaldeko abisu moderatua",
     "moderate coastal event warning": "Kostaldeko abisu moderatua",
     "moderate_coastalevent": "Kostaldeko abisu moderatua",
-
     "low_temperature_warning": "Tenperatura baxuen abisua",
     "low temperature warning": "Tenperatura baxuen abisua",
     "moderate_low_temperature_warning": "Tenperatura baxuen abisu moderatua",
     "moderate low temperature warning": "Tenperatura baxuen abisu moderatua",
-
     "snow_warning": "Elur abisua",
     "wind_warning": "Haize abisua",
     "rain_warning": "Euri abisua",
-
     "minimum_temperature": "Gutxieneko tenperatura",
     "minimum temperature": "Gutxieneko tenperatura"
   },
-
   "last_update": "Eguneratua duela",
   "refresh_data": "Eguneratu",
   "refreshing_data": "Eguneratzen…",
@@ -375,17 +334,15 @@
   "alerts_title": "AEMET abisu ofizialak",
   "alerts_none": "Ez dago meteorologiako abisu aktiborik.",
   "no_alerts": "Ez dago abisurik une honetan.",
-
   "notifications": {
-  "label": "Jakinarazpenak",
-  "on": "AKTIBATUTA",
-  "off": "DESAKTIBATUTA",
-  "info_label": "Jakinarazpenei buruzko informazioa",
-  "info_title": "Push jakinarazpenak",
-  "info_body": "Jakinarazpenek beroak, hotzak, haizeak eta UV erradiazioak eragindako arrisku garrantzitsuen eta abisu meteorologiko ofizialen berri ematen dizute, zure kokapenaren eta ezarpenen arabera. Zenbait kasutan, haizearekin adibidez, hautatutako jarduera motak abisua noiz bidaltzen den ere baldintza dezake.",
-  "info_close": "Ulertuta"
-},
-
+    "label": "Jakinarazpenak",
+    "on": "AKTIBATUTA",
+    "off": "DESAKTIBATUTA",
+    "info_label": "Jakinarazpenei buruzko informazioa",
+    "info_title": "Push jakinarazpenak",
+    "info_body": "Jakinarazpenek beroak, hotzak, haizeak eta UV erradiazioak eragindako arrisku garrantzitsuen eta abisu meteorologiko ofizialen berri ematen dizute, zure kokapenaren eta ezarpenen arabera. Zenbait kasutan, haizearekin adibidez, hautatutako jarduera motak abisua noiz bidaltzen den ere baldintza dezake.",
+    "info_close": "Ulertuta"
+  },
   "solar_info": "Eguzki-erradiazioa eta UV indizea",
   "uv_index_current": "Uneko UV indizea",
   "uv_level": "Maila",
@@ -400,155 +357,145 @@
     "exposure_summary": "Gutxi gorabeherako esposizioa",
     "skin_summary_type": "Azal mota"
   },
-
   "activity": {
-  "inactive": "Mugimendua detektatzea aktibatu",
-  "requesting": "Detekzioa aktibatzen…",
-  "active_label": "Jarduera",
-  "rest": "Atsedena",
-  "walk": "Oinez",
-  "moderate": "Esfortzu ertaina",
-  "intense": "Esfortzu bizia",
-  "extra": "gehigarri",
-  "adjusts_risk": "prebentzio-doikuntza aktibo",
-  "no_impact": "ez du eraginik uneko arriskuan",
-  "motion_permission_denied": "Mugimendu-baimena ukatu da",
-  "motion_activation_error": "Ezin izan da mugimendu-detekzioa aktibatu",
-  "info_label": "Mugimendu-detekzioari buruzko informazioa",
-  "info_title": "Mugimendu-detekzioa",
-  "info_body": "ThermoSafek gailuaren mugimendu-sentsoreak erabiltzen ditu jarduera fisikoaren intentsitatea —atsedena, oinez ibiltzea, esfortzu ertaina edo bizia— kalkulatzeko, eta bero-arriskua eta beroarekin lotutako gomendioak egokitzeko.",
-  "info_context": "Funtzio hau Jarduera motatik independentea da; jarduera mota eskuz hautatzen da, haizea bezalako arriskuak testuinguruan jartzeko.",
-  "info_privacy": "Datuak gailuan bertan prozesatzen dira eta ez dira zerbitzarietara bidaltzen.",
-  "info_close": "Ulertuta"
-},
-
-"windActivity": {
-  "label": "Jarduera mota",
-  "info_label": "Jarduera motari buruzko informazioa",
-  "info_title": "Jarduera mota",
-  "info_body": "Hautatu egiten ari zaren jarduera, ThermoSafe-k haize-arriskuaren balorazioa eta jakinarazpenak hautatutako jarduerara egokitzeko.",
-  "info_example": "Adibidez, haizeak arrisku handiagoa ekar dezake altueran lan egitean edo inausketan, aisialdiko jarduera batean baino.",
-  "info_context": "Hautaketa hau mugimendu-detekziotik independentea da.",
-  "info_default": "Ez baduzu jarduerarik zehaztu nahi, Orokorra hautatuta utz dezakezu.",
-  "info_close": "Ulertuta",
-  "profile": {
-    "generic": "Orokorra",
-    "jardineria": "Lorezaintza",
-    "poda": "Inausketa",
-    "altura": "Altuera-lana",
-    "obra": "Obra",
-    "neteja": "Kanpoko garbiketa",
-    "trekking": "Trekkinga",
-    "oci": "Aisialdiko jarduera"
+    "inactive": "Mugimendua detektatzea aktibatu",
+    "requesting": "Detekzioa aktibatzen…",
+    "active_label": "Jarduera",
+    "rest": "Atsedena",
+    "walk": "Oinez",
+    "moderate": "Esfortzu ertaina",
+    "intense": "Esfortzu bizia",
+    "extra": "gehigarri",
+    "adjusts_risk": "prebentzio-doikuntza aktibo",
+    "no_impact": "ez du eraginik uneko arriskuan",
+    "motion_permission_denied": "Mugimendu-baimena ukatu da",
+    "motion_activation_error": "Ezin izan da mugimendu-detekzioa aktibatu",
+    "info_label": "Mugimendu-detekzioari buruzko informazioa",
+    "info_title": "Mugimendu-detekzioa",
+    "info_body": "ThermoSafek gailuaren mugimendu-sentsoreak erabiltzen ditu jarduera fisikoaren intentsitatea —atsedena, oinez ibiltzea, esfortzu ertaina edo bizia— kalkulatzeko, eta bero-arriskua eta beroarekin lotutako gomendioak egokitzeko.",
+    "info_context": "Funtzio hau Jarduera motatik independentea da; jarduera mota eskuz hautatzen da, haizea bezalako arriskuak testuinguruan jartzeko.",
+    "info_privacy": "Datuak gailuan bertan prozesatzen dira eta ez dira zerbitzarietara bidaltzen.",
+    "info_close": "Ulertuta"
   },
-  "level": {
-    "caution": "Kontuz haizearekin",
-    "elevated": "Kontu handiz ibili",
-    "avoid": "Gelditu edo atzeratu haizepeko jarduera"
+  "windActivity": {
+    "label": "Jarduera mota",
+    "info_label": "Jarduera motari buruzko informazioa",
+    "info_title": "Jarduera mota",
+    "info_body": "Hautatu egiten ari zaren jarduera, ThermoSafe-k haize-arriskuaren balorazioa eta jakinarazpenak hautatutako jarduerara egokitzeko.",
+    "info_example": "Adibidez, haizeak arrisku handiagoa ekar dezake altueran lan egitean edo inausketan, aisialdiko jarduera batean baino.",
+    "info_context": "Hautaketa hau mugimendu-detekziotik independentea da.",
+    "info_default": "Ez baduzu jarduerarik zehaztu nahi, Orokorra hautatuta utz dezakezu.",
+    "info_close": "Ulertuta",
+    "profile": {
+      "generic": "Orokorra",
+      "jardineria": "Lorezaintza",
+      "poda": "Inausketa",
+      "altura": "Altuera-lana",
+      "obra": "Obra",
+      "neteja": "Kanpoko garbiketa",
+      "trekking": "Trekkinga",
+      "oci": "Aisialdiko jarduera"
+    },
+    "level": {
+      "caution": "Kontuz haizearekin",
+      "elevated": "Kontu handiz ibili",
+      "avoid": "Gelditu edo atzeratu haizepeko jarduera"
+    },
+    "advice": {
+      "generic": "Haizeak zenbait jarduera zaildu ditzake, batez ere eremu agerietan.",
+      "jardineria": "Kontuz adarrekin, tresnekin eta mugi daitezkeen objektuekin.",
+      "poda": "Haizeak adarrak eta tresnak kontrolatzea zaildu dezake.",
+      "altura": "Haizeak orekan eta materialen kontrolean eragin dezake.",
+      "obra": "Finkatu materialak eta elementu solteak lanean jarraitu aurretik.",
+      "neteja": "Zaindu tresnak eta objektu arinak eremu agerietan.",
+      "trekking": "Haizeak oreka zaildu dezake agerian dauden tarteetan.",
+      "oci": "Aukeratu haizetik babestutako tokia eta finkatu objektu arinak."
+    }
   },
-  "advice": {
-    "generic": "Haizeak zenbait jarduera zaildu ditzake, batez ere eremu agerietan.",
-    "jardineria": "Kontuz adarrekin, tresnekin eta mugi daitezkeen objektuekin.",
-    "poda": "Haizeak adarrak eta tresnak kontrolatzea zaildu dezake.",
-    "altura": "Haizeak orekan eta materialen kontrolean eragin dezake.",
-    "obra": "Finkatu materialak eta elementu solteak lanean jarraitu aurretik.",
-    "neteja": "Zaindu tresnak eta objektu arinak eremu agerietan.",
-    "trekking": "Haizeak oreka zaildu dezake agerian dauden tarteetan.",
-    "oci": "Aukeratu haizetik babestutako tokia eta finkatu objektu arinak."
-  }
-},
-
-"insst_heat": "INSST: estres termikoa eta beroa",
-"aemet_health": "AEMET: osasuna eta meteorologia",
-
-"risk_levels": {
-  "safe": "Baldintza seguruak",
-  "mild": "Arrisku arina",
-  "low": "Arrisku baxua",
-  "medium": "Arrisku ertaina",
-  "moderate": "Arrisku ertaina",
-  "high": "Arrisku handia",
-  "severe": "Arrisku larria",
-  "extreme": "Arrisku muturrekoa"
-},
-"skin": {
-  "toggle": "Erakutsi/Ezkutatu fototipoaren informazioa"
-},
-
-"risk": {
-  "current": "Uneko arriskua"
-},
-
-"share": "Partekatu",
-"show_advice": "Gomendioak erakutsi",
-"hide_advice": "Gomendioak ezkutatu",
-"show_details": "Xehetasuna ikusi",
-"hide_details": "Xehetasuna ezkutatu",
-
-"official_advice_share": "Segurtasun-gomendioak jarraitu zure uneko arrisku-mailaren arabera.",
-
-"officialAdviceDynamic": {
-  "heat": {
-    "mild": "Maiz hidratatu eta atseden hartu gune freskoetan.",
-    "moderate": "Murriztu ahalegin bizia, hidratatu eta egin atsedenaldiak leku fresko batean.",
-    "moderate_night": "Tenperaturak altu jarraitzen du gauean. Hidratatu, aireztatu espazioak eta saihestu beharrezkoak ez diren ahaleginak.",
-    "high": "Arrisku handia: mugatu aire libreko jarduerak eta hidratatu etengabe.",
-    "high_night": "Beroak altu jarraitzen du gauean. Murriztu ahalegina, hidratatu eta aireztapena hobetu.",
-    "extreme": "Arrisku larria: saihestu guztiz kanpoaldea. Bero-kolpearen arrisku handia.",
-    "extreme_night": "Gaueko muturreko beroa. Saihestu ahalegina, hidratatu eta lehenetsi espazio freskoak edo klimatizatuak."
+  "insst_heat": "INSST: estres termikoa eta beroa",
+  "aemet_health": "AEMET: osasuna eta meteorologia",
+  "risk_levels": {
+    "safe": "Baldintza seguruak",
+    "mild": "Arrisku arina",
+    "low": "Arrisku baxua",
+    "medium": "Arrisku ertaina",
+    "moderate": "Arrisku ertaina",
+    "high": "Arrisku handia",
+    "severe": "Arrisku larria",
+    "extreme": "Arrisku muturrekoa"
   },
-  "cold": {
-    "mild": "Tenperatura baxua: jantzi arropa egokia eta babestu eskuak.",
-    "moderate": "Tenperatura oso baxua: erabili arropa-geruzak eta saihestu esposizio luzeak.",
-    "high": "Arrisku handia: babestu gorputz-adarrak eta mugatu kanpoko jarduerak.",
-    "extreme": "Arrisku larria: saihestu kanpoaldea. Izozte-arriskua."
+  "skin": {
+    "toggle": "Erakutsi/Ezkutatu fototipoaren informazioa"
   },
-  "wind": {
-    "breezy": "Haize leuna: ez dira neurri berezirik behar.",
-    "moderate": "Haize moderatua: ziurtatu objektuak eta ibili kontuz.",
-    "strong": "Haize bortitza: saihestu zuhaitz eremuak eta sendotu kanpoko altzariak.",
-    "very_strong": "Haize oso bortitza: geratu barruan eta saihestu egitura ahulak."
+  "risk": {
+    "current": "Uneko arriskua"
   },
-  "uv": {
-    "moderate": "Erabili SPF 30+ eguzki-babesa eta eguzkitako betaurrekoak.",
-    "high": "Saihestu eguzkia eguneko ordu zentraletan. Hidratatu zaitez eta erabili eguzki-babes handia.",
-    "very_high": "Babes maximoa: alkandora, txanoa, betaurrekoak eta SPF 50+.",
-    "extreme": "Saihestu eguzkitan egotea. Arrisku oso handia azal eta begietarako."
-  }
-},
-
-"official_advice": {
-  "hydration": "Ura edan aldizka, egarri ez baduzu ere.",
-  "rest": "Atseden hartu itzaletan jarduera luzeetan.",
-  "sunAvoid": "Saihestu eguzkiaren esposizio zuzena eguneko ordu zentraletan.",
-  "coldClothes": "Hotzarekin, erabili arropa-geruzak eta haize-babesak.",
-  "limitExposure": "Mugatu kanpoan emandako denbora.",
-  "protectExtremities": "Babestu eskuak, belarriak eta gorputz-adarrak.",
-  "avoidWind": "Saihestu haize zuzena.",
-  "secureObjects": "Ziurtatu kanpoko objektuak, hegan joateko arriskua badute.",
-  "avoidTrees": "Saihestu zuhaitz ahulen edo adar solteenen ondotik pasatzea.",
-  "avoidUnstableStructures": "Ez hurbildu egitura ahuletara edo ezegonkorretara.",
-  "useSPF": "Erabili SPF 30+ eguzki-babesa.",
-  "useShade": "Erabili itzala ahal duzun guztietan.",
-  "followAlerts": "Jarraitu eguraldi-alerta ofizialak.",
-  "symptoms": "Zorabioak, goragaleak edo nahasmena badituzu, eten jarduera.",
-  "symptomsCold": "Dardarak edo konfusioa badituzu, bilatu babeslekua."
-},
-"official_advice_title": "Segurtasun gomendio ofizialak",
-"share_title": "Arriskuaren laburpena – ThermoSafe",
-"share_copied": "Testua arbelean kopiatu da",
-"share_failed": "Ezin izan da testua partekatu edo kopiatu",
-"official_advice_footer": "INSST eta AEMET-en gomendioetan oinarritua.",
-"data_sources_footer": "Datu-iturriak: OpenWeather · OpenUV · NASA POWER · AEMET (abisu ofizialak) · OpenStreetMap/Nominatim",
-
-"alert_time": {
-  "active": "Indarrean",
-  "ended": "Amaituta",
-  "remaining_hours": "{{hours}}h {{minutes}}min geratzen dira",
-  "remaining_minutes": "{{minutes}} min geratzen dira",
-  "starts_in_hours": "{{hours}}h {{minutes}}min barru hasiko da",
-  "starts_in_minutes": "{{minutes}} min barru hasiko da"
-},
+  "share": "Partekatu",
+  "show_advice": "Gomendioak erakutsi",
+  "hide_advice": "Gomendioak ezkutatu",
+  "show_details": "Xehetasuna ikusi",
+  "hide_details": "Xehetasuna ezkutatu",
+  "official_advice_share": "Segurtasun-gomendioak jarraitu zure uneko arrisku-mailaren arabera.",
+  "officialAdviceDynamic": {
+    "heat": {
+      "mild": "Maiz hidratatu eta atseden hartu gune freskoetan.",
+      "moderate": "Murriztu ahalegin bizia, hidratatu eta egin atsedenaldiak leku fresko batean.",
+      "moderate_night": "Tenperaturak altu jarraitzen du gauean. Hidratatu, aireztatu espazioak eta saihestu beharrezkoak ez diren ahaleginak.",
+      "high": "Arrisku handia: mugatu aire libreko jarduerak eta hidratatu etengabe.",
+      "high_night": "Beroak altu jarraitzen du gauean. Murriztu ahalegina, hidratatu eta aireztapena hobetu.",
+      "extreme": "Arrisku larria: saihestu guztiz kanpoaldea. Bero-kolpearen arrisku handia.",
+      "extreme_night": "Gaueko muturreko beroa. Saihestu ahalegina, hidratatu eta lehenetsi espazio freskoak edo klimatizatuak."
+    },
+    "cold": {
+      "mild": "Tenperatura baxua: jantzi arropa egokia eta babestu eskuak.",
+      "moderate": "Tenperatura oso baxua: erabili arropa-geruzak eta saihestu esposizio luzeak.",
+      "high": "Arrisku handia: babestu gorputz-adarrak eta mugatu kanpoko jarduerak.",
+      "extreme": "Arrisku larria: saihestu kanpoaldea. Izozte-arriskua."
+    },
+    "wind": {
+      "breezy": "Haize leuna: ez dira neurri berezirik behar.",
+      "moderate": "Haize moderatua: ziurtatu objektuak eta ibili kontuz.",
+      "strong": "Haize bortitza: saihestu zuhaitz eremuak eta sendotu kanpoko altzariak.",
+      "very_strong": "Haize oso bortitza: geratu barruan eta saihestu egitura ahulak."
+    },
+    "uv": {
+      "moderate": "Erabili SPF 30+ eguzki-babesa eta eguzkitako betaurrekoak.",
+      "high": "Saihestu eguzkia eguneko ordu zentraletan. Hidratatu zaitez eta erabili eguzki-babes handia.",
+      "very_high": "Babes maximoa: alkandora, txanoa, betaurrekoak eta SPF 50+.",
+      "extreme": "Saihestu eguzkitan egotea. Arrisku oso handia azal eta begietarako."
+    }
+  },
+  "official_advice": {
+    "hydration": "Ura edan aldizka, egarri ez baduzu ere.",
+    "rest": "Atseden hartu itzaletan jarduera luzeetan.",
+    "sunAvoid": "Saihestu eguzkiaren esposizio zuzena eguneko ordu zentraletan.",
+    "coldClothes": "Hotzarekin, erabili arropa-geruzak eta haize-babesak.",
+    "limitExposure": "Mugatu kanpoan emandako denbora.",
+    "protectExtremities": "Babestu eskuak, belarriak eta gorputz-adarrak.",
+    "avoidWind": "Saihestu haize zuzena.",
+    "secureObjects": "Ziurtatu kanpoko objektuak, hegan joateko arriskua badute.",
+    "avoidTrees": "Saihestu zuhaitz ahulen edo adar solteenen ondotik pasatzea.",
+    "avoidUnstableStructures": "Ez hurbildu egitura ahuletara edo ezegonkorretara.",
+    "useSPF": "Erabili SPF 30+ eguzki-babesa.",
+    "useShade": "Erabili itzala ahal duzun guztietan.",
+    "followAlerts": "Jarraitu eguraldi-alerta ofizialak.",
+    "symptoms": "Zorabioak, goragaleak edo nahasmena badituzu, eten jarduera.",
+    "symptomsCold": "Dardarak edo konfusioa badituzu, bilatu babeslekua."
+  },
+  "official_advice_title": "Segurtasun gomendio ofizialak",
+  "share_title": "Arriskuaren laburpena – ThermoSafe",
+  "share_copied": "Testua arbelean kopiatu da",
+  "share_failed": "Ezin izan da testua partekatu edo kopiatu",
+  "official_advice_footer": "INSST eta AEMET-en gomendioetan oinarritua.",
+  "data_sources_footer": "Datu-iturriak: OpenWeather · OpenUV · NASA POWER · AEMET (abisu ofizialak) · OpenStreetMap/Nominatim",
+  "alert_time": {
+    "active": "Indarrean",
+    "ended": "Amaituta",
+    "remaining_hours": "{{hours}}h {{minutes}}min geratzen dira",
+    "remaining_minutes": "{{minutes}} min geratzen dira",
+    "starts_in_hours": "{{hours}}h {{minutes}}min barru hasiko da",
+    "starts_in_minutes": "{{minutes}} min barru hasiko da"
+  },
   "uvTitle": "ThermoSafe abisua",
   "uvLow": "UV indize baxua.",
   "uvModerate": "UV indize moderatua. Babesa gomendatua.",
@@ -692,6 +639,252 @@
       "focus": "Focus",
       "scheduledSummary": "Programatutako laburpena",
       "pwaInstalled": "PWA instalatuta"
+    }
+  },
+  "guide": {
+    "link": "Informazioa",
+    "title": "Erabiltzailearen gida",
+    "metaTitle": "Erabiltzailearen gida · ThermoSafe",
+    "description": "Ikasi eguraldia kontsultatzen, arriskuak ulertzen eta ThermoSafe zure aire zabaleko jardueretarako konfiguratzen.",
+    "eyebrow": "INFORMAZIOA ETA LAGUNTZA",
+    "back": "Itzuli ThermoSafe-ra",
+    "top": "Itzuli gora",
+    "index": "Gida honetan",
+    "skip": "Joan edukira",
+    "language": "Hizkuntza",
+    "safetyTitle": "Prebentzioa, irizpidez",
+    "safety": "ThermoSafe prebentziorako tresna osagarria da. Ez ditu ordezten laneko arriskuen ebaluazioak, prebentzio-zerbitzuen jarraibideak edo abisu ofizialak. Datuak eta estimazioak osatugabeak izan daitezke edo atzerapenarekin irits daitezke. Abisurik ez egoteak ez du bermatzen egoera bat segurua denik.",
+    "sections": {
+      "about": {
+        "title": "Zer da ThermoSafe?",
+        "paragraphs": [
+          "ThermoSafe-k eguraldiaren baldintzak ulertzen eta aire zabaleko jarduerak informazio gehiagorekin planifikatzen laguntzen du. Kanpoko lanetan, txangoetan eta aisialdiko jardueretan erabilgarria izan daiteke.",
+          "Beroa, hotza, haizea eta erradiazio ultramorea ebaluatzen ditu. Gomendioak orientagarriak dira: ez dituzte lantoki bateko baldintza guztiak edo norberaren egoera guztiak deskribatzen.",
+          "Hornitzaileen datuak eta zu zauden tokiko baldintza zehatzak desberdinak izan daitezke. Kontsultatu, halaber, jarraibide ofizialak eta zure prebentzio-zerbitzuarenak."
+        ],
+        "blocks": []
+      },
+      "start": {
+        "title": "Nola hasi",
+        "paragraphs": [],
+        "blocks": [
+          {
+            "title": "1. Aukeratu hizkuntza",
+            "text": "Hautatu katalana, gaztelania, euskara, galegoa edo ingelesa. Hobespena nabigatzailean gordetzen da, biltegiratzea erabilgarri badago."
+          },
+          {
+            "title": "2. Aukeratu kokapena",
+            "text": "Baimendu geolokalizazioa zauden tokia kontsultatzeko, edo bilatu herri bat eta hautatu emaitza zuzena. Egiaztatu beti erakutsitako kokapenaren izena."
+          },
+          {
+            "title": "3. Irakurri baldintzak",
+            "text": "Berrikusi tenperatura, sentsazio termikoa, haizea eta UV indizea, arrisku nagusiarekin eta gomendioekin batera. Iragarpenak gero gerta litekeena adierazten du; ez da uneko behaketa."
+          },
+          {
+            "title": "4. Egiaztatu eguneratzea",
+            "text": "Erakutsitako orduak edo igarotako denborak informazioaren antzinatasuna baloratzen laguntzen du. Ez du esan nahi zure ondoan unean bertan neurtu denik. Erabili eguneratzeko kontrola eta egiaztatu kontsulta behar bezala amaitu dela."
+          }
+        ]
+      },
+      "personalization": {
+        "title": "Jarduera mota eta pertsonalizazioa",
+        "paragraphs": [
+          "Hiru doikuntza independente dira. Hautatu benetako zeregina ondoen deskribatzen duen profila; doikuntzek ez dituzte beharrezko prebentzio-neurriak ordezten."
+        ],
+        "blocks": [
+          {
+            "title": "A. Kanpoko jardueraren profila",
+            "text": "Orokorra, Lorezaintza, Inausketa, Altuerako lana, Eraikuntza, Kanpoko garbiketa, Trekkinga edo Aisialdiko jarduera aukera ditzakezu. Zehaztu nahi ez baduzu, hautatu Orokorra. Profilak haizearen testuinguruko abisua eta haize-jakinarazpenen profila egokitzen ditu, baina ez du haizearen sailkapen meteorologiko orokorra aldatzen."
+          },
+          {
+            "title": "B. Mugimenduaren detekzioa",
+            "text": "Aukerakoa da. Gailuaren sentsoreek atsedena, ibiltzea eta esfortzu neurritsua edo bizia estimatzen dituzte, eta beroaren prebentzio-balorazioa igo dezakete. Ez da intentsitatea eskuz hautatzeko aukera bat, ezta benetako esfortzuaren neurketa ere. Mugimendua gailuan prozesatzen da, eta orria ezkutuan dagoenean ez da prozesatzen jarraitzen."
+          },
+          {
+            "title": "C. Larruazalaren fototipoa",
+            "text": "I–VI fototipoek UV esposizio-denboraren gutxi gorabeherako estimazioa egokitzen dute. Ez dute UV indizea edo haren maila aldatzen. Estimatutako denborak ez du esposizio segurua bermatzen."
+          }
+        ],
+        "details": {
+          "title": "Jardueraren araberako haize-atalaseak",
+          "text": "Balioak km/h-tan: kontuz / arreta handiagoa / gelditu edo atzeratu haizepeko jarduera. Adierazitako baliotik aurrera aplikatzen dira.\nOrokorra eta Lorezaintza: 30 / 45 / 65.\nInausketa: 25 / 40 / 60.\nAltuerako lana: 20 / 35 / 55.\nEraikuntza: 28 / 45 / 65.\nKanpoko garbiketa: 30 / 50 / 70.\nTrekkinga eta Aisialdiko jarduera: 35 / 50 / 70."
+        }
+      },
+      "risks": {
+        "title": "Arriskuak nola interpretatu",
+        "paragraphs": [
+          "Balio meteorologikoa datu bat da, adibidez tenperatura edo haizearen abiadura. Arrisku-maila aplikazioak egiten duen balorazioa da. Arrisku nagusiak faktore garrantzitsuenetako bat nabarmentzen du, baina ez ditu gainerako arriskuak ezabatzen.",
+          "Gomendioek prebentzioa bideratzen dute. Jardueraren testuinguruko adierazleak zereginari buruzko informazioa gehitzen du. Bereizi beti uneko baldintzak, iragarpena eta joera."
+        ],
+        "blocks": [
+          {
+            "title": "Beroa",
+            "text": "Tenperatura eta hezetasuna konbinatzen dituen bero-indizean oinarritzen da; ez da airearen tenperatura hutsa. Mugimenduaren detekzioa aktibatuta badago, balorazioa igo dezake ezarritako prebentzio-mugen barruan."
+          },
+          {
+            "title": "Hotza",
+            "text": "Tenperatura eraginkorra baloratzen da, haizearen eragina barne, kalkuluaren baldintzak betetzen direnean. Giro freskoa eta hotzagatiko arrisku-maila ez dira nahitaez gauza bera."
+          },
+          {
+            "title": "Haizea",
+            "text": "Sailkapen orokorrak haizearen abiadura iraunkorra erabiltzen du. Jarduera-profilak adierazle bereizia eskaintzen du: abiadura berak arreta handiagoa eska dezake altuerako lanean aisialdiko jarduera batean baino."
+          },
+          {
+            "title": "UV erradiazioa",
+            "text": "UV indizeak erradiazio ultramorea adierazten du, ez tenperatura. Hodeiek edo freskotasun-sentsazioak ez dute arriskurik eza bermatzen. UV balioa erabilgarri ez egoteak ez du esan nahi zero denik."
+          }
+        ],
+        "details": {
+          "title": "Pantailako erreferentzia-eskalak",
+          "text": "Beroa, mugimenduaren doikuntzaren aurretik, bero-indizearen °C-tan: 27 baino gutxiago, arriskurik ez; 27tik 32 baino gutxiagora, baxua; 32tik 41 baino gutxiagora, neurritsua; 41etik 54 baino gutxiagora, handia; 54 edo gehiago, muturrekoa.\nHotza, °C eraginkorretan: 0 baino gehiago, arriskurik ez; −5 baino gehiagotik 0ra, arina; −15 baino gehiagotik −5era, neurritsua; −25 baino gehiagotik −15era, handia; −40 baino gehiagotik −25era, oso handia; −40 edo gutxiago, muturrekoa.\nHaizea, km/h-tan: 15 baino gutxiago, arriskurik ez; 15etik 25 baino gutxiagora, haize leuna; 25etik 45 baino gutxiagora, neurritsua; 45etik 65 baino gutxiagora, indartsua; 65 edo gehiago, oso indartsua.\nUV, dezimal batera normalizatuta: 3 baino gutxiago, baxua; 3tik 6 baino gutxiagora, neurritsua; 6tik 8 baino gutxiagora, handia; 8tik 11 baino gutxiagora, oso handia; 11 edo gehiago, muturrekoa."
+        }
+      },
+      "notifications": {
+        "title": "Jakinarazpenak",
+        "paragraphs": [
+          "Aktibatu edo desaktibatu abisuak pantaila nagusiko Jakinarazpenak kontrolarekin. Aktibatzeko, jakinarazpen-baimena, nabigatzaile bateragarria eta GPS kokapena behar dira. Desaktibatzean, harpidetza kentzea eskatzen da; egiaztatu eragiketak ez duela errorerik erakusten.",
+          "Alertak harpidetzan gordetako koordenatuetarako kalkulatzen dira. Gero egindako eskuzko bilaketa batek koordenatuak egunera ditzake: ez pentsa beti zure uneko kokapen fisikoari dagozkionik."
+        ],
+        "blocks": [
+          {
+            "title": "Noiz bidaltzen da abisua?",
+            "text": "Egiaztapen automatikoak gutxi gorabehera orduro egiten dira. Abisu berri bat arriskuaren, atalasearen eta aurretik jakinarazitako maila gainditzearen araberakoa da. Pantaila eguneratzeak ez du bidalketarik behartzen. Pantailak eta abisuek eskala desberdinak erabil ditzakete; detektatutako mugimendua ez zaie berdin aplikatzen jakinarazpenei."
+          },
+          {
+            "title": "Zergatik ez da errepikatzen?",
+            "text": "Aplikazioak jakinarazitako maila gordetzen du errepikapenak saihesteko. Arriskua jaitsi eta maila berera itzultzen bada, baliteke berriz ez abisatzea. Arrisku meteorologikoen eta UVaren egoerak egunero berrezartzen dira; abisu ofizialen errepikapenak gertakariaren arabera saihesten dira, eta larritasuna handitzen bada berriz abisa dezakete."
+          },
+          {
+            "title": "Ordutegiak eta mezu bateratuak",
+            "text": "Beroaren, hotzaren eta haizearen prozesuak ez du bidaltzen tokiko 22:00etatik 07:00etara. UVaren prozesu espezifikoak 07:00etatik 20:00ak baino lehen bidaltzen du. Ez pentsa ordutegi horiek abisu ofizialei ere aplikatzen zaizkienik. Beroa eta UVa, edo hotza eta haizea, mezu berean bil daitezke."
+          },
+          {
+            "title": "Jasotzea ez dago bermatuta",
+            "text": "Konexioak, baimenek, nabigatzaileak, sistema eragileak eta hornitzaileek eragina izan dezakete abisuetan. Ez itxaron jakinarazpen bati arrisku-egoera batean neurriak hartzeko."
+          }
+        ],
+        "details": {
+          "title": "Bidalketa-irizpideei buruz gehiago",
+          "text": "Bero-jakinarazpenek 27, 32 eta 41 °C-ko bero-indizearen atalaseak erabiltzen dituzte; pantailako bost kategoria bisualetatik bereizten dira. Jakinarazpena maila igotzen bada eta konfiguratutako atalasea lortzen badu soilik bidaltzen da. Duela 90 minutu edo gutxiago eguneratutako AEMET datuek beroarekin edo tenperaturarekin lotutako abisua identifikatzen badute, ohiko bero-jakinarazpena blokeatzen da. UV jakinarazpen bateratu batek AEMET gertaera jakin bat estal dezake: abisu ofizialen prozesuak jakinarazpena 120 minutu baino gutxiagoz atzera dezake, harpidetza bera bada, gertaera bera bada eta estalitako maila oraingoa bezain handia edo handiagoa bada. Abisua larriagotzen bada, etenaldi hori ez da aplikatzen. Beraz, 120 minutu ez da jakinarazpen guztientzako itxaronaldi orokorra."
+        }
+      },
+      "location": {
+        "title": "Kokapena eta eguneratzea",
+        "paragraphs": [
+          "GPSak gailuaren kokapena kontsultatzen du; eskuzko bilaketak hautatutako lekua kontsultatzen du, zu beste nonbait egon arren. Egiaztatu herria arriskua interpretatu aurretik.",
+          "Orria martxan dagoenean, datuak 30 minuturo eguneratzen dira. Lehen planora itzultzean, azken eguneratze zuzenetik gutxienez 10 minutu igaro badira eguneratu daitezke. Nabigatzaileak bigarren planoko zereginak eten ditzake.",
+          "Ez dago etengabeko GPS jarraipenik aplikazioa itxita dagoenean. Abisuek gordetako azken kokapenari lotuta jarrai dezakete. Datu berriak lortzeko konexioa eta hornitzaileak erabilgarri egotea behar dira."
+        ],
+        "blocks": []
+      },
+      "official": {
+        "title": "Abisu meteorologiko ofizialak",
+        "paragraphs": [
+          "ThermoSafe-k hornitzaile meteorologikoaren bidez jasotako abisu ofizialak erakusten ditu, eta igorlea identifikatzen du informazio hori erabilgarri dagoenean. Espainian AEMETen abisuak izan daitezke; ez dira guztiak zuzenean AEMETen APItik iristen, eta igorle guztiak ez dira AEMET.",
+          "Egiaztatu hasiera eta amaiera: abisu aktibo batek uneko aldia hartzen du; etorkizuneko batek geroagoko aldia iragartzen du; iraungitako batek baliozkotasun-aldia gainditu du. Aurkezpenak itzulpenak izan ditzake.",
+          "ThermoSafe-n abisurik ez egoteak ez du bermatzen abisu ofizialik ez dagoenik. Kontsultatu kanal ofizialak eta jarraitu haien jarraibideak."
+        ],
+        "blocks": []
+      },
+      "installation": {
+        "title": "Instalazioa eta eguneratzea",
+        "paragraphs": [],
+        "blocks": [
+          {
+            "title": "Nabigatzailea",
+            "text": "ThermoSafe zuzenean erabil dezakezu thermosafe.app helbidean, instalatu gabe."
+          },
+          {
+            "title": "PWA instalazioa",
+            "text": "Nabigatzaileak aukera ematen badu, erabili instalatzeko edo hasierako pantailara gehitzeko aukera. Aukeraren izena eta erabilgarritasuna nabigatzailearen eta gailuaren araberakoak dira."
+          },
+          {
+            "title": "Android",
+            "text": "Android aplikazioak ThermoSafe-ren web esperientzia irekitzen du. Sistemaren eta nabigatzailearen baimenek erabilgarri dauden funtzioetan eragina izan dezakete."
+          },
+          {
+            "title": "Bertsio berriak eta konexioa",
+            "text": "Pantaila nagusiak bertsio berri bat detektatzen duenean, berriz kargatzeko oharra erakusten du. Erabili konexioa duzunean. Gida konexiorik gabe irakur daiteke baliabideak cachean badaude, baina ez dago gailu guztietan bermatuta. Datu eta abisu berriek konexioa behar dute."
+          }
+        ]
+      },
+      "faq": {
+        "title": "Ohiko galderak",
+        "paragraphs": [
+          "Funtzioren batek huts egiten badu, ez hartu daturik edo abisurik eza segurtasunaren frogatzat."
+        ],
+        "blocks": [
+          {
+            "title": "Kokapena okerra da",
+            "text": "Egiaztatu eskuzko bilaketa bat hautatuta duzun. Eskatu berriz uneko kokapena edo bilatu herri zuzena. GPSak eta leku-izenek zehaztasun-akatsak izan ditzakete."
+          },
+          {
+            "title": "GPS baimena ukatu dut",
+            "text": "Eguraldia eskuzko bilaketarekin kontsulta dezakezu. GPSa berriz erabiltzeko, berrikusi gunearen kokapen-baimena nabigatzailean eta gailuan. Jakinarazpenak aktibatzeko GPS kokapena lortu behar da."
+          },
+          {
+            "title": "Jakinarazpenak ez dira iristen",
+            "text": "Egiaztatu Jakinarazpenak kontrola, gunearen eta sistemaren baimenak, konexioa eta bateriaren murrizketak. Berrikusi lotutako kokapena eta ordutegiak ere. Handitzen ez den arrisku batek baliteke beste abisurik ez sortzea."
+          },
+          {
+            "title": "Pantaila eta jakinarazpena desberdinak dira",
+            "text": "Ordu edo kokapen desberdinei buruzkoak izan daitezke. Gainera, bidalketa-irizpideek ez dituzte pantailako doikuntza guztiak jasotzen, hala nola mugimenduaren detekzioa."
+          },
+          {
+            "title": "Ez dago UV informaziorik",
+            "text": "Baliteke hornitzaileak balio baliodunik ez itzultzea. Saiatu berriz konexioarekin. Ez hartu falta den balioa zerotzat."
+          },
+          {
+            "title": "Datuak ez dira eguneratzen",
+            "text": "Egiaztatu konexioa, hautatutako kokapena eta erakutsitako ordua. Erabili eguneratzeko kontrola; hornitzaileak huts egiten badu, saiatu geroago. Datuak cachetik berrerabil daitezke."
+          },
+          {
+            "title": "Ez dut instalatzeko aukerarik aurkitzen",
+            "text": "Aukera nabigatzailearen eta gailuaren araberakoa da. Berrikusi nabigatzailearen menua; erabilgarri ez badago, webgunea erabiltzen jarrai dezakezu."
+          },
+          {
+            "title": "Ez dut konexiorik",
+            "text": "Ezin dira datu meteorologiko berriak lortu. Gordetako baliabide batzuk eskuragarri egon daitezke, baina ez dago konexiorik gabeko funtzionamendu osoa bermatuta."
+          }
+        ]
+      },
+      "sources": {
+        "title": "Iturriak, mugak eta segurtasuna",
+        "paragraphs": [
+          "Informazioa testuinguru meteorologikoaren estimazio bat da, ez zure esposizio pertsonalaren edo lanekoaren ebaluazio osoa."
+        ],
+        "blocks": [
+          {
+            "title": "OpenWeather",
+            "text": "Uneko baldintzak, ordukako iragarpena, geokodetzea eta abisu ofizialen banaketa. Jakinarazpen-sistemarako ordezko UV datuak ere eman ditzake."
+          },
+          {
+            "title": "OpenUV",
+            "text": "Uneko eta gehieneko UV indizea eta eguzki-esposizioari buruzko informazio zehatza."
+          },
+          {
+            "title": "NASA POWER",
+            "text": "Eguneroko eguzki-erradiazioaren datuak. Ez dira zauden tokiko uneko neurketa."
+          },
+          {
+            "title": "OpenStreetMap / Nominatim",
+            "text": "Koordenatuetatik herriak identifikatzea, OpenWeather ordezko laguntza gisa erabilita."
+          },
+          {
+            "title": "Abisuak eta gomendioak",
+            "text": "Hornitzaile meteorologikoak banatzen ditu abisu ofizialak. Prebentzio-erreferentziek ez dute esan nahi aipatutako erakundeek ThermoSafe ziurtatzen edo babesten dutenik."
+          }
+        ]
+      },
+      "contact": {
+        "title": "Kontaktua",
+        "paragraphs": [
+          "Zalantzarik duzu, akatsen bat aurkitu duzu edo ThermoSafe hobetzeko proposamen bat egin nahi duzu? Idatzi helbide honetara:"
+        ],
+        "email": "info@thermosafe.app",
+        "blocks": [],
+        "emergencyNote": "Kanal hau ez da larrialdiak jakinarazteko."
+      }
     }
   }
 }

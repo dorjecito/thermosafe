@@ -2,16 +2,13 @@
   "current_wind": "Viento",
   "current_wind_gusts": "Rachas",
   "t": "ThermoSafe – Riesgo actual ☀️❄️💨",
-
   "ph": "Introduce una ciudad o pueblo",
   "btn": "🔍 Consultar",
   "gps": "📍 Usar ubicación actual",
-
   "title": "ThermoSafe – Riesgo actual ☀️❄️💨",
   "search_placeholder": "Busca ciudad",
   "search_button": "🔍 Consultar",
   "gps_button": "📍 Usar ubicación actual",
-
   "location": "📍 Localización",
   "current_conditions": "Condiciones actuales",
   "humidity": "Humedad",
@@ -28,14 +25,12 @@
   "moderate_wind": "Moderado",
   "strong_wind": "Fuerte",
   "very_strong_wind": "Muy fuerte",
-
   "combinedRisk": {
-  "highTitle": "Combinación de riesgos relevante",
-  "highText": "Hay varios factores de riesgo simultáneos. Reduce la exposición y extrema la precaución.",
-  "extremeTitle": "Combinación de riesgo muy elevada",
-  "extremeText": "La combinación actual de condiciones meteorológicas exige máxima precaución y limitación de la exposición exterior."
-},
-
+    "highTitle": "Combinación de riesgos relevante",
+    "highText": "Hay varios factores de riesgo simultáneos. Reduce la exposición y extrema la precaución.",
+    "extremeTitle": "Combinación de riesgo muy elevada",
+    "extremeText": "La combinación actual de condiciones meteorológicas exige máxima precaución y limitación de la exposición exterior."
+  },
   "riskTrend": {
     "loading": "Se está calculando la previsión para las próximas horas…",
     "unavailable": "La previsión para las próximas horas no está disponible.",
@@ -76,30 +71,24 @@
     "partialSuffix": "Esta previsión se basa en los datos disponibles.",
     "localTimeSuffix": "(hora local)"
   },
-
   "caution_outdoors": "Precaución en exteriores",
   "take_extreme_caution": "Evita actividades al aire libre",
   "wind_alert_label": "Recibir avisos por viento fuerte",
-
   "highIrradianceWarning": "⚠️ Irradiancia solar muy alta. Evita la exposición directa al sol.",
   "highUVIWarning": "⚠️ Índice UV muy alto. ¡Protección solar imprescindible!",
   "extremeUVIWarning": "🚨 UV EXTREMO (11+) — Evita exposición directa",
   "irradianceTips": "👒 Usa sombrero, gafas de sol y protector solar. Evita actividad física bajo el sol.",
-
   "risk_level": "Riesgo por calor:",
   "alert_extreme": "🚨 ¡RIESGO EXTREMO DE CALOR! Detén la actividad e hidrátate de inmediato.",
   "alertRisk": "⚠️ Riesgo alto o extremo por calor.",
-
   "loading": "Cargando datos meteorológicos...",
   "errorGPS": "No se ha podido obtener la ubicación por GPS.",
   "errorCity": "No se han encontrado datos para esta ubicación. Se muestran los últimos datos disponibles.",
   "errorNoLocation": "No se ha podido obtener la ubicación.",
-
   "recommendations_title": "Recomendaciones según condiciones actuales:",
   "solarProtection": "🔆 Protección solar",
   "irradianceLegend": "☀️ Niveles de irradiancia: <8 moderado · ≥8 alto",
   "toggleLegend": "ℹ️ Mostrar/Ocultar escala UV",
-
   "safe_conditions": "Condiciones seguras",
   "safe_conditions_text_day": "No se observan riesgos destacables en este momento.",
   "uv_data_unavailable_title": "Evaluación incompleta",
@@ -193,7 +182,6 @@
       "extreme": "Radiación UV extrema"
     }
   },
-
   "push": {
     "label": "Recibir avisos cuando el riesgo por calor sea ≥ moderado",
     "enabled": "Avisos activados. Recibirás notificaciones cuando el riesgo sea moderado o superior.",
@@ -205,28 +193,22 @@
       "noToken": "No se ha podido obtener el token de notificaciones."
     }
   },
-
   "sky_state": "Estado del cielo",
-
   "weather_desc": {
     "clear_sky": "Cielo despejado",
     "few_clouds": "Pocas nubes",
     "scattered_clouds": "Nubes dispersas",
     "broken_clouds": "Parcialmente nublado",
     "overcast_clouds": "Cielo cubierto",
-
     "light_rain": "Lluvia débil",
     "moderate_rain": "Lluvia moderada",
     "heavy_intensity_rain": "Lluvia intensa",
     "drizzle": "Llovizna",
     "shower_rain": "Chubasco",
-
     "thunderstorm": "Tormenta",
     "thunderstorm_with_rain": "Tormenta con lluvia",
-
     "snow": "Nieve",
     "light_snow": "Nieve débil",
-
     "mist": "Bruma",
     "fog": "Niebla",
     "smoke": "Humo",
@@ -234,10 +216,8 @@
     "dust": "Polvo",
     "sand": "Arena",
     "ash": "Ceniza volcánica",
-
     "squall": "Rachas de viento",
     "tornado": "Tornado",
-
     "ennuvolat": "Nublado",
     "lleugerament_ennuvolat": "Ligeramente nublado",
     "molt_ennuvolat": "Muy nublado",
@@ -245,11 +225,9 @@
     "poc_ennuvolat": "Poco nublado",
     "nuvolositat_variable": "Nubosidad variable"
   },
-
   "official_links": "Enlaces oficiales",
   "link_insst": "INSST: estrés térmico y calor",
   "link_aemet": "AEMET: salud y meteorología",
-
   "cold_alert_label": "Recibir avisos por frío extremo",
   "heat_risk": "Riesgo por calor",
   "current_risk": "Riesgo actual",
@@ -269,30 +247,23 @@
   "high": "Alto",
   "extreme": "Extremo",
   "moderate": "Moderado",
-
   "notify": {
-  "coldTitle": "Aviso ThermoSafe",
-  "coldBody": "Riesgo por frío {{risk}}. Temperatura: {{temp}}°C",
-
-  "heatTitle": "Aviso ThermoSafe",
-  "heatBody": "Riesgo por calor {{risk}}. Sensación térmica: {{hi}}°C",
-
-  "windTitle": "Aviso ThermoSafe",
-  "windBody": "Riesgo por viento {{risk}}. Velocidad del viento: {{speed}} km/h",
-
-  "uvTitle": "Aviso ThermoSafe",
-  "uvModerate": "Índice UV moderado. Protección solar recomendada si hay exposición.",
-  "uvHigh": "Índice UV alto. Utiliza protección solar y limita la exposición prolongada.",
-  "uvVeryHigh": "Índice UV muy alto. Protección solar imprescindible.",
-  "uvExtreme": "Índice UV extremo. Evita la exposición directa al sol."
-},
-
-"search_help_title": "Ayuda de búsqueda",
-"search_help": "Escribe al menos 4 letras. Las sugerencias pueden requerir casi el nombre completo de la ciudad.",
-
+    "coldTitle": "Aviso ThermoSafe",
+    "coldBody": "Riesgo por frío {{risk}}. Temperatura: {{temp}}°C",
+    "heatTitle": "Aviso ThermoSafe",
+    "heatBody": "Riesgo por calor {{risk}}. Sensación térmica: {{hi}}°C",
+    "windTitle": "Aviso ThermoSafe",
+    "windBody": "Riesgo por viento {{risk}}. Velocidad del viento: {{speed}} km/h",
+    "uvTitle": "Aviso ThermoSafe",
+    "uvModerate": "Índice UV moderado. Protección solar recomendada si hay exposición.",
+    "uvHigh": "Índice UV alto. Utiliza protección solar y limita la exposición prolongada.",
+    "uvVeryHigh": "Índice UV muy alto. Protección solar imprescindible.",
+    "uvExtreme": "Índice UV extremo. Evita la exposición directa al sol."
+  },
+  "search_help_title": "Ayuda de búsqueda",
+  "search_help": "Escribe al menos 4 letras. Las sugerencias pueden requerir casi el nombre completo de la ciudad.",
   "heatRiskLabel": "Riesgo por calor",
   "effectiveTemp": "Temperatura efectiva",
-
   "heatRisk": {
     "cap": "sin riesgo",
     "baix": "bajo",
@@ -304,7 +275,6 @@
     "extrem": "extremo",
     "extreme": "extremo"
   },
-
   "coldRisk": {
     "cap": "sin riesgo",
     "lleu": "leve",
@@ -314,28 +284,24 @@
     "extrem": "extremo"
   },
   "risk": {
-  "current": "Riesgo actual"
-},
-
+    "current": "Riesgo actual"
+  },
   "cold_risk_title": "Riesgo por frío",
   "wind_chill": "Temperatura efectiva",
-
   "windRisk": {
-  "none": "sin riesgo",
-  "breezy": "bajo",
-  "moderate": "moderado",
-  "strong": "alto",
-  "very_strong": "muy alto",
-
-  "low": "bajo",
-  "high": "alto",
-  "extreme": "extremo",
-  "very_high": "muy alto"
-},
+    "none": "sin riesgo",
+    "breezy": "bajo",
+    "moderate": "moderado",
+    "strong": "alto",
+    "very_strong": "muy alto",
+    "low": "bajo",
+    "high": "alto",
+    "extreme": "extremo",
+    "very_high": "muy alto"
+  },
   "skin": {
-  "toggle": "Mostrar/Ocultar información del fototipo"
-},
-
+    "toggle": "Mostrar/Ocultar información del fototipo"
+  },
   "weather_alerts": {
     "storm": "Aviso por tormenta",
     "rain": "Aviso por lluvia",
@@ -343,30 +309,24 @@
     "wind": "Aviso por viento",
     "heat": "Aviso por calor",
     "cold": "Aviso por frío",
-
     "coastalevent": "Aviso por riesgo costero",
     "coastal_event": "Aviso por riesgo costero",
     "coastal_event_warning": "Aviso por riesgo costero",
     "coastalevent_warning": "Aviso por riesgo costero",
-
     "moderate_coastalevent_warning": "Aviso costero moderado",
     "moderate_coastal_event_warning": "Aviso costero moderado",
     "moderate coastal event warning": "Aviso costero moderado",
     "moderate_coastalevent": "Aviso costero moderado",
-
     "low_temperature_warning": "Aviso por temperaturas bajas",
     "low temperature warning": "Aviso por temperaturas bajas",
     "moderate_low_temperature_warning": "Aviso moderado por temperaturas bajas",
     "moderate low temperature warning": "Aviso moderado por temperaturas bajas",
-
     "snow_warning": "Aviso por nieve",
     "wind_warning": "Aviso por viento",
     "rain_warning": "Aviso por lluvia",
-
     "minimum_temperature": "Temperatura mínima",
     "minimum temperature": "Temperatura mínima"
   },
-
   "last_update": "Actualizado hace",
   "refresh_data": "Actualiza",
   "refreshing_data": "Actualizando…",
@@ -390,17 +350,15 @@
   "alerts_title": "Avisos meteorológicos oficiales",
   "alerts_none": "No hay avisos meteorológicos activos actualmente.",
   "no_alerts": "No hay avisos meteorológicos actualmente.",
-
   "notifications": {
-  "label": "Notificaciones",
-  "on": "ACTIVAS",
-  "off": "DESACTIVADAS",
-  "info_label": "Información sobre las notificaciones",
-  "info_title": "Notificaciones push",
-  "info_body": "Las notificaciones te avisan de riesgos relevantes por calor, frío, viento, UV y avisos meteorológicos oficiales, según tu ubicación y configuración. En algunos casos, como el viento, el tipo de actividad seleccionado también puede ajustar cuándo se genera un aviso.",
-  "info_close": "Entendido"
-}, 
-
+    "label": "Notificaciones",
+    "on": "ACTIVAS",
+    "off": "DESACTIVADAS",
+    "info_label": "Información sobre las notificaciones",
+    "info_title": "Notificaciones push",
+    "info_body": "Las notificaciones te avisan de riesgos relevantes por calor, frío, viento, UV y avisos meteorológicos oficiales, según tu ubicación y configuración. En algunos casos, como el viento, el tipo de actividad seleccionado también puede ajustar cuándo se genera un aviso.",
+    "info_close": "Entendido"
+  },
   "solar_info": "Radiación solar e índice UV",
   "uv_index_current": "Índice UV actual",
   "uv_level": "Nivel",
@@ -415,7 +373,6 @@
     "exposure_summary": "Exposición orientativa",
     "skin_summary_type": "Piel tipo"
   },
-
   "recommendations_full": {
     "heat": {
       "low": "Bebe agua con frecuencia y evita el sol directo en las horas de más calor.",
@@ -448,7 +405,6 @@
       "extreme": "Oleaje muy fuerte: riesgo extremo. Evita por completo pasear cerca del mar."
     }
   },
-
   "activity": {
     "inactive": "Activar detección de movimiento",
     "requesting": "Activando detección…",
@@ -469,7 +425,6 @@
     "info_privacy": "Los datos se procesan localmente en el dispositivo y no se envían a ningún servidor.",
     "info_close": "Entendido"
   },
-
   "windActivity": {
     "label": "Tipo de actividad",
     "info_label": "Información sobre el tipo de actividad",
@@ -505,7 +460,6 @@
       "oci": "Elige una zona resguardada y asegura los elementos ligeros."
     }
   },
-
   "officialAdviceDynamic": {
     "heat": {
       "mild": "Hidrátate a menudo y descansa en zonas frescas.",
@@ -535,14 +489,12 @@
       "extreme": "Evita exponerte al sol. Riesgo extremo de daño cutáneo y ocular."
     }
   },
-
   "insst_heat": "INSST: estrés térmico y calor",
   "aemet_health": "AEMET: salud y meteorología",
   "show_advice": "Mostrar recomendaciones",
   "hide_advice": "Ocultar recomendaciones",
   "show_details": "Ver detalle",
   "hide_details": "Ocultar detalle",
-
   "official_advice": {
     "hydration": "Hidrátate con regularidad, aunque no tengas sed.",
     "rest": "Descansa en zonas de sombra durante actividades prolongadas.",
@@ -560,7 +512,6 @@
     "symptoms": "Si tienes mareos, náuseas o confusión, detén la actividad.",
     "symptomsCold": "Si tienes temblores, escalofríos o confusión, busca refugio."
   },
-
   "official_advice_title": "Recomendaciones oficiales de seguridad",
   "share_title": "Resumen de riesgo – ThermoSafe",
   "share_copied": "Texto copiado al portapapeles",
@@ -568,15 +519,14 @@
   "official_advice_footer": "Basado en guías del INSST y AEMET.",
   "data_sources_footer": "Fuentes de datos: OpenWeather · OpenUV · NASA POWER · AEMET (avisos oficiales) · OpenStreetMap/Nominatim",
   "share": "Compartir",
-
   "alert_time": {
-  "active": "Vigente",
-  "ended": "Finalizado",
-  "remaining_hours": "Quedan {{hours}}h {{minutes}}min",
-  "remaining_minutes": "Quedan {{minutes}} min",
-  "starts_in_hours": "Comienza en {{hours}}h {{minutes}}min",
-  "starts_in_minutes": "Comienza en {{minutes}} min"
-},
+    "active": "Vigente",
+    "ended": "Finalizado",
+    "remaining_hours": "Quedan {{hours}}h {{minutes}}min",
+    "remaining_minutes": "Quedan {{minutes}} min",
+    "starts_in_hours": "Comienza en {{hours}}h {{minutes}}min",
+    "starts_in_minutes": "Comienza en {{minutes}} min"
+  },
   "uvTitle": "Aviso ThermoSafe",
   "uvLow": "Índice UV bajo.",
   "uvModerate": "Índice UV moderado. Protección recomendada.",
@@ -720,6 +670,252 @@
       "focus": "Focus",
       "scheduledSummary": "Resumen programado",
       "pwaInstalled": "PWA instalada"
+    }
+  },
+  "guide": {
+    "link": "Información",
+    "title": "Guía de usuario",
+    "metaTitle": "Guía de usuario · ThermoSafe",
+    "description": "Aprende a consultar el tiempo, interpretar los riesgos y configurar ThermoSafe para tus actividades al aire libre.",
+    "eyebrow": "INFORMACIÓN Y AYUDA",
+    "back": "Volver a ThermoSafe",
+    "top": "Volver arriba",
+    "index": "En esta guía",
+    "skip": "Ir al contenido",
+    "language": "Idioma",
+    "safetyTitle": "Prevención con criterio",
+    "safety": "ThermoSafe es una herramienta auxiliar de prevención. No sustituye las evaluaciones de riesgos laborales, las instrucciones de los servicios de prevención ni los avisos oficiales. Los datos y las estimaciones pueden ser incompletos o llegar con retraso. La ausencia de un aviso no garantiza que una situación sea segura.",
+    "sections": {
+      "about": {
+        "title": "¿Qué es ThermoSafe?",
+        "paragraphs": [
+          "ThermoSafe ayuda a entender las condiciones meteorológicas y a planificar actividades al aire libre con más información. Puede ser útil en trabajos exteriores, excursiones y actividades recreativas.",
+          "Evalúa calor, frío, viento y radiación ultravioleta. Sus recomendaciones son orientativas: no describen todas las condiciones de un puesto de trabajo ni todas las circunstancias personales.",
+          "Los datos de los proveedores pueden diferir de las condiciones exactas del lugar donde te encuentras. Consulta también las indicaciones oficiales y de tu servicio de prevención."
+        ],
+        "blocks": []
+      },
+      "start": {
+        "title": "Cómo empezar",
+        "paragraphs": [],
+        "blocks": [
+          {
+            "title": "1. Elige el idioma",
+            "text": "Selecciona catalán, castellano, euskera, gallego o inglés. La preferencia se guarda en el navegador cuando el almacenamiento está disponible."
+          },
+          {
+            "title": "2. Elige la ubicación",
+            "text": "Permite la geolocalización para consultar dónde estás o busca una localidad y selecciona el resultado correcto. Comprueba siempre el nombre de la ubicación mostrada."
+          },
+          {
+            "title": "3. Lee las condiciones",
+            "text": "Revisa temperatura, sensación térmica, viento y UV, junto con el riesgo principal y las recomendaciones. La previsión indica lo que podría ocurrir después; no es una observación actual."
+          },
+          {
+            "title": "4. Comprueba la actualización",
+            "text": "La hora o el tiempo transcurrido que se muestra ayuda a valorar la antigüedad de la información. No implica una medición instantánea a tu lado. Utiliza el control de actualización y comprueba que la consulta termina correctamente."
+          }
+        ]
+      },
+      "personalization": {
+        "title": "Tipo de actividad y personalización",
+        "paragraphs": [
+          "Son tres ajustes independientes. Elige el perfil que mejor describa la tarea real; ningún ajuste sustituye las medidas de prevención necesarias."
+        ],
+        "blocks": [
+          {
+            "title": "A. Perfil de actividad exterior",
+            "text": "Puedes elegir General, Jardinería, Poda, Trabajo en altura, Obra, Limpieza exterior, Trekking o Actividad recreativa. General es la opción si no quieres concretar. El perfil adapta el aviso contextual de viento y el perfil de las notificaciones de viento, pero no cambia la clasificación meteorológica general del viento."
+          },
+          {
+            "title": "B. Detección de movimiento",
+            "text": "Es opcional. Los sensores del dispositivo estiman reposo, caminar, esfuerzo moderado o intenso y pueden elevar la valoración preventiva de calor. No es un selector manual de intensidad ni una medición del esfuerzo real. El movimiento se procesa localmente y deja de procesarse con la página oculta."
+          },
+          {
+            "title": "C. Fototipo de piel",
+            "text": "Los fototipos I–VI ajustan la estimación orientativa del tiempo de exposición UV. No modifican el índice UV ni su nivel. El tiempo estimado no garantiza una exposición segura."
+          }
+        ],
+        "details": {
+          "title": "Umbrales contextuales de viento",
+          "text": "Valores en km/h: precaución / precaución elevada / detén o aplaza la actividad expuesta. Se aplican a partir del valor indicado.\nGeneral y Jardinería: 30 / 45 / 65.\nPoda: 25 / 40 / 60.\nTrabajo en altura: 20 / 35 / 55.\nObra: 28 / 45 / 65.\nLimpieza exterior: 30 / 50 / 70.\nTrekking y Actividad recreativa: 35 / 50 / 70."
+        }
+      },
+      "risks": {
+        "title": "Cómo interpretar los riesgos",
+        "paragraphs": [
+          "El valor meteorológico es un dato, como la temperatura o la velocidad del viento. El nivel de riesgo es la valoración que hace la aplicación. El riesgo principal destaca uno de los factores más relevantes, pero no elimina los demás riesgos.",
+          "Las recomendaciones orientan la prevención. El indicador contextual de actividad añade información sobre la tarea. Distingue siempre las condiciones actuales de la previsión y de la tendencia."
+        ],
+        "blocks": [
+          {
+            "title": "Calor",
+            "text": "Se basa en un índice de calor que combina temperatura y humedad; no es simplemente la temperatura del aire. La detección de movimiento, si está activada, puede elevar la valoración dentro de los límites preventivos implementados."
+          },
+          {
+            "title": "Frío",
+            "text": "Se valora la temperatura efectiva, con el efecto del viento cuando se cumplen las condiciones del cálculo. Una temperatura fresca y un nivel de riesgo por frío no son necesariamente lo mismo."
+          },
+          {
+            "title": "Viento",
+            "text": "La clasificación general utiliza la velocidad sostenida del viento. El perfil de actividad aporta un indicador separado: la misma velocidad puede requerir más precaución en altura que en una actividad recreativa."
+          },
+          {
+            "title": "Radiación UV",
+            "text": "El índice UV describe la radiación ultravioleta, no la temperatura. Las nubes o la sensación de frescor no garantizan ausencia de riesgo. Un UV no disponible no significa UV cero."
+          }
+        ],
+        "details": {
+          "title": "Escalas de referencia de la pantalla",
+          "text": "Calor, antes del ajuste por movimiento, en °C de índice de calor: menos de 27, sin riesgo; de 27 a menos de 32, bajo; de 32 a menos de 41, moderado; de 41 a menos de 54, alto; 54 o más, extremo.\nFrío, en °C efectivos: más de 0, ninguno; más de −5 hasta 0, leve; más de −15 hasta −5, moderado; más de −25 hasta −15, alto; más de −40 hasta −25, muy alto; −40 o menos, extremo.\nViento, en km/h: menos de 15, sin riesgo; de 15 a menos de 25, brisa; de 25 a menos de 45, moderado; de 45 a menos de 65, fuerte; 65 o más, muy fuerte.\nUV, normalizado a un decimal: menos de 3, bajo; de 3 a menos de 6, moderado; de 6 a menos de 8, alto; de 8 a menos de 11, muy alto; 11 o más, extremo."
+        }
+      },
+      "notifications": {
+        "title": "Notificaciones",
+        "paragraphs": [
+          "Activa o desactiva los avisos con el control Notificaciones de la pantalla principal. Para activarlos se necesita permiso de notificaciones, compatibilidad del navegador y obtención de la ubicación GPS. Desactivarlos solicita la baja de la suscripción; comprueba que la operación no muestra errores.",
+          "Las alertas se calculan para las coordenadas guardadas en la suscripción. Una búsqueda manual posterior puede actualizarlas: no presupongas que siempre corresponden a tu posición física actual."
+        ],
+        "blocks": [
+          {
+            "title": "¿Cuándo se envía un aviso?",
+            "text": "Las comprobaciones automáticas son aproximadamente cada hora. Un nuevo aviso depende del riesgo, del umbral y de si supera el nivel ya notificado. Actualizar la pantalla no fuerza un envío. La pantalla y los avisos pueden utilizar escalas distintas; el movimiento detectado no se aplica de la misma manera a las notificaciones."
+          },
+          {
+            "title": "¿Por qué no se repite?",
+            "text": "La aplicación conserva el nivel notificado para evitar repeticiones. Si el riesgo baja y vuelve al mismo nivel, puede no avisar de nuevo. Hay reinicios diarios para los riesgos meteorológicos y UV; los avisos oficiales se deduplican por episodio y pueden volver a avisar si se agravan."
+          },
+          {
+            "title": "Horarios y agrupaciones",
+            "text": "El proceso de calor, frío y viento evita envíos de 22 a 7 h locales. El proceso específico de UV envía entre las 7 y antes de las 20 h. No debe darse por hecho que estas franjas se aplican a los avisos oficiales. Se pueden agrupar calor y UV, o frío y viento, en un mensaje."
+          },
+          {
+            "title": "La entrega no está garantizada",
+            "text": "La conexión, los permisos, el navegador, el sistema operativo y los proveedores pueden afectar a los avisos. No esperes una notificación para tomar medidas ante una situación de riesgo."
+          }
+        ],
+        "details": {
+          "title": "Más sobre los criterios de envío",
+          "text": "Las notificaciones de calor usan los umbrales de índice de calor de 27, 32 y 41 °C; son distintos de las cinco categorías visuales de la pantalla. El aviso solo se envía si el nivel sube y alcanza el umbral configurado. Si los datos AEMET, actualizados hace 90 minutos o menos, identifican un aviso relacionado con calor o temperatura, se bloquea el aviso ordinario de calor. Una notificación combinada UV puede cubrir un episodio AEMET concreto: el proceso de avisos oficiales puede suprimir su notificación durante menos de 120 minutos si corresponde a la misma suscripción, coincide el episodio y el nivel ya cubierto es igual o superior. Esta supresión no se aplica si el aviso se agrava. Por tanto, 120 minutos no es un tiempo de espera general para todas las notificaciones."
+        }
+      },
+      "location": {
+        "title": "Ubicación y actualización",
+        "paragraphs": [
+          "El GPS consulta la posición del dispositivo; la búsqueda manual consulta el lugar elegido aunque estés en otro sitio. Comprueba la localidad antes de interpretar el riesgo.",
+          "Con la página en funcionamiento, los datos se actualizan cada 30 minutos. Al volver a primer plano pueden actualizarse si han pasado al menos 10 minutos desde la última actualización correcta. El navegador puede suspender las tareas en segundo plano.",
+          "No hay seguimiento GPS continuo con la aplicación cerrada. Los avisos pueden seguir referidos a la última ubicación guardada. Para obtener datos nuevos se necesita conexión y disponibilidad de los proveedores."
+        ],
+        "blocks": []
+      },
+      "official": {
+        "title": "Avisos meteorológicos oficiales",
+        "paragraphs": [
+          "ThermoSafe muestra avisos oficiales recibidos a través del proveedor meteorológico e identifica al emisor cuando está disponible. En España pueden incluir avisos de AEMET; no todos llegan directamente de la API de AEMET ni todos los emisores son AEMET.",
+          "Comprueba el inicio y el final: un aviso activo afecta al periodo actual; uno futuro anuncia un periodo posterior; uno caducado ya ha superado su vigencia. La presentación puede incluir traducciones.",
+          "La ausencia de un aviso en ThermoSafe no garantiza que no exista un aviso oficial. Consulta los canales oficiales y sigue sus instrucciones."
+        ],
+        "blocks": []
+      },
+      "installation": {
+        "title": "Instalación y actualización",
+        "paragraphs": [],
+        "blocks": [
+          {
+            "title": "Navegador",
+            "text": "Puedes utilizar ThermoSafe directamente en thermosafe.app, sin instalarla."
+          },
+          {
+            "title": "Instalación PWA",
+            "text": "Si el navegador lo permite, utiliza la opción de instalar o añadir a la pantalla de inicio. El nombre y la disponibilidad de la opción dependen del navegador y del dispositivo."
+          },
+          {
+            "title": "Android",
+            "text": "La aplicación Android abre la experiencia web de ThermoSafe. Los permisos del sistema y del navegador pueden afectar a las funciones disponibles."
+          },
+          {
+            "title": "Nuevas versiones y conexión",
+            "text": "Cuando la pantalla principal detecta una versión nueva, muestra un banner para recargarla. Utilízalo con conexión. La guía puede consultarse sin conexión si sus recursos ya están en caché, pero no se garantiza en todos los dispositivos. Los datos y avisos nuevos necesitan conexión."
+          }
+        ]
+      },
+      "faq": {
+        "title": "Preguntas frecuentes",
+        "paragraphs": [
+          "Si alguna función falla, no interpretes la ausencia de datos o avisos como una situación segura."
+        ],
+        "blocks": [
+          {
+            "title": "La ubicación es incorrecta",
+            "text": "Comprueba si tienes seleccionada una búsqueda manual. Vuelve a solicitar la ubicación actual o busca la localidad correcta. El GPS y los nombres de lugar pueden tener errores de precisión."
+          },
+          {
+            "title": "He denegado el GPS",
+            "text": "Puedes consultar el tiempo con la búsqueda manual. Para volver a utilizar GPS, revisa el permiso de ubicación del sitio en el navegador y en el dispositivo. Activar las notificaciones requiere obtener GPS."
+          },
+          {
+            "title": "No llegan notificaciones",
+            "text": "Comprueba el control Notificaciones, los permisos del sitio y del sistema, la conexión y las restricciones de batería. Revisa también la ubicación asociada y los horarios. Un riesgo que no aumenta puede no generar otro aviso."
+          },
+          {
+            "title": "La pantalla y la notificación son diferentes",
+            "text": "Pueden corresponder a horas o ubicaciones distintas. Además, los criterios de envío no reproducen todos los ajustes de pantalla, como la detección de movimiento."
+          },
+          {
+            "title": "No hay información UV",
+            "text": "El proveedor puede no haber devuelto un valor válido. Vuelve a consultar con conexión. No interpretes un valor ausente como cero."
+          },
+          {
+            "title": "Los datos no se actualizan",
+            "text": "Comprueba la conexión, la ubicación seleccionada y la hora mostrada. Utiliza la actualización; si falla el proveedor, habrá que intentarlo más tarde. Los datos pueden reutilizar caché."
+          },
+          {
+            "title": "No encuentro cómo instalarla",
+            "text": "La opción depende del navegador y del dispositivo. Revisa el menú del navegador; si no está disponible, puedes seguir usando la web."
+          },
+          {
+            "title": "No tengo conexión",
+            "text": "No se pueden obtener datos meteorológicos nuevos. Algunos recursos guardados pueden seguir accesibles, pero no se garantiza el funcionamiento completo sin conexión."
+          }
+        ]
+      },
+      "sources": {
+        "title": "Fuentes, limitaciones y seguridad",
+        "paragraphs": [
+          "La información es una estimación del contexto meteorológico, no una evaluación completa de tu exposición personal o laboral."
+        ],
+        "blocks": [
+          {
+            "title": "OpenWeather",
+            "text": "Condiciones actuales, previsión horaria, geocodificación y distribución de avisos oficiales. También puede aportar UV de apoyo al sistema de notificaciones."
+          },
+          {
+            "title": "OpenUV",
+            "text": "Índice UV actual, máximo e información detallada relacionada con la exposición solar."
+          },
+          {
+            "title": "NASA POWER",
+            "text": "Datos de radiación solar diaria. No son una medición instantánea en el lugar donde te encuentras."
+          },
+          {
+            "title": "OpenStreetMap / Nominatim",
+            "text": "Identificación de localidades a partir de coordenadas, con apoyo alternativo de OpenWeather."
+          },
+          {
+            "title": "Avisos y recomendaciones",
+            "text": "Los avisos oficiales son distribuidos por el proveedor meteorológico. Las referencias preventivas no implican certificación ni aval de ThermoSafe por los organismos citados."
+          }
+        ]
+      },
+      "contact": {
+        "title": "Contacto",
+        "paragraphs": [
+          "¿Tienes alguna duda, has detectado un error o quieres proponer una mejora de ThermoSafe? Puedes escribir a:"
+        ],
+        "email": "info@thermosafe.app",
+        "blocks": [],
+        "emergencyNote": "Este canal no es para comunicar emergencias."
+      }
     }
   }
 }

@@ -19,7 +19,7 @@
   "irradiance": "☀️ Solar irradiance",
   "uvi": "🔆 UV index",
   "wind_direction": "Wind direction",
-  "cloudiness": "Cloudiness", 
+  "cloudiness": "Cloudiness",
   "wind_risk": "Wind risk",
   "no_risk_wind": "No wind risk",
   "wind_none": "No risk",
@@ -45,7 +45,6 @@
   "solarProtection": "🔆 Sun protection",
   "irradianceLegend": "☀️ Irradiance levels: <8 moderate · ≥8 high",
   "toggleLegend": "ℹ️ Show/Hide UV scale",
-  
   "safe_conditions": "Safe conditions",
   "safe_conditions_text_day": "No significant risks are currently observed.",
   "uv_data_unavailable_title": "Assessment incomplete",
@@ -139,14 +138,12 @@
       "extreme": "Extreme UV radiation"
     }
   },
-
   "combinedRisk": {
-  "highTitle": "Relevant combination of risks",
-  "highText": "Several risk factors are present simultaneously. Reduce exposure and exercise extra caution.",
-  "extremeTitle": "Very high combined risk",
-  "extremeText": "The current combination of weather conditions requires maximum caution and limited outdoor exposure."
-},
-
+    "highTitle": "Relevant combination of risks",
+    "highText": "Several risk factors are present simultaneously. Reduce exposure and exercise extra caution.",
+    "extremeTitle": "Very high combined risk",
+    "extremeText": "The current combination of weather conditions requires maximum caution and limited outdoor exposure."
+  },
   "riskTrend": {
     "loading": "The forecast for the next few hours is being calculated…",
     "unavailable": "The forecast for the next few hours is not available.",
@@ -187,7 +184,6 @@
     "partialSuffix": "This forecast is based on the available data.",
     "localTimeSuffix": "(local time)"
   },
-
   "push": {
     "label": "Receive alerts when heat risk ≥ moderate",
     "enabled": "Alerts enabled. You will receive notifications when risk is moderate or higher.",
@@ -199,7 +195,6 @@
       "noToken": "Unable to obtain notification token."
     }
   },
-
   "sky_state": "Sky condition",
   "weather_desc": {
     "clear_sky": "Clear sky",
@@ -225,7 +220,6 @@
     "ash": "Volcanic ash",
     "squall": "Wind gusts",
     "tornado": "Tornado",
-
     "ennuvolat": "Cloudy",
     "lleugerament_ennuvolat": "Lightly cloudy",
     "molt_ennuvolat": "Very cloudy",
@@ -233,10 +227,8 @@
     "poc_ennuvolat": "Slightly cloudy",
     "nuvolositat_variable": "Variable cloudiness"
   },
-
   "link_insst": "INSST: Heat stress and thermal risk",
   "link_aemet": "AEMET: Health and meteorology",
-
   "cold_alert_label": "Receive alerts for extreme cold",
   "heat_risk": "Heat risk",
   "current_risk": "Current risk",
@@ -246,7 +238,6 @@
   "high": "High",
   "extreme": "Extreme",
   "moderate": "Moderate",
-
   "notify": {
     "coldTitle": "ThermoSafe Alert",
     "coldBody": "Cold risk {{risk}}. Temperature: {{temp}}°C",
@@ -260,13 +251,10 @@
     "uvVeryHigh": "Very high UV index. Sun protection is essential.",
     "uvExtreme": "Extreme UV index. Avoid direct sun exposure."
   },
-
- "search_help_title": "Search help",
-"search_help": "Type at least 4 letters. Suggestions may require nearly the full city name.",
-
+  "search_help_title": "Search help",
+  "search_help": "Type at least 4 letters. Suggestions may require nearly the full city name.",
   "heatRiskLabel": "Heat risk",
   "effectiveTemp": "Effective temperature",
-
   "heatRisk": {
     "Cap risc": "no risk",
     "Baix": "low",
@@ -278,7 +266,6 @@
     "Extrem": "extreme",
     "extreme": "extreme"
   },
-
   "coldRisk": {
     "cap": "no risk",
     "lleu": "mild",
@@ -286,13 +273,10 @@
     "alt": "high",
     "molt_alt": "very high",
     "extrem": "extreme",
-
     "molt alt": "very high"
   },
-
   "cold_risk_title": "Cold risk",
   "wind_chill": "Effective temperature",
-
   "windRisk": {
     "none": "no risk",
     "breezy": "low",
@@ -301,7 +285,6 @@
     "very_strong": "very high",
     "extreme": "extreme"
   },
-
   "weather_alerts": {
     "storm": "Storm alert",
     "rain": "Rain alert",
@@ -309,30 +292,24 @@
     "wind": "Wind alert",
     "heat": "Heat alert",
     "cold": "Cold alert",
-
     "coastalevent": "Coastal risk alert",
     "coastal_event": "Coastal risk alert",
     "coastal_event_warning": "Coastal risk warning",
     "coastalevent_warning": "Coastal risk warning",
-
     "moderate_coastalevent_warning": "Moderate coastal warning",
     "moderate_coastal_event_warning": "Moderate coastal warning",
     "moderate coastal event warning": "Moderate coastal warning",
     "moderate_coastalevent": "Moderate coastal warning",
-
     "low_temperature_warning": "Low temperature warning",
     "low temperature warning": "Low temperature warning",
     "moderate_low_temperature_warning": "Moderate low temperature warning",
     "moderate low temperature warning": "Moderate low temperature warning",
-
     "snow_warning": "Snow warning",
     "wind_warning": "Wind warning",
     "rain_warning": "Rain warning",
-
     "minimum_temperature": "Minimum temperature",
     "minimum temperature": "Minimum temperature"
   },
-
   "last_update": "Updated",
   "refresh_data": "Refresh",
   "refreshing_data": "Refreshing…",
@@ -356,7 +333,6 @@
   "alerts_title": "Official weather alerts",
   "alerts_none": "There are currently no active weather alerts.",
   "no_alerts": "No alerts at this time.",
-
   "notifications": {
     "label": "Notifications",
     "on": "ON",
@@ -366,7 +342,6 @@
     "info_body": "Notifications alert you to significant risks from heat, cold, wind and UV, and to official weather warnings, based on your location and settings. In some cases, such as wind, your selected activity type may also affect when an alert is sent.",
     "info_close": "Got it"
   },
-
   "solar_info": "Solar radiation and UV index",
   "uv_index_current": "Current UV index",
   "uv_level": "Level",
@@ -381,7 +356,6 @@
     "exposure_summary": "Estimated exposure",
     "skin_summary_type": "Skin type"
   },
-
   "uv": {
     "safe_time_title": "Indicative exposure time",
     "phototype": "Skin type",
@@ -393,7 +367,6 @@
     "updated_at": "Updated",
     "ozone": "Ozone"
   },
-
   "recommendations_full": {
     "heat": {
       "low": "Safe conditions. Stay hydrated and avoid direct sun during peak hours.",
@@ -426,7 +399,6 @@
       "extreme": "Very heavy swell: extreme risk. Avoid walking near the sea."
     }
   },
-
   "activity": {
     "inactive": "Enable motion detection",
     "requesting": "Enabling detection…",
@@ -447,7 +419,6 @@
     "info_privacy": "Data is processed locally on the device and is not sent to any server.",
     "info_close": "Got it"
   },
-
   "windActivity": {
     "label": "Activity type",
     "info_label": "Information about activity type",
@@ -483,11 +454,9 @@
       "oci": "Choose a sheltered area and secure lightweight items."
     }
   },
-
   "official_links": "Official links",
   "insst_heat": "INSST: Heat stress and thermal risk",
   "aemet_health": "AEMET: Health and meteorology",
-
   "risk_levels": {
     "safe": "Safe conditions",
     "mild": "Mild risk",
@@ -498,22 +467,18 @@
     "severe": "Severe risk",
     "extreme": "Extreme risk"
   },
-
   "skin": {
     "toggle": "Show/Hide skin type information"
   },
-
   "risk": {
-  "current": "Current risk"
-},
-
+    "current": "Current risk"
+  },
   "share": "Share",
   "show_advice": "Show recommendations",
   "hide_advice": "Hide recommendations",
   "official_advice_share": "Follow safety recommendations based on your current risk.",
   "show_details": "Show details",
   "hide_details": "Hide details",
-
   "officialAdviceDynamic": {
     "heat": {
       "mild": "Hydrate often and rest in cool areas.",
@@ -543,7 +508,6 @@
       "extreme": "Avoid sun exposure. Extreme risk of eye and skin damage."
     }
   },
-
   "official_advice": {
     "hydration": "Hydrate regularly, even if you are not thirsty.",
     "rest": "Rest in the shade during prolonged activity.",
@@ -561,25 +525,21 @@
     "symptoms": "If you feel dizzy, nauseous, or confused, stop activity.",
     "symptomsCold": "If you have chills, shivering, or confusion, seek shelter and warmth."
   },
-
   "official_advice_title": "Official safety recommendations",
   "share_title": "Risk summary – ThermoSafe",
   "share_copied": "Text copied to clipboard",
   "share_failed": "Could not share or copy the text",
   "official_advice_footer": "Based on INSST and AEMET guidance.",
   "data_sources_footer": "Data sources: OpenWeather · OpenUV · NASA POWER · AEMET (official alerts) · OpenStreetMap/Nominatim",
-
   "rec": {
     "safe": "Safe conditions. Drink water as usual.",
     "safeWithHighUV": "Thermally safe conditions. Use caution due to solar radiation."
   },
-
   "wind_warning": "Wind warning",
   "coastal_warning": "Coastal warning",
   "adverse_weather": "Adverse weather",
   "maximum_gust": "Maximum gust of wind",
   "aemet_source": "AEMET · Spanish Meteorological Agency",
-
   "alert_time": {
     "active": "Active",
     "ended": "Ended",
@@ -588,7 +548,6 @@
     "starts_in_hours": "Starts in {{hours}}h {{minutes}}m",
     "starts_in_minutes": "Starts in {{minutes}}m"
   },
-
   "uvTitle": "ThermoSafe alert",
   "uvLow": "Low UV index.",
   "uvModerate": "Moderate UV index. Protection recommended.",
@@ -732,6 +691,252 @@
       "focus": "Focus",
       "scheduledSummary": "Scheduled summary",
       "pwaInstalled": "PWA installed"
+    }
+  },
+  "guide": {
+    "link": "Information",
+    "title": "User guide",
+    "metaTitle": "User guide · ThermoSafe",
+    "description": "Learn how to check the weather, understand risks and set up ThermoSafe for your outdoor activities.",
+    "eyebrow": "INFORMATION AND HELP",
+    "back": "Back to ThermoSafe",
+    "top": "Back to top",
+    "index": "In this guide",
+    "skip": "Skip to content",
+    "language": "Language",
+    "safetyTitle": "Informed prevention",
+    "safety": "ThermoSafe is a supporting tool for prevention. It does not replace occupational risk assessments, instructions from occupational prevention services or official warnings. Data and estimates may be incomplete or delayed. The absence of a warning does not guarantee that a situation is safe.",
+    "sections": {
+      "about": {
+        "title": "What is ThermoSafe?",
+        "paragraphs": [
+          "ThermoSafe helps you understand weather conditions and plan outdoor activities with more information. It can be useful for outdoor work, hiking and leisure activities.",
+          "It assesses heat, cold, wind and ultraviolet radiation. Its recommendations are indicative: they do not describe every workplace condition or every personal circumstance.",
+          "Provider data may differ from the exact conditions where you are. Also follow official guidance and instructions from your occupational prevention service."
+        ],
+        "blocks": []
+      },
+      "start": {
+        "title": "Getting started",
+        "paragraphs": [],
+        "blocks": [
+          {
+            "title": "1. Choose a language",
+            "text": "Select Catalan, Spanish, Basque, Galician or English. Your preference is saved in the browser when storage is available."
+          },
+          {
+            "title": "2. Choose a location",
+            "text": "Allow geolocation to check where you are, or search for a place and select the correct result. Always check the location name shown."
+          },
+          {
+            "title": "3. Read the conditions",
+            "text": "Review temperature, feels-like temperature, wind and UV alongside the main risk and recommendations. A forecast describes what might happen later; it is not a current observation."
+          },
+          {
+            "title": "4. Check the update time",
+            "text": "The time or elapsed time shown helps you judge how old the information is. It does not mean an instant measurement beside you. Use the refresh control and check that the request completes successfully."
+          }
+        ]
+      },
+      "personalization": {
+        "title": "Activity type and personalization",
+        "paragraphs": [
+          "These are three independent settings. Choose the profile that best describes your actual task; no setting replaces the preventive measures you need."
+        ],
+        "blocks": [
+          {
+            "title": "A. Outdoor activity profile",
+            "text": "Choose General, Gardening, Pruning, Work at height, Construction, Outdoor cleaning, Trekking or Recreational activity. Use General if you do not want to specify a task. The profile adjusts the contextual wind warning and the wind notification profile, but does not change the general meteorological wind classification."
+          },
+          {
+            "title": "B. Motion detection",
+            "text": "This is optional. Device sensors estimate rest, walking, moderate or intense exertion and may increase the preventive heat assessment. It is not a manual intensity selector or a measurement of actual effort. Motion is processed locally and is no longer processed while the page is hidden."
+          },
+          {
+            "title": "C. Skin phototype",
+            "text": "Phototypes I–VI adjust the indicative estimate of UV exposure time. They do not change the UV index or its level. The estimated time is not a guarantee of safe exposure."
+          }
+        ],
+        "details": {
+          "title": "Contextual wind thresholds",
+          "text": "Values in km/h: caution / increased caution / stop or postpone the exposed activity. Each applies from the stated value.\nGeneral and Gardening: 30 / 45 / 65.\nPruning: 25 / 40 / 60.\nWork at height: 20 / 35 / 55.\nConstruction: 28 / 45 / 65.\nOutdoor cleaning: 30 / 50 / 70.\nTrekking and Recreational activity: 35 / 50 / 70."
+        }
+      },
+      "risks": {
+        "title": "Understanding the risks",
+        "paragraphs": [
+          "A weather value is a measurement or estimate, such as temperature or wind speed. A risk level is the app’s assessment of that value. The main risk highlights one of the most relevant factors, but does not remove the other risks.",
+          "Recommendations guide prevention. The contextual activity indicator adds information about the task. Always distinguish current conditions from forecasts and trends."
+        ],
+        "blocks": [
+          {
+            "title": "Heat",
+            "text": "This is based on a heat index combining temperature and humidity, rather than air temperature alone. When enabled, motion detection may increase the assessment within the implemented preventive limits."
+          },
+          {
+            "title": "Cold",
+            "text": "The app assesses effective temperature, including wind chill when the calculation conditions are met. Cool weather and a cold risk level are not necessarily the same thing."
+          },
+          {
+            "title": "Wind",
+            "text": "The general classification uses sustained wind speed. The activity profile provides a separate indicator: the same speed may require more caution for work at height than for leisure activities."
+          },
+          {
+            "title": "UV radiation",
+            "text": "The UV index describes ultraviolet radiation, not temperature. Clouds or feeling cool do not guarantee that there is no risk. An unavailable UV value does not mean zero UV."
+          }
+        ],
+        "details": {
+          "title": "Screen reference scales",
+          "text": "Heat, before motion adjustment, in °C of heat index: below 27, no risk; 27 to below 32, low; 32 to below 41, moderate; 41 to below 54, high; 54 or above, extreme.\nCold, in effective °C: above 0, none; above −5 up to 0, mild; above −15 up to −5, moderate; above −25 up to −15, high; above −40 up to −25, very high; −40 or below, extreme.\nWind, in km/h: below 15, no risk; 15 to below 25, breezy; 25 to below 45, moderate; 45 to below 65, strong; 65 or above, very strong.\nUV, normalized to one decimal place: below 3, low; 3 to below 6, moderate; 6 to below 8, high; 8 to below 11, very high; 11 or above, extreme."
+        }
+      },
+      "notifications": {
+        "title": "Notifications",
+        "paragraphs": [
+          "Turn alerts on or off with the Notifications control on the main screen. Enabling them requires notification permission, browser support and a GPS location. Turning them off requests removal of the subscription; check that no error is shown.",
+          "Alerts are calculated for the coordinates saved in your subscription. A later manual search may update them: do not assume they always match your current physical position."
+        ],
+        "blocks": [
+          {
+            "title": "When is an alert sent?",
+            "text": "Automatic checks run roughly hourly. A new alert depends on the risk, the threshold and whether it exceeds the previously notified level. Refreshing the screen does not force an alert. Screen and notification scales may differ; detected motion is not applied to notifications in the same way."
+          },
+          {
+            "title": "Why is it not repeated?",
+            "text": "The app remembers the notified level to avoid repetitions. If risk drops and returns to the same level, another alert may not be sent. Weather and UV risk states reset daily; official warnings are deduplicated by episode and may trigger another alert if severity increases."
+          },
+          {
+            "title": "Hours and combined messages",
+            "text": "The heat, cold and wind process avoids sending between 22:00 and 07:00 local time. The dedicated UV process sends from 07:00 until before 20:00. Do not assume these hours apply to official warnings. Heat and UV, or cold and wind, may be combined in one message."
+          },
+          {
+            "title": "Delivery is not guaranteed",
+            "text": "Connection, permissions, the browser, operating system and providers can affect alerts. Do not wait for a notification before taking action in a risky situation."
+          }
+        ],
+        "details": {
+          "title": "More about sending criteria",
+          "text": "Heat notifications use heat index thresholds of 27, 32 and 41 \u00b0C; these differ from the five visual categories on screen. A notification is sent only when the level rises and reaches the configured threshold. If AEMET data updated within the last 90 minutes identifies a heat- or temperature-related warning, the routine heat notification is blocked. A combined UV notification can cover a specific AEMET episode: the official-warning process may suppress its notification for less than 120 minutes if it is the same subscription and episode, and the level already covered is equal to or higher than the current level. This suppression does not apply when the warning escalates. So 120 minutes is not a general waiting period for all notifications."
+        }
+      },
+      "location": {
+        "title": "Location and updates",
+        "paragraphs": [
+          "GPS checks the device’s position; manual search checks the chosen place even if you are elsewhere. Check the location before interpreting risk.",
+          "While the page is running, data refreshes every 30 minutes. Returning to the foreground may trigger an update if at least 10 minutes have passed since the last successful refresh. The browser may suspend background tasks.",
+          "There is no continuous GPS tracking with the app closed. Alerts may still refer to the last saved location. New data requires a connection and available providers."
+        ],
+        "blocks": []
+      },
+      "official": {
+        "title": "Official weather warnings",
+        "paragraphs": [
+          "ThermoSafe displays official warnings received through the weather provider and identifies the issuer when available. In Spain these may include AEMET warnings; they do not all arrive directly from the AEMET API, and not all issuers are AEMET.",
+          "Check the start and end: an active warning covers the current period; an upcoming warning covers a later period; an expired warning has passed its validity period. The presentation may include translations.",
+          "The absence of a warning in ThermoSafe does not guarantee that no official warning exists. Check official channels and follow their instructions."
+        ],
+        "blocks": []
+      },
+      "installation": {
+        "title": "Installation and updates",
+        "paragraphs": [],
+        "blocks": [
+          {
+            "title": "Browser",
+            "text": "You can use ThermoSafe directly at thermosafe.app without installing it."
+          },
+          {
+            "title": "PWA installation",
+            "text": "If your browser supports it, use its install or add-to-home-screen option. The name and availability of this option depend on the browser and device."
+          },
+          {
+            "title": "Android",
+            "text": "The Android app opens the ThermoSafe web experience. System and browser permissions may affect the available features."
+          },
+          {
+            "title": "New versions and connectivity",
+            "text": "When the main screen detects a new version, it shows a banner to reload. Use it while connected. The guide may be readable offline if its resources are already cached, but this is not guaranteed on every device. New data and warnings need a connection."
+          }
+        ]
+      },
+      "faq": {
+        "title": "Frequently asked questions",
+        "paragraphs": [
+          "If a feature fails, do not treat missing data or warnings as evidence of safety."
+        ],
+        "blocks": [
+          {
+            "title": "The location is wrong",
+            "text": "Check whether a manual search is selected. Request your current location again or search for the correct place. GPS and place names can be inaccurate."
+          },
+          {
+            "title": "I denied GPS permission",
+            "text": "You can check the weather using manual search. To use GPS again, review location permission for the site in your browser and on your device. Enabling notifications requires a GPS location."
+          },
+          {
+            "title": "Notifications are not arriving",
+            "text": "Check the Notifications control, site and system permissions, connectivity and battery restrictions. Also check the saved location and notification hours. A risk that has not increased may not generate another alert."
+          },
+          {
+            "title": "The screen and notification differ",
+            "text": "They may refer to different times or places. Sending criteria also do not reproduce every screen adjustment, such as motion detection."
+          },
+          {
+            "title": "UV information is unavailable",
+            "text": "The provider may not have returned a valid value. Try again while connected. Do not interpret a missing value as zero."
+          },
+          {
+            "title": "Data is not updating",
+            "text": "Check the connection, selected location and displayed time. Use refresh; if the provider fails, try again later. Data may be reused from cache."
+          },
+          {
+            "title": "I cannot find the install option",
+            "text": "The option depends on the browser and device. Check the browser menu; if unavailable, you can continue using the website."
+          },
+          {
+            "title": "I am offline",
+            "text": "New weather data cannot be retrieved. Some saved resources may remain accessible, but full offline operation is not guaranteed."
+          }
+        ]
+      },
+      "sources": {
+        "title": "Sources, limitations and safety",
+        "paragraphs": [
+          "This information estimates the weather context; it is not a complete assessment of your personal or occupational exposure."
+        ],
+        "blocks": [
+          {
+            "title": "OpenWeather",
+            "text": "Current conditions, hourly forecasts, geocoding and distribution of official warnings. It can also provide fallback UV data for the notification system."
+          },
+          {
+            "title": "OpenUV",
+            "text": "Current and maximum UV index and detailed information related to sun exposure."
+          },
+          {
+            "title": "NASA POWER",
+            "text": "Daily solar radiation data. This is not an instant measurement where you are."
+          },
+          {
+            "title": "OpenStreetMap / Nominatim",
+            "text": "Place identification from coordinates, with OpenWeather as an alternative."
+          },
+          {
+            "title": "Warnings and recommendations",
+            "text": "Official warnings are distributed by the weather provider. Prevention references do not imply certification or endorsement of ThermoSafe by the organizations mentioned."
+          }
+        ]
+      },
+      "contact": {
+        "title": "Contact",
+        "paragraphs": [
+          "Do you have a question, found an error, or want to suggest an improvement to ThermoSafe? You can write to:"
+        ],
+        "email": "info@thermosafe.app",
+        "blocks": [],
+        "emergencyNote": "This channel is not for reporting emergencies."
+      }
     }
   }
 }
