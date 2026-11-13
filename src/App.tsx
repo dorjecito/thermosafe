@@ -69,6 +69,7 @@ import { calcHIOrNull } from "./utils/calcHI";
    import { getHeatDayPhase, isDayAtLocation, isLateDayAtLocation } from "./utils/isDayAtLocation";
    import { getPrimaryStatusBlock } from "./utils/getPrimaryStatusBlock";
    import { getPrimaryAdviceText } from "./utils/getPrimaryAdviceText";
+   import { composeWindActivityWorkWindowText } from "./utils/composeWindActivityWorkWindowText";
    import { formatLastUpdate } from "./utils/formatLastUpdate";
 	   import { getAlertTimeCountdown } from "./utils/getRemainingTime";
 	   import { normalizeLang } from "./utils/normalizeLang";
@@ -2216,18 +2217,23 @@ const aemetOnlyCaution = useMemo(
 const workWindowLang = currentLang;
 const workWindowTitle = useMemo(() => getWorkWindowTitle(workWindowLang), [workWindowLang]);
 const workWindowText = useMemo(
-  () => getWorkWindowText(
+  () => composeWindActivityWorkWindowText(
+    getWorkWindowText(
+      workWindow,
+      workWindowLang,
+      aemetActive,
+      undefined,
+      aemetOnlyCaution,
+      uvUnavailable,
+      heatRisk?.class,
+      engineRisk?.primary?.factor,
+      uvPending
+    ),
     workWindow,
-    workWindowLang,
-    aemetActive,
-    undefined,
-    aemetOnlyCaution,
-    uvUnavailable,
-    heatRisk?.class,
-    engineRisk?.primary?.factor,
-    uvPending
+    windActivityRisk,
+    workWindowLang
   ),
-  [workWindow, workWindowLang, aemetActive, aemetOnlyCaution, uvUnavailable, heatRisk?.class, engineRisk?.primary?.factor, uvPending]
+  [workWindow, workWindowLang, aemetActive, aemetOnlyCaution, uvUnavailable, heatRisk?.class, engineRisk?.primary?.factor, uvPending, windActivityRisk]
 );
 
 useEffect(() => {
