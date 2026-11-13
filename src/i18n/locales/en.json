@@ -441,16 +441,16 @@
     "level": {
       "caution": "Wind caution",
       "elevated": "Increased caution",
-      "avoid": "Stop or postpone exposed activity"
+      "avoid": "Do not start an activity exposed to wind, or stop it if underway, until conditions are safer."
     },
     "advice": {
-      "generic": "Wind can make some activities more difficult, especially in exposed areas.",
+      "generic": "Check conditions before outdoor activities and secure lightweight items, especially in exposed areas.",
       "jardineria": "Take care around branches, tools and items that could move.",
-      "poda": "Wind can make branches and tools harder to control.",
-      "altura": "Wind can affect balance and control of materials.",
+      "poda": "Check whether it is advisable to continue. Wind can move branches and make tools harder to control.",
+      "altura": "Check conditions before continuing. Wind can make you lose your balance and make tools and materials harder to control.",
       "obra": "Secure materials and loose items before continuing.",
       "neteja": "Watch tools and lightweight items in exposed areas.",
-      "trekking": "Wind can make balance harder on exposed sections.",
+      "trekking": "Adapt your route and avoid exposed sections if wind makes it difficult to keep your balance.",
       "oci": "Choose a sheltered area and secure lightweight items."
     }
   },

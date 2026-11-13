@@ -428,16 +428,16 @@
     "level": {
       "caution": "Precaució pel vent",
       "elevated": "Precaució elevada",
-      "avoid": "Atura o ajorna l’activitat exposada"
+      "avoid": "No comencis una activitat exposada al vent o atura-la fins que les condicions siguin més segures."
     },
     "advice": {
-      "generic": "El vent pot dificultar algunes activitats, especialment en zones exposades.",
+      "generic": "Comprova les condicions abans de fer activitats a l’exterior i assegura els objectes lleugers, sobretot en zones exposades.",
       "jardineria": "Precaució amb branques, eines i elements que es puguin desplaçar.",
-      "poda": "El vent pot dificultar el control de branques i eines.",
-      "altura": "El vent pot afectar l’equilibri i el control de materials.",
+      "poda": "Comprova si convé continuar. El vent pot moure les branques i dificultar el control de les eines.",
+      "altura": "Comprova les condicions abans de continuar. El vent pot fer-te perdre l’equilibri i dificultar el control de les eines i els materials.",
       "obra": "Assegura materials i elements solts abans de continuar.",
       "neteja": "Vigila eines i elements lleugers en zones exposades.",
-      "trekking": "El vent pot dificultar l’equilibri en trams exposats.",
+      "trekking": "Adapta el recorregut i evita els trams exposats si el vent dificulta mantenir l’equilibri.",
       "oci": "Tria una zona arrecerada i assegura els elements lleugers."
     }
   },

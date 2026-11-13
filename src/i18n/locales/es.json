@@ -447,16 +447,16 @@
     "level": {
       "caution": "Precaución por viento",
       "elevated": "Precaución elevada",
-      "avoid": "Detén o aplaza la actividad expuesta"
+      "avoid": "No empieces una actividad expuesta al viento o detenla hasta que las condiciones sean más seguras."
     },
     "advice": {
-      "generic": "El viento puede dificultar algunas actividades, especialmente en zonas expuestas.",
+      "generic": "Comprueba las condiciones antes de realizar actividades al aire libre y asegura los objetos ligeros, sobre todo en zonas expuestas.",
       "jardineria": "Precaución con ramas, herramientas y elementos que puedan desplazarse.",
-      "poda": "El viento puede dificultar el control de ramas y herramientas.",
-      "altura": "El viento puede afectar al equilibrio y al control de materiales.",
+      "poda": "Comprueba si conviene continuar. El viento puede mover las ramas y dificultar el control de las herramientas.",
+      "altura": "Comprueba las condiciones antes de continuar. El viento puede hacerte perder el equilibrio y dificultar el control de las herramientas y los materiales.",
       "obra": "Asegura materiales y elementos sueltos antes de continuar.",
       "neteja": "Vigila herramientas y elementos ligeros en zonas expuestas.",
-      "trekking": "El viento puede dificultar el equilibrio en tramos expuestos.",
+      "trekking": "Adapta la ruta y evita los tramos expuestos si el viento dificulta mantener el equilibrio.",
       "oci": "Elige una zona resguardada y asegura los elementos ligeros."
     }
   },

@@ -430,16 +430,16 @@
     "level": {
       "caution": "Precaución polo vento",
       "elevated": "Precaución elevada",
-      "avoid": "Detén ou adía a actividade exposta"
+      "avoid": "Non comeces unha actividade exposta ao vento ou detena ata que as condicións sexan máis seguras."
     },
     "advice": {
-      "generic": "O vento pode dificultar algunhas actividades, especialmente nas zonas expostas.",
+      "generic": "Comproba as condicións antes de realizar actividades ao aire libre e asegura os obxectos lixeiros, sobre todo nas zonas expostas.",
       "jardineria": "Precaución con pólas, ferramentas e elementos que se poidan desprazar.",
-      "poda": "O vento pode dificultar o control das pólas e das ferramentas.",
-      "altura": "O vento pode afectar ao equilibrio e ao control dos materiais.",
+      "poda": "Comproba se convén continuar. O vento pode mover as pólas e dificultar o control das ferramentas.",
+      "altura": "Comproba as condicións antes de continuar. O vento pode facerche perder o equilibrio e dificultar o control das ferramentas e dos materiais.",
       "obra": "Asegura os materiais e os elementos soltos antes de continuar.",
       "neteja": "Vixía ferramentas e elementos lixeiros en zonas expostas.",
-      "trekking": "O vento pode dificultar o equilibrio en tramos expostos.",
+      "trekking": "Adapta a ruta e evita os tramos expostos se o vento dificulta manter o equilibrio.",
       "oci": "Escolle unha zona abeirada e asegura os elementos lixeiros."
     }
   },

@@ -399,16 +399,16 @@
     "level": {
       "caution": "Kontuz haizearekin",
       "elevated": "Kontu handiz ibili",
-      "avoid": "Gelditu edo atzeratu haizepeko jarduera"
+      "avoid": "Ez hasi haizepeko jarduera edo eten ezazu, baldintzak seguruagoak izan arte."
     },
     "advice": {
-      "generic": "Haizeak zenbait jarduera zaildu ditzake, batez ere eremu agerietan.",
+      "generic": "Egiaztatu baldintzak aire zabaleko jarduerak egin aurretik, eta finkatu objektu arinak, batez ere eremu agerietan.",
       "jardineria": "Kontuz adarrekin, tresnekin eta mugi daitezkeen objektuekin.",
-      "poda": "Haizeak adarrak eta tresnak kontrolatzea zaildu dezake.",
-      "altura": "Haizeak orekan eta materialen kontrolean eragin dezake.",
+      "poda": "Egiaztatu jarraitzea komeni den. Haizeak adarrak mugitu eta tresnak kontrolatzea zaildu dezake.",
+      "altura": "Egiaztatu baldintzak jarraitu aurretik. Haizeak oreka galtzea eta tresnak eta materialak kontrolatzea zaildu dezake.",
       "obra": "Finkatu materialak eta elementu solteak lanean jarraitu aurretik.",
       "neteja": "Zaindu tresnak eta objektu arinak eremu agerietan.",
-      "trekking": "Haizeak oreka zaildu dezake agerian dauden tarteetan.",
+      "trekking": "Aldatu ibilbidea eta saihestu agerian dauden tarteak, haizeak oreka mantentzea zailtzen badu.",
       "oci": "Aukeratu haizetik babestutako tokia eta finkatu objektu arinak."
     }
   },
